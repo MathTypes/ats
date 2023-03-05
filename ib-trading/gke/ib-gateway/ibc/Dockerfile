@@ -27,7 +27,7 @@ RUN unzip /tmp/IBC.zip -d ${IBC_PATH}
 RUN chmod +x ${IBC_PATH}/*.sh ${IBC_PATH}/*/*.sh
 
 # install TWS, write output to file so that we can parse the TWS version number later
-RUN yes n | /tmp/ibgw.sh > ${TWS_INSTALL_LOG}
+RUN yes ''| /tmp/ibgw.sh > ${TWS_INSTALL_LOG}
 
 # remove downloaded files
 RUN rm /tmp/ibgw.sh /tmp/IBC.zip

@@ -1,3 +1,5 @@
+apiVersion: apps/v1
+kind: Deployment
 # https://cloud.google.com/deployment-manager/docs/configuration/supported-resource-types
 resources:
 - name: ib-trading-net

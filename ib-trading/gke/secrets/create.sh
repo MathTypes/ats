@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-gcloud config set project PROJECT_ID
+gcloud config set project vibrant-retina-379605
 
 if [[ "$1" == "" ]] || [[ "$2" == "" ]] || [[ "$3" == "" ]]
 then
