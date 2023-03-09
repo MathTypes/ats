@@ -1,0 +1,19 @@
+{
+    "include": [
+        "dataprep"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/tests"
+    ],
+    "ignore": [],
+    "stubPath": "./typings",
+    "venvPath": "./.venv",
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    "pythonVersion": "3.7",
+    "pythonPlatform": "Linux",
+    "executionEnvironments": [],
+    "typeCheckingMode": "basic"
+}
