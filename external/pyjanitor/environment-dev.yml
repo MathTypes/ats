@@ -1,0 +1,53 @@
+name: pyjanitor-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - biopython
+  - black=22.12.0 # keep this in sync with `.pre-commit-config.yaml`
+  - bump2version=1.0.1
+  - cairo
+  - conda
+  - hypothesis
+  - ipykernel
+  - ipython
+  - isort
+  - jinja2>=3.1.0
+  - jupyterlab
+  - lxml
+  - make
+  - mkdocs
+  - mkdocs-material
+  - mkdocstrings>=0.19.0
+  - mkdocstrings-python
+  - missingno
+  - multipledispatch
+  - mypy
+  - natsort
+  - numba
+  - numpy
+  - openpyxl
+  - pandas-flavor
+  - pandas-vet
+  - pandas=1.3.5
+  - pip
+  - pipreqs
+  - pip-tools
+  - pre-commit
+  - pyspark>=3.2.0
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - pytest-doctestplus
+  - python-language-server
+  - rdkit=2021.09.3
+  - recommonmark
+  - seaborn
+  - twine
+  - unyt
+  - xarray
+  - xlrd
+  - xorg-libxrender
+  - pip:
+      - mknotebooks
+      - lazy-loader

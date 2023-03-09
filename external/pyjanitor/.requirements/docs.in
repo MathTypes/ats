@@ -1,0 +1,10 @@
+mkdocs
+mkdocs-material
+mkdocstrings>=0.19.0
+mkdocstrings-python
+ipython>7.31.1
+-r biology.in
+-r chemistry.in
+-r engineering.in
+-r spark.in
+# -e .

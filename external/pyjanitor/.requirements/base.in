@@ -1,0 +1,9 @@
+# ipykernel
+# jupyter_client
+# lxml
+natsort
+# seaborn
+pandas_flavor
+multipledispatch
+scipy
+lazy_loader
