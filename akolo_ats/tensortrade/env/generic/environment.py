@@ -124,6 +124,8 @@ class TradingEnv(gym.Env, TimeIndexed):
             The computed reward for performing the action.
         bool
             Whether or not the episode is complete.
+        bool                                                                                                                             
+            Whether or not the episode is truncated. 
         dict
             The information gathered after completing the step.
         """
