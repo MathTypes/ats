@@ -1,5 +1,5 @@
-GPU_IMAGE?="tensortrade:latest-gpu"
-CPU_IMAGE?="tensortrade:latest"
+GPU_IMAGE?="akolo_ats:latest-gpu"
+CPU_IMAGE?="akolo_ats:latest"
 SHM_SIZE?="3.0gb" # TODO: Automate me!
 
 clean:
