@@ -31,15 +31,15 @@ jobs:
           pip install .
           
       - name: List dependencies
-      run: |
-        pip freeze
+        run: |
+          pip freeze
       
       - name: Lint
-      run: |
-        pip install 'black==22.6.0' 'flake8==5.0.3' 'pydocstyle==6.1.1'
-        black -l 79 --check akolo_ats/ tests
-        flake8 akolo_ats tests
-        pydocstyle akolo_ats
+        run: |
+          pip install 'black==22.6.0' 'flake8==5.0.3' 'pydocstyle==6.1.1'
+          black -l 79 --check akolo_ats/ tests
+          flake8 akolo_ats tests
+          pydocstyle akolo_ats
           
       - name: run tests
         run: |          
