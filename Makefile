@@ -6,7 +6,7 @@ clean:
 	find . | grep -E '(__pycache__|\.pyc|\.pyo$$)' | xargs rm -rf
 
 test:
-	pytest tests/
+	PYTHONPATH=akolo_ats pytest tests/
 
 test-parallel:
 	pytest --workers auto tests/
