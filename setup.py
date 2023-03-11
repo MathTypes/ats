@@ -23,25 +23,25 @@ if sys.version_info.major != 3:
     raise NotImplementedError("TensorTrade is only compatible with Python 3.")
 
 
-tensortrade_directory = os.path.abspath(os.path.dirname(__file__))
+akolo_ats_directory = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(tensortrade_directory, 'tensortrade', 'version.py'), 'r') as filehandle:
+with open(os.path.join(akolo_ats_directory, 'akolo_ats', 'version.py'), 'r') as filehandle:
     for line in filehandle:
         if line.startswith('__version__'):
             version = line[15:-2]
 
 setup(
-    name='tensortrade',
+    name='akolo_ats',
     version=version,
-    description='TensorTrade: A reinforcement learning library for training, evaluating, and deploying robust trading agents.',
-    long_description='TensorTrade: A reinforcement learning library for training, evaluating, and deploying robust trading agents.',
+    description='Akolo ATS: automated trading system.',
+    long_description='Akolo ATS: automated trading system.',
     long_description_content_type='text/markdown',
-    author='Adam King <adamjking3@gmail.com>, Matthew Brulhardt <mwbrulhardt@gmail.com>',
-    maintainer='Carlo Grisetti <carlo.grisetti@gmail.com>',
-    url='https://github.com/tensortrade-org/tensortrade',
+    author='Johnny Chen <johnnychen762@gmail.com>',
+    maintainer='Johnny Chen <johnnychen762@gmail.com>',
+    url='https://github.com/MathTypes/ats',
     packages=[
         package for package in find_packages(exclude=('tests', 'docs'))
-        if package.startswith('tensortrade')
+        if package.startswith('akolo_ats')
     ],
     license='Apache 2.0',
     python_requires='>=3.7',
@@ -74,7 +74,7 @@ setup(
         ],
     },
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 1 - Dev/Alpha',
         'Natural Language :: English',
         'Intended Audience :: Developers',
         'Intended Audience :: Education',
