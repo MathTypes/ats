@@ -38,26 +38,26 @@ build-cpu-if-not-built:
 build-gpu-if-not-built:
 	if [ ! $$(docker images -q ${GPU_IMAGE}) ]; then $(MAKE) build-gpu; fi;
 
-run-notebook: build-cpu-if-not-built
+run-notebook: build-cpu
 	docker run -it --rm -p=8888:8888 -p=6006:6006 -v ${PWD}/examples:/examples -v ${PWD}:/akolo_ats --shm-size=${SHM_SIZE} ${CPU_IMAGE} jupyter notebook --ip='*' --port=8888 --no-browser --allow-root ./examples/
 
-run-docs: build-cpu-if-not-built
+run-docs: build-cpu
 	if [ $$(docker ps -aq --filter name=akolo_ats_docs) ]; then docker rm $$(docker ps -aq --filter name=akolo_ats_docs); fi;
 	docker run -t --name akolo_ats_docs --shm-size=${SHM_SIZE} ${CPU_IMAGE} make docs-build && make docs-serve
 	python3 -m webbrowser http://localhost:8000/docs/build/html/index.html
 
-run-tests: build-cpu-if-not-built
+run-tests: build-cpu
 	docker run -it --rm --shm-size=${SHM_SIZE} ${CPU_IMAGE} make test
 
-run-notebook-gpu: build-gpu-if-not-built
+run-notebook-gpu: build-gpu
 	docker run -it --rm -p=8888:8888 -p=6006:6006 -v ${PWD}/examples:/examples --shm-size=${SHM_SIZE} ${GPU_IMAGE} jupyter notebook --ip='*' --port=8888 --no-browser --allow-root /examples/
 
-run-docs-gpu: build-gpu-if-not-built
+run-docs-gpu: build-gpu
 	if [ $$(docker ps -aq --filter name=akolo_ats_docs) ]; then docker rm $$(docker ps -aq --filter name=akolo_ats_docs); fi;
 	docker run -t --name akolo_ats_docs --shm-size=${SHM_SIZE} ${GPU_IMAGE} make docs-build && make docs-serve
 	python3 -m webbrowser http://localhost:8000/docs/build/html/index.html
 
-run-tests-gpu: build-gpu-if-not-built
+run-tests-gpu: build-gpu
 	docker run -it --rm --shm-size=${SHM_SIZE} ${GPU_IMAGE} make test
 
 package:
