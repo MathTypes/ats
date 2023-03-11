@@ -17,13 +17,6 @@ COPY . ./
 SHELL ["/bin/bash", "-c"]
 
 RUN pip install --upgrade numpy
-#RUN pip3 uninstall numpy -y
-#RUN pip3 install numpy==1.20.3
-#RUN apt-get install -y --fix-missing software-properties-common
-#RUN add-apt-repository ppa:deadsnakes/ppa   
-#RUN apt-get install python3.7
-#RUN apt update -y && apt install python3.7
-#RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 10
 RUN python --version
 RUN apt-get install wget
 RUN apt-key del 7fa2af80
