@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.8', '3.9', '3.10']
         
     env:
@@ -28,7 +28,7 @@ jobs:
         run: | 
           python -m pip install --upgrade pip
           pip install pytest coveralls
-          pip install .
+          pip install -r requirements.txt
           
       - name: List dependencies
       run: |
@@ -43,8 +43,11 @@ jobs:
           
       - name: run tests
         run: |          
-          coverage run --source=akolo_ats -m pytest tests
-          coverage lcov -o coverage.lcov
+          make test
+
+      - name: run docker tests
+        run: |          
+          make run-tests
           
       - name: coveralls parallel
         uses: coverallsapp/github-action@master
