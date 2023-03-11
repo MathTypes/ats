@@ -15,6 +15,7 @@ AkoloAts requires Python >= 3.7 for all functionality to work as expected.
 
 ```bash
 pip install -r requirements.txt
+make test
 ```
 
 ## Docker
@@ -37,9 +38,17 @@ To build the HTML documentation, execute the following command.
 make run-docs
 ```
 
-### Run Test Suite
+### Run Local Test Suite
 
-To run the test suite, execute the following command.
+To run the test suite locally, execute the following command.
+
+```bash
+make test
+```
+
+### Run Docker Test Suite
+
+To run the test suite in docker, execute the following command.
 
 ```bash
 make run-tests
