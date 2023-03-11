@@ -1,0 +1,18 @@
+language: python
+python:
+  - "3.8"
+  - "3.9"
+
+install:
+  - "pip install pandas"
+  - "pip install coveralls"
+  - "pip install coverage"
+  - "python setup.py install"
+
+script:
+#  - py.test --cov=pandas_market_calendars
+   - coverage run --source akolo_ats -m py.test
+   - coverage report -m
+
+after_success:
+  - coveralls
