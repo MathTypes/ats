@@ -1,5 +1,14 @@
 FROM ubuntu:18.04
 
+ARG TWS_USER=tws_user
+ARG TWS_PASSWORD=tws_password
+
+ENV JAVA_VRSN=1.8.0_202 \
+  TWS_MAJOR_VRSN=1019 \
+  TRADING_MODE=live \
+  TWSUSERID=${TWS_USER} \
+  TWSPASSWORD=${TWS_PASSWORD}
+
 # install dependencies
 RUN  apt-get update \
   && apt-get install -y wget unzip xvfb libxtst6 libxrender1 xterm socat procps

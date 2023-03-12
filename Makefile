@@ -1,5 +1,6 @@
 GPU_IMAGE?="akolo_ats:latest-gpu"
 CPU_IMAGE?="akolo_ats:latest"
+IB_IMAGE?="akolo_ats_ib:latest"
 SHM_SIZE?="3.0gb" # TODO: Automate me!
 
 clean:
@@ -28,6 +29,9 @@ docs-serve:
 
 build-cpu:
 	docker build -t ${CPU_IMAGE} .
+
+build-ib:
+	docker build -t ${IB_IMAGE} --build-arg TWS_USERID=${TWS_USERID} --build-arg TWS_PASSWORD=${TWS_PASSWORD} akolo_ats/ib-trading/gke/ib-gateway/ibc
 
 build-gpu:
 	docker build -t ${GPU_IMAGE} . --build-arg gpu_tag="-gpu"
