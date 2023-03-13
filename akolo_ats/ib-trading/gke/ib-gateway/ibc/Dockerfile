@@ -1,17 +1,12 @@
-FROM ubuntu:18.04
-
-ARG TWS_USER=tws_user
+FROM akolotech/ibc:v0
+ARG TWS_USERID=tws_userid
 ARG TWS_PASSWORD=tws_password
 
 ENV JAVA_VRSN=1.8.0_202 \
   TWS_MAJOR_VRSN=1019 \
   TRADING_MODE=live \
-  TWSUSERID=${TWS_USER} \
+  TWSUSERID=${TWS_USERID} \
   TWSPASSWORD=${TWS_PASSWORD}
-
-# install dependencies
-RUN  apt-get update \
-  && apt-get install -y wget unzip xvfb libxtst6 libxrender1 xterm socat procps
 
 # set environment variables
 ENV APP=GATEWAY \
@@ -26,24 +21,11 @@ ENV APP=GATEWAY \
 # make dirs
 RUN mkdir -p /tmp && mkdir -p ${IBC_PATH} && mkdir -p ${TWS_PATH}
 
-# download IB TWS
-RUN wget -q -O /tmp/ibgw.sh https://download2.interactivebrokers.com/installers/ibgateway/stable-standalone/ibgateway-stable-standalone-linux-x64.sh
-RUN chmod +x /tmp/ibgw.sh
-
-# download IBC
-RUN wget -q -O /tmp/IBC.zip https://github.com/IbcAlpha/IBC/releases/download/3.8.1/IBCLinux-3.8.1.zip
-RUN unzip /tmp/IBC.zip -d ${IBC_PATH}
-RUN chmod +x ${IBC_PATH}/*.sh ${IBC_PATH}/*/*.sh
-
-# install TWS, write output to file so that we can parse the TWS version number later
-RUN yes ''| /tmp/ibgw.sh > ${TWS_INSTALL_LOG}
-
-# remove downloaded files
-RUN rm /tmp/ibgw.sh /tmp/IBC.zip
-
 # copy IBC/Jts configs
-COPY config/config.ini ${IBC_INI}
-COPY config/jts.ini ${TWS_PATH}/jts.ini
+# For some reason, the copy does not seem to overwrite those files. End up committing
+# container with the right config files.
+#COPY config/config.ini ${IBC_INI}
+#COPY config/jts.ini ${TWS_PATH}/jts.ini
 
 # copy cmd script
 WORKDIR /home
@@ -54,4 +36,4 @@ RUN chmod +x cmd.sh
 ENV DISPLAY=:0
 
 # execute cmd script
-CMD ./cmd.sh
+ENTRYPOINT "/home/cmd.sh"

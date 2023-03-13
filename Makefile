@@ -31,7 +31,7 @@ build-cpu:
 	docker build -t ${CPU_IMAGE} .
 
 build-ib:
-	docker build -t ${IB_IMAGE} --build-arg TWS_USERID=${TWS_USERID} --build-arg TWS_PASSWORD=${TWS_PASSWORD} akolo_ats/ib-trading/gke/ib-gateway/ibc
+	cd akolo_ats/ib-trading/gke/ib-gateway/ibc; docker build -t ${IB_IMAGE} --build-arg TWS_USERID=${TWS_USERID} --build-arg TWS_PASSWORD=${TWS_PASSWORD} .
 
 build-gpu:
 	docker build -t ${GPU_IMAGE} . --build-arg gpu_tag="-gpu"

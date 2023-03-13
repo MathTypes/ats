@@ -10,10 +10,12 @@ echo "Starting Xvfb..."
 Xvfb "$DISPLAY" -ac -screen 0 1024x768x16 +extension RANDR &
 sleep 1
 
-echo "Starting IB gateway..."
-${IBC_PATH}/scripts/displaybannerandlaunch.sh &
-# Give enough time to start up
-sleep 30
+/usr/bin/x11vnc -ncache 10 -ncache_cr -viewpasswd remote_view_only_pass -passwd secreate  -display :0 -forever -shared -logappend /var/log/x11vnc.log -bg -noipv6
 
-echo "Forking :::4001 onto 0.0.0.0:4003..."
-socat TCP-LISTEN:4003,reuseaddr,fork TCP:127.0.0.1:4001
+echo "Starting IB gateway..."
+${IBC_PATH}/scripts/displaybannerandlaunch.sh
+# Give enough time to start up
+#sleep 30
+
+#echo "Forking :::4001 onto 0.0.0.0:4003..."
+#socat TCP-LISTEN:4003,reuseaddr,fork TCP:127.0.0.1:4001

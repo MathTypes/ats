@@ -45,4 +45,3 @@ RUN apt-get update && \
 
 # Faster compilation for tests
 RUN pip3 install --no-cache-dir -e ".[docs,tests]"
-
