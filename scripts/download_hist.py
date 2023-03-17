@@ -9,7 +9,9 @@ import os
 import sys
 import argparse
 import logging
-import traceback
+import math
+import time
+
 from datetime import datetime, timedelta
 # MAX: necessary imports for multi-threading
 from threading import Thread
@@ -52,7 +54,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
     def __init__(self, contracts: ContractList, args: argparse.Namespace):
         EClient.__init__(self, wrapper=self)
         wrapper.EWrapper.__init__(self)
-        self.request_id = 0
+        self.request_id = math.floor(time.time())
         self.started = False
         self.next_valid_order_id = None
         self.contracts = contracts
@@ -62,7 +64,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         self.args = args
         self.current = self.args.end_date
         self.duration = self.args.duration
-        self.useRTH = 1
+        self.useRTH = 0
         # MAX: message queue for inter thread communication
         self.queue = Queue()
 
@@ -85,13 +87,12 @@ class DownloadApp(EClient, wrapper.EWrapper):
         return self.request_id
 
     def historicalDataRequest(self, contract: Contract) -> None:
-        traceback.print_stack()
         cid = self.next_request_id(contract)
         self.pending_ends.add(cid)
         self.reqHistoricalData(
             cid,  # tickerId, used to identify incoming data
             contract,
-            self.current.strftime("%Y%m%d 00:00:00 US/Eastern"),  # always go to midnight
+            self.current.strftime("%Y%m%d-00:00:00"),  # always go to midnight
             self.duration,  # amount of time to go back
             self.args.size,  # bar size
             self.args.data_type,  # historical data type
@@ -142,7 +143,6 @@ class DownloadApp(EClient, wrapper.EWrapper):
 
     @iswrapper
     def headTimestamp(self, reqId: int, headTimestamp: str) -> None:
-        traceback.print_stack()
         contract = self.requests.get(reqId)
         ts = datetime.strptime(headTimestamp, "%Y%m%d  %H:%M:%S")
         logging.info("Head Timestamp for %s is %s", contract, ts)
@@ -164,7 +164,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
                 self.duration = "%d Y" % np.ceil(days / 365)
             # when getting daily data, look at regular trading hours only
             # to get accurate daily closing prices
-            self.useRTH = 1
+            self.useRTH = 0
             # round up current time to midnight for even days
             self.current = self.current.replace(
                 hour=0, minute=0, second=0, microsecond=0
@@ -233,14 +233,22 @@ class DownloadApp(EClient, wrapper.EWrapper):
             self.send_done(error_code)
 
 
-def make_contract(symbol: str, sec_type: str, currency: str, exchange: str, localsymbol: str) -> Contract:
+def make_contract(symbol: str, sec_type: str, currency: str, exchange: str, localsymbol: str, last_trade_date: str) -> Contract:
     contract = Contract()
+    #contract.conId = 495512572
     contract.symbol = symbol
     contract.secType = sec_type
     contract.currency = currency
     contract.exchange = exchange
+    contract.includeExpired = True
     if localsymbol:
-        contract.localSymbol = localsymbol
+        contract.tradingClass = localsymbol
+    if last_trade_date:
+        contract.lastTradeDateOrContractMonth = last_trade_date
+    logging.info(f'symbol:{symbol}')
+    logging.info(f'exchange:{exchange}')
+    logging.info(f'tradingClass:{localsymbol}')
+    logging.info(f'lastTradeDate:{last_trade_date}')
     return contract
 
 
@@ -345,6 +353,9 @@ def main():
         "--exchange", type=str, default="SMART", help="exchange for symbols"
     )
     argp.add_argument(
+        "--last_trade_date", type=str, default="", help="last trade date (for futures)"
+    )
+    argp.add_argument(
         "--localsymbol", type=str, default="", help="local symbol (for futures)"
     )
     argp.add_argument(
@@ -389,7 +400,7 @@ def main():
     logging.debug(f"args={args}")
     contracts = []
     for s in args.symbol:
-        contract = make_contract(s, args.security_type, args.currency, args.exchange, args.localsymbol)
+        contract = make_contract(s, args.security_type, args.currency, args.exchange, args.localsymbol, args.last_trade_date)
         contracts.append(contract)
         os.makedirs(make_download_path(args, contract), exist_ok=True)
     app = DownloadApp(contracts, args)
