@@ -1,3 +1,4 @@
+from absl import logging
 import os
 from typing import Tuple, List, Dict
 import tensorflow as tf
@@ -438,7 +439,6 @@ def run_single_window(
     else:
         dmn = None
         raise Exception(f"{params['architecture']} is not a valid architecture.")
-
     best_hp, best_model = dmn.hyperparameter_search(
         model_features.train, model_features.valid
     )
