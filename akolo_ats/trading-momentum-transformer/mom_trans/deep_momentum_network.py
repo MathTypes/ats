@@ -1,20 +1,20 @@
-from absl import logging
+from abc import ABC, abstractmethod
+import collections
 import os
 import json
 import pathlib
 import shutil
 import copy
 
+from absl import logging
 from keras_tuner.tuners.randomsearch import RandomSearch
-from abc import ABC, abstractmethod
-
-from tensorflow import keras
-import tensorflow as tf
+import keras_tuner as kt
 import numpy as np
 import pandas as pd
-import collections
-
-import keras_tuner as kt
+from tensorflow import keras
+import tensorflow as tf
+import wandb
+from wandb.keras import WandbCallback
 
 from settings.hp_grid import (
     HP_HIDDEN_LAYER_SIZE,
@@ -186,6 +186,8 @@ class TunerDiversifiedSharpe(kt.tuners.RandomSearch):
         )
 
         original_callbacks = kwargs.pop("callbacks", [])
+        ## Initiates new run for each trial on the dashboard of Weights & Biases
+        run = wandb.init(project="WandBAndKerasTuner", config=kwargs)
 
         for callback in original_callbacks:
             if isinstance(callback, SharpeValidationLoss):
@@ -200,6 +202,7 @@ class TunerDiversifiedSharpe(kt.tuners.RandomSearch):
             callbacks = self._deepcopy_callbacks(original_callbacks)
             self._configure_tensorboard_dir(callbacks, trial, execution)
             callbacks.append(kt.engine.tuner_utils.TunerCallback(self, trial))
+            callbacks.append(WandbCallback())
             # Only checkpoint the best epoch across all executions.
             # callbacks.append(model_checkpoint)
             copied_fit_kwargs["callbacks"] = callbacks
@@ -219,6 +222,8 @@ class TunerDiversifiedSharpe(kt.tuners.RandomSearch):
         self.oracle.update_trial(
             trial.trial_id, metrics=averaged_metrics, step=trial.best_step
         )
+        ## ends the run on the Weights & Biases dashboard
+        run.finish()
 
 
 class DeepMomentumNetworkModel(ABC):
