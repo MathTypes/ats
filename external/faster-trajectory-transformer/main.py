@@ -2,12 +2,13 @@ import torch
 from torch.utils.data import DataLoader
 
 from stable_baselines3.common.vec_env import DummyVecEnv
+#import universe # register the universe environments
 
 from trajectory.models.gpt import GPT, GPTTrainer
 from trajectory.utils.env import create_env, vec_rollout
 from trajectory.datasets.d4rl_dataset import DiscretizedDataset
 
-DEVICE = "cpu"
+DEVICE = "gpu"
 DATASETS = [
     # halfcheetah
     "halfcheetah-medium-expert-v2",
