@@ -1,9 +1,11 @@
 import os
-import wandb
 import argparse
 
+
 from omegaconf import OmegaConf
+import torch
 from torch.utils.data import DataLoader
+import wandb
 
 from trajectory.models.gpt import GPT, GPTTrainer
 from trajectory.datasets.d4rl_dataset import DiscretizedDataset
@@ -25,6 +27,10 @@ def run_experiment(config, seed, device):
     OmegaConf.save(OmegaConf.to_container(config, resolve=True), os.path.join(config.trainer.checkpoints_path, "config.yaml"))
 
     set_seed(seed=seed)
+    if torch.cuda.is_available():
+        device = "cuda:0"
+    else:
+        device = "cpu"
 
     trainer_conf = config.trainer
     data_conf = config.dataset
