@@ -28,6 +28,11 @@ DATASETS = [
 def main():
     # This is example of training and evaluation if you want to train on your own without configs and scripts/train.py
     torch.manual_seed(42)
+    if torch.cuda.is_available():
+        device = "cuda:0"
+    else:
+        device = "cpu"
+
     dataset = DiscretizedDataset(
         env_name=DATASETS[1],
         seq_len=10,
@@ -49,7 +54,7 @@ def main():
         num_heads=4,
         use_sep_heads=True
     )
-    model.to(DEVICE)
+    model.to(device)
     print("Number of model parameters:", sum(p.numel() for p in model.parameters()))
 
     num_epochs = int(1e6 / len(dataset) * 50)
@@ -79,7 +84,7 @@ def main():
         eval_k_act=None,
         checkpoints_path=f"checkpoints/gpt/{DATASETS[1]}",
         save_every=1,
-        device=DEVICE
+        device=device
     )
     trainer.train(
         model=model,
@@ -89,7 +94,7 @@ def main():
 
     # evaluation after training is done
     discretizer = dataset.get_discretizer()
-    discretizer.to(DEVICE)
+    discretizer.to(device)
 
     vec_env = DummyVecEnv([lambda: create_env(DATASETS[1]) for _ in range(25)])
     rewards = vec_rollout(
@@ -104,7 +109,7 @@ def main():
         k_reward=1,
         k_obs=1,
         k_act=None,
-        device=DEVICE
+        device=device
     )
     scores = [vec_env.envs[0].get_normalized_score(r) for r in rewards]
 
