@@ -7,6 +7,7 @@ import CONFIG
 from utils.coingecko_utils import CoinGeckoUtils
 from utils.miner_utils import MinerUtils
 
+# 
 @st.cache(suppress_st_warning=True, allow_output_mutation=True)
 def get_all_coins_df():
     return CoinGeckoUtils().get_all_coins_df()
