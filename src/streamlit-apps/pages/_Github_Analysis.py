@@ -9,7 +9,8 @@ import CONFIG
 
 
 
-@st.cache(suppress_st_warning=True, allow_output_mutation=True)
+@st.cache_data()
+#suppress_st_warning=True, allow_output_mutation=True)
 def get_all_issues_df():
     g = Github()
     repo = g.get_repo("hummingbot/hummingbot")

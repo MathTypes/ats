@@ -9,7 +9,7 @@ from traitlets import default
 MIN_TVL = 1000000.
 MIN_MCAP = 1000000.
 
-@st.cache
+@st.cache_data()
 def get_tvl_mcap_data():
     # initialize api client
     llama = DefiLlama()

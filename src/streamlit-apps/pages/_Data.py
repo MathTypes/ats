@@ -5,19 +5,23 @@ from utils.coingecko_utils import CoinGeckoUtils
 from utils.miner_utils import MinerUtils
 
 
-@st.cache(suppress_st_warning=True, allow_output_mutation=True)
+@st.cache_data()
+#suppress_st_warning=True, allow_output_mutation=True)
 def get_all_coins_df():
     return CoinGeckoUtils().get_all_coins_df()
 
-@st.cache(suppress_st_warning=True, allow_output_mutation=True)
+@st.cache_data()
+#suppress_st_warning=True, allow_output_mutation=True)
 def get_all_exchanges_df():
     return CoinGeckoUtils().get_all_exchanges_df()
 
-@st.cache(suppress_st_warning=True, allow_output_mutation=True)
+@st.cache_data()
+#suppress_st_warning=True, allow_output_mutation=True)
 def get_miner_stats_df():
     return MinerUtils().get_miner_stats_df()
 
-@st.cache(suppress_st_warning=True, allow_output_mutation=True)
+@st.cache_data()
+#suppress_st_warning=True, allow_output_mutation=True)
 def get_coin_tickers_by_id_list(coins_id: list):
     return CoinGeckoUtils().get_coin_tickers_by_id_list(coins_id)
 
