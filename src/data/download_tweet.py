@@ -26,7 +26,7 @@ def upload_tweet_to_neo4j(username, since, until):
     usernames = args.username.split(",")
     query = f"from:{args.username} since:{since} until:{until}"
     neo4j = Neo4j()
-    tweet_urls = sntwitter.TwitterSearchScraper(query).get_items()
+    tweets = sntwitter.TwitterSearchScraper(query).get_items()
     neo4j.bulk_load(tweets)
 
 if __name__ == "__main__":
