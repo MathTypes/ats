@@ -1,39 +1,46 @@
 # importing libraries and packages
-#from absl import logging
-import os
-import snscrape.modules.twitter as sntwitter
-import pandas as pd
-
+# from absl import logging
+# Example of usage:
+# PYTHONPATH=. python3 ../scripts/download_tweet.py --username=eliant_capital --output_dir=../data
+#
 import argparse
 import logging
+import datetime
+import os
 
-parser = argparse.ArgumentParser(
-    description='A test script for http://stackoverflow.com/q/14097061/78845'
-)
-parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                    action="store_true")
-parser.add_argument("--output_dir", type=str, required=True)
-parser.add_argument("--username", type=str, required=True)
+import pandas as pd
 
-args = parser.parse_args()
-if args.verbose:
-    logging.basicConfig(level=logging.DEBUG)
+import snscrape.modules.twitter as sntwitter
+from data.neo4j_util import Neo4j
 
 
-# Creating list to append tweet data 
-tweets_list1 = []
+def upload_tweet_to_neo4j(username, since, until):
+    if until == '':
+        until = datetime.datetime.strftime(datetime.date.today(), '%Y-%m-%d')
+    if since == '':
+        since = datetime.datetime.strftime(datetime.datetime.strptime(
+            until, '%Y-%m-%d') - datetime.timedelta(days=7), '%Y-%m-%d')
 
-# Using TwitterSearchScraper to scrape data and append tweets to list
-for i,tweet in enumerate(sntwitter.TwitterUserScraper(args.username).get_items()): #declare a username 
-    logging.info(f'tweet:{tweet}')
-    if i>1000: #number of tweets you want to scrape
-        break
-    tweets_list1.append([tweet.date, tweet.id, tweet.content, tweet.user.username]) #declare the attributes to be returned
-    
-# Creating a dataframe from the tweets list above 
-tweets_df1 = pd.DataFrame(tweets_list1, columns=['Datetime', 'Tweet Id', 'Text', 'Username'])
+    # Creating list to append tweet data
+    tweets_list1 = []
+    usernames = args.username.split(",")
+    query = f"from:{args.username} since:{since} until:{until}"
+    neo4j = Neo4j()
+    tweet_urls = sntwitter.TwitterSearchScraper(query).get_items()
+    neo4j.bulk_load(tweets)
 
-file_path = os.path.join(args.output_dir, args.username)
-if not os.path.exists(file_path):
-    os.makedirs(file_path, exist_ok=True)
-tweets_df1.to_csv(os.path.join(file_path, 'out.csv'))
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='A test script for http://stackoverflow.com/q/14097061/78845'
+    )
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
+    parser.add_argument("--username", type=str, required=True)
+    parser.add_argument("--since", type=str, required=True)
+    parser.add_argument("--until", type=str, required=True)
+
+    args = parser.parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+
+    upload_tweet_to_neo4j(args.username, args.since, args.until)
