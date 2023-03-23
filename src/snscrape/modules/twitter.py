@@ -1691,7 +1691,6 @@ class TwitterUserScraper(TwitterSearchScraper):
 		else:
 			fieldName = 'userId'
 			endpoint = 'https://twitter.com/i/api/graphql/I5nvpI91ljifos1Y3Lltyg/UserByRestId'
-		logging.error(f'endpoint:{endpoint}')
 		variables = {fieldName: str(self._user), 'withSafetyModeUserFields': True, 'withSuperFollowsUserFields': True}
 		obj = self._get_api_data(endpoint, _TwitterAPIType.GRAPHQL, params = {'variables': variables})
 		if not obj['data'] or 'result' not in obj['data']['user']:
