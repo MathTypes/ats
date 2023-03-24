@@ -3,6 +3,7 @@ import logging
 import sys
 
 from py2neo import Graph, Node, NodeMatcher, Relationship
+from ratelimiter import RateLimiter
 
 # https://github.com/akashjorss/Twitter_Sentiment_Analysis_Using_Neo4j
 
@@ -17,6 +18,7 @@ class Neo4j:
     def delete_all(self):
         self.graph.delete_all()
 
+    @RateLimiter(max_calls=5, period=1)
     def load_data(self, tweet):
         """
         Loads one tweet at a time
@@ -50,28 +52,30 @@ class Neo4j:
 
         # repeat above for all nodes
         tweet_node = self.graph.evaluate(
-            "MATCH(n:Tweet) WHERE n.id = '{id}' return n", id=tweet.id)
-        if tweet_node is None:
-            retweetedTweetId = tweet.retweetedTweet ? tweet.retweetedTweet.id : None;
-            tweet_node = Node("Tweet", id=tweet.id,
-                              pubdate = str(tweet.date),
-                              permalink = tweet.url,
-                              lang=tweet.lang,
-                              source = tweet.source,
-                              source_url = tweet.sourceUrl,
-                              like_count = tweet.likeCount,
-                              quote_count = tweet.quoteCount,
-                              reply_count = tweet.replyCount,
-                              retweet_count = tweet.retweetCount,
-                              retweetedTweet=tweet.retweetedTweetId,
-                              raw_content=tweet.rawContent,
-                              rendered_content=tweet.renderedContent,
-                              retweet_count=tweet.retweetCount)
-            tx.create(tweet_node)
-            # print("Node created:", tweet_node)
+            f"MATCH(n:Tweet) WHERE n.id = {tweet.id} return n")
+        if tweet_node is not None:
+            tx.commit()
+            return
+
+        retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
+        tweet_node = Node("Tweet", id=tweet.id,
+                          pubdate=str(tweet.date),
+                          permalink=tweet.url,
+                          lang=tweet.lang,
+                          source=tweet.source,
+                          source_url=tweet.sourceUrl,
+                          like_count=tweet.likeCount,
+                          quote_count=tweet.quoteCount,
+                          reply_count=tweet.replyCount,
+                          retweet_count=tweet.retweetCount,
+                          retweetedTweet=retweetedTweetId,
+                          raw_content=tweet.rawContent,
+                          rendered_content=tweet.renderedContent)
+        tx.create(tweet_node)
+        # print("Node created:", tweet_node)
 
         conversation_node = self.graph.evaluate(
-            "MATCH(n:Conversation) WHERE n.id = '{id}' return n", id=tweet.conversationId)
+            f"MATCH(n:Conversation) WHERE n.id = {tweet.conversationId} return n")
         if conversation_node is None:
             conversation_node = Node("Conversation", id=tweet.conversationId)
             tx.create(conversation_node)
@@ -94,7 +98,8 @@ class Neo4j:
         # create hashtag nodes and connect them with tweet nodes
         if tweet.hashtags:
             for hashtag in tweet.hashtags:
-                hashtag_node = self.matcher.match("Hashtag", name=hashtag).first()
+                hashtag_node = self.matcher.match(
+                    "Hashtag", name=hashtag).first()
                 # hashtag_node = self.graph.evaluate("MATCH(n) WHERE n.name = {hashtag} return n", hashtag=hashtag)
                 if hashtag_node is None:
                     hashtag_node = Node("Hashtag", name=hashtag)
