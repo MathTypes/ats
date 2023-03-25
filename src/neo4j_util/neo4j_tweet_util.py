@@ -48,7 +48,7 @@ class Neo4j:
         # if remote node is null, create company node
         if user_node is None:
             user_node = Node("User", name=tweet.user.username,
-                             lastUpdate=int(datetime.now().timestamp() * 1000))
+                             last_update=int(datetime.now().timestamp() * 1000))
             tx.create(user_node)
             # print("Node created:", company)
 
@@ -61,9 +61,9 @@ class Neo4j:
 
         retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
         tweet_node = Node("Tweet", id=tweet.id,
-                          createdAt=int(tweet.date.timestamp() * 1000),
-                          lastUpdate=int(datetime.now().timestamp() * 1000),
-                          permalink=tweet.url,
+                          created_at=int(tweet.date.timestamp() * 1000),
+                          last_update=int(datetime.now().timestamp() * 1000),
+                          perma_link=tweet.url,
                           lang=tweet.lang,
                           source=tweet.source,
                           source_url=tweet.sourceUrl,
@@ -71,7 +71,7 @@ class Neo4j:
                           quote_count=tweet.quoteCount,
                           reply_count=tweet.replyCount,
                           retweet_count=tweet.retweetCount,
-                          retweetedTweet=retweetedTweetId,
+                          retweeted_tweet_id=retweetedTweetId,
                           raw_content=tweet.rawContent,
                           rendered_content=tweet.renderedContent)
         tx.create(tweet_node)
@@ -80,7 +80,7 @@ class Neo4j:
             f"MATCH(n:Conversation) WHERE n.id = {tweet.conversationId} return n")
         if conversation_node is None:
             conversation_node = Node("Conversation", id=tweet.conversationId,
-                                     lastUpdate=int(datetime.now().timestamp()*1000))
+                                     last_update=int(datetime.now().timestamp()*1000))
             tx.create(conversation_node)
             child = Relationship(conversation_node, "CONTAINS", tweet_node)
             tx.create(child)
@@ -93,8 +93,8 @@ class Neo4j:
         # check if describes already exists
         created_on = Relationship(
             user_node, "POST", tweet_node,
-            createdAt=int(tweet.date.timestamp() * 1000),
-            lastUpdate=int(datetime.now().timestamp() * 1000))
+            created_at=int(tweet.date.timestamp() * 1000),
+            last_update=int(datetime.now().timestamp() * 1000))
         tx.create(created_on)
         # created_on = Relationship(tweet_node, "CREATED_ON", datetime)
         # tx.create(describes)
