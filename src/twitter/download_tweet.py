@@ -1,7 +1,7 @@
 # importing libraries and packages
 # from absl import logging
 # Example of usage:
-# PYTHONPATH=. python3 ../scripts/download_tweet.py --username=eliant_capital --output_dir=../data
+# PYTHONPATH=. python3 twitter/download_tweet.py --username=eliant_capital --since=2023-03-23 --until=2023-03-24
 #
 import argparse
 import logging
