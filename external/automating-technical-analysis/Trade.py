@@ -160,7 +160,7 @@ if __name__ == '__main__':
     import gc
     warnings.filterwarnings("ignore") 
     gc.collect()
-    action_model = load_model("models/action_prediction_model.h5")
-    price_model = load_model("models/price_prediction_model.h5")
+    action_model = load_model("external/automating-technical-analysis/models/action_prediction_model.h5")
+    price_model = load_model("external/automating-technical-analysis/models/price_prediction_model.h5")
     app_data = Data_Sourcing()
     main(app_data = app_data)
