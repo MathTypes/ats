@@ -18,6 +18,7 @@ from wordcloud import WordCloud
 
 from eda_utils import generate_color
 from neo4j_util.sentiment_api import get_tweets, get_conversations
+from market_data import ts_read_api
 
 logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
     datefmt='%Y-%m-%d:%H:%M:%S',
@@ -49,18 +50,11 @@ NEWS_DATA = "news_pre2011.gzip"
 @st.cache(show_spinner=False)
 def load_data(datapath):
     #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
-    es_market_df = pd.read_csv(f'../../data/FUT/5_secs/ESH3/20230101.csv')
-    es_market_df['assetName'] = "ES"
-    es_market_df['assetCode'] = "ES"
-    nq_market_df = pd.read_csv(f'../../data/FUT/5_secs/NQH3/20230101.csv')
-    nq_market_df['assetName'] = "NQ"
-    nq_market_df['assetCode'] = "NQ"
+    from_date = datetime.date(2023, 3, 1)
+    to_date = datetime.date(2023, 3, 25)
+    es_market_df = ts_read_api.get_time_series('ES', from_date, to_date)
+    nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
     market_df = pd.concat([es_market_df, nq_market_df])
-    market_df = market_df.rename(columns={"date": "time"})
-    market_df["time"] = pd.to_datetime(market_df["time"], infer_datetime_format=True)
-    #logger.info(f'market_df_time:{market_df["time"]}')
-    market_df = market_df.set_index("time")
-    market_df = market_df.sort_index()
     #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
     news_df = get_tweets()
     news_df = news_df.rename(columns={"created_at": "time", "raw_content":"headline"})
