@@ -1,0 +1,9 @@
+streamlit
+plotly
+websocket-client
+yfinance
+bs4
+nltk
+streamlit_autorefresh
+xgboost
+scikit-learn
