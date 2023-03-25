@@ -44,23 +44,30 @@ class Neo4j:
         tx = self.graph.begin()
         # retrieve company node from the remote self.graph
         user_node = self.graph.evaluate(
-            f"MATCH(n:User) WHERE n.name = '{tweet.user.username}' return n")
+            "MATCH(n:User {name:$user}) RETURN n",
+            user=tweet.user.username)
         # if remote node is null, create company node
         if user_node is None:
             user_node = Node("User", name=tweet.user.username,
+                             source="tw",
+                             id=tweet.user.id,
                              last_update=int(datetime.now().timestamp() * 1000))
             tx.create(user_node)
             # print("Node created:", company)
 
         # repeat above for all nodes
         tweet_node = self.graph.evaluate(
-            "MATCH(n:Tweet) WHERE n.id = $tweet_id return n", tweet_id=tweet.id)
+            "MATCH(n:Tweet {id:$tweet_id}) RETURN n",
+            tweet_id=tweet.id)
         if tweet_node is not None:
+            logging.error(f'found tweet_node:{tweet_node}')
             tx.commit()
             return
 
         retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
         tweet_node = Node("Tweet", id=tweet.id,
+                          user=tweet.user.username,
+                          user_id=tweet.user.id,
                           created_at=int(tweet.date.timestamp() * 1000),
                           last_update=int(datetime.now().timestamp() * 1000),
                           perma_link=tweet.url,
@@ -77,7 +84,8 @@ class Neo4j:
         tx.create(tweet_node)
 
         conversation_node = self.graph.evaluate(
-            f"MATCH(n:Conversation) WHERE n.id = {tweet.conversationId} return n")
+            "MATCH(n:Conversation {id:$conv_id}) RETURN n",
+            conv_id=tweet.conversationId)
         if conversation_node is None:
             conversation_node = Node("Conversation", id=tweet.conversationId,
                                      last_update=int(datetime.now().timestamp()*1000))
@@ -91,11 +99,11 @@ class Neo4j:
 
         # create relationships
         # check if describes already exists
-        created_on = Relationship(
+        post = Relationship(
             user_node, "POST", tweet_node,
             created_at=int(tweet.date.timestamp() * 1000),
             last_update=int(datetime.now().timestamp() * 1000))
-        tx.create(created_on)
+        tx.create(post)
         # created_on = Relationship(tweet_node, "CREATED_ON", datetime)
         # tx.create(describes)
         # tx.create(created_on)
