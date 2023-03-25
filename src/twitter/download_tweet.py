@@ -24,8 +24,11 @@ def upload_tweet_to_neo4j(username, since, until):
     # Creating list to append tweet data
     tweets_list1 = []
     usernames = args.username.split(",")
-    query = f"from:{args.username} since:{since} until:{until}"
     neo4j = Neo4j()
+    query = f"from:{args.username} since:{since} until:{until}"
+    tweets = sntwitter.TwitterSearchScraper(query).get_items()
+    neo4j.bulk_load(tweets)
+    query = f"to:{args.username} since:{since} until:{until}"
     tweets = sntwitter.TwitterSearchScraper(query).get_items()
     neo4j.bulk_load(tweets)
 
