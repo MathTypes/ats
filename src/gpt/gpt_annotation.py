@@ -50,7 +50,7 @@ def query(prompt, data, to_print=True):
 
 def get_entity_analysis(x: str):
     res = query(
-        "Extract  knowledge graph and summary in a tree structure with nodes along with reasoning", x)
+        "Extract knowledge graph and summary in a tree structure with nodes along with reasoning", x)
     return res
 
 
@@ -93,22 +93,49 @@ def get_aspect_sentiment(x: str):
         "Recognize all aspect terms with their corresponding sentiment polarity in the following review with the format ['aspect', 'sentiment_polarity']: ", x)
     return res
 
+
 openai.api_key = os.environ["OPENAI_API_KEY"]
 openai.verify_ssl_certs = False
 
-def read_dataset(filenames):
-    """Load spam training dataset without any labels."""
-    dfs = []
-    for i, filename in enumerate(filenames, start=1):
-        df = pd.read_csv(filename, dtype='unicode')
-        df.columns = map(str.lower, df.columns)
-        df = df.sample(frac=1, random_state=123).reset_index(drop=True)
-        dfs.append(df)
-    return pd.concat(dfs)
+from neo4j import GraphDatabase
 
-tweets_df1 = read_dataset(glob.glob(args.input_file))
+host = 'bolt://neo4j:7687'
+user = 'neo4j'
+password = 'pleaseletmein'
+driver = GraphDatabase.driver(host, auth=(user, password))
+
+def read_query(query, params={}):
+    with driver.session() as session:
+        result = session.run(query, params)
+        response = [r.values()[0] for r in result]
+        return response
+
+def get_conversation_ids():
+    text = read_query(
+        "MATCH (n:Conversation)-[CONTAINS] - (t:Tweet) return n.id, min(t.pubdate) as start_date, max(t.pubdate) as end_date order by start_date")
+    return text
+
+def get_tweets(conv_id):
+    text = read_query(
+        f"MATCH(c:Conversation {id:{conv_id}})-[CONTAINS]->(t:Tweet) return t.raw_content as text order by t.pubdate")
+    logging.error(f'text:text')
+    return text
+
+
+def read_dataset():
+    """Load spam training dataset without any labels."""
+    conversation_ids = get_conversation_ids()
+    df = pd.DataFrame(columns = ['conv_id', 'text'])
+    for conv_id in conversation_ids:
+        tweets = get_tweets(conv_id)
+        df = df.append({'conv_id' : conv_id, 'text' : tweets.join("\n")}, ignore_index = True)
+    return df
+
+
+tweets_df1 = read_dataset()
 # make sure indexes pair with number of rows
 tweets_df1 = tweets_df1.reset_index()
+
 if args.max_rows > 0:
     tweets_df1 = tweets_df1.iloc[1:args.max_rows]
 tweets_df1['aspect'] = tweets_df1['text'].map(
@@ -124,4 +151,24 @@ tweets_df1['entity_surprise'] = tweets_df1['text'].map(
 tweets_df1['entity_analysis'] = tweets_df1['text'].map(
     lambda x: get_entity_analysis(x))
 
-tweets_df1.to_csv(args.output_file)
+rels_query ="""
+UNWIND $data as row
+MATCH (s:Entity {id: row.source})
+MATCH (t:Entity {id: row.target})
+CALL apoc.merge.relationship(s, row.type,
+  {},
+  {},
+  t,
+  {}
+)
+YIELD rel
+RETURN distinct 'done';
+"""
+
+for i, row in tweets_df1[['entity', 'property', 'value']].iterrows():
+    source = row['entity']['name'] if len(row['entity']['allUris']) == 0 else row['entity']['allUris'][0]
+    target = row['value']['name'] if len(row['value']['allUris']) == 0 else row['value']['allUris'][0]
+    type = row['property']['name'].replace(' ', '_').upper()
+    relParams.append({'source':source,'target':target,'type':type})
+    run_query(rels_query, {'data': relParams})
+
