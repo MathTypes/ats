@@ -1,2 +1,2 @@
 [deprecation]
-showPyplotGlobalUse = false
+#showPyplotGlobalUse = false
