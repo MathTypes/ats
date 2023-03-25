@@ -11,7 +11,7 @@ import os
 import pandas as pd
 
 import snscrape.modules.twitter as sntwitter
-from data.neo4j_util import Neo4j
+from neo4j.neo4j_tweet_util import Neo4j
 
 
 def upload_tweet_to_neo4j(username, since, until):

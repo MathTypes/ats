@@ -11,7 +11,8 @@ from ratelimiter import RateLimiter
 class Neo4j:
     def __init__(self):
         # initialize the self.graph
-        self.graph = Graph("bolt://localhost:7687", auth=("neo4j", "password"))
+        self.graph = Graph("bolt://host.docker.internal:7687",
+                           auth=("neo4j", "password"))
         # self.graph = Graph(scheme="bolt", host="localhost", port=7687, secure=True, auth=('neo4j', 'password'))
         self.matcher = NodeMatcher(self.graph)
 
@@ -72,7 +73,6 @@ class Neo4j:
                           raw_content=tweet.rawContent,
                           rendered_content=tweet.renderedContent)
         tx.create(tweet_node)
-        # print("Node created:", tweet_node)
 
         conversation_node = self.graph.evaluate(
             f"MATCH(n:Conversation) WHERE n.id = {tweet.conversationId} return n")
@@ -85,11 +85,13 @@ class Neo4j:
             contains_tweet = Relationship(
                 tweet_node, "CONTAINS", conversation_node)
             tx.create(contains_tweet)
-            # print("Node created:", tweet_node)
 
         # create relationships
         # check if describes already exists
-        # describes = Relationship(tweet_node, "DESCRIBES", company)
+        created_on = Relationship(
+            user_node, "CREATED_ON{creation_time:apoc.date.parse({'" + str(tweet.date) + "'},['ms'/'s'], ['yyyy/MM/dd HH:mm:ss'])}", tweet_node)
+        logging.error(f"created_on:{created_on}")
+        tx.create(created_on)
         # created_on = Relationship(tweet_node, "CREATED_ON", datetime)
         # tx.create(describes)
         # tx.create(created_on)
