@@ -74,6 +74,7 @@ class Neo4j:
                           lang=tweet.lang,
                           source=tweet.source,
                           source_url=tweet.sourceUrl,
+                          in_reply_to_tweet_id=tweet.inReplyToTweetId,
                           like_count=tweet.likeCount,
                           quote_count=tweet.quoteCount,
                           reply_count=tweet.replyCount,
