@@ -16,7 +16,7 @@ import pyLDAvis
 from wordcloud import WordCloud
 
 from src.data_analysis.topic_modeling import LatentDirichletAllocation
-from src.neo4j_util.driver import get_tweets, get_conversations
+from neo4j_util.sentiment_api import get_tweets, get_conversations
 
 from utils import (
     data_process,

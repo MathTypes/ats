@@ -1,21 +1,23 @@
-import matplotlib.pyplot as plt
-from eda_utils import generate_color
+import datetime
 import logging
-import neotime
-import streamlit as st
+import os
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.express as px
-import datetime
-import numpy as np
 from PIL import Image
+import streamlit as st
 from wordcloud import WordCloud
-import sys
-import nltk
-nltk.download('stopwords')
 
-from nltk.corpus import stopwords
-from src.neo4j_util.driver import get_tweets, get_conversations
+from eda_utils import generate_color
+from neo4j_util.sentiment_api import get_tweets, get_conversations
 
 logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
     datefmt='%Y-%m-%d:%H:%M:%S',
@@ -127,11 +129,16 @@ def draw_wordcloud(asset="all assets", start_date=None, end_date=None):
         height=850
     ).generate(text)
 
-    # fig1 = plt.figure(figsize = (1200,850))
+    fig1 = plt.figure(figsize = (3, 3))
+    plt.subplot(1, 1, 1)
     plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis("off")
-    plt.show()
-    st.pyplot()
+    plt.axis('off')
+    plt.subplots_adjust(wspace=.025, hspace=.025)
+
+    # save image, display it, and delete after usage.
+    plt.savefig('x',dpi=400)
+    st.image('x.png')
+    os.remove('x.png')
 
 
 def mis_value_graph(data):
