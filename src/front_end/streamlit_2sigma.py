@@ -470,18 +470,21 @@ elif analysis.lower() == "sentiment analysis":
     with row2_1:
         st.plotly_chart(fig)
 
-    def calculate_mean_sentiment(asset, period="M"):
+    def calculate_mean_sentiment(asset, period="5min"):
         X = []
         Y = []
         asset_news_df = news_df[news_df["assetName"] == asset]
 
         for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
-            d = name.strftime("%b '%y")
+            d = name.strftime("%m/%d/%Y, %H:%M")
             counts = group["sentimentClass"].value_counts()
-            logging.info(f'counts:{counts}')
-            logging.info(f'counts_index:{counts.index}')
+            #logging.info(f'counts:{counts}')
+            #logging.info(f'counts_index:{counts.index}')
             counts.index = counts.index.astype("int8")
-            mean_sentiment_score = np.average(counts.index, weights=counts)
+            if counts.size > 0:
+                mean_sentiment_score = np.average(counts.index, weights=counts)
+            else:
+                mean_sentiment_score = 0
             X.append(d)
             Y.append(mean_sentiment_score)
         return X, Y
