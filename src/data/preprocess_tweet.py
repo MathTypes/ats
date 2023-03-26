@@ -7,6 +7,7 @@ import pandas as pd
 from keyword_util import add_subject_keyword
 from neo4j_util.sentiment_api import get_unprocessed_tweets, get_tweet_replies_v2
 from neo4j_util.neo4j_tweet_util import Neo4j
+from util import logging_utils
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -26,22 +27,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
-    logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-        datefmt='%Y-%m-%d:%H:%M:%S',
-        level=logging.DEBUG)
 
-    logger = logging.getLogger(__name__)
-
-    root = logging.getLogger()
-    root.setLevel(logging.INFO)
-
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.INFO)
-    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    formatter = logging.Formatter(FORMAT)
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
-
+    logging_utils.init_logging()
     while True:
         data = get_unprocessed_tweets()
         logging.error(f'unprocess_data:{data}')
