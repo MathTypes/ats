@@ -35,7 +35,7 @@ def get_tweets():
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True).dt.date
+            df["time"], infer_datetime_format=True)
         #df = keyword_util.add_subject_keyword(df)
         return df
 
@@ -56,7 +56,7 @@ def get_unprocessed_tweets():
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True).dt.date
+            df["time"], infer_datetime_format=True)
         #df = keyword_util.add_subject_keyword(df)
         return df
 
@@ -117,7 +117,7 @@ def get_tweet_replies_v2():
         logging.info(f'df:{df}')
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True).dt.date
+            df["time"], infer_datetime_format=True)
         df = df.set_index("time")
         df = df.sort_index()
         #df = keyword_util.add_subject_keyword(df)
