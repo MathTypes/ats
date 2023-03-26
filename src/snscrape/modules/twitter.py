@@ -1936,7 +1936,6 @@ class TwitterTweetScraper(_TwitterAPIScraper):
 		url = 'https://twitter.com/i/api/graphql/NNiD2K-nEYUfXlMwGCocMQ/TweetDetail'
 		if self._mode is TwitterTweetScraperMode.SINGLE:			
 			obj = self._get_api_data(url, _TwitterAPIType.GRAPHQL, params = params)
-			logging.error(f'get api obj:{obj}')
 			if not obj['data']:
 				return
 			for instruction in obj['data']['threaded_conversation_with_injections_v2']['instructions']:
@@ -1948,7 +1947,6 @@ class TwitterTweetScraper(_TwitterAPIScraper):
 						break
 		elif self._mode is TwitterTweetScraperMode.SCROLL:
 			for obj in self._iter_api_data(url, _TwitterAPIType.GRAPHQL, params, paginationParams, direction = _ScrollDirection.BOTH):
-				logging.error(f'get api obj:{obj}')
 				if not obj['data']:
 					continue
 				yield from self._graphql_timeline_instructions_to_tweets(obj['data']['threaded_conversation_with_injections_v2']['instructions'], includeConversationThreads = True)
@@ -1963,7 +1961,6 @@ class TwitterTweetScraper(_TwitterAPIScraper):
 				thisParams = copy.deepcopy(thisPagParams)
 				del thisPagParams['variables']['cursor'], thisPagParams['variables']['referrer']
 				for obj in self._iter_api_data(url, _TwitterAPIType.GRAPHQL, thisParams, thisPagParams, direction = _ScrollDirection.BOTH):
-					logging.error(f'get api obj:{obj}')
 					if not obj['data']:
 						continue
 					for tweet in self._graphql_timeline_instructions_to_tweets(obj['data']['threaded_conversation_with_injections_v2']['instructions'], includeConversationThreads = True):

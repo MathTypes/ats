@@ -20,12 +20,13 @@ MARKET_DATA = "market_pre2011.gzip"
 NEWS_DATA = "news_pre2011.gzip"
 
 
-st.set_page_config(layout="wide")
+#st.set_page_config(layout="wide")
 
 
 @st.cache(show_spinner=False)
 def load_data(datapath):
-    market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
+    #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
+    market_df = pd.read_csv(f'../data/FUT/ESH3/20230101.csv')
     news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
 
     market_df['price_diff'] = market_df['close'] - market_df['open']
