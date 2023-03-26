@@ -36,9 +36,29 @@ def get_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
-        df = keyword_util.add_subject_keyword(df)
+        #df = keyword_util.add_subject_keyword(df)
         return df
 
+
+def get_unprocessed_tweets():
+    query = """MATCH (t:Tweet)
+            WHERE t.last_process_time is null
+            RETURN t.id as id, t.user as user,
+                datetime({epochMillis: t.created_at}) as time,
+                t.perma_link as perma_link, t.like_count as like_count,
+                t.source_url as source_url, t.raw_content as text,
+                t.last_update as last_update
+            LIMIT 1000
+            """
+    params = {}
+    with driver.session() as session:
+        result = session.run(query, params)
+        df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["time"] = pd.to_datetime(
+            df["time"], infer_datetime_format=True).dt.date
+        #df = keyword_util.add_subject_keyword(df)
+        return df
 
 def get_conversation_ids():
     text = read_query(
