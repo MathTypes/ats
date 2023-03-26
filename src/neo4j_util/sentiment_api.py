@@ -120,7 +120,7 @@ def get_tweet_replies_v2():
             df["time"], infer_datetime_format=True).dt.date
         df = df.set_index("time")
         df = df.sort_index()
-        df = keyword_util.add_subject_keyword(df)
+        #df = keyword_util.add_subject_keyword(df)
         logging.info(f'df:{df}')
         return df
     # result = read_query(query)
