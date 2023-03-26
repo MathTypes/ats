@@ -2,6 +2,7 @@ import logging
 from neo4j import GraphDatabase
 import pandas as pd
 
+from data import keyword_util
 host = 'bolt://host.docker.internal:7687'
 user = 'neo4j'
 password = 'password'
@@ -33,7 +34,8 @@ def get_tweets():
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
-        df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True).dt.date
+        df["time"] = pd.to_datetime(
+            df["time"], infer_datetime_format=True).dt.date
         return df
 
 
@@ -42,10 +44,12 @@ def get_conversation_ids():
         "MATCH (n:Conversation)-[CONTAINS] - (t:Tweet) return n.id, min(t.pubdate) as start_date, max(t.pubdate) as end_date order by start_date")
     return text
 
+
 def get_tweet_ids_with_reply():
     text = read_query(
         "MATCH (n:Tweet) with n.in_reply_to_tweet_id as tweet_id, count(*) as replies where replies > 1 return tweet_id")
     return text
+
 
 def get_tweets_by_conv_id(conv_id):
     text = read_query(
@@ -54,11 +58,13 @@ def get_tweets_by_conv_id(conv_id):
     logging.error(f'text:{text}')
     return text
 
+
 def get_tweets_replied_to(tweet_id):
     text = read_query(
         "MATCH(t:Tweet {in_reply_to_tweet_id:$tweet_id}) return t.raw_content as text order by t.created_at DESC",
         params={"tweet_id": tweet_id})
     return text
+
 
 def get_conversations():
     conversation_ids = get_conversation_ids()
@@ -69,6 +75,7 @@ def get_conversations():
             {'conv_id': conv_id, 'text': "\n".join(tweets)}, ignore_index=True)
     return df
 
+
 def get_tweet_replies():
     tweet_ids = get_tweet_ids_with_reply()
     df = pd.DataFrame(columns=['conv_id', 'text'])
@@ -78,19 +85,23 @@ def get_tweet_replies():
             {'conv_id': conv_id, 'text': "\n".join(tweets)}, ignore_index=True)
     return df
 
+
 def get_tweet_replies_v2():
     query = "MATCH (t:Tweet) with t.in_reply_to_tweet_id as conv_id, min(datetime({epochMillis: t.created_at})) as time, count(*) as replies, collect(t.raw_content) as text WHERE replies > 1 RETURN conv_id, time, replies, text"
     params = {}
     with driver.session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        df["text"] = df["text"].apply(lambda x: "\n".join(x))
         logging.info(f'df:{df}')
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
         df = df.set_index("time")
         df = df.sort_index()
+        df = keyword_util.add_subject_keyword(df)
+        logging.info(f'df:{df}')
         return df
-    #result = read_query(query)
-    #result["text"] = result["text"].apply(lambda x: "\n".join(x))
-    #return result
+    # result = read_query(query)
+    # result["text"] = result["text"].apply(lambda x: "\n".join(x))
+    # return result
