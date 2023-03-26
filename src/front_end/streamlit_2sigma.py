@@ -57,9 +57,6 @@ def load_data(datapath):
     market_df = pd.concat([es_market_df, nq_market_df])
     #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
     news_df = get_tweets()
-    news_df = news_df.rename(columns={"created_at": "time", "raw_content":"headline"})
-    news_df["time"] = news_df["time"].apply(lambda x: x.to_native())
-    news_df["time"] = pd.to_datetime(news_df["time"], infer_datetime_format=True)
     news_df['assetName'] = "ES"
     news_df['sentimentClass'] = 1
     #logger.info(f'news_df:{news_df}')
@@ -436,12 +433,12 @@ elif analysis.lower() == "sentiment analysis":
             counts = counts.values/sum(counts.values)
             assets_sentiment_dict[asset] = list(counts)
 
-    logger.info(f'assets_sentiment_dict:{assets_sentiment_dict}')
+    #logger.info(f'assets_sentiment_dict:{assets_sentiment_dict}')
     sentiment_df = pd.DataFrame.from_dict(
         assets_sentiment_dict, orient='index', columns=sent_labels)
     sentiment_df = pd.melt(sentiment_df.rename_axis('asset').reset_index(), id_vars=[
                            "asset"], value_vars=sent_labels, var_name='sentiment', value_name='count')
-    logger.info(f'sentiment_df:{sentiment_df}')
+    #logger.info(f'sentiment_df:{sentiment_df}')
     fig = px.bar(
         sentiment_df,
         x="sentiment",

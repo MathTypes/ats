@@ -32,6 +32,8 @@ def get_tweets():
     with driver.session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True).dt.date
         return df
 
 
@@ -83,6 +85,11 @@ def get_tweet_replies_v2():
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         logging.info(f'df:{df}')
+        df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["time"] = pd.to_datetime(
+            df["time"], infer_datetime_format=True).dt.date
+        df = df.set_index("time")
+        df = df.sort_index()
         return df
     #result = read_query(query)
     #result["text"] = result["text"].apply(lambda x: "\n".join(x))
