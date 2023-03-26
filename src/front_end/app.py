@@ -15,7 +15,7 @@ from streamlit import components
 from wordcloud import WordCloud
 
 from src.data_analysis.topic_modeling import LatentDirichletAllocation
-from neo4j_util.sentiment_api import get_tweets, get_tweet_replies
+from neo4j_util.sentiment_api import get_tweets, get_tweet_replies_v2
 
 from utils import (
     data_process,
@@ -52,7 +52,7 @@ if viz:
 #data = pd.read_csv("dataset/process_data.csv")
 data = get_tweets()
 logging.info(f'data:{data}')
-conv_data = get_tweet_replies()
+conv_data = get_tweet_replies_v2()
 df = data_process(data)
 
 col1, col2 = st.columns(2)
@@ -62,7 +62,7 @@ with col1:
 with col2:
     st.header("Tweet")
 st.dataframe(
-        data[["id", "user", "created_at", "raw_content", "source_url", "like_count", "perma_link", "last_update"]]
+        data[["id", "user", "time", "raw_content", "source_url", "like_count", "perma_link", "last_update"]]
     )
 col3, col4 = st.columns(2)
 with col4:
@@ -77,7 +77,7 @@ st.dataframe(
 if viz:
     start_day = pd.to_datetime(s_d)
     end_day = pd.to_datetime(e_d)
-    sub_data = df[df["sub_date"].between(start_day, end_day)]
+    sub_data = df[df["time"].between(start_day, end_day)]
     count = sub_data.shape[0]
     st.markdown(
         '<p style="text-align: center; color:#A52A2A; font-size:50px; font-family:Arial Black">Number of '

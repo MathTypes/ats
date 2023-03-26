@@ -24,7 +24,7 @@ def get_article_text(title):
 def get_tweets():
     query = """MATCH (t:Tweet)
             RETURN t.id as id, t.user as user,
-                datetime({epochMillis: t.created_at}) as created_at,
+                datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
                 t.source_url as source_url, t.raw_content as raw_content,
                 t.last_update as last_update"""
@@ -75,3 +75,15 @@ def get_tweet_replies():
         df = df.append(
             {'conv_id': conv_id, 'text': "\n".join(tweets)}, ignore_index=True)
     return df
+
+def get_tweet_replies_v2():
+    query = "MATCH (t:Tweet) with t.in_reply_to_tweet_id as conv_id, min(datetime({epochMillis: t.created_at})) as time, count(*) as replies, collect(t.raw_content) as text WHERE replies > 1 RETURN conv_id, time, replies, text"
+    params = {}
+    with driver.session() as session:
+        result = session.run(query, params)
+        df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        logging.info(f'df:{df}')
+        return df
+    #result = read_query(query)
+    #result["text"] = result["text"].apply(lambda x: "\n".join(x))
+    #return result
