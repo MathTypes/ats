@@ -6,17 +6,16 @@ import logging
 import spacy
 from textblob import TextBlob
 
-import streamlit as st
-from streamlit import components
-
-from PIL import Image
 import matplotlib.pyplot as plt
+from PIL import Image
 import plotly.express as px
 import pyLDAvis
+import streamlit as st
+from streamlit import components
 from wordcloud import WordCloud
 
 from src.data_analysis.topic_modeling import LatentDirichletAllocation
-from neo4j_util.sentiment_api import get_tweets, get_conversations
+from neo4j_util.sentiment_api import get_tweets, get_tweet_replies
 
 from utils import (
     data_process,
@@ -44,8 +43,8 @@ st.sidebar.markdown("Navigation:")
 viz = st.sidebar.checkbox("Visualisation")
 if viz:
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
-    s_d = st.sidebar.date_input("Start:", datetime.date(2019, 8, 9))
-    e_d = st.sidebar.date_input("End:", datetime.date(2021, 12, 22))
+    s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
+    e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
 
 # =================================================================================== #
 #                                Display Dataset                                      #
@@ -53,7 +52,7 @@ if viz:
 #data = pd.read_csv("dataset/process_data.csv")
 data = get_tweets()
 logging.info(f'data:{data}')
-conv_data = get_conversations()
+conv_data = get_tweet_replies()
 df = data_process(data)
 
 col1, col2 = st.columns(2)
