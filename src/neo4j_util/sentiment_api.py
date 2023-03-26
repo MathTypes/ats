@@ -27,7 +27,7 @@ def get_tweets():
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
-                t.source_url as source_url, t.raw_content as raw_content,
+                t.source_url as source_url, t.raw_content as text,
                 t.last_update as last_update"""
     params = {}
     with driver.session() as session:
@@ -36,6 +36,7 @@ def get_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
+        df = keyword_util.add_subject_keyword(df)
         return df
 
 
@@ -87,7 +88,7 @@ def get_tweet_replies():
 
 
 def get_tweet_replies_v2():
-    query = "MATCH (t:Tweet) with t.in_reply_to_tweet_id as conv_id, min(datetime({epochMillis: t.created_at})) as time, count(*) as replies, collect(t.raw_content) as text WHERE replies > 1 RETURN conv_id, time, replies, text"
+    query = "MATCH (t:Tweet) with t.in_reply_to_tweet_id as tweet_id, min(datetime({epochMillis: t.created_at})) as time, count(*) as replies, collect(t.raw_content) as text WHERE replies > 1 RETURN tweet_id, time, replies, text"
     params = {}
     with driver.session() as session:
         result = session.run(query, params)
