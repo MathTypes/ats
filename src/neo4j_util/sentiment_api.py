@@ -1,13 +1,9 @@
 import logging
 from neo4j import GraphDatabase
 import pandas as pd
-
-<<<<<<< HEAD
-host = 'bolt://10.0.0.18:7687'
-=======
 from data import keyword_util
-host = 'bolt://host.docker.internal:7687'
->>>>>>> 4b4ec8888de694af9c37de74c4796ec88b8d5ae9
+
+host = 'bolt://10.0.0.18:7687'
 user = 'neo4j'
 password = 'password'
 driver = GraphDatabase.driver(host, auth=(user, password))

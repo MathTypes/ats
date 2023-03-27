@@ -411,7 +411,6 @@ if xe_token_analyze:
     def get_coin_tickers_by_id_list(coins_id: list):
         return CoinGeckoUtils().get_coin_tickers_by_id_list(coins_id)
 
-    st.set_page_config(layout='wide')
     st.title("Cross Exchange Token Analyzer")
     st.write("---")
     with st.spinner(text='In progress'):
@@ -476,13 +475,13 @@ with col1:
 with col2:
     st.header("Tweet")
 st.dataframe(
-        data[["id", "user", "time", "raw_content", "source_url", "like_count", "perma_link", "last_update"]]
+        data[["id", "user", "time", "text", "source_url", "like_count", "perma_link", "last_update"]]
     )
 col3, col4 = st.columns(2)
 with col4:
     st.header("Conversation")
 st.dataframe(
-        conv_data[["conv_id", "text"]]
+        conv_data[["tweet_id", "text"]]
     )
 
 # =================================================================================== #
