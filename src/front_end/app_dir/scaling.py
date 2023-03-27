@@ -1,4 +1,4 @@
-from app.indicator_analysis import Indications
+from app_dir.indicator_analysis import Indications
 from sklearn.preprocessing import scale, StandardScaler
 from collections import deque
 import numpy as np

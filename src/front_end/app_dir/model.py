@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from app.scaling import Preprocessing
+from app_dir.scaling import Preprocessing
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.metrics import r2_score
 import datetime as dt

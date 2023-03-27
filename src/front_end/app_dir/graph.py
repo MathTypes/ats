@@ -1,4 +1,4 @@
-from app.model import Prediction
+from app_dir.model import Prediction
 from _plotly_future_ import v4_subplots
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots

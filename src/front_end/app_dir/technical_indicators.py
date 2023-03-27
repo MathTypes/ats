@@ -1,4 +1,4 @@
-from app.data_sourcing import Data_Sourcing
+from app_dir.data_sourcing import Data_Sourcing
 
 class Technical_Calculations(Data_Sourcing):
     

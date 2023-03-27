@@ -1,4 +1,4 @@
-from app.update_market_data import update_market_data
+from app_dir.update_market_data import update_market_data
 import json
 import requests
 import numpy as np

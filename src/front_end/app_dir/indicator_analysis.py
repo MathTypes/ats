@@ -1,4 +1,4 @@
-from app.technical_indicators import Technical_Calculations
+from app_dir.technical_indicators import Technical_Calculations
 
 class Indications(Technical_Calculations):
 
