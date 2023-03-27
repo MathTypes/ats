@@ -1,8 +1,8 @@
 import streamlit as st
 
 import CONFIG
-from utils.coingecko_utils import CoinGeckoUtils
-from utils.miner_utils import MinerUtils
+from utils_dir.coingecko_utils import CoinGeckoUtils
+from utils_dir.miner_utils import MinerUtils
 
 
 @st.cache_data()
