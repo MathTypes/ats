@@ -1,14 +1,43 @@
 
+import argparse
+import logging
 import os
+
+from ratelimiter import RateLimiter
 from promptify import OpenAI
 from promptify import Prompter
 
-import argparse
-import logging
-from neo4j_util.sentiment_api import get_unprocessed_tweets, get_tweet_replies_v2
+from neo4j_util.sentiment_api import get_gpt_unprocessed_replied_tweets
 from neo4j_util.neo4j_tweet_util import Neo4j
 from util import logging_utils
+import openai
 
+@RateLimiter(max_calls=25, period=60)
+def query(prompt, data, to_print=True):
+    response = openai.Completion.create(
+        model="text-davinci-003",
+        prompt="{}:\n\n{}".format(prompt, data),
+        temperature=0.7,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+
+    payload = response['choices'][0]['text'].strip()
+    if to_print:
+        print(payload)
+    return payload
+
+def get_named_entity(x: str):
+    res = query(
+        "Extract top three financial named entities from following text in csv format:", x)
+    return res
+
+def get_equity_sentiment(x: str):
+    res = query(
+        "Extract top three financial named entities and sentiment and score from 1 to 5 from following text in csv format:", x)
+    return res
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -27,18 +56,19 @@ if __name__ == "__main__":
 
     logging_utils.init_logging()
     while True:
-        data = get_unprocessed_tweets()
+        data = get_gpt_unprocessed_replied_tweets()
         logging.error(f'unprocess_data:{data}')
         for i, row in data.iterrows():
-            result = nlp_prompter.fit('ner.jinja',
-                                    domain='financial',
-                                    text_input=row["text"],
-                                    labels=None)
+            logging.info(f'link:{row["perma_link"]}')
+            logging.info(f'text:{row["text"]}')
+            result = get_named_entity(row["text"])
             # Output
-            print(result)
-            break
-            logging.error(f'process_data:{data}')
-            neo4j_util = Neo4j()
-            neo4j_util.update_processed_text(data)        
+            logging.info(f'result:{result}')
+            equity_sentiment_result = get_equity_sentiment(row["text"])
+            # Output
+            logging.info(f'equity_sentiment_result:{equity_sentiment_result}')
+            #logging.error(f'process_data:{data}')
+            #neo4j_util = Neo4j()
+            #neo4j_util.update_gpt_processed_text(data)        
         break
         
