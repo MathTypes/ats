@@ -20,6 +20,37 @@ class Neo4j:
     def delete_all(self):
         self.graph.delete_all()
 
+    def update_processed_text(self, df):
+        tx = self.graph.begin()
+        for index, row in df.iterrows():
+            tweet_id = row["id"]
+            # retrieve company node from the remote self.graph
+            self.graph.evaluate(
+                """MATCH(t:Tweet {id:$tweet_id}) SET t.processed_text=$processed_text,
+                    t.lemma_text=$lemma_text,
+                    t.keyword_text=$keyword_text,
+                    t.text_ner_names=$text_ner_names,
+                    t.text_ner_count=$text_ner_count,
+                    t.lemma_subject=$lemma_subject,
+                    t.keyword_subject=$keyword_subject,
+                    t.subject_ner_names=$subject_ner_names,
+                    t.last_process_time=$last_process_time,
+                    t.subject_ner_count=$subject_ner_count
+                """, {
+                    "tweet_id": row["id"],
+                    "processed_text": row["text"],
+                    "lemma_text": row["lemma_text"],
+                    "keyword_text": row["keyword_text"],
+                    "text_ner_names": row["text_ner_names"],
+                    "text_ner_count": row["text_ner_count"],
+                    "lemma_subject": row["lemma_subject"],
+                    "keyword_subject": row["keyword_subject"],
+                    "subject_ner_names": row["subject_ner_names"],
+                    "subject_ner_count": row["subject_ner_count"],
+                    "last_process_time": int(datetime.now().timestamp()*1000)
+                })
+        tx.commit()
+
     @RateLimiter(max_calls=5, period=1)
     def load_data(self, tweet):
         """

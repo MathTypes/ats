@@ -19,8 +19,8 @@ sp = spacy.load('en_core_web_sm')
 p = inflect.engine()
 
 
-def data_preprocess(data_path):
-    df = pd.read_csv(data_path, index_col=0)
+def add_subject_keyword(df):
+    #df = pd.read_csv(data_path, index_col=0)
     df['subject'] = np.nan
     for i in range(df.shape[0]):
         parag = list(df['text'][i].split(", "))

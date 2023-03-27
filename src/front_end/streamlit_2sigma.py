@@ -19,22 +19,7 @@ from wordcloud import WordCloud
 from eda_utils import generate_color
 from neo4j_util.sentiment_api import get_tweets, get_conversations
 from market_data import ts_read_api
-
-logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%Y-%m-%d:%H:%M:%S',
-    level=logging.DEBUG)
-
-logger = logging.getLogger(__name__)
-
-root = logging.getLogger()
-root.setLevel(logging.INFO)
-
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.INFO)
-FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-formatter = logging.Formatter(FORMAT)
-ch.setFormatter(formatter)
-root.addHandler(ch)
+from util import logging_utils
 
 
 stop = set(stopwords.words('english'))
@@ -43,6 +28,8 @@ DATA_PATH = "./datasets"
 MARKET_DATA = "market_pre2011.gzip"
 NEWS_DATA = "news_pre2011.gzip"
 
+logging_utils.init_logging()
+logger = logging.getLogger(__name__)
 
 #st.set_page_config(layout="wide")
 
@@ -95,17 +82,17 @@ def draw_wordcloud(asset="all assets", start_date=None, end_date=None):
     start_date = datetime.datetime.combine(start_date, datetime.datetime.min.time())
     end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
     #dr = pd.date_range(start_date, end=end_date, tz='Asia/Tokyo')
-    #logger.info(f'news_df.index:{news_df.index}')
+    logger.info(f'news_df.index:{news_df.index}')
     #logger.info(f'market_df.index:{market_df.index}')
     #logger.info(f'start_date:{type(start_date)}')
     #logger.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-    #logger.info(f'news_df_draw_wordcloud:{news_df}')
+    logger.info(f'news_df_draw_wordcloud:{news_df}')
     if asset.lower() == "all assets":
-        headlines100k = news_df[start_date:end_date]['headline'].str.lower(
+        headlines100k = news_df[start_date:end_date]['text'].str.lower(
         ).values[-100000:]
     else:
         headlines100k = news_df.loc[news_df["assetName"] ==
-                                    asset].loc[start_date:end_date, "headline"].str.lower().values[-100000:]
+                                    asset].loc[start_date:end_date, "text"].str.lower().values[-100000:]
     #logger.info(f'asset:{asset}')
     #logger.info(f'news:{headlines100k}')
     text = ' '.join(
