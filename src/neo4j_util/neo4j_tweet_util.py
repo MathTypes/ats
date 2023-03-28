@@ -51,6 +51,34 @@ class Neo4j:
                 })
         tx.commit()
 
+    def update_gpt_entities(self, df):
+        tx = self.graph.begin()
+        for index, row in df.iterrows():
+            logging.info(f'row:{row}')
+            tweet_id = row["tweet_id"]
+            entity_name = row["entity_name"]
+            entity_type = row["entity_class"]
+            entity_node = self.graph.evaluate(
+                "MATCH(n:Entity {name:$entity_name, type:$entity_type}) RETURN n",
+                entity_name=entity_name, entity_type=entity_type)
+            if entity_node is None:
+                entity_node = Node("Entity", name=entity_name,
+                                   type=entity_type,
+                                   last_update=int(datetime.now().timestamp() * 1000))
+                tx.create(entity_node)
+            # retrieve company node from the remote self.graph
+            self.graph.evaluate(
+                """MERGE (t:Tweet {id:$tweet_id})-[r:SENTIMENT {class:$rate, score:$score, last_process_time:$last_process_time}]->(e:Entity {name:$entity_name})
+                 RETURN r
+                """, {
+                    "tweet_id": row["tweet_id"],
+                    "rate": row["sentiment_class"],
+                    "score": row["sentiment_score"],
+                    "entity_name": entity_name,
+                    "last_process_time": int(datetime.now().timestamp()*1000)
+                })
+        tx.commit()
+
     @RateLimiter(max_calls=5, period=1)
     def load_data(self, tweet):
         """
