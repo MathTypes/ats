@@ -32,7 +32,7 @@ def get_tweets():
                 t.last_update as last_update, t.keyword_subject as keyword_subject,
                 t.lemma_text as lemma_text, t.keyword_text as keyword_text
             ORDER BY t.created_at DESC
-            LIMIT 1000
+            LIMIT 50000
             """
     params = {}
     with driver.session() as session:
