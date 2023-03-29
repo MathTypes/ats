@@ -68,7 +68,7 @@ from PIL import Image
 from wordcloud import WordCloud
 
 from eda_utils import generate_color
-from neo4j_util.sentiment_api import get_tweets, get_conversations
+from neo4j_util.sentiment_api import get_tweets, get_gpt_sentiments
 from market_data import ts_read_api
 from util import logging_utils
 
@@ -88,14 +88,12 @@ navigated = st.sidebar.radio("Navigation:", [
 
 #st.sidebar.markdown("Navigation:")
 
-#viz = st.sidebar.checkbox("Visualisation")
-if navigated.lower() == "Visualization":
-    type = st.sidebar.radio("information type:", ("General", "Detailed"))
-    s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
-    e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
 
-#trade_setup = st.sidebar.checkbox("Model Predictions")
-if navigated.lower() == "Model Predictions":
+#viz = st.sidebar.checkbox("Visualisation")
+logging.info(f'navigated:{navigated}')
+
+
+def render_model_prediction():
     gc.collect()
     data_update()
 
@@ -256,9 +254,13 @@ if navigated.lower() == "Model Predictions":
         app_data = Data_Sourcing()
         main(app_data = app_data)
 
+#trade_setup = st.sidebar.checkbox("Model Predictions")
+if navigated == "Model Predictions":
+    render_model_prediction()
+
 #data_py_open = st.sidebar.checkbox("Trading Data")
 
-if navigated.lower() == "Trading Data":
+def render_trading_data():
     @st.cache_data()
     def get_all_coins_df():
         return CoinGeckoUtils().get_all_coins_df()
@@ -319,9 +321,13 @@ if navigated.lower() == "Trading Data":
     with st.expander('Coins Tickers Data'):
         st.dataframe(coin_tickers_df)
 
+
+if navigated == "Trading Data":
+    render_trading_data()
+
 #hummingbot_DB_open = st.sidebar.checkbox("News Analysis")
 
-if navigated.lower() == "New Analysis": 
+def render_new_analysis():
     @st.cache_data()
     def get_table_data(database_name: str, table_name: str):
         conn = sqlite3.connect(database_name)
@@ -349,9 +355,13 @@ if navigated.lower() == "New Analysis":
             st.write(table)
             st.dataframe(get_table_data(uploaded_file.name, table))
 
+
+if navigated == "New Analysis": 
+    render_new_analysis()
+
 #crypto_analysis = st.sidebar.checkbox("TVL vs MCAP Analysis")
 
-if navigated.lower() == "TVL vs MCAP Analysis":
+def render_tvl_mcap():
     MIN_TVL = 1000000.
     MIN_MCAP = 1000000.
 
@@ -418,9 +428,12 @@ if navigated.lower() == "TVL vs MCAP Analysis":
 
     st.sidebar.write("# Data filters")
 
+if navigated == "TVL vs MCAP Analysis":
+    render_tvl_mcap()
+
 #xe_token_analyze = st.sidebar.checkbox("XE Token Analyzer")
 
-if navigated.lower() == "XE Token Analyzer":
+def render_token_analyzer():
     @st.cache_data()
     def get_all_coins_df():
         return CoinGeckoUtils().get_all_coins_df()
@@ -485,9 +498,12 @@ if navigated.lower() == "XE Token Analyzer":
     st.sidebar.write("Data filters")
     st.plotly_chart(fig, use_container_width=True)
 
+if navigated == "XE Token Analyzer":
+    render_token_analyzer()
+
 #opened_2sigma = st.sidebar.checkbox("2Sigma Charts")
 
-if navigated.lower() == "2Sigma Charts":
+def render_sentiment_analysis():
     stop = set(stopwords.words('english'))
 
     DATA_PATH = "./datasets"
@@ -508,7 +524,7 @@ if navigated.lower() == "2Sigma Charts":
         nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
         market_df = pd.concat([es_market_df, nq_market_df])
         #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
-        news_df = get_tweets()
+        news_df = get_gpt_sentiments()
         news_df['assetName'] = "ES"
         news_df['sentimentClass'] = 1
         #logger.info(f'news_df:{news_df}')
@@ -958,39 +974,44 @@ if navigated.lower() == "2Sigma Charts":
                 st.latex(
                     r'''score = \frac{-1 \cdot samples(negative) + 1 \cdot samples(positive)}{total\_samples}''')
 
-# =================================================================================== #
-#                                Display Dataset                                      #
-# =================================================================================== #
-#data = pd.read_csv("dataset/process_data.csv")
-data = get_tweets()
-logging.info(f'data:{data}')
-conv_data = get_tweet_replies_v2()
-df = data_process(data)
+if navigated == "2Sigma Charts":
+    render_sentiment_analysis()
 
-col1, col2 = st.columns(2)
-with col1:
-    bbc = Image.open("images/bbc.png")
-    st.image(bbc)
-with col2:
-    st.header("Tweet")
-st.dataframe(
-        #data[["id", "user", "time", "text", "source_url", "like_count", "perma_link", "last_update"]]
-        data
-    )
-col3, col4 = st.columns(2)
-with col4:
-    st.header("Conversation")
-st.dataframe(
-        #conv_data[["conv_id", "text"]]
-        conv_data
-    )
+def render_visualization():
+    type = st.sidebar.radio("information type:", ("General", "Detailed"))
+    s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
+    e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
+    # =================================================================================== #
+    #                                Display Dataset                                      #
+    # =================================================================================== #
+    #data = pd.read_csv("dataset/process_data.csv")
+    data = get_tweets()
+    #logging.info(f'data:{data}')
+    conv_data = get_gpt_sentiments()
+    df = data_process(data)
 
-# =================================================================================== #
-#                                Graphs visualisation                                 #
-# =================================================================================== #
-if viz:
+    col1, col2 = st.columns(2)
+    with col1:
+        bbc = Image.open("images/bbc.png")
+        st.image(bbc)
+    with col2:
+        st.header("Tweet")
+    st.dataframe(
+            #data[["id", "user", "time", "text", "source_url", "like_count", "perma_link", "last_update"]]
+            data
+        )
+    col3, col4 = st.columns(2)
+    with col4:
+        st.header("Conversation")
+    st.dataframe(
+            #conv_data[["conv_id", "text"]]
+            conv_data
+        )
+
     start_day = pd.to_datetime(s_d)
     end_day = pd.to_datetime(e_d)
+    logging.info(f'start_day:{start_day}')
+    logging.info(f'df:{df}')
     sub_data = df[df["time"].between(start_day, end_day)]
     count = sub_data.shape[0]
     st.markdown(
@@ -1213,3 +1234,8 @@ if viz:
             )
 
 
+# =================================================================================== #
+#                                Graphs visualisation                                 #
+# =================================================================================== #
+if navigated == "Visualization":
+    render_visualization()

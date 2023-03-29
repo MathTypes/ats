@@ -52,10 +52,11 @@ def parse_csv(data, names):
     lines = data.split(";")
     names_dict = { name:[] for name in names}
     for line in lines:
-        cols = line.split(",")
-        for i, col in enumerate(cols):
-            names_dict[names[i]].append(col) 
-    logging.info(f'dict:{dict}')
+        if line:
+            cols = line.split(",")
+            for i, col in enumerate(cols):
+                names_dict[names[i]].append(col) 
+    logging.info(f'dict:{names_dict}')
     df = pd.DataFrame(names_dict)
     return df
 
@@ -95,4 +96,4 @@ if __name__ == "__main__":
             #logging.info(f'equity_sentiment_result:{equity_sentiment_result}')
             #logging.error(f'process_data:{data}')
             neo4j_util.update_gpt_entities(sentiment_df)        
-        
+        break

@@ -29,7 +29,10 @@ def get_tweets():
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
                 t.source_url as source_url, t.raw_content as text,
-                t.last_update as last_update"""
+                t.last_update as last_update
+            ORDER BY t.created_at DESC
+            LIMIT 5000
+            """
     params = {}
     with driver.session() as session:
         result = session.run(query, params)
@@ -107,6 +110,43 @@ def get_tweets_replied_to(tweet_id):
         "MATCH(t:Tweet {in_reply_to_tweet_id:$tweet_id}) return t.raw_content as text order by t.created_at DESC",
         params={"tweet_id": tweet_id})
     return text
+
+
+def get_gpt_sentiments():
+    query = """
+    MATCH (t:Tweet)-[r:SENTIMENT]->(e:Entity)
+    MATCH (rt:RepliedTweet)
+    WHERE t.created_at is not null and rt.tweet_id=t.id
+    RETURN t.tweet_id as tweet_id, datetime({epochMillis: t.created_at}) as time,
+            (t.raw_content + rt.text) as text, t.perma_link as perma_link, t.keyword_subject as keyword_subject,
+            r.class as class, r.rank as score, e.name as entity_name, e.type as entity_type
+            """
+    params = {}
+    with driver.session() as session:
+        result = session.run(query, params)
+        df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["time"] = pd.to_datetime(
+            df["time"], infer_datetime_format=True)
+        #df = keyword_util.add_subject_keyword(df)
+        return df
+
+                                                                                                                           
+def get_gpt_processed_replied_tweets():
+    query = """MATCH (t:RepliedTweet), (r:Tweet)
+            WHERE t.last_gpt_process_time is not null and r.id=t.tweet_id
+            RETURN t.tweet_id as tweet_id, datetime({epochMillis: r.created_at}) as time,
+            t.replies as replies, (r.raw_content+t.text) as text, r.perma_link as perma_link;
+            """
+    params = {}
+    with driver.session() as session:
+        result = session.run(query, params)
+        df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["time"] = pd.to_datetime(
+            df["time"], infer_datetime_format=True)
+        #df = keyword_util.add_subject_keyword(df)
+        return df
 
 
 def get_gpt_unprocessed_replied_tweets():
