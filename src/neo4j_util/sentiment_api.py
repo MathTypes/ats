@@ -24,14 +24,15 @@ def get_article_text(title):
 
 def get_tweets():
     query = """MATCH (t:Tweet)
-            WHERE t.created_at is not null
+            WHERE t.created_at is not null and not ("" in t.lemma_text)
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
                 t.source_url as source_url, t.raw_content as text,
-                t.last_update as last_update
+                t.last_update as last_update, t.keyword_subject as keyword_subject,
+                t.lemma_text as lemma_text, t.keyword_text as keyword_text
             ORDER BY t.created_at DESC
-            LIMIT 5000
+            LIMIT 1000
             """
     params = {}
     with driver.session() as session:
@@ -41,7 +42,7 @@ def get_tweets():
         df = pd.DataFrame(result_dict, columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
+            df["time"], infer_datetime_format=True).dt.date
         #df = keyword_util.add_subject_keyword(df)
         return df
 
@@ -119,7 +120,8 @@ def get_gpt_sentiments():
     WHERE t.created_at is not null and rt.tweet_id=t.id
     RETURN t.tweet_id as tweet_id, datetime({epochMillis: t.created_at}) as time,
             (t.raw_content + rt.text) as text, t.perma_link as perma_link, t.keyword_subject as keyword_subject,
-            r.class as class, r.rank as score, e.name as entity_name, e.type as entity_type
+            r.class as class, r.rank as score, e.name as entity_name, e.type as entity_type,
+            t.lemma_text as lemma_text, t.keyword_text as keyword_text
             """
     params = {}
     with driver.session() as session:
@@ -127,7 +129,7 @@ def get_gpt_sentiments():
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
+            df["time"], infer_datetime_format=True).dt.date
         #df = keyword_util.add_subject_keyword(df)
         return df
 
@@ -162,7 +164,7 @@ def get_gpt_unprocessed_replied_tweets():
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
+            df["time"], infer_datetime_format=True).dt.date
         #df = keyword_util.add_subject_keyword(df)
         return df
 

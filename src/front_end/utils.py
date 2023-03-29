@@ -46,7 +46,7 @@ def data_process(df):
     df['author_name'] = np.nan
     for i in range(df.shape[0]):
         try:
-            df['sub_date'].iloc[i] = pd.to_datetime(df['date'].iloc[i][:10])
+            df['sub_date'].iloc[i] = pd.to_datetime(df['date'].iloc[i][:10]).dt.date
             df['year'].iloc[i] = int(df['date'].iloc[i][:4])
             df['day'].iloc[i] = int(df['date'].iloc[i][8:10])
             df['month'].iloc[i] = int(df['date'].iloc[i][5:7])

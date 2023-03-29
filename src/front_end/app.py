@@ -1010,8 +1010,6 @@ def render_visualization():
 
     start_day = pd.to_datetime(s_d)
     end_day = pd.to_datetime(e_d)
-    logging.info(f'start_day:{start_day}')
-    logging.info(f'df:{df}')
     sub_data = df[df["time"].between(start_day, end_day)]
     count = sub_data.shape[0]
     st.markdown(
@@ -1029,6 +1027,9 @@ def render_visualization():
         # =================================================================================== #
         col3, col4 = st.columns(2)
         with col3:
+            logging.info(f'sub_data:{sub_data["keyword_subject"]}')
+            sub_data["keyword_subject"] = sub_data["keyword_subject"].apply(lambda x: str(x).replace('[','').replace(']',''))
+            sub_data["keyword_text"] = sub_data["keyword_text"].apply(lambda x: str(x).replace('[','').replace(']',''))
             st.subheader("**Subject wordcloud:**")
             Cloud_text = " ".join(sub_data["keyword_subject"])
             wordcloud = WordCloud(
@@ -1067,6 +1068,9 @@ def render_visualization():
             st.subheader("**Ngrams exploration:**")
             col3, col4 = st.columns(2)
             with col3:
+                # TODO: fix missing lemma_text
+                sub_data["lemma_text"] = sub_data["keyword_text"].apply(lambda x: str(x).replace('[','').replace(']',''))
+                logging.info(f"sub_data_lemma_text:{sub_data['lemma_text']}")
                 common_words = get_top_n_bigram(
                     sub_data["lemma_text"], ngram_range=2, n=20
                 )
@@ -1085,7 +1089,7 @@ def render_visualization():
                 st.plotly_chart(fig)
                 with col4:
                     common_words = get_top_n_bigram(
-                        sub_data["lemma_text"], ngram_range=3, n=20
+                        sub_data["lemma_text"].apply(lambda x: str(x).replace('[','').replace(']','')), ngram_range=3, n=20
                     )
                     df_20_bi = pd.DataFrame(
                         common_words, columns=["Bigram", "count"]
@@ -1113,7 +1117,8 @@ def render_visualization():
                              color_discrete_sequence=px.colors.qualitative.Pastel)
                 st.plotly_chart(fig)
             with col2:
-                df = df[df["sub_date"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
+                #df = df[df["sub_date"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
+                df = df[df["time"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
                 sub_df = subject_analysis(df)
                 st.markdown("**Text analysis:**")
                 fig = px.bar(sub_df, x='sub_date', y='polarity', title='News subject polarity over time')
