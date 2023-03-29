@@ -26,6 +26,7 @@ from utils import (
     display_text, subject_analysis, result_to_df, analyze_token_sentiment,
 )
 
+import nlp_util
 from app_dir.data_sourcing import Data_Sourcing, data_update
 from app_dir.indicator_analysis import Indications
 from app_dir.graph import Visualization
@@ -543,46 +544,6 @@ def render_sentiment_analysis():
         return assets_dict.get(asset)
 
 
-    def draw_wordcloud(asset="all assets", start_date=None, end_date=None):
-        #start_date = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-        #end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
-        #dr = pd.date_range(start_date, end=end_date, tz='Asia/Tokyo')
-        #logger.info(f'news_df.index:{news_df.index}')
-        #logger.info(f'market_df.index:{market_df.index}')
-        #logger.info(f'start_date:{type(start_date)}')
-        logger.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-        #logger.info(f'news_df_draw_wordcloud:{news_df["text"]}')
-        #logging.info(f'asset:{asset}')
-        if asset.lower() == "all assets":
-            headlines100k = news_df[news_df["time"].between(start_date, end_date)]['text']
-            logging.info(f'matched news:{headlines100k}')
-        else:
-            headlines100k = news_df.loc[news_df["assetName"] ==
-                                        asset].loc[start_date:end_date, "text"].str.lower().values[-100000:]
-        #logger.info(f'asset:{asset}')
-        #logger.info(f'news:{headlines100k}')
-        text = ' '.join(
-            str(headline) for headline in headlines100k)
-        #logger.info(f'draw_wordcloud:{text}')
-
-        wordcloud = WordCloud(
-            max_font_size=None,
-            stopwords=stop,
-            background_color='white',
-            width=1200,
-            height=850
-        ).generate(text)
-
-        fig1 = plt.figure(figsize = (3, 3))
-        plt.subplot(1, 1, 1)
-        plt.imshow(wordcloud, interpolation='bilinear')
-        plt.axis('off')
-        plt.subplots_adjust(wspace=.025, hspace=.025)
-
-        # save image, display it, and delete after usage.
-        plt.savefig('x',dpi=400)
-        st.image('x.png')
-        os.remove('x.png')
 
 
     def mis_value_graph(data):
@@ -712,7 +673,7 @@ def render_sentiment_analysis():
             time_period = st.date_input("From/To", [datetime.date(
                 2022, 12, 1), datetime.date(2023, 12, 31)], min_value=datetime.date(2022, 12, 1), max_value=datetime.date(2023, 12, 31))
 
-            draw_wordcloud(selected_asset, *time_period)
+            nlp_util.draw_wordcloud(news_df, stop, selected_asset, *time_period)
 
     elif analysis.lower() == "aggregation charts":
 
