@@ -934,9 +934,6 @@ def render_visualization():
     df = data_process(data)
 
     col1, col2 = st.columns(2)
-    #with col1:
-        #bbc = Image.open("images/bbc.png")
-        #st.image(bbc)
     with col2:
         st.header("Tweet")
     st.dataframe(
@@ -955,12 +952,6 @@ def render_visualization():
     end_day = pd.to_datetime(e_d)
     sub_data = df[df["time"].between(start_day, end_day)]
     count = sub_data.shape[0]
-    st.markdown(
-        '<p style="text-align: center; color:#A52A2A; font-size:50px; font-family:Arial Black">Number of '
-        "BBC articles "
-        "from {} to {}: {}</p> ".format(s_d, e_d, count),
-        unsafe_allow_html=True,
-    )
     # =================================================================================== #
     #                                General                                              #
     # =================================================================================== #
