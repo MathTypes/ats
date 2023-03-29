@@ -4,7 +4,7 @@ import argparse
 import pandas as pd
 
 from src.data.data_collect import data_collection
-from src.data.data_process import data_preprocess
+from src.data.keyword_util import data_preprocess
 
 
 def get_args():

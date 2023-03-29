@@ -27,7 +27,7 @@ NEWS_DATA = "news_pre2011.gzip"
 def load_data(datapath):
     #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
     market_df = pd.read_csv(f'../data/FUT/ESH3/20230101.csv')
-    news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
+    #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
 
     market_df['price_diff'] = market_df['close'] - market_df['open']
     market_df.index = pd.to_datetime(market_df.index)
