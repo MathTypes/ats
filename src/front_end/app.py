@@ -81,7 +81,7 @@ st.title("Streamlit News Analysis")
 # =================================================================================== #
 ds = Image.open("images/ats.jpg")
 st.sidebar.image(ds)
-st.sidebar.title("Ats: Stock Market Analysis & Predictions")
+#st.sidebar.title("Ats: Stock Market Analysis & Predictions")
 
 navigated = st.sidebar.radio("Navigation:", [
         "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer", "2Sigma Charts"], index=0)
@@ -98,7 +98,6 @@ def render_model_prediction():
     data_update()
 
     def main(app_data):
-        st.set_page_config(layout = "wide")
         indication = 'Predicted'
 
         st.sidebar.subheader('Asset:')
@@ -246,11 +245,11 @@ def render_model_prediction():
 
     if __name__ == '__main__':
         import warnings
-        import gc
+        #import gc
         warnings.filterwarnings("ignore") 
         gc.collect()
-        action_model = load_model("external/automating-technical-analysis/models/action_prediction_model.h5")
-        price_model = load_model("external/automating-technical-analysis/models/price_prediction_model.h5")
+        action_model = load_model("action_prediction_model.h5")
+        price_model = load_model("price_prediction_model.h5")
         app_data = Data_Sourcing()
         main(app_data = app_data)
 
@@ -295,6 +294,11 @@ def render_trading_data():
         st.dataframe(coins_df)
 
     with st.expander('Exchanges data'):
+        from_date = datetime.date(2023, 3, 1)
+        to_date = datetime.date(2023, 3, 25)
+        es_market_df = ts_read_api.get_time_series('ES', from_date, to_date)
+        nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
+        exchanges_df = pd.concat([es_market_df, nq_market_df])
         st.dataframe(exchanges_df)
 
     st.write("---")
@@ -314,8 +318,8 @@ def render_trading_data():
     st.write("### Exchanges filter")
     exchanges = st.multiselect(
         "Select the exchanges to analyze:",
-        options=exchanges_df["name"],
-        default=[exchange for exchange in CONFIG.MINER_EXCHANGES if exchange in exchanges_df["name"].unique()])
+        options=exchanges_df["assetName"],
+        default=[exchange for exchange in CONFIG.MINER_EXCHANGES if exchange in exchanges_df["assetName"].unique()])
 
 
     with st.expander('Coins Tickers Data'):
@@ -991,9 +995,9 @@ def render_visualization():
     df = data_process(data)
 
     col1, col2 = st.columns(2)
-    with col1:
-        bbc = Image.open("images/bbc.png")
-        st.image(bbc)
+    #with col1:
+        #bbc = Image.open("images/bbc.png")
+        #st.image(bbc)
     with col2:
         st.header("Tweet")
     st.dataframe(
