@@ -25,6 +25,7 @@ def get_article_text(title):
 def get_tweets():
     query = """MATCH (t:Tweet)
             WHERE t.created_at is not null and not ("" in t.lemma_text)
+            and t.raw_content is not null
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
@@ -38,7 +39,7 @@ def get_tweets():
     with driver.session() as session:
         result = session.run(query, params)
         result_dict = [r.values() for r in result]
-        logging.info(f"result:{result_dict}")
+        #logging.info(f"result:{result_dict}")
         df = pd.DataFrame(result_dict, columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
