@@ -545,12 +545,6 @@ def render_sentiment_analysis():
     with st.spinner("Loading data..."):
         market_df, news_df = load_data(DATA_PATH)
 
-
-    st.sidebar.title("Two Sigma EDA")
-    image = Image.open(f"compet_logo.jpg")
-    st.sidebar.image(image, use_column_width=True)
-    st.sidebar.write("Analyzing news data to predict stock prices. Understanding the predictive power of the news to predict financial outcomes and generate significant economic impact all over the world.")
-
     analysis = st.sidebar.radio("Choose analysis", [
         "Data exploration", "Aggregation charts", "Sentiment analysis"], index=0)
 
@@ -573,7 +567,7 @@ def render_sentiment_analysis():
         #logger.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
         logger.info(f'news_df_draw_wordcloud:{news_df}')
         if asset.lower() == "all assets":
-            headlines100k = news_df[start_date:end_date]['text'].str.lower(
+            headlines100k = news_df[news_df["time"].between(start_date, end_date)]['text'].str.lower(
             ).values[-100000:]
         else:
             headlines100k = news_df.loc[news_df["assetName"] ==
