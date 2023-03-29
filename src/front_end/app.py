@@ -92,6 +92,30 @@ navigated = st.sidebar.radio("Navigation:", [
 #viz = st.sidebar.checkbox("Visualisation")
 logging.info(f'navigated:{navigated}')
 
+@st.cache_data()
+def load_data():
+    #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
+    from_date = datetime.date(2023, 3, 1)
+    to_date = datetime.date(2023, 3, 25)
+    es_market_df = ts_read_api.get_time_series('ES', from_date, to_date)
+    nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
+    market_df = pd.concat([es_market_df, nq_market_df])
+    #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
+    news_df = get_gpt_sentiments()
+    news_df['assetName'] = "ES"
+    news_df['sentimentClass'] = 1
+    #logger.info(f'news_df:{news_df}')
+    news_df = news_df.set_index("time")
+    news_df = news_df.sort_index()
+
+    market_df['price_diff'] = market_df['close'] - market_df['open']
+    #market_df.index = pd.to_datetime(market_df.index)
+    #news_df.index = pd.to_datetime(news_df.index)
+
+    return market_df, news_df
+
+with st.spinner("Loading data..."):
+    market_df, news_df = load_data()
 
 def render_model_prediction():
     gc.collect()
@@ -253,12 +277,6 @@ def render_model_prediction():
         app_data = Data_Sourcing()
         main(app_data = app_data)
 
-#trade_setup = st.sidebar.checkbox("Model Predictions")
-if navigated == "Model Predictions":
-    render_model_prediction()
-
-#data_py_open = st.sidebar.checkbox("Trading Data")
-
 def render_trading_data():
     @st.cache_data()
     def get_all_coins_df():
@@ -326,9 +344,6 @@ def render_trading_data():
         st.dataframe(coin_tickers_df)
 
 
-if navigated == "Trading Data":
-    render_trading_data()
-
 #hummingbot_DB_open = st.sidebar.checkbox("News Analysis")
 
 def render_new_analysis():
@@ -359,9 +374,6 @@ def render_new_analysis():
             st.write(table)
             st.dataframe(get_table_data(uploaded_file.name, table))
 
-
-if navigated == "New Analysis": 
-    render_new_analysis()
 
 #crypto_analysis = st.sidebar.checkbox("TVL vs MCAP Analysis")
 
@@ -432,8 +444,6 @@ def render_tvl_mcap():
 
     st.sidebar.write("# Data filters")
 
-if navigated == "TVL vs MCAP Analysis":
-    render_tvl_mcap()
 
 #xe_token_analyze = st.sidebar.checkbox("XE Token Analyzer")
 
@@ -519,31 +529,6 @@ def render_sentiment_analysis():
 
     st.title("Streamlit 2Sigma")
 
-    @st.cache_data()
-    def load_data(datapath):
-        #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
-        from_date = datetime.date(2023, 3, 1)
-        to_date = datetime.date(2023, 3, 25)
-        es_market_df = ts_read_api.get_time_series('ES', from_date, to_date)
-        nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
-        market_df = pd.concat([es_market_df, nq_market_df])
-        #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
-        news_df = get_gpt_sentiments()
-        news_df['assetName'] = "ES"
-        news_df['sentimentClass'] = 1
-        #logger.info(f'news_df:{news_df}')
-        news_df = news_df.set_index("time")
-        news_df = news_df.sort_index()
-
-        market_df['price_diff'] = market_df['close'] - market_df['open']
-        #market_df.index = pd.to_datetime(market_df.index)
-        #news_df.index = pd.to_datetime(news_df.index)
-
-        return market_df, news_df
-
-
-    with st.spinner("Loading data..."):
-        market_df, news_df = load_data(DATA_PATH)
 
     analysis = st.sidebar.radio("Choose analysis", [
         "Data exploration", "Aggregation charts", "Sentiment analysis"], index=0)
@@ -561,11 +546,11 @@ def render_sentiment_analysis():
         start_date = datetime.datetime.combine(start_date, datetime.datetime.min.time())
         end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
         #dr = pd.date_range(start_date, end=end_date, tz='Asia/Tokyo')
-        logger.info(f'news_df.index:{news_df.index}')
+        #logger.info(f'news_df.index:{news_df.index}')
         #logger.info(f'market_df.index:{market_df.index}')
         #logger.info(f'start_date:{type(start_date)}')
         #logger.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-        logger.info(f'news_df_draw_wordcloud:{news_df}')
+        logger.info(f'news_df_draw_wordcloud:{news_df["time"]}')
         if asset.lower() == "all assets":
             headlines100k = news_df[news_df["time"].between(start_date, end_date)]['text'].str.lower(
             ).values[-100000:]
@@ -972,9 +957,6 @@ def render_sentiment_analysis():
                 st.latex(
                     r'''score = \frac{-1 \cdot samples(negative) + 1 \cdot samples(positive)}{total\_samples}''')
 
-if navigated == "2Sigma Charts":
-    render_sentiment_analysis()
-
 def render_visualization():
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
     s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
@@ -1237,8 +1219,20 @@ def render_visualization():
             )
 
 
-# =================================================================================== #
-#                                Graphs visualisation                                 #
-# =================================================================================== #
+if navigated == "New Analysis": 
+    render_new_analysis()
+
+if navigated == "Model Predictions":
+    render_model_prediction()
+
+if navigated == "Trading Data":
+    render_trading_data()
+
+if navigated == "TVL vs MCAP Analysis":
+    render_tvl_mcap()
+
+if navigated == "2Sigma Charts":
+    render_sentiment_analysis()
+
 if navigated == "Visualization":
     render_visualization()
