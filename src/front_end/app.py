@@ -1,3 +1,4 @@
+
 import datetime
 import pandas as pd
 
@@ -973,13 +974,15 @@ with col1:
 with col2:
     st.header("Tweet")
 st.dataframe(
-        data[["id", "user", "time", "text", "source_url", "like_count", "perma_link", "last_update"]]
+        #data[["id", "user", "time", "text", "source_url", "like_count", "perma_link", "last_update"]]
+        data
     )
 col3, col4 = st.columns(2)
 with col4:
     st.header("Conversation")
 st.dataframe(
-        conv_data[["tweet_id", "text"]]
+        #conv_data[["conv_id", "text"]]
+        conv_data
     )
 
 # =================================================================================== #
@@ -1089,7 +1092,7 @@ if viz:
                              color_discrete_sequence=px.colors.qualitative.Pastel)
                 st.plotly_chart(fig)
             with col2:
-                df = df[df["sub_date"].between(pd.to_datetime("2021-10-01"), pd.to_datetime("2021-12-30"))]
+                df = df[df["sub_date"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
                 sub_df = subject_analysis(df)
                 st.markdown("**Text analysis:**")
                 fig = px.bar(sub_df, x='sub_date', y='polarity', title='News subject polarity over time')

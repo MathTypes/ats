@@ -12,7 +12,7 @@ make build-ib TWS_USERID=<userid> TWS_PASSWORD=<password>
 
 
 ```bash
-make run-notebook
+docker run -d -p 4001:4001 -p 4002:4002 -p 4003:4003 -p 5900:5900 akolo_ats_ib
 ```
 
 ### Query IB

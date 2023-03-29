@@ -22,7 +22,7 @@ model = OpenAI(api_key)  # or `HubModel()` for Huggingface-based inference
 nlp_prompter = Prompter(model)
 
 result = nlp_prompter.fit('ner.jinja',
-                          domain='finance',
+                          domain='financial',
                           text_input=args.input,
                           labels=None)
 # Output
