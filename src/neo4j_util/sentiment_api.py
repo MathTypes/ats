@@ -118,20 +118,25 @@ def get_gpt_sentiments():
     query = """
     MATCH (t:Tweet)-[r:SENTIMENT]->(e:Entity)
     MATCH (rt:RepliedTweet)
-    WHERE t.created_at is not null and rt.tweet_id=t.id
+    WHERE t.created_at is not null and rt.tweet_id=t.id and t.raw_content is not null
     RETURN t.tweet_id as tweet_id, datetime({epochMillis: t.created_at}) as time,
-            (t.raw_content + rt.text) as text, t.perma_link as perma_link, t.keyword_subject as keyword_subject,
-            r.class as class, r.rank as score, e.name as entity_name, e.type as entity_type,
-            t.lemma_text as lemma_text, t.keyword_text as keyword_text
+            (t.raw_content + rt.text) as text, t.perma_link as perma_link,
+            r.class as sentimentClass, r.rank as score, e.name as assetName, e.type as entity_type,
+            (t.raw_content + rt.text) as lemma_text,
+            (t.raw_content + rt.text) as keyword_text,
+            (t.raw_content + rt.text) as keyword_subject
             """
     params = {}
     with driver.session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        #df["assetName"] = df["assetName"].lower()
         df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["text"] = df["text"].apply(lambda x: str(x))
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
         #df = keyword_util.add_subject_keyword(df)
+        logging.info(f'my_df:{df}')
         return df
 
                                                                                                                            

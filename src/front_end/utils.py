@@ -118,7 +118,7 @@ def subject_analysis(df):
     df['polarity'] = np.nan
     for i in range(df.shape[0]):
         try:
-            parag = df['subject'][i]
+            parag = df['text'][i]
             blob = TextBlob(parag)
             result = blob.sentiment.polarity
             df['polarity'].iloc[i] = result

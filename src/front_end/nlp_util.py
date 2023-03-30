@@ -1,5 +1,6 @@
 
 import datetime
+import os
 import pandas as pd
 
 import logging
@@ -33,7 +34,7 @@ def draw_wordcloud(news_df, stop, asset="all assets", start_date=None, end_date=
     #logger.info(f'news_df.index:{news_df.index}')
     #logger.info(f'market_df.index:{market_df.index}')
     #logger.info(f'start_date:{type(start_date)}')
-    logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
+    #logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
     #logger.info(f'news_df_draw_wordcloud:{news_df["text"]}')
     #logging.info(f'asset:{asset}')
     if asset.lower() == "all assets":

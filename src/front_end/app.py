@@ -73,27 +73,25 @@ from neo4j_util.sentiment_api import get_tweets, get_gpt_sentiments
 from market_data import ts_read_api
 from util import logging_utils
 
-nlp = spacy.load("en_core_web_sm")
-st.set_page_config(layout="wide")
 
-st.title("Streamlit News Analysis")
+logging_utils.init_logging()
+
+nlp = spacy.load("en_core_web_sm")
+
+
+st.set_page_config(layout="wide")
 # =================================================================================== #
 #                                Sidebar                                              #
 # =================================================================================== #
 ds = Image.open("images/ats.jpg")
 st.sidebar.image(ds)
-#st.sidebar.title("Ats: Stock Market Analysis & Predictions")
-
 navigated = st.sidebar.radio("Navigation:", [
         "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer", "2Sigma Charts"], index=0)
 
-#st.sidebar.markdown("Navigation:")
+st.title("Streamlit News Analysis")
+#st.sidebar.title("Ats: Stock Market Analysis & Predictions")
 
-
-#viz = st.sidebar.checkbox("Visualisation")
-logging.info(f'navigated:{navigated}')
-
-@st.cache_data()
+#@st.cache_data()
 def load_data():
     #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
     from_date = datetime.date(2023, 3, 1)
@@ -103,10 +101,10 @@ def load_data():
     market_df = pd.concat([es_market_df, nq_market_df])
     #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
     news_df = get_gpt_sentiments()
-    news_df['assetName'] = "ES"
-    news_df['sentimentClass'] = 1
+    #news_df['assetName'] = "ES"
+    #news_df['sentimentClass'] = 1
     news_df['index_time'] = news_df["time"]
-    #logger.info(f'news_df:{news_df}')
+    #logging.info(f'news_df:{news_df}')
     news_df = news_df.set_index("index_time")
     news_df = news_df.sort_index()
 
@@ -116,8 +114,17 @@ def load_data():
 
     return market_df, news_df
 
-with st.spinner("Loading data..."):
-    market_df, news_df = load_data()
+market_df = None
+news_df = None
+
+#with st.spinner("Loading data..."):
+market_df, news_df = load_data()
+logging.info(f'news_df:{news_df}')
+#data = pd.read_csv("dataset/process_data.csv")
+#data = get_tweets()
+#logging.info(f'data:{data}')
+#conv_data = get_gpt_sentiments()
+news_df = data_process(news_df)
 
 def render_model_prediction():
     gc.collect()
@@ -345,9 +352,6 @@ def render_trading_data():
     with st.expander('Coins Tickers Data'):
         st.dataframe(coin_tickers_df)
 
-
-#hummingbot_DB_open = st.sidebar.checkbox("News Analysis")
-
 def render_new_analysis():
     @st.cache_data()
     def get_table_data(database_name: str, table_name: str):
@@ -517,28 +521,13 @@ def render_token_analyzer():
 if navigated == "XE Token Analyzer":
     render_token_analyzer()
 
-#opened_2sigma = st.sidebar.checkbox("2Sigma Charts")
-
 def render_sentiment_analysis():
     stop = set(stopwords.words('english'))
-
-    DATA_PATH = "./datasets"
-    MARKET_DATA = "market_pre2011.gzip"
-    NEWS_DATA = "news_pre2011.gzip"
-
-    logging_utils.init_logging()
-    logger = logging.getLogger(__name__)
-
-    st.title("Streamlit 2Sigma")
-
-
     analysis = st.sidebar.radio("Choose analysis", [
         "Data exploration", "Aggregation charts", "Sentiment analysis"], index=0)
 
-    assets = list(set(market_df.assetName.to_list()))
-
+    assets = list(set(news_df.assetName.to_list()))
     assets_dict = dict(zip(market_df.assetName, market_df.assetCode))
-
 
     def get_asset_code(asset):
         return assets_dict.get(asset)
@@ -628,7 +617,7 @@ def render_sentiment_analysis():
 
             g = grouped.sort_values(('price_diff', 'std'), ascending=False)[
                 :no_of_drops]
-            #logger.info(f'g:{g}')
+            #logging.info(f'g:{g}')
             g['min_text'] = 'Maximum price drop: ' + \
                 (-1 * g['price_diff']['min']).astype(str)
             data = [go.Scatter(
@@ -787,13 +776,13 @@ def render_sentiment_analysis():
             )
 
     elif analysis.lower() == "sentiment analysis":
-
+        logging.info(f'news_df:{news_df.columns}')
         assets = list(news_df.assetName.unique())
-        logger.info(f'assets:{assets}')
+        #logging.info(f'assets:{assets}')
         selected_assets = st.sidebar.multiselect(
             "Please select the assets",
             assets,
-            default=['ES']
+            default=['BAC']
         )
 
         start_date, end_date = st.sidebar.date_input("Time period (from/to)", [datetime.date(
@@ -847,12 +836,12 @@ def render_sentiment_analysis():
                 counts = counts.values/sum(counts.values)
                 assets_sentiment_dict[asset] = list(counts)
 
-        #logger.info(f'assets_sentiment_dict:{assets_sentiment_dict}')
+        #logging.info(f'assets_sentiment_dict:{assets_sentiment_dict}')
         sentiment_df = pd.DataFrame.from_dict(
             assets_sentiment_dict, orient='index', columns=sent_labels)
         sentiment_df = pd.melt(sentiment_df.rename_axis('asset').reset_index(), id_vars=[
                                "asset"], value_vars=sent_labels, var_name='sentiment', value_name='count')
-        #logger.info(f'sentiment_df:{sentiment_df}')
+        #logging.info(f'sentiment_df:{sentiment_df}')
         fig = px.bar(
             sentiment_df,
             x="sentiment",
@@ -921,36 +910,25 @@ def render_sentiment_analysis():
                     r'''score = \frac{-1 \cdot samples(negative) + 1 \cdot samples(positive)}{total\_samples}''')
 
 def render_visualization():
+    global news_df
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
     s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
     e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
     # =================================================================================== #
     #                                Display Dataset                                      #
     # =================================================================================== #
-    #data = pd.read_csv("dataset/process_data.csv")
-    data = get_tweets()
-    #logging.info(f'data:{data}')
-    conv_data = get_gpt_sentiments()
-    df = data_process(data)
 
     col1, col2 = st.columns(2)
     with col2:
         st.header("Tweet")
-    st.dataframe(
-            #data[["id", "user", "time", "text", "source_url", "like_count", "perma_link", "last_update"]]
-            data
-        )
-    col3, col4 = st.columns(2)
-    with col4:
-        st.header("Conversation")
-    st.dataframe(
-            #conv_data[["conv_id", "text"]]
-            conv_data
-        )
+        st.dataframe(news_df)
 
     start_day = pd.to_datetime(s_d)
     end_day = pd.to_datetime(e_d)
-    sub_data = df[df["time"].between(start_day, end_day)]
+    logging.info(f'start_day:{start_day}, end_day:{end_day}')
+    logging.info(f'before filtering:{news_df}')
+    sub_data = news_df[news_df["time"].between(start_day, end_day)]
+    logging.info(f'sub_data:{sub_data["keyword_subject"]}')
     count = sub_data.shape[0]
     # =================================================================================== #
     #                                General                                              #
@@ -961,17 +939,17 @@ def render_visualization():
         # =================================================================================== #
         col3, col4 = st.columns(2)
         with col3:
-            logging.info(f'sub_data:{sub_data["keyword_subject"]}')
             sub_data["keyword_subject"] = sub_data["keyword_subject"].apply(lambda x: str(x).replace('[','').replace(']',''))
             sub_data["keyword_text"] = sub_data["keyword_text"].apply(lambda x: str(x).replace('[','').replace(']',''))
             st.subheader("**Subject wordcloud:**")
-            Cloud_text = " ".join(sub_data["keyword_subject"])
+            cloud_text = " ".join(sub_data["keyword_subject"])
+            logging.info(f'cloud_text:{cloud_text}')
             wordcloud = WordCloud(
                 colormap="Blues",
                 background_color="white",
                 width=1200,
                 height=800,
-            ).generate(Cloud_text)
+            ).generate(cloud_text)
             # Generate plot
             plt.figure(figsize=(100, 100))
             fig = plt.figure()
@@ -981,13 +959,14 @@ def render_visualization():
             st.pyplot(fig)
         with col4:
             st.subheader("**Text wordcloud:**")
-            Cloud_text = " ".join(sub_data["keyword_text"])
+            cloud_text = " ".join(sub_data["keyword_text"])
+            #logging.info(f'cloud_text:{cloud_text}')
             wordcloud = WordCloud(
                 colormap="Reds",
                 background_color="white",
                 width=1200,
                 height=800,
-            ).generate(Cloud_text)
+            ).generate(cloud_text)
             # Generate plot
             plt.figure(figsize=(100, 100))
             fig = plt.figure()
@@ -1004,7 +983,7 @@ def render_visualization():
             with col3:
                 # TODO: fix missing lemma_text
                 sub_data["lemma_text"] = sub_data["keyword_text"].apply(lambda x: str(x).replace('[','').replace(']',''))
-                logging.info(f"sub_data_lemma_text:{sub_data['lemma_text']}")
+                #logging.info(f"sub_data_lemma_text:{sub_data['lemma_text']}")
                 common_words = get_top_n_bigram(
                     sub_data["lemma_text"], ngram_range=2, n=20
                 )
@@ -1052,6 +1031,7 @@ def render_visualization():
                 st.plotly_chart(fig)
             with col2:
                 #df = df[df["sub_date"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
+                df = news_df
                 df = df[df["time"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
                 sub_df = subject_analysis(df)
                 st.markdown("**Text analysis:**")
