@@ -123,6 +123,13 @@ def map_to_market(x):
         return "ES"
     return ""
 
+def map_sentiment(x):
+    if x.lower() in ["negative"]:
+        return -1
+    if x.lower() in ["positive"]:
+        return 1
+    return 0
+
 def get_gpt_sentiments():
     query = """
     MATCH (t:Tweet)-[r:SENTIMENT]->(e:Entity)
@@ -146,6 +153,7 @@ def get_gpt_sentiments():
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
         df["assetName"] = df["assetName"].apply(map_to_market)
+        df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         df["assetCode"] = df["assetName"]
         #df["assetName"] = "Stocks"
         #df = keyword_util.add_subject_keyword(df)

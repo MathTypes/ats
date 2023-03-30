@@ -864,7 +864,7 @@ def render_sentiment_analysis():
         selected_assets = st.sidebar.multiselect(
             "Please select the assets",
             assets,
-            default=['Stocks']
+            default=['ES']
         )
         logging.info(f'selected_assets:{selected_assets}')
 
@@ -908,8 +908,8 @@ def render_sentiment_analysis():
             st.plotly_chart(top10_mean_sentiment_plot(
                 "positive", start_date, end_date))
 
-        # sent_labels = ['negative', 'neutral', 'positive']
-        sent_labels = ['positive']
+        sent_labels = ['negative', 'neutral', 'positive']
+        #sent_labels = ['positive']
         grouped_assets = news_df.loc[start_date:end_date].groupby("assetName")
         assets_sentiment_dict = {}
         for asset in selected_assets:
@@ -951,7 +951,7 @@ def render_sentiment_analysis():
             X = []
             Y = []
             asset_news_df = news_df[news_df["assetName"] == asset]
-
+            asset_news_df.index = pd.to_datetime(asset_news_df.index)
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
                 d = name.strftime("%m/%d/%Y, %H:%M")
                 counts = group["sentimentClass"].value_counts()
