@@ -26,6 +26,7 @@ from utils import (
     display_text, subject_analysis, result_to_df, analyze_token_sentiment,
 )
 
+import nlp_util
 from app_dir.data_sourcing import Data_Sourcing, data_update
 from app_dir.indicator_analysis import Indications
 from app_dir.graph import Visualization
@@ -104,8 +105,9 @@ def load_data():
     news_df = get_gpt_sentiments()
     news_df['assetName'] = "ES"
     news_df['sentimentClass'] = 1
+    news_df['index_time'] = news_df["time"]
     #logger.info(f'news_df:{news_df}')
-    news_df = news_df.set_index("time")
+    news_df = news_df.set_index("index_time")
     news_df = news_df.sort_index()
 
     market_df['price_diff'] = market_df['close'] - market_df['open']
@@ -721,7 +723,7 @@ def render_sentiment_analysis():
             time_period = st.date_input("From/To", [datetime.date(
                 2022, 12, 1), datetime.date(2023, 12, 31)], min_value=datetime.date(2022, 12, 1), max_value=datetime.date(2023, 12, 31))
 
-            draw_wordcloud(selected_asset, *time_period)
+            nlp_util.draw_wordcloud(news_df, stop, selected_asset, *time_period)
 
     elif analysis.lower() == "aggregation charts":
 
@@ -982,9 +984,6 @@ def render_visualization():
     df = data_process(data)
 
     col1, col2 = st.columns(2)
-    #with col1:
-        #bbc = Image.open("images/bbc.png")
-        #st.image(bbc)
     with col2:
         st.header("Tweet")
     st.dataframe(
@@ -1003,12 +1002,6 @@ def render_visualization():
     end_day = pd.to_datetime(e_d)
     sub_data = df[df["time"].between(start_day, end_day)]
     count = sub_data.shape[0]
-    st.markdown(
-        '<p style="text-align: center; color:#A52A2A; font-size:50px; font-family:Arial Black">Number of '
-        "BBC articles "
-        "from {} to {}: {}</p> ".format(s_d, e_d, count),
-        unsafe_allow_html=True,
-    )
     # =================================================================================== #
     #                                General                                              #
     # =================================================================================== #
