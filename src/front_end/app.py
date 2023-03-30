@@ -114,7 +114,7 @@ def load_data():
     market_df['price_diff'] = market_df['close'] - market_df['open']
     # market_df.index = pd.to_datetime(market_df.index)
     # news_df.index = pd.to_datetime(news_df.index)
-
+    news_df = subject_analysis(news_df)
     return market_df, news_df
 
 
@@ -859,14 +859,14 @@ def render_sentiment_analysis():
     elif analysis.lower() == "sentiment analysis":
         # assets = list(news_df.assetName.unique())
         assets = assetNames
-        logging.info(f'assetNames:{assetNames}')
+        #logging.info(f'assetNames:{assetNames}')
         # logging.info(f'assets:{assets}')
         selected_assets = st.sidebar.multiselect(
             "Please select the assets",
             assets,
             default=['ES']
         )
-        logging.info(f'selected_assets:{selected_assets}')
+        #logging.info(f'selected_assets:{selected_assets}')
 
         start_date, end_date = st.sidebar.date_input("Time period (from/to)",
                                                      [from_date, to_date], min_value=min_date, max_value=max_date)
@@ -908,7 +908,8 @@ def render_sentiment_analysis():
             st.plotly_chart(top10_mean_sentiment_plot(
                 "positive", start_date, end_date))
 
-        sent_labels = ['negative', 'neutral', 'positive']
+        #sent_labels = ['negative', 'neutral', 'positive']
+        sent_labels = ['negative', 'positive']
         #sent_labels = ['positive']
         grouped_assets = news_df.loc[start_date:end_date].groupby("assetName")
         assets_sentiment_dict = {}
@@ -947,11 +948,12 @@ def render_sentiment_analysis():
         with row2_1:
             st.plotly_chart(fig)
 
-        def calculate_mean_sentiment(asset, period="5min"):
+        def calculate_mean_sentiment(asset, period="1h"):
             X = []
             Y = []
             asset_news_df = news_df[news_df["assetName"] == asset]
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
+            logging.info(f'asset_news_df:{asset_news_df}')
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
                 d = name.strftime("%m/%d/%Y, %H:%M")
                 counts = group["sentimentClass"].value_counts()
