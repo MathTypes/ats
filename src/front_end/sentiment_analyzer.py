@@ -413,8 +413,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         start_date, end_date = st.sidebar.date_input("Time period (from/to)",
                                                      [from_date, to_date], min_value=min_date, max_value=max_date)
 
-        row1_1, row1_2 = st.columns(2)
-        row2_1, row2_2 = st.columns(2)
+        #row1_1, row1_2 = st.columns(1)
+        #row2_1, row2_2 = st.columns(2)
 
         sentiment_dict = dict(
             negative="-1",
@@ -441,53 +441,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
             return dict(data=data, layout=layout)
 
-        with row1_1:
-            st.plotly_chart(top10_mean_sentiment_plot(
-                "negative", start_date, end_date))
-
-        with row1_2:
-            st.plotly_chart(top10_mean_sentiment_plot(
-                "positive", start_date, end_date))
-
-        sent_labels = ['negative', 'neutral', 'positive']
-        grouped_assets = news_df.loc[start_date:end_date].groupby("assetName")
-        assets_sentiment_dict = {}
-        for asset in selected_assets:
-            if asset in grouped_assets.groups.keys():
-                asset_group = grouped_assets.get_group(asset)
-                counts = asset_group["sentimentClass"].value_counts()
-                counts = counts.values/sum(counts.values)
-                assets_sentiment_dict[asset] = list(counts)
-
-        # logging.info(f'assets_sentiment_dict:{assets_sentiment_dict}')
-        sentiment_df = pd.DataFrame.from_dict(
-            assets_sentiment_dict, orient='index', columns=sent_labels)
-        sentiment_df = pd.melt(sentiment_df.rename_axis('asset').reset_index(), id_vars=[
-                               "asset"], value_vars=sent_labels, var_name='sentiment', value_name='count')
-        # logging.info(f'sentiment_df:{sentiment_df}')
-        fig = px.bar(
-            sentiment_df,
-            x="sentiment",
-            y="count",
-            color="asset",
-            barmode='group',
-        )
-
-        fig.update_layout(
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1,
-                title=""
-            )
-        )
-
-        with row2_1:
-            st.plotly_chart(fig)
-
-        def calculate_mean_sentiment(asset, period="1d"):
+        def calculate_mean_sentiment(asset, period="1h"):
             X = []
             Y = []
             logging.info(f'news_df:{news_df["assetName"]}')
@@ -528,9 +482,4 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             yaxis=dict(title='Mean sentiment'),
         )
 
-        with row2_2:
-            st.plotly_chart(dict(data=data, layout=layout))
-
-            with st.expander("Mean sentiment score computation"):
-                st.latex(
-                    r'''score = \frac{-1 \cdot samples(negative) + 1 \cdot samples(positive)}{total\_samples}''')
+        st.plotly_chart(dict(data=data, layout=layout))

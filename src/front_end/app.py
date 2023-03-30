@@ -36,7 +36,6 @@ st.sidebar.image(ds)
 navigated = st.sidebar.radio("Navigation:", [
     "Overview", "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer"], index=0)
 
-st.title("Streamlit News Analysis")
 # st.sidebar.title("Ats: Stock Market Analysis & Predictions")
 
 # @st.cache_data()
