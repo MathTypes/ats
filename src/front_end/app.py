@@ -1067,8 +1067,8 @@ def render_sentiment_analysis():
             st.plotly_chart(top10_mean_sentiment_plot(
                 "positive", start_date, end_date))
 
-        #sent_labels = ['negative', 'neutral', 'positive']
-        sent_labels = ['negative', 'positive']
+        sent_labels = ['negative', 'neutral', 'positive']
+        #sent_labels = ['negative', 'positive']
         #sent_labels = ['positive']
         grouped_assets = news_df.loc[start_date:end_date].groupby("assetName")
         assets_sentiment_dict = {}
