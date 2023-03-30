@@ -120,12 +120,13 @@ def get_gpt_sentiments():
     MATCH (t:Tweet)-[r:SENTIMENT]->(e:Entity)
     MATCH (rt:RepliedTweet)
     WHERE t.created_at is not null and rt.tweet_id=t.id and t.raw_content is not null
-    RETURN t.tweet_id as tweet_id, datetime({epochMillis: t.created_at}) as time,
+    RETURN t.id as tweet_id, datetime({epochMillis: t.created_at}) as time,
             (t.raw_content + rt.text) as text, t.perma_link as perma_link,
             r.class as sentimentClass, r.rank as score, e.name as assetName, e.type as entity_type,
             (t.raw_content + rt.text) as lemma_text,
             (t.raw_content + rt.text) as keyword_text,
             (t.raw_content + rt.text) as keyword_subject
+    ORDER BY t.created_at DESC
             """
     params = {}
     with driver.session() as session:
@@ -137,7 +138,7 @@ def get_gpt_sentiments():
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
         #df = keyword_util.add_subject_keyword(df)
-        logging.info(f'my_df:{df}')
+        #logging.info(f'my_df:{df}')
         return df
 
                                                                                                                            

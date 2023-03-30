@@ -92,13 +92,19 @@ st.title("Streamlit News Analysis")
 #st.sidebar.title("Ats: Stock Market Analysis & Predictions")
 
 #@st.cache_data()
+market_df = None
+news_df = None
+assetNames = ["ES", "NQ", "RTY"]
 def load_data():
     #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
     from_date = datetime.date(2023, 3, 1)
     to_date = datetime.date(2023, 3, 25)
-    es_market_df = ts_read_api.get_time_series('ES', from_date, to_date)
-    nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
-    market_df = pd.concat([es_market_df, nq_market_df])
+    df_vec = []
+    for asset in assetNames:
+        for date in pd.date_range(from_date, to_date):
+            date_df = ts_read_api.get_time_series_by_instr_date(asset, date)
+            df_vec.append(date_df)
+    market_df = pd.concat(df_vec)
     #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
     news_df = get_gpt_sentiments()
     #news_df['assetName'] = "ES"
@@ -113,9 +119,6 @@ def load_data():
     #news_df.index = pd.to_datetime(news_df.index)
 
     return market_df, news_df
-
-market_df = None
-news_df = None
 
 #with st.spinner("Loading data..."):
 market_df, news_df = load_data()
@@ -537,22 +540,22 @@ def render_sentiment_analysis():
         start_date = datetime.datetime.combine(start_date, datetime.datetime.min.time())
         end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
         #dr = pd.date_range(start_date, end=end_date, tz='Asia/Tokyo')
-        #logger.info(f'news_df.index:{news_df.index}')
-        #logger.info(f'market_df.index:{market_df.index}')
-        #logger.info(f'start_date:{type(start_date)}')
-        #logger.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-        logger.info(f'news_df_draw_wordcloud:{news_df["time"]}')
+        #logging.info(f'news_df.index:{news_df.index}')
+        #logging.info(f'market_df.index:{market_df.index}')
+        #logging.info(f'start_date:{type(start_date)}')
+        #logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
+        logging.info(f'news_df_draw_wordcloud:{news_df["time"]}')
         if asset.lower() == "all assets":
             headlines100k = news_df[news_df["time"].between(start_date, end_date)]['text'].str.lower(
             ).values[-100000:]
         else:
             headlines100k = news_df.loc[news_df["assetName"] ==
                                         asset].loc[start_date:end_date, "text"].str.lower().values[-100000:]
-        #logger.info(f'asset:{asset}')
-        #logger.info(f'news:{headlines100k}')
+        #logging.info(f'asset:{asset}')
+        #logging.info(f'news:{headlines100k}')
         text = ' '.join(
             headline for headline in headlines100k if type(headline) == str)
-        #logger.info(f'draw_wordcloud:{text}')
+        #logging.info(f'draw_wordcloud:{text}')
 
         wordcloud = WordCloud(
             max_font_size=None,
