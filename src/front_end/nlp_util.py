@@ -6,6 +6,8 @@ import logging
 import spacy
 from textblob import TextBlob
 
+import os
+
 import matplotlib.pyplot as plt
 from PIL import Image
 import plotly.express as px
