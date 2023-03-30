@@ -823,9 +823,10 @@ def render_sentiment_analysis():
         def trends_quantile_chart(market_df):
             data = []
             for i in [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]:
-                price_df = market_df.groupby(market_df.index)[
+                #price_df = market_df.groupby(market_df.index)[
+                price_df = market_df.groupby('time')[
                     'close'].quantile(i).reset_index()
-                logging.info(f'price_df:{price_df}')
+                #logging.info(f'price_df:{price_df}')
                 data.append(go.Scatter(
                     x=price_df['time'].dt.strftime(
                         date_format='%Y-%m-%d').values,
