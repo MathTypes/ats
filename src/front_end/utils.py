@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import pandas as pd
 
@@ -118,7 +119,7 @@ def subject_analysis(df):
     df['polarity'] = np.nan
     for i in range(df.shape[0]):
         try:
-            parag = df['subject'][i]
+            parag = df['text'][i]
             blob = TextBlob(parag)
             result = blob.sentiment.polarity
             df['polarity'].iloc[i] = result
@@ -133,8 +134,18 @@ def subject_analysis(df):
         else:
             return 'Positive'
 
+    def sentimentClass(x):
+        if x.lower() == 'negative':
+            return -1
+        elif x.lower() == 'positive':
+            return 1
+        else:
+            return 0
+
     try:
         df['sentiment'] = df['polarity'].map(lambda x: sentiment(x))
+        df['sentimentClass'] = df['sentiment'].map(lambda x: sentimentClass(x))
+        logging.info(f'df_sentiment_class:{df["sentimentClass"]}')
     except:
         pass
     return df

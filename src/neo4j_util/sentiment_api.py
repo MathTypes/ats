@@ -56,6 +56,7 @@ def get_unprocessed_tweets():
                 t.perma_link as perma_link, t.like_count as like_count,
                 t.source_url as source_url, t.raw_content as text,
                 t.last_update as last_update
+            ORDER BY t.created_at DESC
             LIMIT 1000
             """
     params = {}
@@ -113,33 +114,59 @@ def get_tweets_replied_to(tweet_id):
         params={"tweet_id": tweet_id})
     return text
 
+def map_to_market(x):
+    if x in ["WFC", "BAC", "banks"]:
+        return "ES"
+    if x in ["NVDA", "TSLA", "Tesla"]:
+        return "NQ"
+    if x in ["Risk", "Volatility"]:
+        return "ES"
+    return ""
+
+def map_sentiment(x):
+    if x.lower() in ["negative"]:
+        return -1
+    if x.lower() in ["positive"]:
+        return 1
+    return 0
 
 def get_gpt_sentiments():
     query = """
     MATCH (t:Tweet)-[r:SENTIMENT]->(e:Entity)
     MATCH (rt:RepliedTweet)
-    WHERE t.created_at is not null and rt.tweet_id=t.id
-    RETURN t.tweet_id as tweet_id, datetime({epochMillis: t.created_at}) as time,
-            (t.raw_content + rt.text) as text, t.perma_link as perma_link, t.keyword_subject as keyword_subject,
-            r.class as class, r.rank as score, e.name as entity_name, e.type as entity_type,
-            t.lemma_text as lemma_text, t.keyword_text as keyword_text
+    WHERE t.created_at is not null and rt.tweet_id=t.id and t.raw_content is not null
+    RETURN t.id as tweet_id, datetime({epochMillis: t.created_at}) as time,
+            (t.raw_content + rt.text) as text, t.perma_link as perma_link,
+            r.class as sentimentClass, r.rank as score, e.name as assetName, e.type as entity_type,
+            (t.raw_content + rt.text) as lemma_text,
+            (t.raw_content + rt.text) as keyword_text,
+            (t.raw_content + rt.text) as keyword_subject
+    ORDER BY t.created_at DESC
             """
     params = {}
     with driver.session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        #df["assetName"] = df["assetName"].lower()
         df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["text"] = df["text"].apply(lambda x: str(x))
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
+        df["assetName"] = df["assetName"].apply(map_to_market)
+        df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
+        df["assetCode"] = df["assetName"]
+        #df["assetName"] = "Stocks"
         #df = keyword_util.add_subject_keyword(df)
+        #logging.info(f'my_df:{df}')
         return df
 
                                                                                                                            
 def get_gpt_processed_replied_tweets():
-    query = """MATCH (t:RepliedTweet), (r:Tweet)
+    query = """
+            MATCH (t:RepliedTweet), (r:Tweet)
             WHERE t.last_gpt_process_time is not null and r.id=t.tweet_id
             RETURN t.tweet_id as tweet_id, datetime({epochMillis: r.created_at}) as time,
-            t.replies as replies, (r.raw_content+t.text) as text, r.perma_link as perma_link;
+            t.replies as replies, (r.raw_content+t.text) as text, r.perma_link as perma_link
             """
     params = {}
     with driver.session() as session:
@@ -153,10 +180,12 @@ def get_gpt_processed_replied_tweets():
 
 
 def get_gpt_unprocessed_replied_tweets():
-    query = """MATCH (t:RepliedTweet), (r:Tweet)
+    query = """
+            MATCH (t:RepliedTweet), (r:Tweet)
             WHERE t.last_gpt_process_time is null and r.id=t.tweet_id
             RETURN t.tweet_id as tweet_id, datetime({epochMillis: r.created_at}) as time,
             t.replies as replies, (r.raw_content+t.text) as text, r.perma_link as perma_link
+            ORDER BY r.create_at DESC
             LIMIT 10;
             """
     params = {}
@@ -166,7 +195,6 @@ def get_gpt_unprocessed_replied_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
-        #df = keyword_util.add_subject_keyword(df)
         return df
 
 def get_conversations():

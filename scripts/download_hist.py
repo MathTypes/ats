@@ -44,7 +44,7 @@ def make_download_path(args: argparse.Namespace, contract: Contract) -> str:
             args.base_directory,
             args.security_type,
             args.size.replace(" ", "_"),
-            contract.symbol,
+            contract.localSymbol if contract.localSymbol else contract.symbol,
         ]
     )
     return path
