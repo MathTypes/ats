@@ -1,8 +1,5 @@
 
 from util import logging_utils
-from market_data import ts_read_api
-from neo4j_util.sentiment_api import get_tweets, get_gpt_sentiments
-from eda_utils import generate_color
 import plotly.graph_objs as go
 from nltk.corpus import stopwords
 import datetime
@@ -20,10 +17,12 @@ import streamlit as st
 from streamlit import components
 from wordcloud import WordCloud
 
-from src.data_analysis.topic_modeling import LatentDirichletAllocation
+from market_data import ts_read_api
+from neo4j_util.sentiment_api import get_processed_tweets, get_gpt_sentiments
+from eda_utils import generate_color
+from data_analysis.topic_modeling import LatentDirichletAllocation
 from neo4j_util.sentiment_api import get_tweets, get_tweet_replies_v2
-
-from utils import (
+from data.front_end_utils import (
     data_process,
     feature_extraction,
     visualize_ner,
@@ -99,11 +98,13 @@ def load_data():
     df_vec = []
     for asset in futureAssetCodes:
         for date in pd.date_range(from_date, to_date):
-            date_df = ts_read_api.get_time_series_by_instr_date(asset, date)
+            date_df = ts_read_api.get_time_series_by_instr_date(asset, date.date())
             df_vec.append(date_df)
     market_df = pd.concat(df_vec)
     # news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
-    news_df = get_gpt_sentiments()
+    #news_df = get_gpt_sentiments()
+    news_df = get_processed_tweets()
+    #logging.info(f'news_df:{news_df}')
     # news_df['assetName'] = "ES"
     # news_df['sentimentClass'] = 1
     news_df['index_time'] = news_df["time"]
@@ -766,8 +767,8 @@ def render_sentiment_analysis():
         if selected_assets:
             data1 = []
             for asset in selected_assets:
-                logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-                logging.info(f'market_df:{market_df[(market_df["assetName"] == asset)]}')
+                #logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
+                #logging.info(f'market_df:{market_df[(market_df["assetName"] == asset)]}')
                 asset_market_df = market_df[(market_df['assetName']== asset)]
                 asset_df = asset_market_df[asset_market_df["time"].between(start_date, end_date)]
 
@@ -951,6 +952,7 @@ def render_sentiment_analysis():
         def calculate_mean_sentiment(asset, period="1h"):
             X = []
             Y = []
+            logging.info(f'news_df:{news_df["assetName"]}')
             asset_news_df = news_df[news_df["assetName"] == asset]
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
             logging.info(f'asset_news_df:{asset_news_df}')

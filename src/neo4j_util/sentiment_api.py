@@ -2,12 +2,30 @@ import logging
 from neo4j import GraphDatabase
 import pandas as pd
 from data import keyword_util
+from data.front_end_utils import (
+    data_process,
+    feature_extraction,
+    visualize_ner,
+    get_top_n_bigram,
+    get_list_ner,
+    display_text, subject_analysis, result_to_df, analyze_token_sentiment,
+)
 
 host = 'bolt://10.0.0.18:7687'
 user = 'neo4j'
 password = 'password'
 driver = GraphDatabase.driver(host, auth=(user, password))
 
+def map_to_market(x):
+    for word in x:
+        word = word.lower()
+        if word in ["wfc", "bac", "banks", "market", "equity"]:
+            return "ES"
+        if word in ["nvda", "tsla", "tesla"]:
+            return "NQ"
+        if word in ["risk", "volatility"]:
+            return "ES"
+    return "ES"
 
 def read_query(query, params={}):
     with driver.session() as session:
@@ -15,23 +33,63 @@ def read_query(query, params={}):
         response = [r.values()[0] for r in result]
         return response
 
-
 def get_article_text(title):
     text = read_query(
         "MATCH (a:Article {webTitle:$title}) RETURN a.bodyContent as response", {'title': title})
     return text
 
-
 def get_tweets():
-    query = """MATCH (t:Tweet)
-            WHERE t.created_at is not null and not ("" in t.lemma_text)
-            and t.raw_content is not null
+    query = """
+            MATCH (t:Tweet)
+            MATCH (rt:RepliedTweet)
+            WHERE t.created_at is not null and rt.tweet_id=t.id and t.raw_content is not null
+             and t.created_at is not null and not ("" in t.lemma_text)
+             and rt.raw_content is not null
+             and not ("" in t.keyword_subject)
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
-                t.source_url as source_url, t.raw_content as text,
+                t.source_url as source_url, (rt.raw_content + t.raw_content) as text,
                 t.last_update as last_update, t.keyword_subject as keyword_subject,
                 t.lemma_text as lemma_text, t.keyword_text as keyword_text
+            ORDER BY t.created_at DESC
+            LIMIT 5
+            """
+    params = {}
+    with driver.session() as session:
+        result = session.run(query, params)
+        result_dict = [r.values() for r in result]
+        #logging.info(f"result:{result_dict}")
+        df = pd.DataFrame(result_dict, columns=result.keys())
+        df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["time"] = pd.to_datetime(
+            df["time"], infer_datetime_format=True).dt.date
+        logging.info(f'original_df_text:{df["text"]}')
+        df["text"] = df["text"].apply(lambda x: str(x))
+        df["assetName"] = df["keyword_subject"].apply(map_to_market)
+        df["assetCode"] = df["assetName"]
+        logging.info(f'df_text:{df["text"]}')
+        df = subject_analysis(df)
+        #df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
+        #df["assetName"] = "Stocks"
+        #df = keyword_util.add_subject_keyword(df)
+        return df
+
+
+def get_processed_tweets():
+    query = """
+            MATCH (t:Tweet)
+            MATCH (rt:RepliedTweet)
+            WHERE t.created_at is not null and rt.tweet_id=t.id and rt.text is not null
+             and not ("" in rt.lemma_text)
+             and not ("" in rt.keyword_subject)
+            RETURN t.id as id, t.user as user,
+                datetime({epochMillis: t.created_at}) as time,
+                t.perma_link as perma_link, t.like_count as like_count,
+                t.source_url as source_url, (rt.text + t.raw_content) as text,
+                rt.keyword_subject as keyword_subject,
+                rt.lemma_text as lemma_text, rt.keyword_text as keyword_text,
+                rt.subject as subject
             ORDER BY t.created_at DESC
             LIMIT 50000
             """
@@ -44,18 +102,28 @@ def get_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
+        logging.info(f'original_df_text:{df["text"]}')
+        df["text"] = df["text"].apply(lambda x: str(x))
+        df["assetName"] = df["keyword_subject"].apply(map_to_market)
+        df["assetCode"] = df["assetName"]
+        logging.info(f'df_text:{df["text"]}')
+        df = subject_analysis(df)
+        #df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
+        #df["assetName"] = "Stocks"
         #df = keyword_util.add_subject_keyword(df)
         return df
 
-
 def get_unprocessed_tweets():
-    query = """MATCH (t:Tweet)
-            WHERE t.last_process_time is null
+    query = """
+            MATCH (rt:RepliedTweet)
+            MATCH (t:Tweet)
+            WHERE t.annotation_time is null and rt.tweet_id=t.id
+            and (rt.text + t.raw_content) is not null
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
-                t.source_url as source_url, t.raw_content as text,
-                t.last_update as last_update
+                t.source_url as source_url,
+                (rt.text + t.raw_content) as text
             ORDER BY t.created_at DESC
             LIMIT 1000
             """
@@ -66,6 +134,7 @@ def get_unprocessed_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True)
+        df["text"] = df["text"].apply(lambda x: str(x))
         #df = keyword_util.add_subject_keyword(df)
         return df
 
@@ -113,15 +182,6 @@ def get_tweets_replied_to(tweet_id):
         "MATCH(t:Tweet {in_reply_to_tweet_id:$tweet_id}) return t.raw_content as text order by t.created_at DESC",
         params={"tweet_id": tweet_id})
     return text
-
-def map_to_market(x):
-    if x in ["WFC", "BAC", "banks"]:
-        return "ES"
-    if x in ["NVDA", "TSLA", "Tesla"]:
-        return "NQ"
-    if x in ["Risk", "Volatility"]:
-        return "ES"
-    return ""
 
 def map_sentiment(x):
     if x.lower() in ["negative"]:

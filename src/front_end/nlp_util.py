@@ -15,10 +15,10 @@ import streamlit as st
 from streamlit import components
 from wordcloud import WordCloud
 
-from src.data_analysis.topic_modeling import LatentDirichletAllocation
+from data_analysis.topic_modeling import LatentDirichletAllocation
 from neo4j_util.sentiment_api import get_tweets, get_tweet_replies_v2
 
-from utils import (
+from data.front_end_utils import (
     data_process,
     feature_extraction,
     visualize_ner,

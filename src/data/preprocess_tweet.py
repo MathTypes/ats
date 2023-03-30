@@ -8,6 +8,9 @@ from keyword_util import add_subject_keyword
 from neo4j_util.sentiment_api import get_unprocessed_tweets, get_tweet_replies_v2
 from neo4j_util.neo4j_tweet_util import Neo4j
 from util import logging_utils
+from data.front_end_utils import (
+    subject_analysis
+)
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -31,14 +34,15 @@ if __name__ == "__main__":
     logging_utils.init_logging()
     while True:
         data = get_unprocessed_tweets()
-        logging.error(f'unprocess_data:{data}')
+        logging.info(f'unprocess_data:{data["text"]}')
         if data.empty:
             break
         data = add_subject_keyword(data)
-        logging.error(f'process_data:{data}')
+        data = subject_analysis(data)
+        logging.error(f'process_data:{data.columns}')
         neo4j_util = Neo4j()
         neo4j_util.update_processed_text(data)
-
+        #break
     #conv_data = get_tweet_replies_v2()
     #conv_data = add_subject_keyword(conv_data)
 

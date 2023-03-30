@@ -26,19 +26,26 @@ class Neo4j:
             tweet_id = row["id"]
             # retrieve company node from the remote self.graph
             self.graph.evaluate(
-                """MATCH(t:Tweet {id:$tweet_id}) SET t.processed_text=$processed_text,
+                """MATCH(t:RepliedTweet {tweet_id:$tweet_id})
+                   SET
+                    t.subject=$subject,
                     t.lemma_text=$lemma_text,
                     t.keyword_text=$keyword_text,
+                    t.text=$text,
                     t.text_ner_names=$text_ner_names,
                     t.text_ner_count=$text_ner_count,
                     t.lemma_subject=$lemma_subject,
                     t.keyword_subject=$keyword_subject,
                     t.subject_ner_names=$subject_ner_names,
-                    t.last_process_time=$last_process_time,
-                    t.subject_ner_count=$subject_ner_count
+                    t.subject_ner_count=$subject_ner_count,
+                    t.polarity=$polarity,
+                    t.sentiment=$sentiment,
+                    t.sentiment_class=$sentiment_class,
+                    t.annotation_time=$annotation_time
                 """, {
                     "tweet_id": row["id"],
-                    "processed_text": row["text"],
+                    "text": row["text"],
+                    "subject": row["subject"],
                     "lemma_text": row["lemma_text"],
                     "keyword_text": row["keyword_text"],
                     "text_ner_names": row["text_ner_names"],
@@ -47,7 +54,10 @@ class Neo4j:
                     "keyword_subject": row["keyword_subject"],
                     "subject_ner_names": row["subject_ner_names"],
                     "subject_ner_count": row["subject_ner_count"],
-                    "last_process_time": int(datetime.now().timestamp()*1000)
+                    "polarity": row["polarity"],
+                    "sentiment":row["sentiment"],
+                    "sentiment_class": row["sentimentClass"],
+                    "annotation_time": int(datetime.now().timestamp()*1000)
                 })
         tx.commit()
 
