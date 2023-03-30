@@ -40,7 +40,7 @@ import numpy as np
 def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date, min_date, max_date):
     stop = set(stopwords.words('english'))
     analysis = st.sidebar.radio("Choose analysis", [
-        "Data exploration", "Aggregation charts", "Sentiment analysis"], index=0)
+        "Sentiment analysis", "Data exploration", "Aggregation charts"], index=0)
 
     # assets = list(set(news_df.assetName.to_list()))
     assets = assetNames
