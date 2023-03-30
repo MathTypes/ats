@@ -34,7 +34,7 @@ st.set_page_config(layout="wide")
 ds = Image.open("images/ats.jpg")
 st.sidebar.image(ds)
 navigated = st.sidebar.radio("Navigation:", [
-    "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer", "2Sigma Charts"], index=0)
+    "Overview", "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer"], index=0)
 
 st.title("Streamlit News Analysis")
 # st.sidebar.title("Ats: Stock Market Analysis & Predictions")
@@ -101,7 +101,7 @@ if navigated == "Trading Data":
 if navigated == "TVL vs MCAP Analysis":
     rvl.render_tvl_mcap()
 
-if navigated == "2Sigma Charts":
+if navigated == "Overview":
     sentiment_analyzer.render_sentiment_analysis(
         market_df, news_df, assetNames, from_date, to_date, min_date, max_date)
 

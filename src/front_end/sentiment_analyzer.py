@@ -92,18 +92,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         st.image('x.png')
         os.remove('x.png')
 
-        # def function(app_data):
-        # exchange = 'Yahoo! Finance'
-        # app_data.exchange_data(exchange)
-
-        # if asset == 'Stocks':
-        # st.sidebar.subheader(f'Stock Index:')
-        # stock_indexes = app_data.stock_indexes
-        # market = st.sidebar.selectbox('', stock_indexes, index=11)
-        # app_data.market_data(market)
-        # assets = app_data.stocks
-        # function(app_data=app_data)
-
     def mis_value_graph(data):
         data = [
             go.Bar(
@@ -136,7 +124,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             mis_value_graph(market_df)
         assetNameGB = market_df[market_df['assetName']
                                 == 'Unknown'].groupby('assetCode')
-        # logging.info(f'assetNameGB:{assetNameGB}')
         unknownAssets = assetNameGB.size().reset_index('assetCode')
         unknownAssets.columns = ['assetCode', "value"]
         unknownAssets = unknownAssets.sort_values("value", ascending=False)
