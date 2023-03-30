@@ -56,6 +56,7 @@ def get_unprocessed_tweets():
                 t.perma_link as perma_link, t.like_count as like_count,
                 t.source_url as source_url, t.raw_content as text,
                 t.last_update as last_update
+            ORDER BY t.created_at DESC
             LIMIT 1000
             """
     params = {}
@@ -141,10 +142,11 @@ def get_gpt_sentiments():
 
                                                                                                                            
 def get_gpt_processed_replied_tweets():
-    query = """MATCH (t:RepliedTweet), (r:Tweet)
+    query = """
+            MATCH (t:RepliedTweet), (r:Tweet)
             WHERE t.last_gpt_process_time is not null and r.id=t.tweet_id
             RETURN t.tweet_id as tweet_id, datetime({epochMillis: r.created_at}) as time,
-            t.replies as replies, (r.raw_content+t.text) as text, r.perma_link as perma_link;
+            t.replies as replies, (r.raw_content+t.text) as text, r.perma_link as perma_link
             """
     params = {}
     with driver.session() as session:
@@ -158,10 +160,12 @@ def get_gpt_processed_replied_tweets():
 
 
 def get_gpt_unprocessed_replied_tweets():
-    query = """MATCH (t:RepliedTweet), (r:Tweet)
+    query = """
+            MATCH (t:RepliedTweet), (r:Tweet)
             WHERE t.last_gpt_process_time is null and r.id=t.tweet_id
             RETURN t.tweet_id as tweet_id, datetime({epochMillis: r.created_at}) as time,
             t.replies as replies, (r.raw_content+t.text) as text, r.perma_link as perma_link
+            ORDER BY r.create_at DESC
             LIMIT 10;
             """
     params = {}
@@ -171,7 +175,6 @@ def get_gpt_unprocessed_replied_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
-        #df = keyword_util.add_subject_keyword(df)
         return df
 
 def get_conversations():

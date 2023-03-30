@@ -119,7 +119,7 @@ news_df = None
 
 #with st.spinner("Loading data..."):
 market_df, news_df = load_data()
-logging.info(f'news_df:{news_df}')
+#logging.info(f'news_df:{news_df}')
 #data = pd.read_csv("dataset/process_data.csv")
 #data = get_tweets()
 #logging.info(f'data:{data}')
