@@ -16,16 +16,17 @@ def get_time_series_by_instr_date(instr_name, asof_date):
     elif asof_date < datetime.date(2023, 6, 15):
         post_fix = 'M3'
     assetCode = instr_name + post_fix
-    file_path = os.path.join(ONE_MIN_ROOT_DIR, assetCode,
+    file_path = os.path.join(ONE_MIN_ROOT_DIR, instr_name,
                              asof_date.strftime("%Y%m%d") + '.csv')
     try:
         market_df = pd.read_csv(file_path)
         market_df['assetName'] = instr_name
-        market_df['assetCode'] = assetCode
+        market_df['assetCode'] = instr_name
         market_df = market_df.rename(columns={"date": "time"})
         market_df["time"] = pd.to_datetime(
             market_df["time"], infer_datetime_format=True)
-        market_df = market_df.set_index("time")
+        market_df["idx_time"]=market_df["time"]
+        market_df = market_df.set_index("idx_time")
         market_df = market_df.sort_index()
         return market_df
     except:

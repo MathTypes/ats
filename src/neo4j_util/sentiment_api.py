@@ -114,6 +114,14 @@ def get_tweets_replied_to(tweet_id):
         params={"tweet_id": tweet_id})
     return text
 
+def map_to_market(x):
+    if x in ["WFC", "BAC", "banks"]:
+        return "ES"
+    if x in ["NVDA", "TSLA", "Tesla"]:
+        return "NQ"
+    if x in ["Risk", "Volatility"]:
+        return "ES"
+    return ""
 
 def get_gpt_sentiments():
     query = """
@@ -137,6 +145,9 @@ def get_gpt_sentiments():
         df["text"] = df["text"].apply(lambda x: str(x))
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
+        df["assetName"] = df["assetName"].apply(map_to_market)
+        df["assetCode"] = df["assetName"]
+        #df["assetName"] = "Stocks"
         #df = keyword_util.add_subject_keyword(df)
         #logging.info(f'my_df:{df}')
         return df

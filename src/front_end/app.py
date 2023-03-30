@@ -1,4 +1,10 @@
 
+from util import logging_utils
+from market_data import ts_read_api
+from neo4j_util.sentiment_api import get_tweets, get_gpt_sentiments
+from eda_utils import generate_color
+import plotly.graph_objs as go
+from nltk.corpus import stopwords
 import datetime
 import pandas as pd
 
@@ -60,24 +66,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import nltk
 nltk.download('stopwords')
-from nltk.corpus import stopwords
-
-import pandas as pd
-import plotly.graph_objs as go
-import plotly.express as px
-from PIL import Image
-from wordcloud import WordCloud
-
-from eda_utils import generate_color
-from neo4j_util.sentiment_api import get_tweets, get_gpt_sentiments
-from market_data import ts_read_api
-from util import logging_utils
 
 
 logging_utils.init_logging()
 
 nlp = spacy.load("en_core_web_sm")
-
 
 st.set_page_config(layout="wide")
 # =================================================================================== #
@@ -86,48 +79,54 @@ st.set_page_config(layout="wide")
 ds = Image.open("images/ats.jpg")
 st.sidebar.image(ds)
 navigated = st.sidebar.radio("Navigation:", [
-        "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer", "2Sigma Charts"], index=0)
+    "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer", "2Sigma Charts"], index=0)
 
 st.title("Streamlit News Analysis")
-#st.sidebar.title("Ats: Stock Market Analysis & Predictions")
+# st.sidebar.title("Ats: Stock Market Analysis & Predictions")
 
-#@st.cache_data()
+# @st.cache_data()
 market_df = None
 news_df = None
 assetNames = ["ES", "NQ", "RTY"]
+futureAssetCodes = ["ES", "NQ", "RTY"]
+from_date = datetime.date(2023, 3, 1)
+to_date = datetime.date(2023, 3, 29)
+min_date = datetime.date(2022, 9, 1)
+max_date = datetime.date.today()
+
 def load_data():
-    #market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
-    from_date = datetime.date(2023, 3, 1)
-    to_date = datetime.date(2023, 3, 25)
+    # market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
     df_vec = []
-    for asset in assetNames:
+    for asset in futureAssetCodes:
         for date in pd.date_range(from_date, to_date):
             date_df = ts_read_api.get_time_series_by_instr_date(asset, date)
             df_vec.append(date_df)
     market_df = pd.concat(df_vec)
-    #news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
+    # news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
     news_df = get_gpt_sentiments()
-    #news_df['assetName'] = "ES"
-    #news_df['sentimentClass'] = 1
+    # news_df['assetName'] = "ES"
+    # news_df['sentimentClass'] = 1
     news_df['index_time'] = news_df["time"]
-    #logging.info(f'news_df:{news_df}')
+    # logging.info(f'news_df:{news_df}')
     news_df = news_df.set_index("index_time")
     news_df = news_df.sort_index()
 
     market_df['price_diff'] = market_df['close'] - market_df['open']
-    #market_df.index = pd.to_datetime(market_df.index)
-    #news_df.index = pd.to_datetime(news_df.index)
+    # market_df.index = pd.to_datetime(market_df.index)
+    # news_df.index = pd.to_datetime(news_df.index)
 
     return market_df, news_df
 
-#with st.spinner("Loading data..."):
+
+# with st.spinner("Loading data..."):
 market_df, news_df = load_data()
-#logging.info(f'news_df:{news_df}')
-#data = pd.read_csv("dataset/process_data.csv")
-#data = get_tweets()
-#logging.info(f'data:{data}')
-#conv_data = get_gpt_sentiments()
+# logging.info(f'news_df:{news_df}')
+# data = pd.read_csv("dataset/process_data.csv")
+# data = get_tweets()
+# logging.info(f'data:{data}')
+# conv_data = get_gpt_sentiments()
 news_df = data_process(news_df)
+
 
 def render_model_prediction():
     gc.collect()
@@ -137,8 +136,9 @@ def render_model_prediction():
         indication = 'Predicted'
 
         st.sidebar.subheader('Asset:')
-        asset_options = sorted(['Cryptocurrency', 'Index Fund', 'Forex', 'Futures & Commodities', 'Stocks'])
-        asset = st.sidebar.selectbox('', asset_options, index = 4)
+        asset_options = sorted(
+            ['Cryptocurrency', 'Index Fund', 'Forex', 'Futures & Commodities', 'Stocks'])
+        asset = st.sidebar.selectbox('', asset_options, index=4)
 
         if asset in ['Index Fund', 'Forex', 'Futures & Commodities', 'Stocks']:
             exchange = 'Yahoo! Finance'
@@ -146,8 +146,8 @@ def render_model_prediction():
 
             if asset == 'Stocks':
                 st.sidebar.subheader(f'Stock Index:')
-                stock_indexes  = app_data.stock_indexes
-                market = st.sidebar.selectbox('', stock_indexes, index = 11)
+                stock_indexes = app_data.stock_indexes
+                market = st.sidebar.selectbox('', stock_indexes, index=11)
                 app_data.market_data(market)
                 assets = app_data.stocks
                 asset = f'{market} Companies'
@@ -157,7 +157,7 @@ def render_model_prediction():
                 assets = app_data.futures
             elif asset == 'Forex':
                 assets = app_data.forex
-        
+
             st.sidebar.subheader(f'{asset}:')
             equity = st.sidebar.selectbox('', assets)
 
@@ -168,46 +168,53 @@ def render_model_prediction():
                 currency = 'Pts'
                 market = None
             elif asset == 'Forex':
-                currency = app_data.df_forex[(app_data.df_forex['Currencies'] == equity)]['Currency'].unique()[0]
-                market = app_data.df_forex[(app_data.df_forex['Currencies'] == equity)]['Market'].unique()[0]
+                currency = app_data.df_forex[(
+                    app_data.df_forex['Currencies'] == equity)]['Currency'].unique()[0]
+                market = app_data.df_forex[(
+                    app_data.df_forex['Currencies'] == equity)]['Market'].unique()[0]
             elif asset == f'{market} Companies':
-                currency = app_data.df_stocks[((app_data.df_stocks['Company'] == equity) & (app_data.df_stocks['Index Fund'] == market))]['Currency'].unique()[0]
+                currency = app_data.df_stocks[((app_data.df_stocks['Company'] == equity) & (
+                    app_data.df_stocks['Index Fund'] == market))]['Currency'].unique()[0]
                 asset = 'Stock'
-        
+
             st.sidebar.subheader('Interval:')
-            interval = st.sidebar.selectbox('', ('5 Minute', '15 Minute', '30 Minute', '1 Hour', '1 Day', '1 Week'), index = 4)
-            volitility_index = 0     
+            interval = st.sidebar.selectbox(
+                '', ('5 Minute', '15 Minute', '30 Minute', '1 Hour', '1 Day', '1 Week'), index=4)
+            volitility_index = 0
 
         elif asset in ['Cryptocurrency']:
             exchange = 'Binance'
             app_data.exchange_data(exchange)
             markets = app_data.markets
-        
+
             st.sidebar.subheader('Market:')
-            market = st.sidebar.selectbox('', markets, index = 3)
+            market = st.sidebar.selectbox('', markets, index=3)
             app_data.market_data(market)
             assets = app_data.assets
             currency = app_data.currency
-        
+
             st.sidebar.subheader('Crypto:')
             equity = st.sidebar.selectbox('', assets)
 
             st.sidebar.subheader('Interval:')
-            interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute', '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index = 8)
+            interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute',
+                                            '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index=8)
 
-            volitility_index = 2 
-        
+            volitility_index = 2
+
         label = asset
-        
+
         st.sidebar.subheader('Trading Volatility:')
-        risk = st.sidebar.selectbox('', ('Low', 'Medium', 'High'), index = volitility_index)
+        risk = st.sidebar.selectbox(
+            '', ('Low', 'Medium', 'High'), index=volitility_index)
 
         st.title(f'Automated Technical Analysis.')
         st.subheader(f'{label} Data Sourced from {exchange}.')
         st.info(f'Predicting...')
-    
-        future_price = 1   
-        analysis = Visualization(exchange, interval, equity, indication, action_model, price_model, market)
+
+        future_price = 1
+        analysis = Visualization(
+            exchange, interval, equity, indication, action_model, price_model, market)
         analysis_day = Indications(exchange, '1 Day', equity, market)
         requested_date = analysis.df.index[-1]
         current_price = float(analysis.df['Adj Close'][-1])
@@ -215,9 +222,9 @@ def render_model_prediction():
         requested_prediction_price = float(analysis.requested_prediction_price)
         requested_prediction_action = analysis.requested_prediction_action
 
-        risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]], 
-                'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],   
-                'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]],}
+        risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]],
+                 'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],
+                 'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]], }
         buy_price = float(risks[risk][0])
         sell_price = float(risks[risk][1])
 
@@ -245,8 +252,9 @@ def render_model_prediction():
         else:
             present_statement_prefix = ''
             present_statement_suffix = ''
-                
-        accuracy_threshold = {analysis.score_action: 75., analysis.score_price: 75.}
+
+        accuracy_threshold = {
+            analysis.score_action: 75., analysis.score_price: 75.}
         confidence = dict()
         for score, threshold in accuracy_threshold.items():
             if float(score) >= threshold:
@@ -262,32 +270,36 @@ def render_model_prediction():
 
         asset_suffix = 'price'
 
-        st.markdown(f'**Prediction Date & Time (UTC):** {str(requested_date)}.')
+        st.markdown(
+            f'**Prediction Date & Time (UTC):** {str(requested_date)}.')
         st.markdown(f'**Current Price:** {currency} {current_price}.')
         st.markdown(f'**{interval} Price Change:** {change_display}.')
-        st.markdown(f'**Recommended Trading Action:** You should **{requested_prediction_action.lower()}** {present_statement_prefix} this {label.lower()[:6]}{present_statement_suffix}. {str(confidence[analysis.score_action])}')
-        st.markdown(f'**Estimated Forecast Price:** The {label.lower()[:6]} {asset_suffix} for **{equity}** is estimated to be **{currency} {requested_prediction_price}** in the next **{forcast_prefix} {forcast_suffix}**. {str(confidence[analysis.score_price])}')
+        st.markdown(
+            f'**Recommended Trading Action:** You should **{requested_prediction_action.lower()}** {present_statement_prefix} this {label.lower()[:6]}{present_statement_suffix}. {str(confidence[analysis.score_action])}')
+        st.markdown(
+            f'**Estimated Forecast Price:** The {label.lower()[:6]} {asset_suffix} for **{equity}** is estimated to be **{currency} {requested_prediction_price}** in the next **{forcast_prefix} {forcast_suffix}**. {str(confidence[analysis.score_price])}')
         if requested_prediction_action == 'Hold':
-            st.markdown(f'**Recommended Trading Margins:** You should consider buying more **{equity}** {label.lower()[:6]} at **{currency} {buy_price}** and sell it at **{currency} {sell_price}**.')
+            st.markdown(
+                f'**Recommended Trading Margins:** You should consider buying more **{equity}** {label.lower()[:6]} at **{currency} {buy_price}** and sell it at **{currency} {sell_price}**.')
 
         prediction_fig = analysis.prediction_graph(asset)
-    
+
         st.success(f'Historical {label[:6]} Price Action.')
-        st.plotly_chart(prediction_fig, use_container_width = True)
+        st.plotly_chart(prediction_fig, use_container_width=True)
 
         technical_analysis_fig = analysis.technical_analysis_graph()
-        st.plotly_chart(technical_analysis_fig, use_container_width = True) 
-    
+        st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
     if __name__ == '__main__':
         import warnings
-        #import gc
-        warnings.filterwarnings("ignore") 
+        # import gc
+        warnings.filterwarnings("ignore")
         gc.collect()
         action_model = load_model("action_prediction_model.h5")
         price_model = load_model("price_prediction_model.h5")
         app_data = Data_Sourcing()
-        main(app_data = app_data)
+        main(app_data=app_data)
+
 
 def render_trading_data():
     @st.cache_data()
@@ -306,14 +318,15 @@ def render_trading_data():
     def get_coin_tickers_by_id_list(coins_id: list):
         return CoinGeckoUtils().get_coin_tickers_by_id_list(coins_id)
 
-    #st.set_page_config(layout='wide')
+    # st.set_page_config(layout='wide')
     st.title("Data Available")
 
     with st.spinner(text='In progress'):
         exchanges_df = get_all_exchanges_df()
         coins_df = get_all_coins_df()
         miner_stats_df = get_miner_stats_df()
-    miner_coins = coins_df.loc[coins_df["symbol"].isin(miner_stats_df["base"].str.lower().unique()), "name"]
+    miner_coins = coins_df.loc[coins_df["symbol"].isin(
+        miner_stats_df["base"].str.lower().unique()), "name"]
 
     default_miner_coins = ["Avalanche"]
 
@@ -324,8 +337,6 @@ def render_trading_data():
         st.dataframe(coins_df)
 
     with st.expander('Exchanges data'):
-        from_date = datetime.date(2023, 3, 1)
-        to_date = datetime.date(2023, 3, 25)
         es_market_df = ts_read_api.get_time_series('ES', from_date, to_date)
         nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
         exchanges_df = pd.concat([es_market_df, nq_market_df])
@@ -333,7 +344,6 @@ def render_trading_data():
 
     st.write("---")
     st.write("## Tickers filtered")
-
 
     st.write("### Coins filter")
     tokens = st.multiselect(
@@ -344,16 +354,17 @@ def render_trading_data():
     coins_id = coins_df.loc[coins_df["name"].isin(tokens), "id"].tolist()
 
     coin_tickers_df = get_coin_tickers_by_id_list(coins_id)
-    coin_tickers_df["coin_name"] = coin_tickers_df.apply(lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
+    coin_tickers_df["coin_name"] = coin_tickers_df.apply(
+        lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
     st.write("### Exchanges filter")
     exchanges = st.multiselect(
         "Select the exchanges to analyze:",
         options=exchanges_df["assetName"],
         default=[exchange for exchange in CONFIG.MINER_EXCHANGES if exchange in exchanges_df["assetName"].unique()])
 
-
     with st.expander('Coins Tickers Data'):
         st.dataframe(coin_tickers_df)
+
 
 def render_new_analysis():
     @st.cache_data()
@@ -384,7 +395,7 @@ def render_new_analysis():
             st.dataframe(get_table_data(uploaded_file.name, table))
 
 
-#crypto_analysis = st.sidebar.checkbox("TVL vs MCAP Analysis")
+# crypto_analysis = st.sidebar.checkbox("TVL vs MCAP Analysis")
 
 def render_tvl_mcap():
     MIN_TVL = 1000000.
@@ -394,8 +405,9 @@ def render_tvl_mcap():
     def get_tvl_mcap_data():
         llama = DefiLlama()
         df = pd.DataFrame(llama.get_all_protocols())
-        tvl_mcap_df = df.loc[(df["tvl"]>0) & (df["mcap"]>0), ["name", "tvl", "mcap", "chain", "category", "slug"]].sort_values(by=["mcap"], ascending=False)
-        return tvl_mcap_df[(tvl_mcap_df["tvl"] > MIN_TVL) & (tvl_mcap_df["mcap"]> MIN_MCAP)]
+        tvl_mcap_df = df.loc[(df["tvl"] > 0) & (df["mcap"] > 0), [
+            "name", "tvl", "mcap", "chain", "category", "slug"]].sort_values(by=["mcap"], ascending=False)
+        return tvl_mcap_df[(tvl_mcap_df["tvl"] > MIN_TVL) & (tvl_mcap_df["mcap"] > MIN_MCAP)]
 
     def get_protocols_by_chain_category(protocols: pd.DataFrame, group_by: list, nth: list):
         return protocols.sort_values('tvl', ascending=False).groupby(group_by).nth(nth).reset_index()
@@ -406,7 +418,8 @@ def render_tvl_mcap():
     with st.spinner(text='In progress'):
         tvl_mcap_df = get_tvl_mcap_data()
 
-    default_chains = ["Ethereum", "Solana", "Binance", "Polygon", "Multi-Chain", "Avalanche"]
+    default_chains = ["Ethereum", "Solana", "Binance",
+                      "Polygon", "Multi-Chain", "Avalanche"]
 
     st.sidebar.write("### Chains filter")
     chains = st.sidebar.multiselect(
@@ -435,26 +448,28 @@ def render_tvl_mcap():
 
     st.sidebar.write("---")
     st.sidebar.write("### SunBurst filter")
-    groupby = st.sidebar.selectbox('Group by:', [['chain', 'category'], ['category', 'chain']])
-    nth = st.sidebar.slider('Top protocols by Category', min_value=1, max_value=5)
+    groupby = st.sidebar.selectbox(
+        'Group by:', [['chain', 'category'], ['category', 'chain']])
+    nth = st.sidebar.slider('Top protocols by Category',
+                            min_value=1, max_value=5)
 
-    proto_agg = get_protocols_by_chain_category(tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)], groupby, np.arange(0, nth, 1).tolist())
+    proto_agg = get_protocols_by_chain_category(
+        tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)], groupby, np.arange(0, nth, 1).tolist())
     groupby.append("slug")
     sunburst = px.sunburst(
-        proto_agg, 
+        proto_agg,
         path=groupby,
         values='tvl',
         height=800,
         title="SunBurst",
         template="plotly_dark",)
 
-
     st.plotly_chart(sunburst, use_container_width=True)
 
     st.sidebar.write("# Data filters")
 
 
-#xe_token_analyze = st.sidebar.checkbox("XE Token Analyzer")
+# xe_token_analyze = st.sidebar.checkbox("XE Token Analyzer")
 
 def render_token_analyzer():
     @st.cache_data()
@@ -479,8 +494,8 @@ def render_token_analyzer():
         exchanges_df = get_all_exchanges_df()
         coins_df = get_all_coins_df()
         miner_stats_df = get_miner_stats_df()
-    miner_coins = coins_df.loc[coins_df["symbol"].isin(miner_stats_df["base"].str.lower().unique()), "name"]
-
+    miner_coins = coins_df.loc[coins_df["symbol"].isin(
+        miner_stats_df["base"].str.lower().unique()), "name"]
 
     st.write("### Coins filter")
     tokens = st.multiselect(
@@ -491,7 +506,8 @@ def render_token_analyzer():
     coins_id = coins_df.loc[coins_df["name"].isin(tokens), "id"].tolist()
 
     coin_tickers_df = get_coin_tickers_by_id_list(coins_id)
-    coin_tickers_df["coin_name"] = coin_tickers_df.apply(lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
+    coin_tickers_df["coin_name"] = coin_tickers_df.apply(
+        lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
 
     st.sidebar.write("### Exchanges filter")
     exchanges = st.sidebar.multiselect(
@@ -501,7 +517,8 @@ def render_token_analyzer():
 
     height = len(coin_tickers_df["coin_name"].unique()) * 500
     fig = px.scatter(
-        data_frame=coin_tickers_df[coin_tickers_df["exchange"].isin(exchanges)],
+        data_frame=coin_tickers_df[coin_tickers_df["exchange"].isin(
+            exchanges)],
         x="volume",
         y="bid_ask_spread_percentage",
         color="exchange",
@@ -521,41 +538,46 @@ def render_token_analyzer():
     st.sidebar.write("Data filters")
     st.plotly_chart(fig, use_container_width=True)
 
+
 if navigated == "XE Token Analyzer":
     render_token_analyzer()
+
 
 def render_sentiment_analysis():
     stop = set(stopwords.words('english'))
     analysis = st.sidebar.radio("Choose analysis", [
         "Data exploration", "Aggregation charts", "Sentiment analysis"], index=0)
 
-    assets = list(set(news_df.assetName.to_list()))
-    assets_dict = dict(zip(market_df.assetName, market_df.assetCode))
+    # assets = list(set(news_df.assetName.to_list()))
+    assets = assetNames
+    #assets_dict = dict(zip(market_df.assetName, market_df.assetCode))
+    assets_dict = dict(zip(assetNames, assetNames))
 
     def get_asset_code(asset):
         return assets_dict.get(asset)
 
-
     def draw_wordcloud(asset="all assets", start_date=None, end_date=None):
-        start_date = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-        end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
-        #dr = pd.date_range(start_date, end=end_date, tz='Asia/Tokyo')
-        #logging.info(f'news_df.index:{news_df.index}')
-        #logging.info(f'market_df.index:{market_df.index}')
-        #logging.info(f'start_date:{type(start_date)}')
-        #logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-        logging.info(f'news_df_draw_wordcloud:{news_df["time"]}')
+        start_date = datetime.datetime.combine(
+            start_date, datetime.datetime.min.time())
+        end_date = datetime.datetime.combine(
+            end_date, datetime.datetime.min.time())
+        # dr = pd.date_range(start_date, end=end_date, tz='Asia/Tokyo')
+        # logging.info(f'news_df.index:{news_df.index}')
+        # logging.info(f'market_df.index:{market_df.index}')
+        # logging.info(f'start_date:{type(start_date)}')
+        # logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
+        # logging.info(f'news_df_draw_wordcloud:{news_df["time"]}')
         if asset.lower() == "all assets":
             headlines100k = news_df[news_df["time"].between(start_date, end_date)]['text'].str.lower(
             ).values[-100000:]
         else:
             headlines100k = news_df.loc[news_df["assetName"] ==
                                         asset].loc[start_date:end_date, "text"].str.lower().values[-100000:]
-        #logging.info(f'asset:{asset}')
-        #logging.info(f'news:{headlines100k}')
+        # logging.info(f'asset:{asset}')
+        # logging.info(f'news:{headlines100k}')
         text = ' '.join(
             headline for headline in headlines100k if type(headline) == str)
-        #logging.info(f'draw_wordcloud:{text}')
+        # logging.info(f'draw_wordcloud:{text}')
 
         wordcloud = WordCloud(
             max_font_size=None,
@@ -565,28 +587,28 @@ def render_sentiment_analysis():
             height=850
         ).generate(text)
 
-        fig1 = plt.figure(figsize = (3, 3))
+        fig1 = plt.figure(figsize=(3, 3))
         plt.subplot(1, 1, 1)
         plt.imshow(wordcloud, interpolation='bilinear')
         plt.axis('off')
         plt.subplots_adjust(wspace=.025, hspace=.025)
 
         # save image, display it, and delete after usage.
-        plt.savefig('x',dpi=400)
+        plt.savefig('x', dpi=400)
         st.image('x.png')
         os.remove('x.png')
+
         def function(app_data):
             exchange = 'Yahoo! Finance'
             app_data.exchange_data(exchange)
 
             if asset == 'Stocks':
                 st.sidebar.subheader(f'Stock Index:')
-                stock_indexes  = app_data.stock_indexes
-                market = st.sidebar.selectbox('', stock_indexes, index = 11)
+                stock_indexes = app_data.stock_indexes
+                market = st.sidebar.selectbox('', stock_indexes, index=11)
                 app_data.market_data(market)
                 assets = app_data.stocks
-        function(app_data = app_data)
-
+        function(app_data=app_data)
 
     def mis_value_graph(data):
         data = [
@@ -603,11 +625,10 @@ def render_sentiment_analysis():
             legend=dict(
                 yanchor="bottom",
                 xanchor="right",
-           )
+            )
         )
         fig = go.Figure(data=data, layout=layout)
         st.plotly_chart(fig, use_container_width=True)
-
 
     if analysis.lower() == "data exploration":
 
@@ -619,9 +640,9 @@ def render_sentiment_analysis():
                     "We can see that asset with name 'Unknown' accounts for all the missing values")
 
             mis_value_graph(market_df)
-
         assetNameGB = market_df[market_df['assetName']
                                 == 'Unknown'].groupby('assetCode')
+        # logging.info(f'assetNameGB:{assetNameGB}')
         unknownAssets = assetNameGB.size().reset_index('assetCode')
         unknownAssets.columns = ['assetCode', "value"]
         unknownAssets = unknownAssets.sort_values("value", ascending=False)
@@ -670,7 +691,7 @@ def render_sentiment_analysis():
 
             g = grouped.sort_values(('price_diff', 'std'), ascending=False)[
                 :no_of_drops]
-            #logging.info(f'g:{g}')
+            # logging.info(f'g:{g}')
             g['min_text'] = 'Maximum price drop: ' + \
                 (-1 * g['price_diff']['min']).astype(str)
             data = [go.Scatter(
@@ -703,7 +724,7 @@ def render_sentiment_analysis():
             st.info("We can see huge price fluctiations when market crashed. But this **must be  wrong**, as there was no huge crash on January 2010... which means that there must be some outliers on our data.")
 
         with row2_2:
-            assets = list(news_df.assetName.unique())
+            assets = assetNames
             assets.insert(0, "All assets")
 
             selected_asset = st.selectbox(
@@ -712,10 +733,11 @@ def render_sentiment_analysis():
                 index=0,
             )
 
-            time_period = st.date_input("From/To", [datetime.date(
-                2022, 12, 1), datetime.date(2023, 12, 31)], min_value=datetime.date(2022, 12, 1), max_value=datetime.date(2023, 12, 31))
+            time_period = st.date_input("From/To", [from_date,
+                                                    to_date], min_value=from_date, max_value=to_date)
 
-            nlp_util.draw_wordcloud(news_df, stop, selected_asset, *time_period)
+            nlp_util.draw_wordcloud(
+                news_df, stop, selected_asset, *time_period)
 
     elif analysis.lower() == "aggregation charts":
 
@@ -728,23 +750,26 @@ def render_sentiment_analysis():
 
         start_date = st.sidebar.date_input(
             "Starting date",
-            value=datetime.date(2022, 12, 1),
-            min_value=datetime.date(2022, 12, 1),
-            max_value=datetime.date(2023, 12, 30)
+            value=from_date,
+            min_value=min_date,
+            max_value=max_date
         )
 
         end_date = st.sidebar.date_input(
             "End date",
-            value=datetime.date(2022, 12, 30),
-            min_value=datetime.date(2022, 12, 1),
-            max_value=datetime.date(2023, 12, 30)
+            value=to_date,
+            min_value=min_date,
+            max_value=max_date
         )
-
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
         if selected_assets:
             data1 = []
             for asset in selected_assets:
-                asset_df = market_df[(market_df['assetName']
-                                      == asset)].loc[start_date:end_date]
+                logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
+                logging.info(f'market_df:{market_df[(market_df["assetName"] == asset)]}')
+                asset_market_df = market_df[(market_df['assetName']== asset)]
+                asset_df = asset_market_df[asset_market_df["time"].between(start_date, end_date)]
 
                 data1.append(go.Scatter(
                     x=asset_df.index.strftime(date_format='%Y-%m-%d').values,
@@ -764,16 +789,16 @@ def render_sentiment_analysis():
                                      stepmode="backward"),
                                 dict(count=6,
                                      label="6m",
-                                    step="month",
-                                    stepmode="backward"),
+                                     step="month",
+                                     stepmode="backward"),
                                 dict(count=1,
                                      label="YTD",
-                                    step="year",
-                                    stepmode="todate"),
+                                     step="year",
+                                     stepmode="todate"),
                                 dict(count=1,
                                      label="1y",
-                                    step="year",
-                                    stepmode="backward"),
+                                     step="year",
+                                     stepmode="backward"),
                                 dict(step="all")
                             ])
                         ),
@@ -794,15 +819,16 @@ def render_sentiment_analysis():
             with st.expander("Description"):
                 st.write("We can see some companies' stocks started trading later, some dissappeared. Disappearence could be due to bankruptcy, acquisition or other reasons.")
 
-        @st.cache_data()
+        #@st.cache_data()
         def trends_quantile_chart(market_df):
             data = []
             for i in [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]:
                 price_df = market_df.groupby(market_df.index)[
                     'close'].quantile(i).reset_index()
-
+                logging.info(f'price_df:{price_df}')
                 data.append(go.Scatter(
-                    x=price_df['time'].dt.strftime(date_format='%Y-%m-%d').values,
+                    x=price_df['time'].dt.strftime(
+                        date_format='%Y-%m-%d').values,
                     y=price_df['close'].values,
                     name=f'{i} quantile'
                 ))
@@ -820,7 +846,8 @@ def render_sentiment_analysis():
             )
         )
 
-        st.plotly_chart(dict(data=data2, layout=layout1), use_container_width=True)
+        st.plotly_chart(dict(data=data2, layout=layout1),
+                        use_container_width=True)
         with st.expander("See explanation"):
             st.write(
                 """
@@ -829,17 +856,19 @@ def render_sentiment_analysis():
             )
 
     elif analysis.lower() == "sentiment analysis":
-        logging.info(f'news_df:{news_df.columns}')
-        assets = list(news_df.assetName.unique())
-        #logging.info(f'assets:{assets}')
+        # assets = list(news_df.assetName.unique())
+        assets = assetNames
+        logging.info(f'assetNames:{assetNames}')
+        # logging.info(f'assets:{assets}')
         selected_assets = st.sidebar.multiselect(
             "Please select the assets",
             assets,
-            default=['BAC']
+            default=['Stocks']
         )
+        logging.info(f'selected_assets:{selected_assets}')
 
-        start_date, end_date = st.sidebar.date_input("Time period (from/to)", [datetime.date(
-            2022, 1, 1), datetime.date(2023, 12, 31)], min_value=datetime.date(2022, 1, 1), max_value=datetime.date(2023, 12, 31))
+        start_date, end_date = st.sidebar.date_input("Time period (from/to)",
+                                                     [from_date, to_date], min_value=min_date, max_value=max_date)
 
         row1_1, row1_2 = st.columns(2)
         row2_1, row2_2 = st.columns(2)
@@ -878,7 +907,7 @@ def render_sentiment_analysis():
             st.plotly_chart(top10_mean_sentiment_plot(
                 "positive", start_date, end_date))
 
-        #sent_labels = ['negative', 'neutral', 'positive']
+        # sent_labels = ['negative', 'neutral', 'positive']
         sent_labels = ['positive']
         grouped_assets = news_df.loc[start_date:end_date].groupby("assetName")
         assets_sentiment_dict = {}
@@ -889,12 +918,12 @@ def render_sentiment_analysis():
                 counts = counts.values/sum(counts.values)
                 assets_sentiment_dict[asset] = list(counts)
 
-        #logging.info(f'assets_sentiment_dict:{assets_sentiment_dict}')
+        # logging.info(f'assets_sentiment_dict:{assets_sentiment_dict}')
         sentiment_df = pd.DataFrame.from_dict(
             assets_sentiment_dict, orient='index', columns=sent_labels)
         sentiment_df = pd.melt(sentiment_df.rename_axis('asset').reset_index(), id_vars=[
                                "asset"], value_vars=sent_labels, var_name='sentiment', value_name='count')
-        #logging.info(f'sentiment_df:{sentiment_df}')
+        # logging.info(f'sentiment_df:{sentiment_df}')
         fig = px.bar(
             sentiment_df,
             x="sentiment",
@@ -925,11 +954,12 @@ def render_sentiment_analysis():
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
                 d = name.strftime("%m/%d/%Y, %H:%M")
                 counts = group["sentimentClass"].value_counts()
-                #logging.info(f'counts:{counts}')
-                #logging.info(f'counts_index:{counts.index}')
+                # logging.info(f'counts:{counts}')
+                # logging.info(f'counts_index:{counts.index}')
                 counts.index = counts.index.astype("int8")
                 if counts.size > 0:
-                    mean_sentiment_score = np.average(counts.index, weights=counts)
+                    mean_sentiment_score = np.average(
+                        counts.index, weights=counts)
                 else:
                     mean_sentiment_score = 0
                 X.append(d)
@@ -962,6 +992,7 @@ def render_sentiment_analysis():
                 st.latex(
                     r'''score = \frac{-1 \cdot samples(negative) + 1 \cdot samples(positive)}{total\_samples}''')
 
+
 def render_visualization():
     global news_df
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
@@ -978,10 +1009,10 @@ def render_visualization():
 
     start_day = pd.to_datetime(s_d)
     end_day = pd.to_datetime(e_d)
-    logging.info(f'start_day:{start_day}, end_day:{end_day}')
-    logging.info(f'before filtering:{news_df}')
+    # logging.info(f'start_day:{start_day}, end_day:{end_day}')
+    # logging.info(f'before filtering:{news_df}')
     sub_data = news_df[news_df["time"].between(start_day, end_day)]
-    logging.info(f'sub_data:{sub_data["keyword_subject"]}')
+    # logging.info(f'sub_data:{sub_data["keyword_subject"]}')
     count = sub_data.shape[0]
     # =================================================================================== #
     #                                General                                              #
@@ -992,11 +1023,13 @@ def render_visualization():
         # =================================================================================== #
         col3, col4 = st.columns(2)
         with col3:
-            sub_data["keyword_subject"] = sub_data["keyword_subject"].apply(lambda x: str(x).replace('[','').replace(']',''))
-            sub_data["keyword_text"] = sub_data["keyword_text"].apply(lambda x: str(x).replace('[','').replace(']',''))
+            sub_data["keyword_subject"] = sub_data["keyword_subject"].apply(
+                lambda x: str(x).replace('[', '').replace(']', ''))
+            sub_data["keyword_text"] = sub_data["keyword_text"].apply(
+                lambda x: str(x).replace('[', '').replace(']', ''))
             st.subheader("**Subject wordcloud:**")
             cloud_text = " ".join(sub_data["keyword_subject"])
-            logging.info(f'cloud_text:{cloud_text}')
+            # logging.info(f'cloud_text:{cloud_text}')
             wordcloud = WordCloud(
                 colormap="Blues",
                 background_color="white",
@@ -1013,7 +1046,7 @@ def render_visualization():
         with col4:
             st.subheader("**Text wordcloud:**")
             cloud_text = " ".join(sub_data["keyword_text"])
-            #logging.info(f'cloud_text:{cloud_text}')
+            # logging.info(f'cloud_text:{cloud_text}')
             wordcloud = WordCloud(
                 colormap="Reds",
                 background_color="white",
@@ -1035,8 +1068,9 @@ def render_visualization():
             col3, col4 = st.columns(2)
             with col3:
                 # TODO: fix missing lemma_text
-                sub_data["lemma_text"] = sub_data["keyword_text"].apply(lambda x: str(x).replace('[','').replace(']',''))
-                #logging.info(f"sub_data_lemma_text:{sub_data['lemma_text']}")
+                sub_data["lemma_text"] = sub_data["keyword_text"].apply(
+                    lambda x: str(x).replace('[', '').replace(']', ''))
+                # logging.info(f"sub_data_lemma_text:{sub_data['lemma_text']}")
                 common_words = get_top_n_bigram(
                     sub_data["lemma_text"], ngram_range=2, n=20
                 )
@@ -1055,7 +1089,7 @@ def render_visualization():
                 st.plotly_chart(fig)
                 with col4:
                     common_words = get_top_n_bigram(
-                        sub_data["lemma_text"].apply(lambda x: str(x).replace('[','').replace(']','')), ngram_range=3, n=20
+                        sub_data["lemma_text"].apply(lambda x: str(x).replace('[', '').replace(']', '')), ngram_range=3, n=20
                     )
                     df_20_bi = pd.DataFrame(
                         common_words, columns=["Bigram", "count"]
@@ -1083,12 +1117,14 @@ def render_visualization():
                              color_discrete_sequence=px.colors.qualitative.Pastel)
                 st.plotly_chart(fig)
             with col2:
-                #df = df[df["sub_date"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
+                # df = df[df["sub_date"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
                 df = news_df
-                df = df[df["time"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
+                df = df[df["time"].between(pd.to_datetime(
+                    "2023-01-01"), pd.to_datetime("2023-12-31"))]
                 sub_df = subject_analysis(df)
                 st.markdown("**Text analysis:**")
-                fig = px.bar(sub_df, x='sub_date', y='polarity', title='News subject polarity over time')
+                fig = px.bar(sub_df, x='sub_date', y='polarity',
+                             title='News subject polarity over time')
                 st.plotly_chart(fig)
         # =================================================================================== #
         #                                Topic recognition                                    #
@@ -1099,7 +1135,8 @@ def render_visualization():
             lda = LatentDirichletAllocation(sub_data)
             perplexity, coherance_lda, vis = lda.visualisation()
             html_string = pyLDAvis.prepared_data_to_html(vis)
-            st.components.v1.html(html_string, width=1300, height=800, scrolling=True)
+            st.components.v1.html(html_string, width=1300,
+                                  height=800, scrolling=True)
     # =================================================================================== #
     #                                Detailed                                             #
     # =================================================================================== #
@@ -1118,7 +1155,7 @@ def render_visualization():
             text = df["text"][df["subject"] == option[0]].values[0]
             sen = nlp(text)
             visualize_ner(
-                    sen, title="", labels=nlp.get_pipe("ner").labels
+                sen, title="", labels=nlp.get_pipe("ner").labels
             )
             st.markdown("**sentiment analysis:**")
             col1, col2 = st.columns(2)
@@ -1206,7 +1243,7 @@ def render_visualization():
             )
 
 
-if navigated == "New Analysis": 
+if navigated == "New Analysis":
     render_new_analysis()
 
 if navigated == "Model Predictions":
