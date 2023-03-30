@@ -103,7 +103,7 @@ if navigated == "TVL vs MCAP Analysis":
 
 if navigated == "2Sigma Charts":
     sentiment_analyzer.render_sentiment_analysis(
-        market_df, news_df, assetNames, from_date, to_date)
+        market_df, news_df, assetNames, from_date, to_date, min_date, max_date)
 
 if navigated == "Visualization":
     visualization.render_visualization(news_df)

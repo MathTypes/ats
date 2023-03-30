@@ -81,7 +81,6 @@ def get_processed_tweets():
             MATCH (t:Tweet)
             MATCH (rt:RepliedTweet)
             WHERE t.created_at is not null and rt.tweet_id=t.id and rt.text is not null
-             and not ("" in rt.lemma_text)
              and not ("" in rt.keyword_subject)
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
@@ -91,7 +90,7 @@ def get_processed_tweets():
                 rt.lemma_text as lemma_text, rt.keyword_text as keyword_text,
                 rt.subject as subject
             ORDER BY t.created_at DESC
-            LIMIT 50000
+            LIMIT 5000
             """
     params = {}
     with driver.session() as session:
@@ -102,7 +101,7 @@ def get_processed_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True).dt.date
-        logging.info(f'original_df_text:{df["text"]}')
+        #logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
@@ -198,9 +197,9 @@ def get_gpt_sentiments():
     RETURN t.id as tweet_id, datetime({epochMillis: t.created_at}) as time,
             (t.raw_content + rt.text) as text, t.perma_link as perma_link,
             r.class as sentimentClass, r.rank as score, e.name as assetName, e.type as entity_type,
-            (t.raw_content + rt.text) as lemma_text,
-            (t.raw_content + rt.text) as keyword_text,
-            (t.raw_content + rt.text) as keyword_subject
+            rt.lemma_text as lemma_text,
+            rt.keyword_text as keyword_text,
+            rt.keyword_subject as keyword_subject
     ORDER BY t.created_at DESC
             """
     params = {}

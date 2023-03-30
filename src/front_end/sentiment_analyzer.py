@@ -36,14 +36,15 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date):
+
+def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date, min_date, max_date):
     stop = set(stopwords.words('english'))
     analysis = st.sidebar.radio("Choose analysis", [
         "Data exploration", "Aggregation charts", "Sentiment analysis"], index=0)
 
     # assets = list(set(news_df.assetName.to_list()))
     assets = assetNames
-    #assets_dict = dict(zip(market_df.assetName, market_df.assetCode))
+    # assets_dict = dict(zip(market_df.assetName, market_df.assetCode))
     assets_dict = dict(zip(assetNames, assetNames))
 
     def get_asset_code(asset):
@@ -91,17 +92,17 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         st.image('x.png')
         os.remove('x.png')
 
-        #def function(app_data):
-            #exchange = 'Yahoo! Finance'
-            #app_data.exchange_data(exchange)
+        # def function(app_data):
+        # exchange = 'Yahoo! Finance'
+        # app_data.exchange_data(exchange)
 
-            #if asset == 'Stocks':
-                #st.sidebar.subheader(f'Stock Index:')
-                #stock_indexes = app_data.stock_indexes
-                #market = st.sidebar.selectbox('', stock_indexes, index=11)
-                #app_data.market_data(market)
-                #assets = app_data.stocks
-        #function(app_data=app_data)
+        # if asset == 'Stocks':
+        # st.sidebar.subheader(f'Stock Index:')
+        # stock_indexes = app_data.stock_indexes
+        # market = st.sidebar.selectbox('', stock_indexes, index=11)
+        # app_data.market_data(market)
+        # assets = app_data.stocks
+        # function(app_data=app_data)
 
     def mis_value_graph(data):
         data = [
@@ -214,7 +215,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             fig = go.Figure(data=data, layout=layout)
             st.plotly_chart(fig, use_container_width=True)
 
-            #st.info("We can see huge price fluctiations when market crashed. But this **must be  wrong**, as there was no huge crash on January 2010... which means that there must be some outliers on our data.")
+            # st.info("We can see huge price fluctiations when market crashed. But this **must be  wrong**, as there was no huge crash on January 2010... which means that there must be some outliers on our data.")
 
         with row2_2:
             assets = assetNames
@@ -238,158 +239,161 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             def main(app_data):
                 indication = 'Predicted'
 
-                #st.sidebar.subheader('Asset:')
-                #asset_options = sorted(['Cryptocurrency', 'Index Fund', 'Forex', 'Futures & Commodities', 'Stocks'])
-                #asset = st.sidebar.selectbox('', asset_options, index = 4)
+                # st.sidebar.subheader('Asset:')
+                # asset_options = sorted(['Cryptocurrency', 'Index Fund', 'Forex', 'Futures & Commodities', 'Stocks'])
+                # asset = st.sidebar.selectbox('', asset_options, index = 4)
 
-                #if asset in ['Index Fund', 'Forex', 'Futures & Commodities', 'Stocks']:
+                # if asset in ['Index Fund', 'Forex', 'Futures & Commodities', 'Stocks']:
                 exchange = 'Yahoo! Finance'
                 app_data.exchange_data(exchange)
 
-                #if asset == 'Stocks':
+                # if asset == 'Stocks':
                 st.sidebar.subheader(f'Stock Index:')
-                stock_indexes  = app_data.stock_indexes
-                market = st.sidebar.selectbox('', stock_indexes, index = 11)
+                stock_indexes = app_data.stock_indexes
+                market = st.sidebar.selectbox('', stock_indexes, index=11)
                 app_data.market_data(market)
                 assets = app_data.stocks
                 asset = f'{market} Companies'
-                #elif asset == 'Index Fund':
-                    #assets = app_data.indexes
-                #elif asset == 'Futures & Commodities':
-                    #assets = app_data.futures
-                #elif asset == 'Forex':
-                    #assets = app_data.forex
-            
+                # elif asset == 'Index Fund':
+                # assets = app_data.indexes
+                # elif asset == 'Futures & Commodities':
+                # assets = app_data.futures
+                # elif asset == 'Forex':
+                # assets = app_data.forex
+
                 st.sidebar.subheader(f'{asset}:')
                 equity = st.sidebar.selectbox('', assets)
 
-                #if asset == 'Futures & Commodities':
-                    #currency = 'USD'
-                    #market = None
-                #elif asset == 'Index Fund':
-                    #currency = 'Pts'
-                    #market = None
-                #elif asset == 'Forex':
-                    #currency = app_data.df_forex[(app_data.df_forex['Currencies'] == equity)]['Currency'].unique()[0]
-                    #market = app_data.df_forex[(app_data.df_forex['Currencies'] == equity)]['Market'].unique()[0]
-                #elif asset == f'{market} Companies':
-                    #currency = app_data.df_stocks[((app_data.df_stocks['Company'] == equity) & (app_data.df_stocks['Index Fund'] == market))]['Currency'].unique()[0]
-                    #asset = 'Stock'
-            
+                # if asset == 'Futures & Commodities':
+                # currency = 'USD'
+                # market = None
+                # elif asset == 'Index Fund':
+                # currency = 'Pts'
+                # market = None
+                # elif asset == 'Forex':
+                # currency = app_data.df_forex[(app_data.df_forex['Currencies'] == equity)]['Currency'].unique()[0]
+                # market = app_data.df_forex[(app_data.df_forex['Currencies'] == equity)]['Market'].unique()[0]
+                # elif asset == f'{market} Companies':
+                # currency = app_data.df_stocks[((app_data.df_stocks['Company'] == equity) & (app_data.df_stocks['Index Fund'] == market))]['Currency'].unique()[0]
+                # asset = 'Stock'
+
                 st.sidebar.subheader('Interval:')
-                interval = st.sidebar.selectbox('', ('5 Minute', '15 Minute', '30 Minute', '1 Hour', '1 Day', '1 Week'), index = 4)
-                volitility_index = 0     
+                interval = st.sidebar.selectbox(
+                    '', ('5 Minute', '15 Minute', '30 Minute', '1 Hour', '1 Day', '1 Week'), index=4)
+                volitility_index = 0
 
-                #elif asset in ['Cryptocurrency']:
-                    #exchange = 'Binance'
-                    #markets = app_data.markets
-                    #st.sidebar.subheader('Market:')
-                    #market = st.sidebar.selectbox('', markets, index = 3)
-                    #app_data.market_data(market)
-                    #assets = app_data.assets
-                    #currency = app_data.currency
-                
-                    #st.sidebar.subheader('Crypto:')
-                    #equity = st.sidebar.selectbox('', assets)
+                # elif asset in ['Cryptocurrency']:
+                # exchange = 'Binance'
+                # markets = app_data.markets
+                # st.sidebar.subheader('Market:')
+                # market = st.sidebar.selectbox('', markets, index = 3)
+                # app_data.market_data(market)
+                # assets = app_data.assets
+                # currency = app_data.currency
 
-                    #st.sidebar.subheader('Interval:')
-                    #interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute', '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index = 8)
+                # st.sidebar.subheader('Crypto:')
+                # equity = st.sidebar.selectbox('', assets)
 
-                    #volitility_index = 2 
-                
+                # st.sidebar.subheader('Interval:')
+                # interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute', '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index = 8)
+
+                # volitility_index = 2
+
                 label = asset
-                
-                #st.sidebar.subheader('Trading Volatility:')
-                risk = st.sidebar.selectbox('', ('Low', 'Medium', 'High'), index = volitility_index)
 
-                #st.title(f'Automated Technical Analysis.')
-                #st.subheader(f'{label} Data Sourced from {exchange}.')
-                #st.info(f'Predicting...')
-            
-                #future_price = 1   
-                analysis = Visualization(exchange, interval, equity, indication, action_model, price_model, market)
+                # st.sidebar.subheader('Trading Volatility:')
+                risk = st.sidebar.selectbox(
+                    '', ('Low', 'Medium', 'High'), index=volitility_index)
+
+                # st.title(f'Automated Technical Analysis.')
+                # st.subheader(f'{label} Data Sourced from {exchange}.')
+                # st.info(f'Predicting...')
+
+                # future_price = 1
+                analysis = Visualization(
+                    exchange, interval, equity, indication, action_model, price_model, market)
                 analysis_day = Indications(exchange, '1 Day', equity, market)
                 requested_date = analysis.df.index[-1]
                 current_price = float(analysis.df['Adj Close'][-1])
                 change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
-                #requested_prediction_price = float(analysis.requested_prediction_price)
-                #requested_prediction_action = analysis.requested_prediction_action
+                # requested_prediction_price = float(analysis.requested_prediction_price)
+                # requested_prediction_action = analysis.requested_prediction_action
 
-                risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]], 
-                        'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],   
-                        'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]],}
+                risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]],
+                         'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],
+                         'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]], }
                 buy_price = float(risks[risk][0])
                 sell_price = float(risks[risk][1])
 
                 #
 
-                #if change > 0:
-                    #change_display = f'A **{float(change):,.2f}%** gain'
-                #elif change < 0:
-                    #change_display = f'A **{float(change):,.2f}%** loss'
-                #else:
-                    #change_display = 'UNCH'
+                # if change > 0:
+                # change_display = f'A **{float(change):,.2f}%** gain'
+                # elif change < 0:
+                # change_display = f'A **{float(change):,.2f}%** loss'
+                # else:
+                # change_display = 'UNCH'
 
-                #if exchange == 'Yahoo! Finance':
-                    #current_price = f'{float(current_price):,.2f}'
-                    #requested_prediction_price = f'{float(requested_prediction_price):,.2f}'
-                    #buy_price = f'{float(buy_price):,.2f}'
-                    #sell_price = f'{float(sell_price):,.2f}'
-                #else:
-                    #current_price = f'{float(current_price):,.8f}'
-                    #requested_prediction_price = f'{float(requested_prediction_price):,.8f}'
-                    #buy_price = f'{float(buy_price):,.8f}'
-                    #sell_price = f'{float(sell_price):,.8f}'
+                # if exchange == 'Yahoo! Finance':
+                # current_price = f'{float(current_price):,.2f}'
+                # requested_prediction_price = f'{float(requested_prediction_price):,.2f}'
+                # buy_price = f'{float(buy_price):,.2f}'
+                # sell_price = f'{float(sell_price):,.2f}'
+                # else:
+                # current_price = f'{float(current_price):,.8f}'
+                # requested_prediction_price = f'{float(requested_prediction_price):,.8f}'
+                # buy_price = f'{float(buy_price):,.8f}'
+                # sell_price = f'{float(sell_price):,.8f}'
 
-                #if analysis.requested_prediction_action == 'Hold':
-                    #present_statement_prefix = 'off from taking any action with'
-                    #present_statement_suffix = ' at this time'
-                #else:
-                    #present_statement_prefix = ''
-                    #present_statement_suffix = ''
-                        
-                #accuracy_threshold = {analysis.score_action: 75., analysis.score_price: 75.}
-                #confidence = dict()
-                #for score, threshold in accuracy_threshold.items():
-                    #if float(score) >= threshold:
-                        #confidence[score] = f'*({score}% confident)*'
-                    #else:
-                        #confidence[score] = ''
+                # if analysis.requested_prediction_action == 'Hold':
+                # present_statement_prefix = 'off from taking any action with'
+                # present_statement_suffix = ' at this time'
+                # else:
+                # present_statement_prefix = ''
+                # present_statement_suffix = ''
 
-                #forcast_prefix = int(interval.split()[0]) * future_price
-                #if forcast_prefix > 1:
-                    #forcast_suffix = str(interval.split()[1]).lower() + 's'
-                #else:
-                    #forcast_suffix = str(interval.split()[1]).lower()
+                # accuracy_threshold = {analysis.score_action: 75., analysis.score_price: 75.}
+                # confidence = dict()
+                # for score, threshold in accuracy_threshold.items():
+                # if float(score) >= threshold:
+                # confidence[score] = f'*({score}% confident)*'
+                # else:
+                # confidence[score] = ''
 
-                #asset_suffix = 'price'
+                # forcast_prefix = int(interval.split()[0]) * future_price
+                # if forcast_prefix > 1:
+                # forcast_suffix = str(interval.split()[1]).lower() + 's'
+                # else:
+                # forcast_suffix = str(interval.split()[1]).lower()
 
-                #st.markdown(f'**Prediction Date & Time (UTC):** {str(requested_date)}.')
-                #st.markdown(f'**Current Price:** {currency} {current_price}.')
-                #st.markdown(f'**{interval} Price Change:** {change_display}.')
-                #st.markdown(f'**Recommended Trading Action:** You should **{requested_prediction_action.lower()}** {present_statement_prefix} this {label.lower()[:6]}{present_statement_suffix}. {str(confidence[analysis.score_action])}')
-                #st.markdown(f'**Estimated Forecast Price:** The {label.lower()[:6]} {asset_suffix} for **{equity}** is estimated to be **{currency} {requested_prediction_price}** in the next **{forcast_prefix} {forcast_suffix}**. {str(confidence[analysis.score_price])}')
-                #if requested_prediction_action == 'Hold':
-                    #st.markdown(f'**Recommended Trading Margins:** You should consider buying more **{equity}** {label.lower()[:6]} at **{currency} {buy_price}** and sell it at **{currency} {sell_price}**.')
+                # asset_suffix = 'price'
+
+                # st.markdown(f'**Prediction Date & Time (UTC):** {str(requested_date)}.')
+                # st.markdown(f'**Current Price:** {currency} {current_price}.')
+                # st.markdown(f'**{interval} Price Change:** {change_display}.')
+                # st.markdown(f'**Recommended Trading Action:** You should **{requested_prediction_action.lower()}** {present_statement_prefix} this {label.lower()[:6]}{present_statement_suffix}. {str(confidence[analysis.score_action])}')
+                # st.markdown(f'**Estimated Forecast Price:** The {label.lower()[:6]} {asset_suffix} for **{equity}** is estimated to be **{currency} {requested_prediction_price}** in the next **{forcast_prefix} {forcast_suffix}**. {str(confidence[analysis.score_price])}')
+                # if requested_prediction_action == 'Hold':
+                # st.markdown(f'**Recommended Trading Margins:** You should consider buying more **{equity}** {label.lower()[:6]} at **{currency} {buy_price}** and sell it at **{currency} {sell_price}**.')
 
                 prediction_fig = analysis.prediction_graph(asset)
-            
-                #st.success(f'Historical {label[:6]} Price Action.')
-                st.plotly_chart(prediction_fig, use_container_width = True)
+
+                # st.success(f'Historical {label[:6]} Price Action.')
+                st.plotly_chart(prediction_fig, use_container_width=True)
 
                 technical_analysis_fig = analysis.technical_analysis_graph()
-                st.plotly_chart(technical_analysis_fig, use_container_width = True) 
-            
+                st.plotly_chart(technical_analysis_fig,
+                                use_container_width=True)
 
             if __name__ == '__main__':
                 import warnings
-                #import gc
-                warnings.filterwarnings("ignore") 
+                # import gc
+                warnings.filterwarnings("ignore")
                 gc.collect()
                 action_model = load_model("action_prediction_model.h5")
                 price_model = load_model("price_prediction_model.h5")
                 app_data = Data_Sourcing()
-                main(app_data = app_data)
+                main(app_data=app_data)
     elif analysis.lower() == "aggregation charts":
 
         selected_assets = st.sidebar.multiselect(
@@ -417,10 +421,11 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         if selected_assets:
             data1 = []
             for asset in selected_assets:
-                #logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-                #logging.info(f'market_df:{market_df[(market_df["assetName"] == asset)]}')
-                asset_market_df = market_df[(market_df['assetName']== asset)]
-                asset_df = asset_market_df[asset_market_df["time"].between(start_date, end_date)]
+                # logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
+                # logging.info(f'market_df:{market_df[(market_df["assetName"] == asset)]}')
+                asset_market_df = market_df[(market_df['assetName'] == asset)]
+                asset_df = asset_market_df[asset_market_df["time"].between(
+                    start_date, end_date)]
 
                 data1.append(go.Scatter(
                     x=asset_df.index.strftime(date_format='%Y-%m-%d').values,
@@ -470,14 +475,14 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             with st.expander("Description"):
                 st.write("We can see some companies' stocks started trading later, some dissappeared. Disappearence could be due to bankruptcy, acquisition or other reasons.")
 
-        #@st.cache_data()
+        # @st.cache_data()
         def trends_quantile_chart(market_df):
             data = []
             for i in [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]:
-                #price_df = market_df.groupby(market_df.index)[
+                # price_df = market_df.groupby(market_df.index)[
                 price_df = market_df.groupby('time')[
                     'close'].quantile(i).reset_index()
-                #logging.info(f'price_df:{price_df}')
+                # logging.info(f'price_df:{price_df}')
                 data.append(go.Scatter(
                     x=price_df['time'].dt.strftime(
                         date_format='%Y-%m-%d').values,
@@ -510,14 +515,14 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
     elif analysis.lower() == "sentiment analysis":
         # assets = list(news_df.assetName.unique())
         assets = assetNames
-        #logging.info(f'assetNames:{assetNames}')
+        # logging.info(f'assetNames:{assetNames}')
         # logging.info(f'assets:{assets}')
         selected_assets = st.sidebar.multiselect(
             "Please select the assets",
             assets,
             default=['ES']
         )
-        #logging.info(f'selected_assets:{selected_assets}')
+        # logging.info(f'selected_assets:{selected_assets}')
 
         start_date, end_date = st.sidebar.date_input("Time period (from/to)",
                                                      [from_date, to_date], min_value=min_date, max_value=max_date)
@@ -560,8 +565,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 "positive", start_date, end_date))
 
         sent_labels = ['negative', 'neutral', 'positive']
-        #sent_labels = ['negative', 'positive']
-        #sent_labels = ['positive']
+        # sent_labels = ['negative', 'positive']
+        # sent_labels = ['positive']
         grouped_assets = news_df.loc[start_date:end_date].groupby("assetName")
         assets_sentiment_dict = {}
         for asset in selected_assets:
@@ -646,4 +651,3 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             with st.expander("Mean sentiment score computation"):
                 st.latex(
                     r'''score = \frac{-1 \cdot samples(negative) + 1 \cdot samples(positive)}{total\_samples}''')
-
