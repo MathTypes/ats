@@ -581,6 +581,17 @@ def render_sentiment_analysis():
         plt.savefig('x',dpi=400)
         st.image('x.png')
         os.remove('x.png')
+        def function(app_data):
+            exchange = 'Yahoo! Finance'
+            app_data.exchange_data(exchange)
+
+            if asset == 'Stocks':
+                st.sidebar.subheader(f'Stock Index:')
+                stock_indexes  = app_data.stock_indexes
+                market = st.sidebar.selectbox('', stock_indexes, index = 11)
+                app_data.market_data(market)
+                assets = app_data.stocks
+        function(app_data = app_data)
 
 
     def mis_value_graph(data):
