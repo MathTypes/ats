@@ -27,16 +27,15 @@ logging_utils.init_logging()
 
 nlp = spacy.load("en_core_web_sm")
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 # =================================================================================== #
 #                                Sidebar                                              #
 # =================================================================================== #
 ds = Image.open("images/ats.jpg")
 st.sidebar.image(ds)
 navigated = st.sidebar.radio("Navigation:", [
-    "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer", "2Sigma Charts"], index=0)
+    "Overview", "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer"], index=0)
 
-st.title("Streamlit News Analysis")
 # st.sidebar.title("Ats: Stock Market Analysis & Predictions")
 
 # @st.cache_data()
@@ -50,6 +49,7 @@ min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
 
+@st.cache_data()
 def load_data():
     # market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
     df_vec = []
@@ -101,7 +101,7 @@ if navigated == "Trading Data":
 if navigated == "TVL vs MCAP Analysis":
     rvl.render_tvl_mcap()
 
-if navigated == "2Sigma Charts":
+if navigated == "Overview":
     sentiment_analyzer.render_sentiment_analysis(
         market_df, news_df, assetNames, from_date, to_date, min_date, max_date)
 
