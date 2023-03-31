@@ -5,6 +5,7 @@ import logging
 import os
 
 import matplotlib.pyplot as plt
+from streamlit_plotly_events import plotly_events
 import nlp_util
 import numpy as np
 import pandas as pd
@@ -18,7 +19,7 @@ from eda_utils import generate_color
 from nltk.corpus import stopwords
 from tensorflow.keras.models import load_model
 from wordcloud import WordCloud
-
+import visualization
 
 def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date, min_date, max_date):
     stop = set(stopwords.words('english'))
@@ -38,23 +39,14 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             start_date, datetime.datetime.min.time())
         end_date = datetime.datetime.combine(
             end_date, datetime.datetime.min.time())
-        # dr = pd.date_range(start_date, end=end_date, tz='Asia/Tokyo')
-        # logging.info(f'news_df.index:{news_df.index}')
-        # logging.info(f'market_df.index:{market_df.index}')
-        # logging.info(f'start_date:{type(start_date)}')
-        # logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-        # logging.info(f'news_df_draw_wordcloud:{news_df["time"]}')
         if asset.lower() == "all assets":
             headlines100k = news_df[news_df["time"].between(start_date, end_date)]['text'].str.lower(
             ).values[-100000:]
         else:
             headlines100k = news_df.loc[news_df["assetName"] ==
                                         asset].loc[start_date:end_date, "text"].str.lower().values[-100000:]
-        # logging.info(f'asset:{asset}')
-        # logging.info(f'news:{headlines100k}')
         text = ' '.join(
             headline for headline in headlines100k if type(headline) == str)
-        # logging.info(f'draw_wordcloud:{text}')
 
         wordcloud = WordCloud(
             max_font_size=None,
@@ -96,9 +88,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         st.plotly_chart(fig, use_container_width=True)
 
     if analysis.lower() == "data exploration":
-
         row1_1, row1_2 = st.columns(2)
-
         with row1_1:
             with st.expander("Chart description: Total Missing Value By Column"):
                 st.write(
@@ -265,7 +255,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 app_data = Data_Sourcing()
                 main(app_data=app_data)
     elif analysis.lower() == "aggregation charts":
-
         selected_assets = st.sidebar.multiselect(
             "Please select the assets",
             assets,
@@ -291,8 +280,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         if selected_assets:
             data1 = []
             for asset in selected_assets:
-                # logging.info(f'asset:{asset}, start_date:{start_date}, end_date:{end_date}')
-                # logging.info(f'market_df:{market_df[(market_df["assetName"] == asset)]}')
                 asset_market_df = market_df[(market_df['assetName'] == asset)]
                 asset_df = asset_market_df[asset_market_df["time"].between(
                     start_date, end_date)]
@@ -352,7 +339,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 # price_df = market_df.groupby(market_df.index)[
                 price_df = market_df.groupby('time')[
                     'close'].quantile(i).reset_index()
-                # logging.info(f'price_df:{price_df}')
                 data.append(go.Scatter(
                     x=price_df['time'].dt.strftime(
                         date_format='%Y-%m-%d').values,
@@ -383,10 +369,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
 
     elif analysis.lower() == "sentiment analysis":
-        # assets = list(news_df.assetName.unique())
         assets = assetNames
-        # logging.info(f'assetNames:{assetNames}')
-        # logging.info(f'assets:{assets}')
         selected_assets = st.sidebar.multiselect(
             "Please select the assets",
             assets,
@@ -396,9 +379,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         start_date, end_date = st.sidebar.date_input("Time period (from/to)",
                                                      [from_date, to_date], min_value=min_date, max_value=max_date)
-
-        # row1_1, row1_2 = st.columns(1)
-        # row2_1, row2_2 = st.columns(2)
 
         sentiment_dict = dict(
             negative="-1",
@@ -424,8 +404,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 yaxis=dict(title=f"{sentiment} sentiment count")
             )
             return dict(data=data, layout=layout)
-
-        def calculate_mean_sentiment(asset, period="1h"):
+        period = datetime.timedelta(hours=1)
+        def calculate_mean_sentiment(asset, period):
             X = []
             Y = []
             logging.info(f'news_df:{news_df["assetName"]}')
@@ -433,7 +413,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
             logging.info(f'asset_news_df:{asset_news_df}')
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
-                d = name.strftime("%m/%d/%Y, %H:%M")
+                d = name.strftime("%m/%d/%y %H:%M:%S")
                 counts = group["sentimentClass"].value_counts()
                 # logging.info(f'counts:{counts}')
                 # logging.info(f'counts_index:{counts.index}')
@@ -448,14 +428,17 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             return X, Y
 
         data = []
+        selected_points_vec = []
+        logging.info(f'asset_size:{selected_assets}')
         for asset in selected_assets:
-            X, Y = calculate_mean_sentiment(asset)
-            fig = go.Scatter(
-                x=X,
-                y=Y,
-                name=asset,
-            )
-            data.append(fig)
+            X, Y = calculate_mean_sentiment(asset, period)
+            df = pd.DataFrame({"x:": X, "y": Y})
+            plotly_fig = px.scatter(data_frame=df, x=X, y=Y, 
+                                    title="Price/Mean sentiment")  # Get data from the dataframe with selected columns, choose the x axis as the index of the dataframe, y axis is the data that will be multiselected
+            data.append(plotly_fig)
+            selected_points = plotly_events(plotly_fig)
+            st.write(selected_points)
+            selected_points_vec.append(selected_points)
 
         layout = dict(
             title="Mean sentiment score over time",
@@ -465,8 +448,20 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             xaxis=dict(
                 title='Time',
             ),
-            margin=dict(l=0, r=0, t=0, b=0),
             yaxis=dict(title='Price/Mean sentiment'),
         )
-
-        st.plotly_chart(dict(data=data, layout=layout))
+        # selected: {'x': '03/29/2023, 00:00',
+        #  'y': 0.11788617886178862, 'curveNumber': 0, 'pointNumber': 24, 'pointIndex': 24}
+        #st.plotly_chart(dict(data=data, layout=layout), use_container_width=True)
+        #st.plotly_chart(data[0], use_container_width=True)
+        for selected_points in selected_points_vec:
+            #current_x = selected_points[0]['x']
+            #current_y = selected_points[0]['y']
+            if selected_points:
+                logging.info(f'selected: {selected_points[0]}')
+                end_day = datetime.datetime.strptime(selected_points[0]['x'], '%m/%d/%y %H:%M:%S')
+                start_day = end_day - period
+                logging.info(f'start_day:{start_day}, end_day:{end_day}')
+                visualization.render_visualization(news_df, start_day, end_day)
+            else:
+                logging.info(f'no selection')

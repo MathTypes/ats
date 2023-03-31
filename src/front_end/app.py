@@ -49,6 +49,7 @@ min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
 
+@st.cache_data()
 def load_data():
     # market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
     df_vec = []

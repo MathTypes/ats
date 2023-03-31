@@ -20,7 +20,7 @@ from data_analysis.topic_modeling import LatentDirichletAllocation
 nltk.download('stopwords')
 
 
-def render_visualization(news_df):
+def render_visualization(news_df, start_day, end_day):
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
     s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
     e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
