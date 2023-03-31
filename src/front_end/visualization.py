@@ -1,38 +1,22 @@
 
 import datetime
-import pandas as pd
-
-from textblob import TextBlob
-
-import matplotlib.pyplot as plt
-import plotly.express as px
-import pyLDAvis
-import streamlit as st
-from wordcloud import WordCloud
-
-from data_analysis.topic_modeling import LatentDirichletAllocation
-from data.front_end_utils import (
-    visualize_ner,
-    get_top_n_bigram,
-    get_list_ner,
-    display_text, subject_analysis, result_to_df, analyze_token_sentiment,
-)
-
-
-
-import plotly.express as px
-
-import pandas as pd
-
-
-import plotly.express as px
-
-import datetime
 import logging
 
 import matplotlib.pyplot as plt
-import numpy as np
 import nltk
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import pyLDAvis
+import streamlit as st
+from textblob import TextBlob
+from wordcloud import WordCloud
+
+from data.front_end_utils import (analyze_token_sentiment, display_text,
+                                  get_list_ner, get_top_n_bigram, result_to_df,
+                                  subject_analysis, visualize_ner)
+from data_analysis.topic_modeling import LatentDirichletAllocation
+
 nltk.download('stopwords')
 
 

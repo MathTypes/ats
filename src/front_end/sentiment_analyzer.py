@@ -1,40 +1,23 @@
 
-import plotly.graph_objs as go
-from nltk.corpus import stopwords
 import datetime
-import pandas as pd
-
-import logging
-
-import matplotlib.pyplot as plt
-import plotly.express as px
-import streamlit as st
-from wordcloud import WordCloud
-
-from eda_utils import generate_color
-
-import nlp_util
-from app_dir.data_sourcing import Data_Sourcing, data_update
-from app_dir.indicator_analysis import Indications
-from app_dir.graph import Visualization
-from tensorflow.keras.models import load_model
 import gc
-
-
-import plotly.express as px
-
-import pandas as pd
-
-
-import numpy as np
-import plotly.express as px
-
-import datetime
 import logging
 import os
 
 import matplotlib.pyplot as plt
+import nlp_util
 import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objs as go
+import streamlit as st
+from app_dir.data_sourcing import Data_Sourcing, data_update
+from app_dir.graph import Visualization
+from app_dir.indicator_analysis import Indications
+from eda_utils import generate_color
+from nltk.corpus import stopwords
+from tensorflow.keras.models import load_model
+from wordcloud import WordCloud
 
 
 def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date, min_date, max_date):
@@ -273,6 +256,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
             if __name__ == '__main__':
                 import warnings
+
                 # import gc
                 warnings.filterwarnings("ignore")
                 gc.collect()
@@ -413,8 +397,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         start_date, end_date = st.sidebar.date_input("Time period (from/to)",
                                                      [from_date, to_date], min_value=min_date, max_value=max_date)
 
-        #row1_1, row1_2 = st.columns(1)
-        #row2_1, row2_2 = st.columns(2)
+        # row1_1, row1_2 = st.columns(1)
+        # row2_1, row2_2 = st.columns(2)
 
         sentiment_dict = dict(
             negative="-1",
@@ -466,20 +450,23 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         data = []
         for asset in selected_assets:
             X, Y = calculate_mean_sentiment(asset)
-            data.append(go.Scatter(
+            fig = go.Scatter(
                 x=X,
                 y=Y,
-                name=asset
-            ))
+                name=asset,
+            )
+            data.append(fig)
 
         layout = dict(
             title="Mean sentiment score over time",
             plot_bgcolor="#FFFFFF",
             hovermode="x",
+            autosize=True,
             xaxis=dict(
-                title='Month',
+                title='Time',
             ),
-            yaxis=dict(title='Mean sentiment'),
+            margin=dict(l=0, r=0, t=0, b=0),
+            yaxis=dict(title='Price/Mean sentiment'),
         )
 
         st.plotly_chart(dict(data=data, layout=layout))

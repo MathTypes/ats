@@ -27,7 +27,7 @@ logging_utils.init_logging()
 
 nlp = spacy.load("en_core_web_sm")
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 # =================================================================================== #
 #                                Sidebar                                              #
 # =================================================================================== #

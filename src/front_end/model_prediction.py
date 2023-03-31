@@ -164,6 +164,7 @@ def render_model_prediction():
 
     if __name__ == '__main__':
         import warnings
+
         # import gc
         warnings.filterwarnings("ignore")
         gc.collect()

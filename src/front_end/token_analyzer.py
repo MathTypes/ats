@@ -7,6 +7,7 @@ import streamlit as st
 from utils_dir.coingecko_utils import CoinGeckoUtils
 from utils_dir.miner_utils import MinerUtils
 
+
 def render_token_analyzer():
     @st.cache_data()
     def get_all_coins_df():

@@ -8,7 +8,6 @@ from utils_dir.miner_utils import MinerUtils
 from market_data import ts_read_api
 
 
-
 def render_trading_data():
     @st.cache_data()
     def get_all_coins_df():
