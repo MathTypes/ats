@@ -124,7 +124,7 @@ def get_unprocessed_tweets():
                 t.source_url as source_url,
                 (rt.text + t.raw_content) as text
             ORDER BY t.created_at DESC
-            LIMIT 1000
+            LIMIT 100
             """
     params = {}
     with driver.session() as session:
