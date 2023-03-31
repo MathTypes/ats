@@ -49,7 +49,7 @@ min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
 
-#@st.cache_data()
+@st.cache_data()
 def load_data():
     df_vec = []
     for asset in futureAssetCodes:

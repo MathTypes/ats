@@ -20,7 +20,7 @@ class Neo4j:
     def delete_all(self):
         self.graph.delete_all()
 
-    @RateLimiter(max_calls=1, period=10)
+    @RateLimiter(max_calls=1, period=60)
     def update_processed_text(self, df):
         for index, row in df.iterrows():
             tx = self.graph.begin()

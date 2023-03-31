@@ -42,13 +42,13 @@ def add_subject_keyword(df):
 
 
 def name_entity_recognition(text, obj=None):
+    l_e = []
     try:
         sen = sp(text)
+        for entity in sen.ents:
+            l_e.append(entity.label_)
     except:
         pass
-    l_e = []
-    for entity in sen.ents:
-        l_e.append(entity.label_)
     e_count = {}
     for e in l_e:
         e_count[e] = l_e.count(e)

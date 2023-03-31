@@ -21,8 +21,8 @@ nltk.download('stopwords')
 
 
 def render_visualization(news_df, start_day, end_day):
-    #logging.info(f'start_day:{type(start_day)}')
-    news_df["time"] = news_df["time"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    logging.info(f'start_day:{dir(start_day)}')
+    news_df["time_str"] = news_df["time"].dt.strftime("%Y-%m-%d %H:%M:%S")
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
     s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
     e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
@@ -30,17 +30,12 @@ def render_visualization(news_df, start_day, end_day):
     #                                Display Dataset                                      #
     # =================================================================================== #
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.header("Tweet")
-        st.dataframe(news_df)
+    st.dataframe(news_df)
 
-    start_day = pd.to_datetime(start_day)
-    end_day = pd.to_datetime(end_day)
+    start_day = pd.to_datetime(start_day).tz_localize('utc')
+    end_day = pd.to_datetime(end_day).tz_localize('utc')
     logging.info(f'start_day:{start_day}, end_day:{end_day}')
-    # logging.info(f'before filtering:{news_df}')
     sub_data = news_df[news_df["time"].between(start_day, end_day)]
-    # logging.info(f'sub_data:{sub_data["keyword_subject"]}')
     count = sub_data.shape[0]
     # =================================================================================== #
     #                                General                                              #
@@ -145,10 +140,7 @@ def render_visualization(news_df, start_day, end_day):
                              color_discrete_sequence=px.colors.qualitative.Pastel)
                 st.plotly_chart(fig)
             with col2:
-                # df = df[df["sub_date"].between(pd.to_datetime("2023-01-01"), pd.to_datetime("2023-12-31"))]
-                df = news_df
-                df = df[df["time"].between(pd.to_datetime(
-                    "2023-01-01"), pd.to_datetime("2023-12-31"))]
+                df = sub_data
                 sub_df = subject_analysis(df)
                 st.markdown("**Text analysis:**")
                 fig = px.bar(sub_df, x='sub_date', y='polarity',
@@ -215,22 +207,6 @@ def render_visualization(news_df, start_day, end_day):
             st.markdown("**Knowledge graph representation:**")
             st.info("Due to depolyment problem, I recommand to visualise this plot on the "
                     "knowledge_graph notebook")
-            # st.info("this process takes some time ⌛ ...")
-
-            # sub_rf = generate_relations(text)
-            # G = nx.from_pandas_edgelist(sub_kg, "source", "target",
-            #                             edge_attr=True, create_using=nx.MultiDiGraph())
-            # col7, col8 = st.columns(2)
-            # with col7:
-            #     fig = plt.figure()
-            #     d = dict(G.degree)
-            #     pos = nx.spring_layout(G)
-            #     nx.draw(G, with_labels=True, node_color='#FF6347',
-            #             node_size=[v * 100 for v in d.values()])
-            #
-            #     st.pyplot(fig, use_container_width= true)
-            # with col8:
-            #     st.dataframe(rf)
 
         # =================================================================================== #
         #                                summary NER                                          #
