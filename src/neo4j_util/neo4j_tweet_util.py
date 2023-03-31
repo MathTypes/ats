@@ -21,8 +21,8 @@ class Neo4j:
         self.graph.delete_all()
 
     def update_processed_text(self, df):
-        tx = self.graph.begin()
         for index, row in df.iterrows():
+            tx = self.graph.begin()
             tweet_id = row["id"]
             # retrieve company node from the remote self.graph
             self.graph.evaluate(
@@ -31,7 +31,7 @@ class Neo4j:
                     t.subject=$subject,
                     t.lemma_text=$lemma_text,
                     t.keyword_text=$keyword_text,
-                    t.text=$text,
+                    t.full_text=$full_text,
                     t.text_ner_names=$text_ner_names,
                     t.text_ner_count=$text_ner_count,
                     t.lemma_subject=$lemma_subject,
@@ -44,7 +44,7 @@ class Neo4j:
                     t.annotation_time=$annotation_time
                 """, {
                     "tweet_id": row["id"],
-                    "text": row["text"],
+                    "full_text": row["text"],
                     "subject": row["subject"],
                     "lemma_text": row["lemma_text"],
                     "keyword_text": row["keyword_text"],
@@ -59,6 +59,7 @@ class Neo4j:
                     "sentiment_class": row["sentimentClass"],
                     "annotation_time": int(datetime.now().timestamp()*1000)
                 })
+            #logging.info(f'result:{result}')
         tx.commit()
 
     def update_gpt_entities(self, df):

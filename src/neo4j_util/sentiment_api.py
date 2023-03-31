@@ -116,7 +116,7 @@ def get_unprocessed_tweets():
     query = """
             MATCH (rt:RepliedTweet)
             MATCH (t:Tweet)
-            WHERE t.annotation_time is null and rt.tweet_id=t.id
+            WHERE rt.annotation_time is null and rt.tweet_id=t.id
             and (rt.text + t.raw_content) is not null
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,

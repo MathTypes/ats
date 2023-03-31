@@ -34,12 +34,12 @@ if __name__ == "__main__":
     logging_utils.init_logging()
     while True:
         data = get_unprocessed_tweets()
-        logging.info(f'unprocess_data:{data["text"]}')
+        logging.info(f'unprocess_data:{data["id"]}')
         if data.empty:
             break
         data = add_subject_keyword(data)
         data = subject_analysis(data)
-        logging.error(f'process_data:{data.columns}')
+        #logging.error(f'process_data:{data.columns}')
         neo4j_util = Neo4j()
         neo4j_util.update_processed_text(data)
         #break
