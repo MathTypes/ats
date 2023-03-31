@@ -505,10 +505,10 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         def calculate_mean_sentiment(asset, period):
             X = []
             Y = []
-            logging.info(f'news_df:{news_df["assetName"]}')
+            #logging.info(f'news_df:{news_df["assetName"]}')
             asset_news_df = news_df[news_df["assetName"] == asset]
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
-            logging.info(f'asset_news_df:{asset_news_df}')
+            #logging.info(f'asset_news_df:{asset_news_df}')
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
                 d = name.strftime("%m/%d/%y %H:%M:%S")
                 counts = group["sentimentClass"].value_counts()
@@ -526,7 +526,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         data = []
         selected_points_vec = []
-        logging.info(f'asset_size:{selected_assets}')
+        #logging.info(f'asset_size:{selected_assets}')
         for asset in selected_assets:
             X, Y = calculate_mean_sentiment(asset, period)
             df = pd.DataFrame({"x:": X, "y": Y})
@@ -534,7 +534,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                                     title="Price/Mean sentiment")  # Get data from the dataframe with selected columns, choose the x axis as the index of the dataframe, y axis is the data that will be multiselected
             data.append(plotly_fig)
             selected_points = plotly_events(plotly_fig)
-            st.write(selected_points)
             selected_points_vec.append(selected_points)
 
         layout = dict(
@@ -555,7 +554,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             #current_x = selected_points[0]['x']
             #current_y = selected_points[0]['y']
             if selected_points:
-                logging.info(f'selected: {selected_points[0]}')
+                #logging.info(f'selected: {selected_points[0]}')
                 end_day = datetime.datetime.strptime(selected_points[0]['x'], '%m/%d/%y %H:%M:%S')
                 start_day = end_day - period
                 logging.info(f'start_day:{start_day}, end_day:{end_day}')

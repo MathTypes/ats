@@ -63,7 +63,8 @@ def get_tweets():
         df = pd.DataFrame(result_dict, columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True).dt.date
+        #    df["time"], infer_datetime_format=True).dt.date
+            df["time"], infer_datetime_format=True)
         logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
@@ -100,7 +101,8 @@ def get_processed_tweets():
         df = pd.DataFrame(result_dict, columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True).dt.date
+        #    df["time"], infer_datetime_format=True).dt.date
+            df["time"], infer_datetime_format=True)
         #logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
@@ -210,7 +212,8 @@ def get_gpt_sentiments():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["text"] = df["text"].apply(lambda x: str(x))
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True).dt.date
+        #    df["time"], infer_datetime_format=True).dt.date
+            df["time"], infer_datetime_format=True)
         df["assetName"] = df["assetName"].apply(map_to_market)
         df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         df["assetCode"] = df["assetName"]
@@ -253,7 +256,8 @@ def get_gpt_unprocessed_replied_tweets():
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True).dt.date
+        #    df["time"], infer_datetime_format=True).dt.date
+            df["time"], infer_datetime_format=True)
         return df
 
 def get_conversations():

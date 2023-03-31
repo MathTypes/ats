@@ -49,9 +49,8 @@ min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
 
-@st.cache_data()
+#@st.cache_data()
 def load_data():
-    # market_df = pd.read_parquet(f"{datapath}/{MARKET_DATA}")
     df_vec = []
     for asset in futureAssetCodes:
         for date in pd.date_range(from_date, to_date):
@@ -59,31 +58,17 @@ def load_data():
                 asset, date.date())
             df_vec.append(date_df)
     market_df = pd.concat(df_vec)
-    # news_df = pd.read_parquet(f"{datapath}/{NEWS_DATA}")
-    # news_df = get_gpt_sentiments()
     news_df = get_processed_tweets()
-    # logging.info(f'news_df:{news_df}')
-    # news_df['assetName'] = "ES"
-    # news_df['sentimentClass'] = 1
     news_df['index_time'] = news_df["time"]
-    # logging.info(f'news_df:{news_df}')
     news_df = news_df.set_index("index_time")
     news_df = news_df.sort_index()
 
     market_df['price_diff'] = market_df['close'] - market_df['open']
-    # market_df.index = pd.to_datetime(market_df.index)
-    # news_df.index = pd.to_datetime(news_df.index)
     news_df = subject_analysis(news_df)
     return market_df, news_df
 
 
-# with st.spinner("Loading data..."):
 market_df, news_df = load_data()
-# logging.info(f'news_df:{news_df}')
-# data = pd.read_csv("dataset/process_data.csv")
-# data = get_tweets()
-# logging.info(f'data:{data}')
-# conv_data = get_gpt_sentiments()
 news_df = data_process(news_df)
 
 if navigated == "XE Token Analyzer":

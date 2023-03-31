@@ -21,6 +21,8 @@ nltk.download('stopwords')
 
 
 def render_visualization(news_df, start_day, end_day):
+    #logging.info(f'start_day:{type(start_day)}')
+    news_df["time"] = news_df["time"].dt.strftime("%Y-%m-%d %H:%M:%S")
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
     s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
     e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
@@ -29,13 +31,13 @@ def render_visualization(news_df, start_day, end_day):
     # =================================================================================== #
 
     col1, col2 = st.columns(2)
-    with col2:
+    with col1:
         st.header("Tweet")
         st.dataframe(news_df)
 
-    start_day = pd.to_datetime(s_d)
-    end_day = pd.to_datetime(e_d)
-    # logging.info(f'start_day:{start_day}, end_day:{end_day}')
+    start_day = pd.to_datetime(start_day)
+    end_day = pd.to_datetime(end_day)
+    logging.info(f'start_day:{start_day}, end_day:{end_day}')
     # logging.info(f'before filtering:{news_df}')
     sub_data = news_df[news_df["time"].between(start_day, end_day)]
     # logging.info(f'sub_data:{sub_data["keyword_subject"]}')

@@ -117,7 +117,7 @@ def find(c, text_ner, text_ner_count):
 
 def subject_analysis(df):
     df['polarity'] = np.nan
-    logging.info(f'subject_analysis:{df["text"]}')
+    #logging.info(f'subject_analysis:{df["text"]}')
     for i in range(df.shape[0]):
         try:
             parag = df['text'][i]

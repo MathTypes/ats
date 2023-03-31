@@ -20,6 +20,7 @@ class Neo4j:
     def delete_all(self):
         self.graph.delete_all()
 
+    @RateLimiter(max_calls=1, period=10)
     def update_processed_text(self, df):
         for index, row in df.iterrows():
             tx = self.graph.begin()
@@ -62,6 +63,7 @@ class Neo4j:
             #logging.info(f'result:{result}')
         tx.commit()
 
+    @RateLimiter(max_calls=1, period=1)
     def update_gpt_entities(self, df):
         tx = self.graph.begin()
         for index, row in df.iterrows():
@@ -88,7 +90,7 @@ class Neo4j:
                 })
         tx.commit()
 
-    @RateLimiter(max_calls=5, period=1)
+    @RateLimiter(max_calls=1, period=1)
     def load_data(self, tweet):
         """
         Loads one tweet at a time

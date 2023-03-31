@@ -13,7 +13,7 @@ class LatentDirichletAllocation:
     def __init__(self, df):
         self.dataset = df
         self.data = self.dataset.text.values.tolist()
-        logging.info(f'data:{self.data}')
+        #logging.info(f'data:{self.data}')
 
         self.en = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
         self.stopwords = list(self.en.Defaults.stop_words)
