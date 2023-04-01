@@ -1,4 +1,5 @@
 import json
+import logging
 import requests
 import datetime as dt
 import pandas as pd
@@ -176,6 +177,7 @@ def update_market_data():
         df_futures = df_futures.drop_duplicates(subset = ['Ticker', 'Futures'], keep = False)
         df_futures.loc[0, 'Last Update'] = dt.date.today()
         df_futures.to_csv('market_data/futures.txt', index = False)
+        logging.info(f'df_futures:{df_futures}')
     except:
         pass
 

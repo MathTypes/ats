@@ -199,79 +199,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             nlp_util.draw_wordcloud(
                 news_df, stop, selected_asset, *time_period)
 
-            gc.collect()
-            data_update()
-
-            import warnings
-            # import gc
-            warnings.filterwarnings("ignore")
-            gc.collect()
-            action_model = load_model("action_prediction_model.h5")
-            price_model = load_model("price_prediction_model.h5")
-            app_data = Data_Sourcing()
-
-            indication = 'Predicted'
-
-            # st.sidebar.subheader('Asset:')
-            # asset_options = sorted(['Cryptocurrency', 'Index Fund', 'Forex', 'Futures & Commodities', 'Stocks'])
-            # asset = st.sidebar.selectbox('', asset_options, index = 4)
-
-            # if asset in ['Index Fund', 'Forex', 'Futures & Commodities', 'Stocks']:
-            exchange = 'Yahoo! Finance'
-            app_data.exchange_data(exchange)
-
-            # if asset == 'Stocks':
-            st.sidebar.subheader(f'Stock Index:')
-            stock_indexes = app_data.stock_indexes
-            market = st.sidebar.selectbox('', stock_indexes, index=11)
-            app_data.market_data(market)
-            assets = app_data.stocks
-            asset = f'{market} Companies'
-
-            st.sidebar.subheader(f'{asset}:')
-            equity = st.sidebar.selectbox('', assets)
-
-            asset = 'Stock'
-
-            st.sidebar.subheader('Interval:')
-            interval = st.sidebar.selectbox(
-                '', ('5 Minute', '15 Minute', '30 Minute', '1 Hour', '1 Day', '1 Week'), index=4)
-            volitility_index = 0
-
-            st.sidebar.subheader('Interval:')
-            interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute',
-                                            '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index=8)
-
-            # volitility_index = 2
-
-            label = asset
-
-            st.sidebar.subheader('Trading Volatility:')
-            risk = st.sidebar.selectbox(
-                '', ('Low', 'Medium', 'High'), index=volitility_index)
-
-            analysis = Visualization(
-                exchange, interval, equity, indication, action_model, price_model, market)
-            analysis_day = Indications(exchange, '1 Day', equity, market)
-            requested_date = analysis.df.index[-1]
-            current_price = float(analysis.df['Adj Close'][-1])
-            change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
-            requested_prediction_price = float(
-                analysis.requested_prediction_price)
-            requested_prediction_action = analysis.requested_prediction_action
-
-            risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]],
-                     'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],
-                     'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]], }
-            buy_price = float(risks[risk][0])
-            sell_price = float(risks[risk][1])
-
-            prediction_fig = analysis.prediction_graph(asset)
-
-            st.plotly_chart(prediction_fig, use_container_width=True)
-
-            technical_analysis_fig = analysis.technical_analysis_graph()
-            st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
     elif analysis.lower() == "aggregation charts":
         selected_assets = st.sidebar.multiselect(
@@ -433,7 +360,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
             # logging.info(f'asset_news_df:{asset_news_df}')
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
-                logging.info(f'name:{name}')
+                #logging.info(f'name:{type(name)}')
                 # d = name.strftime("%m/%d/%y %H:%M:%S")
                 counts = group["sentimentClass"].value_counts()
                 # logging.info(f'counts:{counts}')
@@ -446,7 +373,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                     mean_sentiment_score = 0
                 X.append(name)
                 Y.append(mean_sentiment_score)
-            logging.info(f'x_df:{X}')
+            # logging.info(f'x_df:{X}')
             return X, Y
 
         data = []
@@ -458,38 +385,116 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('assetName:N', scale=alt.Scale(
                 domain=df.assetName.unique().tolist()), legend=None), alt.value("lightgray"))
             brushed = alt.selection_interval(encodings=["x"], name="brushed")
-            opacity = alt.condition(brushed, alt.value(0.7), alt.value(0.25))
+            # opacity = alt.condition(brushed, alt.value(0.7), alt.value(0.25))
             # selected = alt.selection_single(on="mouseover", empty="none")
             # selected = alt.selection_single(on="click", empty="none", fields=['x'])
             line = alt.Chart(hist_data).mark_line().encode(
-                x=alt.X('x:T', axis=None),
-                y='y:Q',
+                x=alt.X('x:T', title="Time"),
+                y=alt.Y('y:Q', scale=alt.Scale(zero=True), title="Sentiment"),
                 shape=alt.Shape('assetName:N', scale=alt.Scale(
                     range=['circle', 'diamond'])),
                 tooltip=['x:N', 'y:N',
                          'assetName:N', 'label:N', 'pred:N'],
-                opacity=opacity
+                # opacity=opacity
                 # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
             ).add_selection(brushed).properties(
                 width=1000,
-                height=400
+                height=400,
+                title="Market Sentiment Watch!"
             )
-            # callout = alt.Chart(hist_data.iloc[7:8]).mark_point(
-            #    color='red', size=300, tooltip="Tooltip text here"
-            # ).encode(
-            #    x='x:T',
-            #    y='y:Q'
-            # )
+            callout = alt.Chart(hist_data.iloc[7:8]).mark_point(
+                color='red', size=300, tooltip="Tooltip text here"
+            ).encode(
+                x='x:T',
+                y='y:Q'
+            )
             return line
+
+        gc.collect()
+        data_update()
+
+        import warnings
+        # import gc
+        warnings.filterwarnings("ignore")
+        gc.collect()
+        action_model = load_model("action_prediction_model.h5")
+        price_model = load_model("price_prediction_model.h5")
+        app_data = Data_Sourcing()
+
+        indication = 'Predicted'
+
+        # st.sidebar.subheader('Asset:')
+        # asset_options = sorted(['Cryptocurrency', 'Index Fund', 'Forex', 'Futures & Commodities', 'Stocks'])
+        # asset = st.sidebar.selectbox('', asset_options, index = 4)
+
+        # if asset in ['Index Fund', 'Forex', 'Futures & Commodities', 'Stocks']:
+        exchange = 'Yahoo! Finance'
+        app_data.exchange_data(exchange)
+
+        # if asset == 'Stocks':
+        st.sidebar.subheader(f'Stock Index:')
+        stock_indexes = app_data.stock_indexes
+        market = st.sidebar.selectbox('', stock_indexes, index=11)
+        app_data.market_data(market)
+        #assets = app_data.stocks
+        assets = assetNames
+        #asset = f'{market} Companies'
+
+        #st.sidebar.subheader(f'{asset}:')
+        equity = st.sidebar.selectbox('', assets)
+
+        #asset = 'Stock'
+        asset = selected_assets[0]
+
+        st.sidebar.subheader('Interval:')
+        interval = st.sidebar.selectbox(
+            '', ('5 Minute', '15 Minute', '30 Minute', '1 Hour', '1 Day', '1 Week'), index=4)
+        volitility_index = 0
+
+        st.sidebar.subheader('Interval:')
+        interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute',
+                                        '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index=8)
+
+        # volitility_index = 2
+
+        label = asset
+
+        st.sidebar.subheader('Trading Volatility:')
+        risk = st.sidebar.selectbox(
+            '', ('Low', 'Medium', 'High'), index=volitility_index)
+
+        analysis = Visualization(
+            exchange, interval, equity, indication, action_model, price_model, market)
+        analysis_day = Indications(exchange, '1 Day', equity, market)
+        requested_date = analysis.df.index[-1]
+        current_price = float(analysis.df['Adj Close'][-1])
+        change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
+        requested_prediction_price = float(
+            analysis.requested_prediction_price)
+        requested_prediction_action = analysis.requested_prediction_action
+
+        risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]],
+                    'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],
+                    'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]], }
+        buy_price = float(risks[risk][0])
+        sell_price = float(risks[risk][1])
+
+        prediction_fig = analysis.prediction_graph(asset)
+
+        st.plotly_chart(prediction_fig, use_container_width=True)
+
+        #technical_analysis_fig = analysis.technical_analysis_graph()
+        #st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
         # logging.info(f'asset_size:{selected_assets}')
         for asset in selected_assets:
             X, Y = calculate_mean_sentiment(asset, period)
             df = pd.DataFrame({"x": X, "y": Y, "assetName": asset})
-            logging.info(f'event_df:{df.shape}')
+            #logging.info(f'altair_df:{df}')
+            # logging.info(f'event_df:{df.shape}')
             # event_dict = altair_component(altair_chart=altair_histogram(df))
             selection = altair_component(altair_histogram(df))
-            logging.info(f'selection:{selection}')
+            #logging.info(f'selection:{selection}')
             r = selection.get("x")
             if r:
                 start_day = datetime.datetime.fromtimestamp(r[0]*1000)
@@ -497,8 +502,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 to_day = datetime.datetime.fromtimestamp(r[1]*1000)
                 to_day = pd.to_datetime(to_day).tz_localize('utc')
                 filtered = df[(df.x >= start_day) & (df.x < to_day)]
-                logging.info(f'start_day:{start_day}, end_day:{to_day}')
-                logging.info(f'filter:{filtered}')
+                #logging.info(f'start_day:{start_day}, end_day:{to_day}')
+                #logging.info(f'filter:{filtered}')
                 st.write(filtered)
 
         if "_vgsid_" in selection:

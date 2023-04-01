@@ -1,11 +1,15 @@
+import datetime
 from app_dir.update_market_data import update_market_data
 import json
+import logging
 import requests
 import numpy as np
 import pandas as pd
 import datetime as dt
 import yfinance as yf
 import gc
+
+from market_data import ts_read_api
 
 pd.set_option("display.precision", 8)
 
@@ -82,8 +86,22 @@ class Data_Sourcing:
                     
     def apis(self, asset):
         self.asset = asset
-        limit = 600
+        #limit = 600
+        limit = 30
         
+        self.ticker_market = "CME"
+        self.exchange = "CME"
+        self.currency = "USD"
+        to_date = datetime.date.today()
+        from_date = to_date - datetime.timedelta(days=limit)
+        logging.info(f'from_date:{from_date}, to_date:{to_date}')
+        self.df = ts_read_api.get_time_series_by_range(asset, from_date, to_date)
+        #logging.info(f'self.asset:{self.asset}, self.df.column: {self.df.columns}')
+        #logging.info(f'self.asset:{self.asset}, market_data_df:{self.df}')
+        #logging.info(f'duplicate index:{self.df.index.duplicated()}')
+        #logging.info(f'duplicate index cnt:{self.df.index.duplicated().size}')
+        return
+    
         if self.exchange != 'Yahoo! Finance':
             self.ticker_market = self.df_crypto[((self.df_crypto['Currency'] == self.asset) & 
                  (self.df_crypto['Market'] == self.market))][f'{self.exchange} Pair'].values[0]

@@ -1,6 +1,6 @@
 
 import datetime
-
+import logging
 import model_prediction
 import news_analyzer
 import nltk
@@ -21,7 +21,6 @@ from neo4j_util.sentiment_api import (get_processed_tweets)
 from util import logging_utils
 
 nltk.download('stopwords')
-
 
 logging_utils.init_logging()
 
@@ -48,27 +47,27 @@ to_date = datetime.date(2023, 3, 29)
 min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
+# @st.cache_data(ttl=600)
 
-@st.cache_data()
-def load_data():
+
+def load_data(from_date, to_date):
     df_vec = []
     for asset in futureAssetCodes:
-        for date in pd.date_range(from_date, to_date):
-            date_df = ts_read_api.get_time_series_by_instr_date(
-                asset, date.date())
-            df_vec.append(date_df)
+        date_df = ts_read_api.get_time_series_by_range(
+            asset, from_date, to_date)
+        df_vec.append(date_df)
     market_df = pd.concat(df_vec)
+    logging.info(f'market_index:{market_df.index}')
+    logging.info(f'false index:{market_df[market_df.index==False]}')
     news_df = get_processed_tweets()
     news_df['index_time'] = news_df["time"]
     news_df = news_df.set_index("index_time")
     news_df = news_df.sort_index()
-
-    market_df['price_diff'] = market_df['close'] - market_df['open']
     news_df = subject_analysis(news_df)
     return market_df, news_df
 
 
-market_df, news_df = load_data()
+market_df, news_df = load_data(from_date, to_date)
 news_df = data_process(news_df)
 
 if navigated == "XE Token Analyzer":

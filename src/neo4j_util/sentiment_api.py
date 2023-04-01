@@ -11,8 +11,8 @@ from data.front_end_utils import (
     display_text, subject_analysis, result_to_df, analyze_token_sentiment,
 )
 
-#host = 'bolt://10.0.0.18:7687'
-host = 'bolt://host.docker.internal:7687'
+host = 'bolt://10.0.0.18:7687'
+#host = 'bolt://host.docker.internal:7687'
 user = 'neo4j'
 password = 'password'
 driver = GraphDatabase.driver(host, auth=(user, password))
@@ -66,11 +66,11 @@ def get_tweets():
         df["time"] = pd.to_datetime(
         #    df["time"], infer_datetime_format=True).dt.date
             df["time"], infer_datetime_format=True)
-        logging.info(f'original_df_text:{df["text"]}')
+        #logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
-        logging.info(f'df_text:{df["text"]}')
+        #logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
         #df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         #df["assetName"] = "Stocks"
@@ -175,7 +175,7 @@ def get_tweets_by_conv_id(conv_id):
     text = read_query(
         "MATCH(c:Conversation {id:$conv_id})-[CONTAINS]->(t:Tweet) return t.raw_content as text order by t.created_at DESC",
         params={"conv_id": conv_id})
-    logging.error(f'text:{text}')
+    #logging.error(f'text:{text}')
     return text
 
 
@@ -288,14 +288,14 @@ def get_tweet_replies_v2():
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["text"] = df["text"].apply(lambda x: "\n".join(x))
-        logging.info(f'df:{df}')
+        #logging.info(f'df:{df}')
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True)
         df = df.set_index("time")
         df = df.sort_index()
         #df = keyword_util.add_subject_keyword(df)
-        logging.info(f'df:{df}')
+        #logging.info(f'df:{df}')
         return df
     # result = read_query(query)
     # result["text"] = result["text"].apply(lambda x: "\n".join(x))

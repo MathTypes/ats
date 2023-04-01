@@ -40,7 +40,7 @@ def draw_wordcloud(news_df, stop, asset="all assets", start_date=None, end_date=
     #logger.info(f'news_df_draw_wordcloud:{news_df["text"]}')
     #logging.info(f'asset:{asset}')
     if asset.lower() == "all assets":
-        headlines100k = news_df[news_df["time"].between(start_date, end_date)]['text']
+        headlines100k = news_df[news_df["time"].dt.date.between(start_date, end_date)]['text']
         #logging.info(f'matched news:{headlines100k}')
     else:
         headlines100k = news_df.loc[news_df["assetName"] ==
