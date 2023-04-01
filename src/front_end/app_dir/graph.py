@@ -1,4 +1,5 @@
 from app_dir.model import Prediction
+import logging
 from _plotly_future_ import v4_subplots
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -32,23 +33,23 @@ class Visualization(Prediction):
         self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Adj Close'], name = f"Close Price ({price_tag})", connectgaps = False,  
         marker = dict(color = '#000000'), fill = 'tozeroy', fillcolor = trace_color), secondary_y = False)
 
-        self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Price_Buy'], mode = 'markers', name = "Buy",  
-        marker = dict(color = '#32AB60', opacity = 0.85, size = 7.5)), secondary_y = False)
-        self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Price_Sell'], mode = 'markers', name = "Sell", 
-        marker = dict(color = '#DB4052', opacity = 0.85, size = 7.5)), secondary_y = False)
-        self.fig_action.add_trace(go.Bar(x = self.df_visualization.index, y = self.df_visualization['Bullish Volume'], name = "Bullish Volume", opacity = 0.2,
-        marker = dict(color = '#008000')), secondary_y = True)
-        self.fig_action.add_trace(go.Bar(x = self.df_visualization.index, y = self.df_visualization['Bearish Volume'], name = "Bearish Volume" , opacity = 0.2,
-        marker = dict(color = '#D2042D')), secondary_y = True)
+        #self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Price_Buy'], mode = 'markers', name = "Buy",  
+        #marker = dict(color = '#32AB60', opacity = 0.85, size = 7.5)), secondary_y = False)
+        #self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Price_Sell'], mode = 'markers', name = "Sell", 
+        #marker = dict(color = '#DB4052', opacity = 0.85, size = 7.5)), secondary_y = False)
+        #self.fig_action.add_trace(go.Bar(x = self.df_visualization.index, y = self.df_visualization['Bullish Volume'], name = "Bullish Volume", opacity = 0.2,
+        #marker = dict(color = '#008000')), secondary_y = True)
+        #self.fig_action.add_trace(go.Bar(x = self.df_visualization.index, y = self.df_visualization['Bearish Volume'], name = "Bearish Volume" , opacity = 0.2,
+        #marker = dict(color = '#D2042D')), secondary_y = True)
 
         self.fig_action.update_layout(autosize = False, height = 750, dragmode = False, hovermode = 'x', plot_bgcolor = 'rgba(255, 255, 255, 0.88)', 
         title = dict(text = prediction_title, y = 0.95, x = 0.5, xanchor =  'center', yanchor = 'top', font = dict(size = 20)), 
         xaxis_range = (self.df_visualization.index.min(), self.df_visualization.index.max()), 
         yaxis_range = (self.df_visualization['Adj Close'].min() - self.df_visualization['Adj Close'].std() / 10, self.df_visualization['Adj Close'].max() + self.df_visualization['Adj Close'].std() / 3))
-        self.fig_action.update_xaxes(title_text = "Date", zeroline = False, showline = False, showgrid = False, linewidth = 2, rangeslider_visible = True)
+        #self.fig_action.update_xaxes(title_text = "Date", zeroline = False, showline = False, showgrid = False, linewidth = 2, rangeslider_visible = True)
         self.fig_action.update_yaxes(title_text = "Price & Trading Action", secondary_y = False, showgrid = False, showline = False)
-        self.fig_action.update_yaxes(title_text = "Volume", secondary_y = True, showgrid = False, showline = False, visible = False)
-
+        #self.fig_action.update_yaxes(title_text = "Volume", secondary_y = True, showgrid = False, showline = False, visible = False)
+        logging.info(f'self.fig_action:{self.fig_action}')
         return self.fig_action
 
     def technical_analysis_graph(self):

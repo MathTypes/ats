@@ -52,9 +52,9 @@ def get_time_series_by_range(instr_name, from_date, end_date):
     market_df = pd.concat(df_vec)
     #logging.info(f'market_time:{market_df}')
     logging.info(f'total_market_shape:{market_df.shape}') 
-    logging.info(f'duplicate index:{market_df[market_df.index.duplicated()]}')
+    #logging.info(f'duplicate index:{market_df[market_df.index.duplicated()]}')
     logging.info(f'duplicate_index_shape:{market_df[market_df.index.duplicated()].shape}')
     market_df = market_df.drop_duplicates(keep='last')
-    traceback.print_stack()
+    #traceback.print_stack()
     logging.info(f'deduped_total_market_shape:{market_df.shape}') 
     return market_df

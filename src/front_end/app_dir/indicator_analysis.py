@@ -1,4 +1,5 @@
 from app_dir.technical_indicators import Technical_Calculations
+import logging
 
 class Indications(Technical_Calculations):
 
@@ -62,4 +63,5 @@ class Indications(Technical_Calculations):
         self.df['Distinct_Action'].fillna('Hold', inplace = True)
         self.df.drop(['Indication'], inplace = True, axis = 1)
         self.df.dropna(inplace = True)
+        logging.info(f'price_action:{self.df}')
         

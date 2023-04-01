@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import pandas as pd
 from app_dir.scaling import Preprocessing
@@ -43,7 +44,7 @@ class Prediction(Preprocessing):
 
         price_prediction_length = self.model_prediction_price.shape[0]
         self.df_price = self.df_price.iloc[-price_prediction_length:]
-
+        logging.info(f'prediction:{self.df_price}')
         self.score_action = self.action_model.evaluate(self.action_features, self.action_labels, verbose = 0) 
         self.score_price = r2_score(self.df_price['Adj Close'].values[1:], self.model_prediction_price[:-1])
         self.score_action, self.score_price = round((self.score_action[1] * 100), 1), round((self.score_price * 100), 1)
