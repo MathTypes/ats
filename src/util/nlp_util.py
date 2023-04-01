@@ -1,5 +1,6 @@
 
 import datetime
+import functools
 import os
 import pandas as pd
 
@@ -69,3 +70,8 @@ def draw_wordcloud(news_df, stop, asset="all assets", start_date=None, end_date=
     plt.savefig('x',dpi=400)
     st.image('x.png')
     os.remove('x.png')
+
+@functools.lru_cache
+def get_nlp():
+    nltk.download('stopwords')
+    return spacy.load("en_core_web_sm")

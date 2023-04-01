@@ -7,11 +7,8 @@ import os
 import altair as alt
 from streamlit_vega_lite import altair_component
 
-# import function
-# from streamlit_bokeh_events import streamlit_bokeh_events
 import matplotlib.pyplot as plt
-# from streamlit_plotly_events import plotly_events
-import nlp_util
+from util import nlp_utils
 import numpy as np
 import pandas as pd
 import plotly.express as px

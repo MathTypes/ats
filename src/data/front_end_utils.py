@@ -1,6 +1,8 @@
+import functools
 import logging
 import numpy as np
 import pandas as pd
+import util.nlp_utils
 
 import spacy
 from spacy import displacy
@@ -38,7 +40,7 @@ def analyze_token_sentiment(docx):
     data_neg = pd.DataFrame({"words": list(neg.keys()), "polarity": list(neg.values())})
     return data_pos, data_neg
 
-
+@fun
 def data_process(df):
     df['year'] = np.nan
     df['day'] = np.nan
