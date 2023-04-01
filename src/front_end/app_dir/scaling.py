@@ -16,8 +16,8 @@ class Preprocessing(Indications):
         super(Preprocessing, self).price_action()
 
     def scaling(self, df_values):
-        # training_window = 60
-        training_window = 120
+        training_window = 60
+        #training_window = 120
         df_predictors = df_values
         predictors = df_predictors.iloc[:, :-1].columns
         df_predictors = df_predictors.replace([np.inf, -np.inf], 0)
