@@ -92,15 +92,18 @@ def get_processed_tweets():
     query = """
             MATCH (t:Tweet)
             MATCH (rt:RepliedTweet)
+            MATCH (p:Person)
             WHERE t.created_at is not null and rt.tweet_id=t.id and rt.text is not null
              and not ("" in rt.keyword_subject)
+             and p.name=t.user
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
                 t.source_url as source_url, (rt.text + t.raw_content) as text,
                 rt.keyword_subject as keyword_subject,
                 rt.lemma_text as lemma_text, rt.keyword_text as keyword_text,
-                rt.subject as subject
+                rt.subject as subject,
+                p.rating as analyst_rating
             ORDER BY t.created_at DESC
             LIMIT 5000
             """

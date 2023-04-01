@@ -1,5 +1,6 @@
 
 import datetime
+import functools
 import gc
 import logging
 import os
@@ -14,7 +15,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 import streamlit as st
-from app_dir.data_sourcing import Data_Sourcing, data_update
+#from app_dir.data_sourcing import Data_Sourcing, data_update
+from app_dir.data_sourcing import Data_Sourcing
 from app_dir.graph import Visualization
 from app_dir.indicator_analysis import Indications
 from eda_utils import generate_color
@@ -23,6 +25,9 @@ from tensorflow.keras.models import load_model
 from wordcloud import WordCloud
 import visualization
 
+@functools.lru_cache
+def cached_load_model(file_path):
+    return load_model(file_path)
 
 def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date, min_date, max_date):
     stop = set(stopwords.words('english'))
@@ -193,9 +198,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             time_period = st.date_input("From/To", [from_date,
                                                     to_date], min_value=from_date, max_value=to_date)
 
-            nlp_util.draw_wordcloud(
-                news_df, stop, selected_asset, *time_period)
-
+            nlp_util.draw_wordcloud(news_df, stop, selected_asset, *time_period)
 
     elif analysis.lower() == "aggregation charts":
         selected_assets = st.sidebar.multiselect(
@@ -349,15 +352,15 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             return dict(data=data, layout=layout)
         period = datetime.timedelta(hours=1)
 
-        def calculate_mean_sentiment(asset, period):
+        def calculate_mean_sentiment(asset, period, analyst_rating):
             X = []
             Y = []
             # logging.info(f'news_df:{news_df["assetName"]}')
-            asset_news_df = news_df[news_df["assetName"] == asset]
+            asset_news_df = news_df[(news_df["assetName"] == asset) & (news_df["analyst_rating"] == analyst_rating)]
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
             # logging.info(f'asset_news_df:{asset_news_df}')
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
-                #logging.info(f'name:{type(name)}')
+                # logging.info(f'name:{type(name)}')
                 # d = name.strftime("%m/%d/%y %H:%M:%S")
                 counts = group["sentimentClass"].value_counts()
                 # logging.info(f'counts:{counts}')
@@ -407,24 +410,20 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
             return line
 
-        gc.collect()
-        data_update()
+        #gc.collect()
+        #data_update()
 
-        import warnings
+        #import warnings
         # import gc
-        warnings.filterwarnings("ignore")
-        gc.collect()
-        action_model = load_model("action_prediction_model.h5")
-        price_model = load_model("price_prediction_model.h5")
+        #warnings.filterwarnings("ignore")
+        #gc.collect()
+        
+        action_model = cached_load_model("action_prediction_model.h5")
+        price_model = cached_load_model("price_prediction_model.h5")
         app_data = Data_Sourcing()
 
         indication = 'Predicted'
 
-        # st.sidebar.subheader('Asset:')
-        # asset_options = sorted(['Cryptocurrency', 'Index Fund', 'Forex', 'Futures & Commodities', 'Stocks'])
-        # asset = st.sidebar.selectbox('', asset_options, index = 4)
-
-        # if asset in ['Index Fund', 'Forex', 'Futures & Commodities', 'Stocks']:
         exchange = 'Yahoo! Finance'
         app_data.exchange_data(exchange)
 
@@ -433,14 +432,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         stock_indexes = app_data.stock_indexes
         market = st.sidebar.selectbox('', stock_indexes, index=11)
         app_data.market_data(market)
-        #assets = app_data.stocks
         assets = assetNames
-        #asset = f'{market} Companies'
 
-        #st.sidebar.subheader(f'{asset}:')
         equity = st.sidebar.selectbox('', assets)
-
-        #asset = 'Stock'
         asset = selected_assets[0]
 
         st.sidebar.subheader('Interval:')
@@ -452,13 +446,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute',
                                         '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index=8)
 
-        # volitility_index = 2
-
         label = asset
-
         st.sidebar.subheader('Trading Volatility:')
-        risk = st.sidebar.selectbox(
-            '', ('Low', 'Medium', 'High'), index=volitility_index)
+        risk = st.sidebar.selectbox('', ('Low', 'Medium', 'High'), index=volitility_index)
 
         analysis = Visualization(
             exchange, interval, equity, indication, action_model, price_model, market)
@@ -466,56 +456,33 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         requested_date = analysis.df.index[-1]
         current_price = float(analysis.df['Adj Close'][-1])
         change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
-        requested_prediction_price = float(
-            analysis.requested_prediction_price)
+        requested_prediction_price = float(analysis.requested_prediction_price)
         requested_prediction_action = analysis.requested_prediction_action
 
         risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]],
-                    'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],
-                    'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]], }
+                 'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],
+                 'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]], }
         buy_price = float(risks[risk][0])
         sell_price = float(risks[risk][1])
 
         prediction_fig = analysis.prediction_graph(asset)
-
         st.plotly_chart(prediction_fig, use_container_width=True)
 
-        #technical_analysis_fig = analysis.technical_analysis_graph()
-        #st.plotly_chart(technical_analysis_fig, use_container_width=True)
+        # technical_analysis_fig = analysis.technical_analysis_graph()
+        # st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
         # logging.info(f'asset_size:{selected_assets}')
         for asset in selected_assets:
-            X, Y = calculate_mean_sentiment(asset, period)
+            X, Y = calculate_mean_sentiment(asset, period, 2)
             df = pd.DataFrame({"x": X, "y": Y, "assetName": asset})
-            #logging.info(f'altair_df:{df}')
-            # logging.info(f'event_df:{df.shape}')
-            # event_dict = altair_component(altair_chart=altair_histogram(df))
             selection = altair_component(altair_histogram(df))
-            #logging.info(f'selection:{selection}')
             r = selection.get("x")
             if r:
                 start_day = datetime.datetime.fromtimestamp(r[0]*1000)
                 start_day = pd.to_datetime(start_day).tz_localize('utc')
                 to_day = datetime.datetime.fromtimestamp(r[1]*1000)
                 to_day = pd.to_datetime(to_day).tz_localize('utc')
-                filtered = df[(df.x >= start_day) & (df.x < to_day)]
-                #logging.info(f'start_day:{start_day}, end_day:{to_day}')
-                #logging.info(f'filter:{filtered}')
+                filtered = news_df[(news_df.index >= start_day) & (news_df.index < to_day)]
+                # logging.info(f'start_day:{start_day}, end_day:{to_day}')
+                # logging.info(f'filter:{filtered}')
                 st.write(filtered)
-
-        if "_vgsid_" in selection:
-            # the ids start at 1
-            st.write(df.iloc[[selection["_vgsid_"][0] - 1]])
-        else:
-            st.info(
-                "Hover over the chart above to see details about the Penguin here.")
-
-        # for selected_points in selected_points_vec:
-        #    if selected_points:
-        #        end_day = datetime.datetime.strptime(
-        #            selected_points[0]['x'], '%m/%d/%y %H:%M:%S')
-        #        start_day = end_day - period
-        #        logging.info(f'start_day:{start_day}, end_day:{end_day}')
-        #        visualization.render_visualization(news_df, start_day, end_day)
-        #    else:
-        #        logging.info(f'no selection')

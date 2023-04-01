@@ -1,6 +1,6 @@
 import datetime
 from functools import lru_cache
-from app_dir.update_market_data import update_market_data
+#from app_dir.update_market_data import update_market_data
 import json
 import logging
 import requests
@@ -14,7 +14,7 @@ from market_data import ts_read_api
 
 pd.set_option("display.precision", 8)
 
-def data_update():
+def data_update_():
     #df_crypto = pd.read_csv('market_data/binance.txt')
     df_crypto = pd.read_csv('binance_us.txt')
     df_stocks = pd.read_csv('stocks.txt')
