@@ -4,8 +4,13 @@ import gc
 import logging
 import os
 
+import altair as alt
+from streamlit_vega_lite import altair_component
+
+# import function
+# from streamlit_bokeh_events import streamlit_bokeh_events
 import matplotlib.pyplot as plt
-from streamlit_plotly_events import plotly_events
+# from streamlit_plotly_events import plotly_events
 import nlp_util
 import numpy as np
 import pandas as pd
@@ -261,7 +266,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             buy_price = float(risks[risk][0])
             sell_price = float(risks[risk][1])
 
-
             prediction_fig = analysis.prediction_graph(asset)
 
             st.plotly_chart(prediction_fig, use_container_width=True)
@@ -429,7 +433,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
             # logging.info(f'asset_news_df:{asset_news_df}')
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
-                d = name.strftime("%m/%d/%y %H:%M:%S")
+                logging.info(f'name:{name}')
+                # d = name.strftime("%m/%d/%y %H:%M:%S")
                 counts = group["sentimentClass"].value_counts()
                 # logging.info(f'counts:{counts}')
                 # logging.info(f'counts_index:{counts.index}')
@@ -439,28 +444,76 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                         counts.index, weights=counts)
                 else:
                     mean_sentiment_score = 0
-                X.append(d)
+                X.append(name)
                 Y.append(mean_sentiment_score)
+            logging.info(f'x_df:{X}')
             return X, Y
 
         data = []
         selected_points_vec = []
+        # @st.cache_data
+
+        @st.cache_resource
+        def altair_histogram(hist_data):
+            color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('assetName:N', scale=alt.Scale(
+                domain=df.assetName.unique().tolist()), legend=None), alt.value("lightgray"))
+            brushed = alt.selection_interval(encodings=["x"], name="brushed")
+            opacity = alt.condition(brushed, alt.value(0.7), alt.value(0.25))
+            # selected = alt.selection_single(on="mouseover", empty="none")
+            # selected = alt.selection_single(on="click", empty="none", fields=['x'])
+            line = alt.Chart(hist_data).mark_line().encode(
+                x=alt.X('x:T', axis=None),
+                y='y:Q',
+                shape=alt.Shape('assetName:N', scale=alt.Scale(
+                    range=['circle', 'diamond'])),
+                tooltip=['x:N', 'y:N',
+                         'assetName:N', 'label:N', 'pred:N'],
+                opacity=opacity
+                # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
+            ).add_selection(brushed).properties(
+                width=1000,
+                height=400
+            )
+            # callout = alt.Chart(hist_data.iloc[7:8]).mark_point(
+            #    color='red', size=300, tooltip="Tooltip text here"
+            # ).encode(
+            #    x='x:T',
+            #    y='y:Q'
+            # )
+            return line
+
         # logging.info(f'asset_size:{selected_assets}')
         for asset in selected_assets:
             X, Y = calculate_mean_sentiment(asset, period)
-            df = pd.DataFrame({"x:": X, "y": Y})
-            plotly_fig = px.line(data_frame=df, x=X, y=Y,
-                                 title="Price/Mean sentiment")  # Get data from the dataframe with selected columns, choose the x axis as the index of the dataframe, y axis is the data that will be multiselected
-            data.append(plotly_fig)
-            selected_points = plotly_events(plotly_fig)
-            selected_points_vec.append(selected_points)
+            df = pd.DataFrame({"x": X, "y": Y, "assetName": asset})
+            logging.info(f'event_df:{df.shape}')
+            # event_dict = altair_component(altair_chart=altair_histogram(df))
+            selection = altair_component(altair_histogram(df))
+            logging.info(f'selection:{selection}')
+            r = selection.get("x")
+            if r:
+                start_day = datetime.datetime.fromtimestamp(r[0]*1000)
+                start_day = pd.to_datetime(start_day).tz_localize('utc')
+                to_day = datetime.datetime.fromtimestamp(r[1]*1000)
+                to_day = pd.to_datetime(to_day).tz_localize('utc')
+                filtered = df[(df.x >= start_day) & (df.x < to_day)]
+                logging.info(f'start_day:{start_day}, end_day:{to_day}')
+                logging.info(f'filter:{filtered}')
+                st.write(filtered)
 
-        for selected_points in selected_points_vec:
-            if selected_points:
-                end_day = datetime.datetime.strptime(
-                    selected_points[0]['x'], '%m/%d/%y %H:%M:%S')
-                start_day = end_day - period
-                logging.info(f'start_day:{start_day}, end_day:{end_day}')
-                visualization.render_visualization(news_df, start_day, end_day)
-            else:
-                logging.info(f'no selection')
+        if "_vgsid_" in selection:
+            # the ids start at 1
+            st.write(df.iloc[[selection["_vgsid_"][0] - 1]])
+        else:
+            st.info(
+                "Hover over the chart above to see details about the Penguin here.")
+
+        # for selected_points in selected_points_vec:
+        #    if selected_points:
+        #        end_day = datetime.datetime.strptime(
+        #            selected_points[0]['x'], '%m/%d/%y %H:%M:%S')
+        #        start_day = end_day - period
+        #        logging.info(f'start_day:{start_day}, end_day:{end_day}')
+        #        visualization.render_visualization(news_df, start_day, end_day)
+        #    else:
+        #        logging.info(f'no selection')

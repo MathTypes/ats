@@ -11,7 +11,8 @@ from data.front_end_utils import (
     display_text, subject_analysis, result_to_df, analyze_token_sentiment,
 )
 
-host = 'bolt://10.0.0.18:7687'
+#host = 'bolt://10.0.0.18:7687'
+host = 'bolt://host.docker.internal:7687'
 user = 'neo4j'
 password = 'password'
 driver = GraphDatabase.driver(host, auth=(user, password))
