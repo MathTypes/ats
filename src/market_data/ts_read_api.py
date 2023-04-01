@@ -29,7 +29,7 @@ def get_time_series_by_instr_date(instr_name, asof_date):
         market_df["time"] = pd.to_datetime(
             market_df["date"], format="%Y%m%d  %H:%M:%S").dt.tz_localize("UTC")
         market_df['idx_time'] = market_df["time"]
-        market_df = market_df.set_index(["idx_time", "assetName"])
+        market_df = market_df.set_index(["idx_time"])
         market_df = market_df.rename(columns={'date':'Date', 'close': 'Adj Close', 'high': 'High',
                                               'low': 'Low', 'volume': 'Volume', 'open': 'Open'})
         market_df = market_df[['High', 'Low', 'Open',

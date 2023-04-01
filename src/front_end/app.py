@@ -45,10 +45,8 @@ st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 # =================================================================================== #
 #                                Sidebar                                              #
 # =================================================================================== #
-ds = Image.open("images/ats.jpg")
-st.sidebar.image(ds)
 navigated = st.sidebar.radio("Navigation:", [
-    "Overview", "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer"], index=0)
+    "Overview", "Trading Data", "New Analysis"], index=0)
 
 market_df = None
 news_df = None
