@@ -380,6 +380,15 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         selected_points_vec = []
         # @st.cache_data
 
+        @functools.lru_cache
+        def get_analysis(exchange, interval, equity, indication, market):
+            action_model = cached_load_model("action_prediction_model.h5")
+            price_model = cached_load_model("price_prediction_model.h5")
+            analysis = Visualization(
+                exchange, interval, equity, indication, action_model, price_model, market)
+            analysis_day = Indications(exchange, '1 Day', equity, market)
+            return analysis, analysis_day
+        
         @st.cache_resource
         def altair_histogram(hist_data):
             color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('assetName:N', scale=alt.Scale(
@@ -418,12 +427,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         #warnings.filterwarnings("ignore")
         #gc.collect()
         
-        action_model = cached_load_model("action_prediction_model.h5")
-        price_model = cached_load_model("price_prediction_model.h5")
         app_data = Data_Sourcing()
-
         indication = 'Predicted'
-
         exchange = 'Yahoo! Finance'
         app_data.exchange_data(exchange)
 
@@ -450,12 +455,13 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         st.sidebar.subheader('Trading Volatility:')
         risk = st.sidebar.selectbox('', ('Low', 'Medium', 'High'), index=volitility_index)
 
-        analysis = Visualization(
-            exchange, interval, equity, indication, action_model, price_model, market)
-        analysis_day = Indications(exchange, '1 Day', equity, market)
+        analysis, analysis_day = get_analysis(exchange, interval, equity, indication, market)
         requested_date = analysis.df.index[-1]
         current_price = float(analysis.df['Adj Close'][-1])
         change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
+        logging.info(f'requested_date:{requested_date}')
+        logging.info(f'current_price:{current_price}')
+        logging.info(f'change:{change}')
         requested_prediction_price = float(analysis.requested_prediction_price)
         requested_prediction_action = analysis.requested_prediction_action
 

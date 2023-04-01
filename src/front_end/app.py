@@ -67,8 +67,8 @@ def load_data(from_date, to_date):
             asset, from_date, to_date)
         df_vec.append(date_df)
     market_df = pd.concat(df_vec)
-    logging.info(f'market_index:{market_df.index}')
-    logging.info(f'false index:{market_df[market_df.index==False]}')
+    #logging.info(f'market_index:{market_df.index}')
+    #logging.info(f'false index:{market_df[market_df.index==False]}')
     news_df = get_processed_tweets()
     news_df['index_time'] = news_df["time"]
     news_df = news_df.set_index("index_time")

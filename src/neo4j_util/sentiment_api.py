@@ -121,7 +121,7 @@ def get_processed_tweets():
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
-        logging.info(f'df_text:{df["text"]}')
+        #logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
         #df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         #df["assetName"] = "Stocks"
