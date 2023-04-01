@@ -1,4 +1,4 @@
-
+import functools
 import datetime
 import logging
 import model_prediction
@@ -19,12 +19,11 @@ from data.front_end_utils import (data_process,
 from market_data import ts_read_api
 from neo4j_util.sentiment_api import (get_processed_tweets)
 from util import logging_utils
-
-nltk.download('stopwords')
+from util import nlp_utils
 
 logging_utils.init_logging()
 
-nlp = spacy.load("en_core_web_sm")
+nlp = nlp_utils.get_nlp()
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 # =================================================================================== #
@@ -35,9 +34,6 @@ st.sidebar.image(ds)
 navigated = st.sidebar.radio("Navigation:", [
     "Overview", "Visualization", "Model Predictions", "Trading Data", "New Analysis", "TVL vs MCAP Analysis", "XE Token Analyzer"], index=0)
 
-# st.sidebar.title("Ats: Stock Market Analysis & Predictions")
-
-# @st.cache_data()
 market_df = None
 news_df = None
 assetNames = ["ES", "NQ", "RTY"]
@@ -47,9 +43,7 @@ to_date = datetime.date(2023, 3, 29)
 min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
-# @st.cache_data(ttl=600)
-
-
+@st.cache_data(ttl=600)
 def load_data(from_date, to_date):
     df_vec = []
     for asset in futureAssetCodes:

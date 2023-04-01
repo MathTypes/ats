@@ -1,6 +1,10 @@
 import logging
 import os
 import time
+import functools
+import time
+
+import traceback
 import datetime
 import pandas as pd
 
@@ -38,7 +42,7 @@ def get_time_series_by_instr_date(instr_name, asof_date):
             f"can not open {instr_name} for {asof_date} at {file_path}, e:{e}")
     return None
 
-
+@functools.lru_cache
 def get_time_series_by_range(instr_name, from_date, end_date):
     df_vec = []
     logging.info(f'instr_name:{instr_name}, from_date:{from_date}, end_date:{end_date}')
@@ -51,5 +55,6 @@ def get_time_series_by_range(instr_name, from_date, end_date):
     logging.info(f'duplicate index:{market_df[market_df.index.duplicated()]}')
     logging.info(f'duplicate_index_shape:{market_df[market_df.index.duplicated()].shape}')
     market_df = market_df.drop_duplicates(keep='last')
+    traceback.print_stack()
     logging.info(f'deduped_total_market_shape:{market_df.shape}') 
     return market_df

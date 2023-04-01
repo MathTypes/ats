@@ -1,3 +1,4 @@
+from functools import lru_cache
 import logging
 from neo4j import GraphDatabase
 import pandas as pd
@@ -77,7 +78,7 @@ def get_tweets():
         #df = keyword_util.add_subject_keyword(df)
         return df
 
-
+@lru_cache
 def get_processed_tweets():
     query = """
             MATCH (t:Tweet)

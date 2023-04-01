@@ -10,15 +10,13 @@ import plotly.express as px
 import pyLDAvis
 import streamlit as st
 from textblob import TextBlob
+from util import nlp_utils
 from wordcloud import WordCloud
 
 from data.front_end_utils import (analyze_token_sentiment, display_text,
                                   get_list_ner, get_top_n_bigram, result_to_df,
                                   subject_analysis, visualize_ner)
 from data_analysis.topic_modeling import LatentDirichletAllocation
-
-nltk.download('stopwords')
-
 
 def render_visualization(news_df, start_day, end_day):
     logging.info(f'start_day:{dir(start_day)}')
@@ -173,6 +171,7 @@ def render_visualization(news_df, start_day, end_day):
             )
             st.markdown("**Name entity Recognition:**")
             text = df["text"][df["subject"] == option[0]].values[0]
+            nlp = nlp_utils.get_nlp()
             sen = nlp(text)
             visualize_ner(
                 sen, title="", labels=nlp.get_pipe("ner").labels

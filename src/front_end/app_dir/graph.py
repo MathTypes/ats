@@ -12,7 +12,7 @@ class Visualization(Prediction):
 
     def prediction_graph(self, equity = None):
         
-        self.df_visualization = self.df_visualization.iloc[-450:]
+        #self.df_visualization = self.df_visualization.iloc[-450:]
 
         if equity == 'Index Fund' or equity == 'Futures & Commodities' or equity == 'Forex':
             prediction_title = f"{self.asset}."
