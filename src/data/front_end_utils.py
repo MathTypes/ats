@@ -40,7 +40,7 @@ def analyze_token_sentiment(docx):
     data_neg = pd.DataFrame({"words": list(neg.keys()), "polarity": list(neg.values())})
     return data_pos, data_neg
 
-@fun
+@functools.lru_cache
 def data_process(df):
     df['year'] = np.nan
     df['day'] = np.nan

@@ -1,9 +1,11 @@
+import argparse
 import functools
 import datetime
 import logging
 import model_prediction
 import news_analyzer
 import nltk
+import os
 import pandas as pd
 import rvl
 import sentiment_analyzer
@@ -18,9 +20,23 @@ from data.front_end_utils import (data_process,
                                   subject_analysis)
 from market_data import ts_read_api
 from neo4j_util.sentiment_api import (get_processed_tweets)
+from util import config_utils
 from util import logging_utils
 from util import nlp_utils
 
+
+parser = argparse.ArgumentParser(description='This app lists animals')
+parser.add_argument("--neo4j_host", type=str, required=True)
+
+try:
+    args = parser.parse_args()
+except SystemExit as e:
+    # This exception will be raised if --help or invalid command line arguments
+    # are used. Currently streamlit prevents the program from exiting normally
+    # so we have to do a hard exit.
+    os._exit(e.code)
+
+config_utils.set_args(args)
 logging_utils.init_logging()
 
 nlp = nlp_utils.get_nlp()
@@ -59,7 +75,6 @@ def load_data(from_date, to_date):
     news_df = news_df.sort_index()
     news_df = subject_analysis(news_df)
     return market_df, news_df
-
 
 market_df, news_df = load_data(from_date, to_date)
 news_df = data_process(news_df)

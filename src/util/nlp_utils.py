@@ -1,14 +1,13 @@
 
 import datetime
 import functools
+import logging
 import os
 import pandas as pd
 
-import logging
+import nltk
 import spacy
 from textblob import TextBlob
-
-import os
 
 import matplotlib.pyplot as plt
 from PIL import Image
