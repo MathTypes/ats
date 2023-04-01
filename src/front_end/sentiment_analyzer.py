@@ -15,7 +15,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 import streamlit as st
-#from app_dir.data_sourcing import Data_Sourcing, data_update
+# from app_dir.data_sourcing import Data_Sourcing, data_update
 from app_dir.data_sourcing import Data_Sourcing
 from app_dir.graph import Visualization
 from app_dir.indicator_analysis import Indications
@@ -25,9 +25,11 @@ from tensorflow.keras.models import load_model
 from wordcloud import WordCloud
 import visualization
 
+
 @functools.lru_cache
 def cached_load_model(file_path):
     return load_model(file_path)
+
 
 def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date, min_date, max_date):
     stop = set(stopwords.words('english'))
@@ -198,7 +200,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             time_period = st.date_input("From/To", [from_date,
                                                     to_date], min_value=from_date, max_value=to_date)
 
-            nlp_util.draw_wordcloud(news_df, stop, selected_asset, *time_period)
+            nlp_util.draw_wordcloud(
+                news_df, stop, selected_asset, *time_period)
 
     elif analysis.lower() == "aggregation charts":
         selected_assets = st.sidebar.multiselect(
@@ -356,7 +359,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             X = []
             Y = []
             # logging.info(f'news_df:{news_df["assetName"]}')
-            asset_news_df = news_df[(news_df["assetName"] == asset) & (news_df["analyst_rating"] == analyst_rating)]
+            asset_news_df = news_df[(news_df["assetName"] == asset) & (
+                news_df["analyst_rating"] == analyst_rating)]
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
             # logging.info(f'asset_news_df:{asset_news_df}')
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
@@ -381,18 +385,18 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         # @st.cache_data
 
         @functools.lru_cache
-        def get_analysis(exchange, interval, equity, indication, market):
+        def get_analysis(exchange, equity, indication, market):
             action_model = cached_load_model("action_prediction_model.h5")
             price_model = cached_load_model("price_prediction_model.h5")
             analysis = Visualization(
-                exchange, interval, equity, indication, action_model, price_model, market)
+                exchange, "5 Minute", equity, indication, action_model, price_model, market)
             analysis_day = Indications(exchange, '1 Day', equity, market)
             return analysis, analysis_day
-        
-        @st.cache_resource
+
+        #@st.cache_resource
         def altair_histogram(hist_data):
-            color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('assetName:N', scale=alt.Scale(
-                domain=df.assetName.unique().tolist()), legend=None), alt.value("lightgray"))
+            color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('analystRating:N', scale=alt.Scale(
+                domain=df.analystRating.unique().tolist()), legend=None), alt.value("lightgray"))
             brushed = alt.selection_interval(encodings=["x"], name="brushed")
             # opacity = alt.condition(brushed, alt.value(0.7), alt.value(0.25))
             # selected = alt.selection_single(on="mouseover", empty="none")
@@ -400,10 +404,10 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             line = alt.Chart(hist_data).mark_line().encode(
                 x=alt.X('x:T', title="Time"),
                 y=alt.Y('y:Q', scale=alt.Scale(zero=True), title="Sentiment"),
-                shape=alt.Shape('assetName:N', scale=alt.Scale(
+                shape=alt.Shape('analystRating:N', scale=alt.Scale(
                     range=['circle', 'diamond'])),
                 tooltip=['x:N', 'y:N',
-                         'assetName:N', 'label:N', 'pred:N'],
+                         'assetName:N', 'label:N', 'pred:N', 'analystRating:N'],
                 # opacity=opacity
                 # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
             ).add_selection(brushed).properties(
@@ -419,14 +423,14 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
             return line
 
-        #gc.collect()
-        #data_update()
+        # gc.collect()
+        # data_update()
 
-        #import warnings
+        # import warnings
         # import gc
-        #warnings.filterwarnings("ignore")
-        #gc.collect()
-        
+        # warnings.filterwarnings("ignore")
+        # gc.collect()
+
         app_data = Data_Sourcing()
         indication = 'Predicted'
         exchange = 'Yahoo! Finance'
@@ -442,34 +446,16 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         equity = st.sidebar.selectbox('', assets)
         asset = selected_assets[0]
 
-        st.sidebar.subheader('Interval:')
-        interval = st.sidebar.selectbox(
-            '', ('5 Minute', '15 Minute', '30 Minute', '1 Hour', '1 Day', '1 Week'), index=4)
-        volitility_index = 0
-
-        st.sidebar.subheader('Interval:')
-        interval = st.sidebar.selectbox('', ('1 Minute', '3 Minute', '5 Minute', '15 Minute',
-                                        '30 Minute', '1 Hour', '6 Hour', '12 Hour', '1 Day', '1 Week'), index=8)
-
-        label = asset
-        st.sidebar.subheader('Trading Volatility:')
-        risk = st.sidebar.selectbox('', ('Low', 'Medium', 'High'), index=volitility_index)
-
-        analysis, analysis_day = get_analysis(exchange, interval, equity, indication, market)
+        analysis, analysis_day = get_analysis(
+            exchange, equity, indication, market)
         requested_date = analysis.df.index[-1]
         current_price = float(analysis.df['Adj Close'][-1])
         change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
         logging.info(f'requested_date:{requested_date}')
         logging.info(f'current_price:{current_price}')
         logging.info(f'change:{change}')
-        requested_prediction_price = float(analysis.requested_prediction_price)
-        requested_prediction_action = analysis.requested_prediction_action
-
-        risks = {'Low': [analysis_day.df['S1'].values[-1], analysis_day.df['R1'].values[-1]],
-                 'Medium': [analysis_day.df['S2'].values[-1], analysis_day.df['R2'].values[-1]],
-                 'High': [analysis_day.df['S3'].values[-1], analysis_day.df['R3'].values[-1]], }
-        buy_price = float(risks[risk][0])
-        sell_price = float(risks[risk][1])
+        # requested_prediction_price = float(analysis.requested_prediction_price)
+        # requested_prediction_action = analysis.requested_prediction_action
 
         prediction_fig = analysis.prediction_graph(asset)
         st.plotly_chart(prediction_fig, use_container_width=True)
@@ -478,17 +464,22 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         # st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
         # logging.info(f'asset_size:{selected_assets}')
+        selections = {}
         for asset in selected_assets:
-            X, Y = calculate_mean_sentiment(asset, period, 2)
-            df = pd.DataFrame({"x": X, "y": Y, "assetName": asset})
-            selection = altair_component(altair_histogram(df))
+            analyst_rating = news_df.analyst_rating.unique().tolist()
+            for rating in analyst_rating:
+                X, Y = calculate_mean_sentiment(asset, period, rating)
+                df = pd.DataFrame({"x": X, "y": Y, "assetName": asset, "analystRating":rating})
+                selection = altair_component(altair_histogram(df))
+                selections[rating] = selection
+
+        for rating, selection in selections.items():
             r = selection.get("x")
             if r:
                 start_day = datetime.datetime.fromtimestamp(r[0]*1000)
                 start_day = pd.to_datetime(start_day).tz_localize('utc')
                 to_day = datetime.datetime.fromtimestamp(r[1]*1000)
                 to_day = pd.to_datetime(to_day).tz_localize('utc')
-                filtered = news_df[(news_df.index >= start_day) & (news_df.index < to_day)]
-                # logging.info(f'start_day:{start_day}, end_day:{to_day}')
-                # logging.info(f'filter:{filtered}')
+                filtered = news_df[(news_df.index >= start_day) & (
+                    news_df.index < to_day) & (news_df.analyst_rating == rating)]
                 st.write(filtered)
