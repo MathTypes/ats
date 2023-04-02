@@ -105,7 +105,7 @@ def get_processed_tweets():
                 rt.subject as subject,
                 p.rating as analyst_rating
             ORDER BY t.created_at DESC
-            LIMIT 5000
+            LIMIT 10000
             """
     params = {}
     with get_driver().session() as session:
@@ -121,6 +121,7 @@ def get_processed_tweets():
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
+        df["analyst_rating"] = df['analyst_rating'].fillna(0)
         #logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
         #df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
