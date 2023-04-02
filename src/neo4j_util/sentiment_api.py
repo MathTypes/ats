@@ -150,17 +150,14 @@ def get_processed_tweets():
 
 def get_unprocessed_tweets():
     query = """
-            MATCH (rt:RepliedTweet)
-            MATCH (t:Tweet)
-            WHERE rt.annotation_time is null and rt.tweet_id=t.id
-            and (rt.text + t.raw_content) is not null
-            RETURN t.id as id, t.user as user,
-                datetime({epochMillis: t.created_at}) as time,
-                t.perma_link as perma_link, t.like_count as like_count,
-                t.source_url as source_url,
-                (rt.text + t.raw_content) as text
-            ORDER BY t.created_at DESC
-            LIMIT 100
+            MATCH (rt:Tweet) with rt order by rt.created_at
+            MATCH (t:Tweet)            
+            WHERE t.annotation_time is null and rt.in_reply_to_tweet_id=t.id
+            and t.raw_content is not null
+            with t.id as tweet_id, t.raw_content + collect(rt.raw_content) as text,
+            datetime({epochMillis: t.created_at}) as time
+            RETURN tweet_id, time, text
+            LIMIT 1000
             """
     params = {}
     with get_driver().session() as session:

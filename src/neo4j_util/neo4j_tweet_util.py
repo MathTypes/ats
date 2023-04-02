@@ -24,15 +24,15 @@ class Neo4j:
     def update_processed_text(self, df):
         tx = self.graph.begin()
         for index, row in df.iterrows():
-            tweet_id = row["id"]
+            tweet_id = row["tweet_id"]
             # retrieve company node from the remote self.graph
             self.graph.evaluate(
-                """MATCH(t:RepliedTweet {tweet_id:$tweet_id})
+                """MATCH(t:Tweet {id:$tweet_id})
                    SET
                     t.subject=$subject,
                     t.lemma_text=$lemma_text,
                     t.keyword_text=$keyword_text,
-                    t.full_text=$full_text,
+                    t.full_text=t.raw_content + " " + $full_text,
                     t.text_ner_names=$text_ner_names,
                     t.text_ner_count=$text_ner_count,
                     t.lemma_subject=$lemma_subject,
@@ -44,7 +44,7 @@ class Neo4j:
                     t.sentiment_class=$sentiment_class,
                     t.annotation_time=$annotation_time
                 """, {
-                    "tweet_id": row["id"],
+                    "tweet_id": row["tweet_id"],
                     "full_text": row["text"],
                     "subject": row["subject"],
                     "lemma_text": row["lemma_text"],
