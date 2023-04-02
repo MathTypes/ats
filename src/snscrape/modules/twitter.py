@@ -1591,6 +1591,7 @@ class TwitterSearchScraper(_TwitterAPIScraper):
 		   existingTweetIds=existingTweetIds, **kwargs)
 		self._query = query  # Note: may get replaced by subclasses when using user ID resolution
 		self._cursor = cursor
+		logging.error(f'existingTweetIds:{len(existingTweetIds)}')
 		if top is not None:
 			replacement = f'{__name__}.TwitterSearchScraperMode.' + ('TOP' if top else 'LIVE')
 			warnings.warn(f'`top` argument is deprecated, use `mode = {replacement}` instead of `top = {bool(top)}`', snscrape.base.DeprecatedFeatureWarning, stacklevel = 2)

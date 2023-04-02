@@ -13,7 +13,7 @@ import pandas as pd
 import snscrape.modules.twitter as sntwitter
 from neo4j_util.neo4j_tweet_util import Neo4j
 from neo4j_util.sentiment_api import get_tweet_id_by_range
-
+from util import logging_utils
 
 def upload_tweet_to_neo4j(username, since, until, existing_tweets):
     if until == '':
@@ -28,17 +28,20 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
     usernames = args.username.split(",")
     neo4j = Neo4j()
     query = f"from:{args.username} since:{since} until:{until}"
-    tweets = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-    neo4j.bulk_load(tweets)
+    tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+    tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+    neo4j.bulk_load(tweet_urls)
     query = f"to:{args.username} since:{since} until:{until}"
-    tweets = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-    neo4j.bulk_load(tweets)
+    tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+    tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+    neo4j.bulk_load(tweet_urls)
 
     if args.hash_tag:
         hash_tags = args.hash_tag.split(",")
         for hash_tag in hash_tags:
             query = f"f#{hash_tag} since:{since} until:{until}"
             tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+            tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
             neo4j.bulk_load(tweet_urls)
 
     if args.stock:
@@ -46,6 +49,7 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
         for stock in stocks:
             query = f"f${stock} since:{since} until:{until}"
             tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+            tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
             neo4j.bulk_load(tweet_urls)
 
 if __name__ == "__main__":
@@ -63,6 +67,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
+    logging_utils.init_logging()
     if not args.username and not args.hash_tag and not args.stock:
         logging.error("Must specify at least one of username, hash_Tag or stock")
         exit(-1)
