@@ -90,8 +90,8 @@ class Neo4j:
                 })
         tx.commit()
 
-    @RateLimiter(max_calls=1, period=1)
-    def load_data(self, tweet):
+    #@RateLimiter(max_calls=1, period=1)
+    def load_data(self, tx, tweet):
         """
         Loads one tweet at a time
         :param tweet: a json doc with following schema
@@ -110,8 +110,6 @@ class Neo4j:
         }
         :return: None
         """
-        # begin transaction
-        tx = self.graph.begin()
         # retrieve company node from the remote self.graph
         user_node = self.graph.evaluate(
             "MATCH(n:User {name:$user}) RETURN n",
@@ -131,7 +129,6 @@ class Neo4j:
             tweet_id=tweet.id)
         if tweet_node is not None:
             logging.error(f'found tweet_node:{tweet_node}')
-            tx.commit()
             return
 
         retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
@@ -196,8 +193,6 @@ class Neo4j:
                     tweet_node, "TAG", hashtag_node)
                 tx.create(contains_hashtag)
 
-        # commit transaction
-        tx.commit()
 
     def bulk_load(self, tweets):
         """
@@ -206,9 +201,13 @@ class Neo4j:
         :param tweets:
         :return:
         """
+        # begin transaction
+        tx = self.graph.begin()
         for t in tweets:
-            self.load_data(t)
+            self.load_data(tx, t)
             print("Tweet loaded into neo4j")
+        # commit transaction
+        tx.commit()
 
     def prune_graph(self):
         self.graph.evaluate('MATCH (t:Tweet)-[:CONTAINS]->(n) WITH n as n, count(t) as tweet_count WHERE tweet_count '
