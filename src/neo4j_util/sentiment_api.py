@@ -15,9 +15,10 @@ from data.front_end_utils import (
 from util import config_utils
 
 DEFAULT_HOST = 'bolt://10.0.0.18:7687'
-#host = 'bolt://host.docker.internal:7687'
+# host = 'bolt://host.docker.internal:7687'
 user = 'neo4j'
 password = 'password'
+
 
 def map_to_market(x):
     for word in x:
@@ -30,13 +31,15 @@ def map_to_market(x):
             return "ES"
     return "ES"
 
+
 def get_driver():
     args = config_utils.get_args()
     host = DEFAULT_HOST
-    if args.neo4j_host:
+    if args and args.neo4j_host:
         host = args.neo4j_host
     driver = GraphDatabase.driver(host, auth=(user, password))
     return driver
+
 
 def read_query(query, params={}):
     with get_driver().session() as session:
@@ -44,10 +47,24 @@ def read_query(query, params={}):
         response = [r.values()[0] for r in result]
         return response
 
+
 def get_article_text(title):
     text = read_query(
         "MATCH (a:Article {webTitle:$title}) RETURN a.bodyContent as response", {'title': title})
     return text
+
+
+def get_tweet_id_by_range(start_date, end_date):
+    query = """
+            MATCH (t:Tweet)
+            WHERE datetime({epochMillis: t.created_at})  > datetime($start_date)
+              and datetime({epochMillis: t.created_at})  < datetime($end_date)
+            RETURN t.id as id
+            """
+    text = read_query(query, params={"start_date": start_date,
+                                     "end_date": end_date})
+    return text
+
 
 def get_tweets():
     query = """
@@ -70,22 +87,23 @@ def get_tweets():
     with get_driver().session() as session:
         result = session.run(query, params)
         result_dict = [r.values() for r in result]
-        #logging.info(f"result:{result_dict}")
+        # logging.info(f"result:{result_dict}")
         df = pd.DataFrame(result_dict, columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-        #    df["time"], infer_datetime_format=True).dt.date
+            #    df["time"], infer_datetime_format=True).dt.date
             df["time"], infer_datetime_format=True)
-        #logging.info(f'original_df_text:{df["text"]}')
+        # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
-        #logging.info(f'df_text:{df["text"]}')
+        # logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
-        #df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
-        #df["assetName"] = "Stocks"
-        #df = keyword_util.add_subject_keyword(df)
+        # df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
+        # df["assetName"] = "Stocks"
+        # df = keyword_util.add_subject_keyword(df)
         return df
+
 
 @lru_cache
 def get_processed_tweets():
@@ -111,23 +129,24 @@ def get_processed_tweets():
     with get_driver().session() as session:
         result = session.run(query, params)
         result_dict = [r.values() for r in result]
-        #logging.info(f"result:{result_dict}")
+        # logging.info(f"result:{result_dict}")
         df = pd.DataFrame(result_dict, columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-        #    df["time"], infer_datetime_format=True).dt.date
+            #    df["time"], infer_datetime_format=True).dt.date
             df["time"], infer_datetime_format=True)
-        #logging.info(f'original_df_text:{df["text"]}')
+        # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
         df["analyst_rating"] = df['analyst_rating'].fillna(0)
-        #logging.info(f'df_text:{df["text"]}')
+        # logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
-        #df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
-        #df["assetName"] = "Stocks"
-        #df = keyword_util.add_subject_keyword(df)
+        # df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
+        # df["assetName"] = "Stocks"
+        # df = keyword_util.add_subject_keyword(df)
         return df
+
 
 def get_unprocessed_tweets():
     query = """
@@ -151,8 +170,9 @@ def get_unprocessed_tweets():
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True)
         df["text"] = df["text"].apply(lambda x: str(x))
-        #df = keyword_util.add_subject_keyword(df)
+        # df = keyword_util.add_subject_keyword(df)
         return df
+
 
 def get_gpt_unprocessed_tweets():
     query = """MATCH (t:Tweet)
@@ -173,6 +193,7 @@ def get_gpt_unprocessed_tweets():
             df["time"], infer_datetime_format=True)
         return df
 
+
 def get_conversation_ids():
     text = read_query(
         "MATCH (n:Conversation)-[CONTAINS] - (t:Tweet) return n.id, min(t.pubdate) as start_date, max(t.pubdate) as end_date order by start_date")
@@ -189,7 +210,7 @@ def get_tweets_by_conv_id(conv_id):
     text = read_query(
         "MATCH(c:Conversation {id:$conv_id})-[CONTAINS]->(t:Tweet) return t.raw_content as text order by t.created_at DESC",
         params={"conv_id": conv_id})
-    #logging.error(f'text:{text}')
+    # logging.error(f'text:{text}')
     return text
 
 
@@ -199,12 +220,14 @@ def get_tweets_replied_to(tweet_id):
         params={"tweet_id": tweet_id})
     return text
 
+
 def map_sentiment(x):
     if x.lower() in ["negative"]:
         return -1
     if x.lower() in ["positive"]:
         return 1
     return 0
+
 
 def get_gpt_sentiments():
     query = """
@@ -223,21 +246,21 @@ def get_gpt_sentiments():
     with get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
-        #df["assetName"] = df["assetName"].lower()
+        # df["assetName"] = df["assetName"].lower()
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["text"] = df["text"].apply(lambda x: str(x))
         df["time"] = pd.to_datetime(
-        #    df["time"], infer_datetime_format=True).dt.date
+            #    df["time"], infer_datetime_format=True).dt.date
             df["time"], infer_datetime_format=True)
         df["assetName"] = df["assetName"].apply(map_to_market)
         df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         df["assetCode"] = df["assetName"]
-        #df["assetName"] = "Stocks"
-        #df = keyword_util.add_subject_keyword(df)
-        #logging.info(f'my_df:{df}')
+        # df["assetName"] = "Stocks"
+        # df = keyword_util.add_subject_keyword(df)
+        # logging.info(f'my_df:{df}')
         return df
 
-                                                                                                                           
+
 def get_gpt_processed_replied_tweets():
     query = """
             MATCH (t:RepliedTweet), (r:Tweet)
@@ -252,7 +275,7 @@ def get_gpt_processed_replied_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True)
-        #df = keyword_util.add_subject_keyword(df)
+        # df = keyword_util.add_subject_keyword(df)
         return df
 
 
@@ -271,9 +294,10 @@ def get_gpt_unprocessed_replied_tweets():
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
-        #    df["time"], infer_datetime_format=True).dt.date
+            #    df["time"], infer_datetime_format=True).dt.date
             df["time"], infer_datetime_format=True)
         return df
+
 
 def get_conversations():
     conversation_ids = get_conversation_ids()
@@ -302,14 +326,14 @@ def get_tweet_replies_v2():
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["text"] = df["text"].apply(lambda x: "\n".join(x))
-        #logging.info(f'df:{df}')
+        # logging.info(f'df:{df}')
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             df["time"], infer_datetime_format=True)
         df = df.set_index("time")
         df = df.sort_index()
-        #df = keyword_util.add_subject_keyword(df)
-        #logging.info(f'df:{df}')
+        # df = keyword_util.add_subject_keyword(df)
+        # logging.info(f'df:{df}')
         return df
     # result = read_query(query)
     # result["text"] = result["text"].apply(lambda x: "\n".join(x))

@@ -649,9 +649,11 @@ class _TwitterAPIType(enum.Enum):
 
 
 class _TwitterAPIScraper(snscrape.base.Scraper):
-	def __init__(self, baseUrl, *, guestTokenManager = None, maxEmptyPages = 0, **kwargs):
+	def __init__(self, baseUrl, existingTweetIds, *, guestTokenManager = None, maxEmptyPages = 0, **kwargs):
 		super().__init__(**kwargs)
 		self._baseUrl = baseUrl
+		self._existingTweetIds = existingTweetIds
+
 		if guestTokenManager is None:
 			global _globalGuestTokenManager
 			if _globalGuestTokenManager is None:
@@ -1579,13 +1581,14 @@ class TwitterSearchScraperMode(enum.Enum):
 class TwitterSearchScraper(_TwitterAPIScraper):
 	name = 'twitter-search'
 
-	def __init__(self, query, *, cursor = None, mode = TwitterSearchScraperMode.LIVE, top = None, maxEmptyPages = 20, **kwargs):
+	def __init__(self, query, existingTweetIds, *, cursor = None, mode = TwitterSearchScraperMode.LIVE, top = None, maxEmptyPages = 20,  **kwargs):
 		if not query.strip():
 			raise ValueError('empty query')
 		if mode not in tuple(TwitterSearchScraperMode):
 			raise ValueError('invalid mode, must be a TwitterSearchScraperMode')
 		kwargs['maxEmptyPages'] = maxEmptyPages
-		super().__init__(baseUrl = 'https://twitter.com/search?' + urllib.parse.urlencode({'f': 'live', 'lang': 'en', 'q': query, 'src': 'spelling_expansion_revert_click'}), **kwargs)
+		super().__init__(baseUrl = 'https://twitter.com/search?' + urllib.parse.urlencode({'f': 'live', 'lang': 'en', 'q': query, 'src': 'spelling_expansion_revert_click'}),
+		   existingTweetIds=existingTweetIds, **kwargs)
 		self._query = query  # Note: may get replaced by subclasses when using user ID resolution
 		self._cursor = cursor
 		if top is not None:
@@ -1885,10 +1888,11 @@ class TwitterTweetScraperMode(enum.Enum):
 class TwitterTweetScraper(_TwitterAPIScraper):
 	name = 'twitter-tweet'
 
-	def __init__(self, tweetId, *, mode = TwitterTweetScraperMode.SINGLE, **kwargs):
+	def __init__(self, tweetId, existingTweetIds, *, mode = TwitterTweetScraperMode.SINGLE, **kwargs):
 		self._tweetId = tweetId
 		self._mode = mode
-		super().__init__(f'https://twitter.com/i/web/status/{self._tweetId}', **kwargs)
+		super().__init__(f'https://twitter.com/i/web/status/{self._tweetId}',
+		   existingTweetIds, **kwargs)
 
 	def get_items(self):
 		paginationVariables = {
@@ -1951,7 +1955,7 @@ class TwitterTweetScraper(_TwitterAPIScraper):
 					continue
 				yield from self._graphql_timeline_instructions_to_tweets(obj['data']['threaded_conversation_with_injections_v2']['instructions'], includeConversationThreads = True)
 		elif self._mode is TwitterTweetScraperMode.RECURSE:
-			seenTweets = set()
+			seenTweets = self._existingTweetIds
 			queue = collections.deque()
 			queue.append(self._tweetId)
 			while queue:
@@ -1965,10 +1969,12 @@ class TwitterTweetScraper(_TwitterAPIScraper):
 						continue
 					for tweet in self._graphql_timeline_instructions_to_tweets(obj['data']['threaded_conversation_with_injections_v2']['instructions'], includeConversationThreads = True):
 						if tweet.id not in seenTweets:
+							logging.info(f'adding tweet:{tweet.id}')
 							yield tweet
 							seenTweets.add(tweet.id)
 							if tweet.id != self._tweetId:  # Already queued at the beginning
 								queue.append(tweet.id)
+
 
 	@classmethod
 	def _cli_setup_parser(cls, subparser):
@@ -1985,8 +1991,8 @@ class TwitterTweetScraper(_TwitterAPIScraper):
 class TwitterListPostsScraper(TwitterSearchScraper):
 	name = 'twitter-list-posts'
 
-	def __init__(self, listName, **kwargs):
-		super().__init__(f'list:{listName}', **kwargs)
+	def __init__(self, listName, existingTweetIds, **kwargs):
+		super().__init__(f'list:{listName}', existingTweetIds, **kwargs)
 		self._listName = listName
 
 	@classmethod
@@ -2001,9 +2007,9 @@ class TwitterListPostsScraper(TwitterSearchScraper):
 class TwitterCommunityScraper(_TwitterAPIScraper):
 	name = 'twitter-community'
 
-	def __init__(self, communityId, **kwargs):
+	def __init__(self, communityId, existingTweetIds, **kwargs):
 		self._communityId = communityId
-		super().__init__(f'https://twitter.com/i/communities/{self._communityId}', **kwargs)
+		super().__init__(f'https://twitter.com/i/communities/{self._communityId}', existingTweetIds, **kwargs)
 
 	def _get_entity(self):
 		self._ensure_guest_token()
