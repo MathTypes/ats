@@ -386,7 +386,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         # @st.cache_data
 
         #@functools.lru_cache(maxsize=32)
-        st.cache_data()
+        #st.cache_data()
         def get_analysis(exchange, asset, indication, market):
             logging.info(
                 f'calling get_analysis, exchange:{exchange}, asset:{asset}, indication:{indication}, market:{market}')
