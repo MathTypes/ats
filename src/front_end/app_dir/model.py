@@ -34,8 +34,13 @@ class Prediction(Preprocessing):
         self.action_labels = self.ohe.fit_transform(self.action_labels)
         
     def get_prediction(self):         
-        self.model_prediction_action = self.action_model.predict(self.action_features)
-        self.model_prediction_price = self.price_model.predict(self.price_features)
+        logging.info(f'self.action_features:{self.action_features.shape}')
+        #self.model_prediction_action = self.action_model.predict(self.action_features)
+        self.model_prediction_action = np.zeros((self.action_features.shape[0],3))
+        logging.info(f'self.model_prediction_action:{self.model_prediction_action.shape}')
+        #self.model_prediction_price = self.price_model.predict(self.price_features)
+        self.model_prediction_price = np.zeros((self.action_features.shape[0],1))
+        logging.info(f'self.model_prediction_price:{self.model_prediction_price.shape}')
         
         self.model_prediction_action = np.array(self.ohe.inverse_transform(self.model_prediction_action.round())).flatten()
         self.model_prediction_price = self.scaler.inverse_transform(self.model_prediction_price).flatten()

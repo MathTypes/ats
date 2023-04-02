@@ -10,8 +10,11 @@ class Visualization(Prediction):
 
     def __init__(self, exchange, interval, asset, indication, action_model, price_model, market=None):
         super().__init__(exchange, interval, asset, action_model, price_model, market)
+        logging.info(f'before get_prediction, indication:{indication}, action_model:{action_model}, price_model:{price_model}')
         super(Visualization, self).get_prediction()
+        logging.info(f'before prediction_postprocessing, indication:{indication}')
         super(Visualization, self).prediction_postprocessing(indication)
+        logging.info(f'post prediction_postprocessing, indication:{indication}')
 
     def prediction_graph(self, equity=None):
 

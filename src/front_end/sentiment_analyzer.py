@@ -7,6 +7,7 @@ import os
 
 import altair as alt
 from streamlit_vega_lite import altair_component
+from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
 import matplotlib.pyplot as plt
 from util import nlp_utils
@@ -496,4 +497,26 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 to_day = pd.to_datetime(to_day).tz_localize('utc')
                 filtered = news_df[(news_df.index >= start_day) & (
                     news_df.index < to_day) & (news_df.analyst_rating == rating)]
-                st.write(filtered)
+                gb = GridOptionsBuilder.from_dataframe(filtered)
+                gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
+                gb.configure_side_bar() #Add a sidebar
+                gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
+                gridOptions = gb.build()
+
+                grid_response = AgGrid(
+                    filtered,
+                    gridOptions=gridOptions,
+                    data_return_mode='AS_INPUT', 
+                    update_mode='MODEL_CHANGED', 
+                    fit_columns_on_grid_load=False,
+                    theme='alpine', #Add theme color to the table
+                    enable_enterprise_modules=True,
+                    height=350, 
+                    width='100%',
+                    reload_data=True
+                )
+
+                data = grid_response['data']
+                selected = grid_response['selected_rows'] 
+                df = pd.DataFrame(selected)
+                #st.write(filtered)
