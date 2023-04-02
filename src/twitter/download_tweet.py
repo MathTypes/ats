@@ -25,16 +25,17 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
     logging.info(f'existing_tweets:{len(existing_tweets)}')
     # Creating list to append tweet data
     tweets_list1 = []
-    usernames = args.username.split(",")
-    neo4j = Neo4j()
-    query = f"from:{args.username} since:{since} until:{until}"
-    tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-    tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
-    neo4j.bulk_load(tweet_urls)
-    query = f"to:{args.username} since:{since} until:{until}"
-    tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-    tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
-    neo4j.bulk_load(tweet_urls)
+    if args.username:
+        usernames = args.username.split(",")
+        neo4j = Neo4j()
+        query = f"from:{args.username} since:{since} until:{until}"
+        tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+        tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+        neo4j.bulk_load(tweet_urls)
+        query = f"to:{args.username} since:{since} until:{until}"
+        tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+        tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+        neo4j.bulk_load(tweet_urls)
 
     if args.hash_tag:
         hash_tags = args.hash_tag.split(",")

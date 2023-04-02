@@ -20,10 +20,10 @@ class Neo4j:
     def delete_all(self):
         self.graph.delete_all()
 
-    @RateLimiter(max_calls=1, period=60)
+    #@RateLimiter(max_calls=1, period=60)
     def update_processed_text(self, df):
+        tx = self.graph.begin()
         for index, row in df.iterrows():
-            tx = self.graph.begin()
             tweet_id = row["id"]
             # retrieve company node from the remote self.graph
             self.graph.evaluate(
