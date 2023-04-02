@@ -9,6 +9,7 @@ import altair as alt
 from streamlit_vega_lite import altair_component
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
+import visualization
 import matplotlib.pyplot as plt
 from util import nlp_utils
 import numpy as np
@@ -518,5 +519,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
                 data = grid_response['data']
                 selected = grid_response['selected_rows'] 
+                logging.info(f'grid_response_selected:{selected}')
                 df = pd.DataFrame(selected)
+                logging.info(f'selected_df:{df}')
+                if not df.empty:
+                    visualization.render_visualization_df(df)
                 #st.write(filtered)

@@ -24,17 +24,15 @@ def render_visualization(news_df, start_day, end_day):
     type = st.sidebar.radio("information type:", ("General", "Detailed"))
     s_d = st.sidebar.date_input("Start:", datetime.date(2023, 3, 1))
     e_d = st.sidebar.date_input("End:", datetime.date(2023, 4, 22))
-    # =================================================================================== #
-    #                                Display Dataset                                      #
-    # =================================================================================== #
-
-    st.dataframe(news_df)
-
     start_day = pd.to_datetime(start_day).tz_localize('utc')
     end_day = pd.to_datetime(end_day).tz_localize('utc')
     logging.info(f'start_day:{start_day}, end_day:{end_day}')
     sub_data = news_df[news_df["time"].between(start_day, end_day)]
+    render_visualization_df(sub_data)
+
+def render_visualization_df(sub_data):
     count = sub_data.shape[0]
+    logging.info(f'rendering:{sub_data}')
     # =================================================================================== #
     #                                General                                              #
     # =================================================================================== #
@@ -167,45 +165,46 @@ def render_visualization(news_df, start_day, end_day):
             option = st.multiselect(
                 "News Subjects:",
                 sub_data["subject"].tolist(),
-                [df["subject"][100]],
+                [],
             )
-            st.markdown("**Name entity Recognition:**")
-            text = df["text"][df["subject"] == option[0]].values[0]
-            nlp = nlp_utils.get_nlp()
-            sen = nlp(text)
-            visualize_ner(
-                sen, title="", labels=nlp.get_pipe("ner").labels
-            )
-            st.markdown("**sentiment analysis:**")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.info("Results")
-                sentiment = TextBlob(text).sentiment
+            if len(option)>0:
+                st.markdown("**Name entity Recognition:**")
+                text = sub_data["text"][sub_data["subject"] == option[0]].values[0]
+                nlp = nlp_utils.get_nlp()
+                sen = nlp(text)
+                visualize_ner(
+                    sen, title="", labels=nlp.get_pipe("ner").labels
+                )
+                st.markdown("**sentiment analysis:**")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.info("Results")
+                    sentiment = TextBlob(text).sentiment
 
-                if sentiment.polarity > 0:
-                    st.markdown("Sentiment: Positive :smiley:")
-                elif sentiment.polarity < 0:
-                    st.markdown("Sentiment: Negative :angry:")
-                else:
-                    st.markdown("Sentiment: Neutral 😐")
-                res = result_to_df(sentiment)
-                st.dataframe(res)
-                fig = px.bar(res, x='metric', y='value')
-                st.plotly_chart(fig)
-            with col2:
-                st.info('Token Sentiment')
-                data_pos, data_neg = analyze_token_sentiment(text)
-                fig_pos = px.bar(data_pos, x='words', y='polarity')
-                fig_neg = px.bar(data_neg, x='words', y='polarity')
-                st.plotly_chart(fig_pos)
-                st.plotly_chart(fig_neg)
-                # st.write(analyze_token_sentiment(text))
-            # =================================================================================== #
-            #                                KG                                                   #
-            # =================================================================================== #
-            st.markdown("**Knowledge graph representation:**")
-            st.info("Due to depolyment problem, I recommand to visualise this plot on the "
-                    "knowledge_graph notebook")
+                    if sentiment.polarity > 0:
+                        st.markdown("Sentiment: Positive :smiley:")
+                    elif sentiment.polarity < 0:
+                        st.markdown("Sentiment: Negative :angry:")
+                    else:
+                        st.markdown("Sentiment: Neutral 😐")
+                    res = result_to_df(sentiment)
+                    st.dataframe(res)
+                    fig = px.bar(res, x='metric', y='value')
+                    st.plotly_chart(fig)
+                with col2:
+                    st.info('Token Sentiment')
+                    data_pos, data_neg = analyze_token_sentiment(text)
+                    fig_pos = px.bar(data_pos, x='words', y='polarity')
+                    fig_neg = px.bar(data_neg, x='words', y='polarity')
+                    st.plotly_chart(fig_pos)
+                    st.plotly_chart(fig_neg)
+                    # st.write(analyze_token_sentiment(text))
+                # =================================================================================== #
+                #                                KG                                                   #
+                # =================================================================================== #
+                st.markdown("**Knowledge graph representation:**")
+                st.info("Due to depolyment problem, I recommand to visualise this plot on the "
+                        "knowledge_graph notebook")
 
         # =================================================================================== #
         #                                summary NER                                          #
