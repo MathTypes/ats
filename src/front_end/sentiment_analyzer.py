@@ -414,10 +414,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                          'assetName:N', 'label:N', 'pred:N', 'analystRating:N'],
                 # opacity=opacity
                 # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
-            ).add_selection(brushed).properties(
-                width=1000,
-                height=400,
-                title="Market Sentiment Watch!"
             )
             callout = alt.Chart(hist_data.iloc[7:8]).mark_point(
                 color='red', size=300, tooltip="Tooltip text here"
@@ -425,7 +421,11 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 x='x:T',
                 y='y:Q'
             )
-            return line + callout
+            return (line).add_selection(brushed).properties(
+                width=1000,
+                height=400,
+                title="Market Sentiment Watch!"
+            )
 
         # gc.collect()
         # data_update()
@@ -440,11 +440,18 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         exchange = 'Yahoo! Finance'
         app_data.exchange_data(exchange)
 
-        # if asset == 'Stocks':
-        st.sidebar.subheader(f'Stock Index:')
-        stock_indexes = app_data.stock_indexes
-        market = st.sidebar.selectbox('', stock_indexes, index=11)
-        app_data.market_data(market)
+        st.sidebar.subheader(f'Analyst:')
+        analysts = news_df.user.unique().tolist()
+        #stock_indexes = app_data.stock_indexes
+        market = "US S&P 500"
+        selected_analysts = st.sidebar.multiselect(
+            "Please select analysts",
+            analysts,
+            default=[]
+        )
+
+        logging.info(f'analyst:{selected_analysts}')
+        #app_data.market_data(market)
         assets = assetNames
         asset = selected_assets[0]
 
@@ -465,6 +472,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         # st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
         # logging.info(f'asset_size:{selected_assets}')
+        if len(selected_analysts) > 0:
+            news_df = news_df[news_df["user"].isin(selected_analysts)]
+            logging.info(f'news_df:{news_df}')
         selections = {}
         for asset in selected_assets:
             analyst_rating = news_df.analyst_rating.unique().tolist()
