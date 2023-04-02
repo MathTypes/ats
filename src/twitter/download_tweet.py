@@ -34,15 +34,15 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
     tweets = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
     neo4j.bulk_load(tweets)
 
-    if args.hash_tags:
-        hash_tags = args.hash_tags.split(",")
+    if args.hash_tag:
+        hash_tags = args.hash_tag.split(",")
         for hash_tag in hash_tags:
             query = f"f#{hash_tag} since:{since} until:{until}"
             tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
             neo4j.bulk_load(tweet_urls)
 
-    if args.stocks:
-        stocks = args.stocks.split(",")
+    if args.stock:
+        stocks = args.stock.split(",")
         for stock in stocks:
             query = f"f${stock} since:{since} until:{until}"
             tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
