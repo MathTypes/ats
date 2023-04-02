@@ -384,16 +384,20 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         selected_points_vec = []
         # @st.cache_data
 
-        @functools.lru_cache
-        def get_analysis(exchange, equity, indication, market):
+        #@functools.lru_cache(maxsize=32)
+        st.cache_data()
+        def get_analysis(exchange, asset, indication, market):
+            logging.info(
+                f'calling get_analysis, exchange:{exchange}, asset:{asset}, indication:{indication}, market:{market}')
             action_model = cached_load_model("action_prediction_model.h5")
             price_model = cached_load_model("price_prediction_model.h5")
             analysis = Visualization(
-                exchange, "5 Minute", equity, indication, action_model, price_model, market)
-            analysis_day = Indications(exchange, '1 Day', equity, market)
-            return analysis, analysis_day
+                exchange, "5 Minute", asset, indication, action_model, price_model, market)
+            analysis_day = Indications(exchange, '1 Day', asset, market)
+            prediction_fig = analysis.prediction_graph(asset)        
+            return analysis, analysis_day, prediction_fig
 
-        #@st.cache_resource
+        @st.cache_resource
         def altair_histogram(hist_data):
             color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('analystRating:N', scale=alt.Scale(
                 domain=df.analystRating.unique().tolist()), legend=None), alt.value("lightgray"))
@@ -421,7 +425,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 x='x:T',
                 y='y:Q'
             )
-            return line
+            return line + callout
 
         # gc.collect()
         # data_update()
@@ -442,22 +446,19 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         market = st.sidebar.selectbox('', stock_indexes, index=11)
         app_data.market_data(market)
         assets = assetNames
-
-        equity = st.sidebar.selectbox('', assets)
         asset = selected_assets[0]
 
-        analysis, analysis_day = get_analysis(
-            exchange, equity, indication, market)
+        analysis, analysis_day, prediction_fig = get_analysis(
+            exchange, asset, indication, market)
         requested_date = analysis.df.index[-1]
         current_price = float(analysis.df['Adj Close'][-1])
         change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
-        logging.info(f'requested_date:{requested_date}')
-        logging.info(f'current_price:{current_price}')
-        logging.info(f'change:{change}')
+        #logging.info(f'requested_date:{requested_date}')
+        #logging.info(f'current_price:{current_price}')
+        #logging.info(f'change:{change}')
         # requested_prediction_price = float(analysis.requested_prediction_price)
         # requested_prediction_action = analysis.requested_prediction_action
 
-        prediction_fig = analysis.prediction_graph(asset)
         st.plotly_chart(prediction_fig, use_container_width=True)
 
         # technical_analysis_fig = analysis.technical_analysis_graph()
@@ -469,10 +470,13 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             analyst_rating = news_df.analyst_rating.unique().tolist()
             for rating in analyst_rating:
                 X, Y = calculate_mean_sentiment(asset, period, rating)
-                df = pd.DataFrame({"x": X, "y": Y, "assetName": asset, "analystRating":rating})
+                df = pd.DataFrame(
+                    {"x": X, "y": Y, "assetName": asset, "analystRating": rating})
                 selection = altair_component(altair_histogram(df))
                 selections[rating] = selection
 
+
+        logging.info(f'selections:{selections}')
         for rating, selection in selections.items():
             r = selection.get("x")
             if r:

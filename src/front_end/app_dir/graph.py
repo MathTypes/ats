@@ -1,3 +1,4 @@
+import traceback
 from app_dir.model import Prediction
 import logging
 from _plotly_future_ import v4_subplots
@@ -15,7 +16,7 @@ class Visualization(Prediction):
     def prediction_graph(self, equity=None):
 
         # self.df_visualization = self.df_visualization.iloc[-450:]
-        logging.info(f'equity:{equity}')
+        #logging.info(f'equity:{equity}')
         if self.df_visualization['Open'].iloc[-1] > self.df_visualization['Adj Close'].iloc[-1]:
             trace_color = 'rgba(255, 0, 0, 0.15)'
             price_tag = 'Bearish'
@@ -26,8 +27,9 @@ class Visualization(Prediction):
         self.fig_action = make_subplots(specs=[[{"secondary_y": True}]])
         self.fig_action.add_trace(go.Scatter(x=self.df_visualization.index, y=self.df_visualization['Adj Close'], name=f"Close Price ({price_tag})", connectgaps=False, marker=dict(
             color='#000000'), fill='tozeroy', fillcolor=trace_color), secondary_y=False)
-        logging.info(f'fig_action_x:{self.df_visualization.index}')
-        logging.info(f'fig_action_y:{self.df_visualization["Adj Close"]}')
+        traceback.print_stack()
+        #logging.info(f'fig_action_x:{self.df_visualization.index}')
+        #logging.info(f'fig_action_y:{self.df_visualization["Adj Close"]}')
         # self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Price_Buy'], mode = 'markers', name = "Buy",
         # marker = dict(color = '#32AB60', opacity = 0.85, size = 7.5)), secondary_y = False)
         # self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Price_Sell'], mode = 'markers', name = "Sell",
