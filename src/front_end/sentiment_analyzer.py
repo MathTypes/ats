@@ -364,9 +364,11 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             asset_news_df = news_df[(news_df["assetName"] == asset) & (
                 news_df["analyst_rating"] == analyst_rating)]
             asset_news_df.index = pd.to_datetime(asset_news_df.index)
-            # logging.info(f'asset_news_df:{asset_news_df}')
+            logging.info(f'asset_news_df:{asset_news_df}')
+            # logging.info(f"groupby:{asset_news_df.groupby(pd.Grouper(freq=period))}")
             for name, group in asset_news_df.groupby(pd.Grouper(freq=period)):
-                # logging.info(f'name:{type(name)}')
+                logging.info(f'name:{name}, type:{type(name)}')
+                # logging.info(f'group:{group}')
                 # d = name.strftime("%m/%d/%y %H:%M:%S")
                 counts = group["sentimentClass"].value_counts()
                 # logging.info(f'counts:{counts}')
@@ -379,15 +381,21 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                     mean_sentiment_score = 0
                 X.append(name)
                 Y.append(mean_sentiment_score)
-            # logging.info(f'x_df:{X}')
-            return X, Y
+            logging.info(f'X:{X}, Y:{Y}')
+            sentiment_df = pd.DataFrame.from_dict({"time": X, "sentiment": Y})
+            logging.info(f'sentiment_df_before_reindex:{sentiment_df}')
+            sentiment_df = sentiment_df.set_index(["time"])
+            sentiment_df = sentiment_df.sort_index()
+            # sentiment_df.index = pd.to_datetime(sentiment_df.index)
+            logging.info(f'sentiment_df:{sentiment_df}')
+            return sentiment_df
 
         data = []
         selected_points_vec = []
         # @st.cache_data
 
-        #@functools.lru_cache(maxsize=32)
-        #st.cache_data()
+        # @functools.lru_cache(maxsize=32)
+        # st.cache_data()
         def get_analysis(exchange, asset, indication, market):
             logging.info(
                 f'calling get_analysis, exchange:{exchange}, asset:{asset}, indication:{indication}, market:{market}')
@@ -396,26 +404,33 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             analysis = Visualization(
                 exchange, "5 Minute", asset, indication, action_model, price_model, market)
             analysis_day = Indications(exchange, '1 Day', asset, market)
-            prediction_fig = analysis.prediction_graph(asset)        
+            prediction_fig = analysis.prediction_graph(asset)
             return analysis, analysis_day, prediction_fig
 
-        @st.cache_resource
+        # @st.cache_resource
         def altair_histogram(hist_data):
             color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('analystRating:N', scale=alt.Scale(
                 domain=df.analystRating.unique().tolist()), legend=None), alt.value("lightgray"))
-            brushed = alt.selection_interval(encodings=["x"], name="brushed")
+            # brushed = alt.selection_interval(encodings=["time"], name="brushed")
             # opacity = alt.condition(brushed, alt.value(0.7), alt.value(0.25))
             # selected = alt.selection_single(on="mouseover", empty="none")
             # selected = alt.selection_single(on="click", empty="none", fields=['x'])
-            line = alt.Chart(hist_data).mark_line().encode(
-                x=alt.X('x:T', title="Time"),
-                y=alt.Y('y:Q', scale=alt.Scale(zero=True), title="Sentiment"),
+            base = alt.Chart(hist_data).encode(
+                alt.X('time:T', axis=alt.Axis(title=None))
+            )
+            line1 = base.mark_line().encode(
+                y=alt.Y('sentiment:Q', scale=alt.Scale(
+                    zero=True), title="Sentiment"),
                 shape=alt.Shape('analystRating:N', scale=alt.Scale(
                     range=['circle', 'diamond'])),
-                tooltip=['x:N', 'y:N',
+                tooltip=['time:T', 'y:N',
                          'assetName:N', 'label:N', 'pred:N', 'analystRating:N'],
                 # opacity=opacity
                 # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
+            )
+            line2 = base.mark_line(stroke='#5276A7', interpolate='monotone').encode(
+                alt.Y('Open:Q',
+                      axis=alt.Axis(title='Open', titleColor='#5276A7')),
             )
             callout = alt.Chart(hist_data.iloc[7:8]).mark_point(
                 color='red', size=300, tooltip="Tooltip text here"
@@ -423,11 +438,16 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 x='x:T',
                 y='y:Q'
             )
-            return (line).add_selection(brushed).properties(
-                width=1000,
-                height=400,
-                title="Market Sentiment Watch!"
+            # return line1
+            return alt.layer(line1, line2).resolve_scale(
+                y='independent'
             )
+        # .add_selection(brushed)
+        #.properties(
+        #    width=1000,
+        #    height=400,
+        #    title="Market Sentiment Watch!"
+        #)
 
         # gc.collect()
         # data_update()
@@ -444,7 +464,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         st.sidebar.subheader(f'Analyst:')
         analysts = news_df.user.unique().tolist()
-        #stock_indexes = app_data.stock_indexes
+        # stock_indexes = app_data.stock_indexes
         market = "US S&P 500"
         selected_analysts = st.sidebar.multiselect(
             "Please select analysts",
@@ -453,7 +473,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         )
 
         logging.info(f'analyst:{selected_analysts}')
-        #app_data.market_data(market)
+        # app_data.market_data(market)
         assets = assetNames
         asset = selected_assets[0]
 
@@ -462,13 +482,13 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         requested_date = analysis.df.index[-1]
         current_price = float(analysis.df['Adj Close'][-1])
         change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
-        #logging.info(f'requested_date:{requested_date}')
-        #logging.info(f'current_price:{current_price}')
-        #logging.info(f'change:{change}')
+        # logging.info(f'requested_date:{requested_date}')
+        # logging.info(f'current_price:{current_price}')
+        # logging.info(f'change:{change}')
         # requested_prediction_price = float(analysis.requested_prediction_price)
         # requested_prediction_action = analysis.requested_prediction_action
 
-        st.plotly_chart(prediction_fig, use_container_width=True)
+        # st.plotly_chart(prediction_fig, use_container_width=True)
 
         # technical_analysis_fig = analysis.technical_analysis_graph()
         # st.plotly_chart(technical_analysis_fig, use_container_width=True)
@@ -478,15 +498,30 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             news_df = news_df[news_df["user"].isin(selected_analysts)]
             logging.info(f'news_df:{news_df}')
         selections = {}
+        rating_period = datetime.timedelta(hours=4)
         for asset in selected_assets:
             analyst_rating = news_df.analyst_rating.unique().tolist()
+            analyst_rating = [0]
             for rating in analyst_rating:
-                X, Y = calculate_mean_sentiment(asset, period, rating)
-                df = pd.DataFrame(
-                    {"x": X, "y": Y, "assetName": asset, "analystRating": rating})
-                selection = altair_component(altair_histogram(df))
+                df = calculate_mean_sentiment(asset, rating_period, rating)
+                df["analystRating"] = rating
+                df["assetName"] = asset
+                logging.info(f"df_shape:{df.shape}")
+                logging.info(f"analysis.df_price:{analysis.df_price.shape}")
+                logging.info(f'df:{df}')
+                # logging.info(f'analysis.df_price[1:5]:{analysis.df_price.iloc[1:5]}')
+                # new_df = pd.concat([df, analysis.df_price], axis=1)
+                # new_df = analysis.df_price.join(df)
+                new_df = analysis.df_price.join(df)
+                new_df["time"] = new_df.index
+                logging.info(f"new_df_shape:{new_df.shape}")
+                # new_df = new_df.rename({"Adj Close":"Close"})
+                # new_df['sentiment'] = new_df.x.apply(lambda sentiment: x.value // 10**9)
+                logging.info(f'new_df:{new_df}')
+                # new_df = new_df.reindex(["x", "analystRating"])
+                # new_df.index = new_df.index.value // 10**9
+                selection = altair_component(altair_histogram(new_df))
                 selections[rating] = selection
-
 
         logging.info(f'selections:{selections}')
         for rating, selection in selections.items():
@@ -499,29 +534,32 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 filtered = news_df[(news_df.index >= start_day) & (
                     news_df.index < to_day) & (news_df.analyst_rating == rating)]
                 gb = GridOptionsBuilder.from_dataframe(filtered)
-                gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
-                gb.configure_side_bar() #Add a sidebar
-                gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
+                gb.configure_pagination(
+                    paginationAutoPageSize=True)  # Add pagination
+                gb.configure_side_bar()  # Add a sidebar
+                # Enable multi-row selection
+                gb.configure_selection(
+                    'multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children")
                 gridOptions = gb.build()
 
                 grid_response = AgGrid(
                     filtered,
                     gridOptions=gridOptions,
-                    data_return_mode='AS_INPUT', 
-                    update_mode='MODEL_CHANGED', 
+                    data_return_mode='AS_INPUT',
+                    update_mode='MODEL_CHANGED',
                     fit_columns_on_grid_load=False,
-                    theme='alpine', #Add theme color to the table
+                    theme='alpine',  # Add theme color to the table
                     enable_enterprise_modules=True,
-                    height=350, 
+                    height=350,
                     width='100%',
                     reload_data=True
                 )
 
                 data = grid_response['data']
-                selected = grid_response['selected_rows'] 
+                selected = grid_response['selected_rows']
                 logging.info(f'grid_response_selected:{selected}')
                 df = pd.DataFrame(selected)
                 logging.info(f'selected_df:{df}')
                 if not df.empty:
                     visualization.render_visualization_df(df)
-                #st.write(filtered)
+                # st.write(filtered)

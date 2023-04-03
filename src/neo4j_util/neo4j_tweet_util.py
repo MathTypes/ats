@@ -207,7 +207,9 @@ class Neo4j:
             self.load_data(tx, t)
             print("Tweet loaded into neo4j")
         # commit transaction
+        logging.info('before commit')
         tx.commit()
+        logging.info('after commit')
 
     def prune_graph(self):
         self.graph.evaluate('MATCH (t:Tweet)-[:CONTAINS]->(n) WITH n as n, count(t) as tweet_count WHERE tweet_count '

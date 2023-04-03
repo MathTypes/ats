@@ -23,17 +23,18 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
             until, '%Y-%m-%d') - datetime.timedelta(days=7), '%Y-%m-%d')
 
     logging.info(f'existing_tweets:{len(existing_tweets)}')
+    empty_tweets = set()
     # Creating list to append tweet data
     tweets_list1 = []
     if args.username:
         usernames = args.username.split(",")
         neo4j = Neo4j()
         query = f"from:{args.username} since:{since} until:{until}"
-        tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+        tweet_urls = sntwitter.TwitterSearchScraper(query, empty_tweets).get_items()
         tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
         neo4j.bulk_load(tweet_urls)
         query = f"to:{args.username} since:{since} until:{until}"
-        tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+        tweet_urls = sntwitter.TwitterSearchScraper(query, empty_tweets).get_items()
         tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
         neo4j.bulk_load(tweet_urls)
 
@@ -41,7 +42,7 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
         hash_tags = args.hash_tag.split(",")
         for hash_tag in hash_tags:
             query = f"f#{hash_tag} since:{since} until:{until}"
-            tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+            tweet_urls = sntwitter.TwitterSearchScraper(query, empty_tweets).get_items()
             tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
             neo4j.bulk_load(tweet_urls)
 
@@ -49,7 +50,7 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
         stocks = args.stock.split(",")
         for stock in stocks:
             query = f"f${stock} since:{since} until:{until}"
-            tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+            tweet_urls = sntwitter.TwitterSearchScraper(query, empty_tweets).get_items()
             tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
             neo4j.bulk_load(tweet_urls)
 

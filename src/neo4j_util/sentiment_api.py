@@ -161,7 +161,7 @@ def get_unprocessed_tweets():
             with t.id as tweet_id, t.raw_content + collect(rt.raw_content) as text,
             datetime({epochMillis: t.created_at}) as time
             RETURN tweet_id, time, text
-            LIMIT 1000
+            LIMIT 100
             """
     params = {}
     with get_driver().session() as session:
