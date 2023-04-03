@@ -109,18 +109,21 @@ def get_tweets():
 def get_processed_tweets():
     query = """
             MATCH (t:Tweet)
-            MATCH (rt:RepliedTweet)
             MATCH (p:Person)
-            WHERE t.created_at is not null and rt.tweet_id=t.id and rt.text is not null
-             and not ("" in rt.keyword_subject)
+            WHERE t.created_at is not null and t.full_text is not null
+             and not ("" in t.keyword_subject)
              and p.name=t.user
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
-                t.source_url as source_url, (rt.text + t.raw_content) as text,
-                rt.keyword_subject as keyword_subject,
-                rt.lemma_text as lemma_text, rt.keyword_text as keyword_text,
-                rt.subject as subject,
+                t.source_url as source_url, t.full_text as text,
+                t.keyword_subject as keyword_subject,
+                t.lemma_text as lemma_text, t.keyword_text as keyword_text,
+                t.subject as subject,
+                t.text_ner_names as text_ner_names,
+                t.text_ner_count as text_ner_count,
+                t.subject_ner_names as subject_ner_names,
+                t.subject_ner_count as subject_ner_count,
                 p.rating as analyst_rating
             ORDER BY t.created_at DESC
             LIMIT 10000
@@ -137,6 +140,7 @@ def get_processed_tweets():
             df["time"], infer_datetime_format=True)
         # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
+        df["text_ner_names"] = df["text_ner_names"].apply(lambda x: str(x))        
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
         df["analyst_rating"] = df['analyst_rating'].fillna(0)

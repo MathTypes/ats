@@ -26,7 +26,7 @@ from util import nlp_utils
 
 
 parser = argparse.ArgumentParser(description='This app lists animals')
-parser.add_argument("--neo4j_host", type=str, required=True)
+parser.add_argument("--neo4j_host", type=str, required=False)
 
 try:
     args = parser.parse_args()
@@ -68,6 +68,7 @@ def load_data(from_date, to_date):
     #logging.info(f'market_index:{market_df.index}')
     #logging.info(f'false index:{market_df[market_df.index==False]}')
     news_df = get_processed_tweets()
+    logging.info(f'news_df:{news_df}')
     news_df['index_time'] = news_df["time"]
     news_df = news_df.set_index("index_time")
     news_df = news_df.sort_index()
