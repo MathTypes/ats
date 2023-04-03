@@ -30,7 +30,7 @@ class Visualization(Prediction):
         self.fig_action = make_subplots(specs=[[{"secondary_y": True}]])
         self.fig_action.add_trace(go.Scatter(x=self.df_visualization.index, y=self.df_visualization['Adj Close'], name=f"Close Price ({price_tag})", connectgaps=False, marker=dict(
             color='#000000'), fill='tozeroy', fillcolor=trace_color), secondary_y=False)
-        traceback.print_stack()
+        #traceback.print_stack()
         #logging.info(f'fig_action_x:{self.df_visualization.index}')
         #logging.info(f'fig_action_y:{self.df_visualization["Adj Close"]}')
         # self.fig_action.add_trace(go.Scatter(x = self.df_visualization.index, y = self.df_visualization['Price_Buy'], mode = 'markers', name = "Buy",
