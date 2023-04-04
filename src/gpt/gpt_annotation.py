@@ -1,42 +1,33 @@
-#
-# Example of usage:
-# PYTHONPATH=. python3 ../scripts/gpt_annotation.py --input_file=../data/tweet/eliant_capital/out.csv \
-#    --output_file=../data/tweet/eliant_capital/gpt_annotation.csv
-#
-# from absl import logging
-import glob
-import os
-from ratelimiter import RateLimiter
-import snscrape.modules.twitter as sntwitter
-import pandas as pd
-import os
-import openai
 
 import argparse
+import json
 import logging
+import os
+import pandas as pd
 
-parser = argparse.ArgumentParser(
-    description='A script to add GPT annotation'
-)
-parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                    action="store_true")
-parser.add_argument("--input_file", type=str, required=True)
-parser.add_argument("--output_file", type=str, required=True)
-parser.add_argument("--max_rows", help="max number of rows",
-                    type=int, default=-1)
+from ratelimiter import RateLimiter
+from promptify import OpenAI
+from promptify import Prompter
 
-args = parser.parse_args()
-if args.verbose:
-    logging.basicConfig(level=logging.DEBUG)
+from neo4j_util.sentiment_api import get_gpt_unprocessed_replied_tweets
+from neo4j_util.neo4j_tweet_util import Neo4j
+from util import logging_utils
+import openai
 
 
 @RateLimiter(max_calls=25, period=60)
 def query(prompt, data, to_print=True):
+    example = """
+    Desired format: semicolon separated list. each list is colon separated list of entity name, entity class, sentiment and score.
+    For example: "WFC,EQUITY,POSITIVE,5;BAC,EQUITY,NEGATIVE,1,mid Jan,DATE,POSITIVE,2"
+    """
+    prompt = "{}\n{}\ntext:{}".format(prompt, example, data)
+    logging.info(f'prompt:{prompt}')
     response = openai.Completion.create(
         model="text-davinci-003",
-        prompt="{}:\n\n{}".format(prompt, data),
-        temperature=0.7,
-        max_tokens=256,
+        prompt=prompt,
+        temperature=0.5,
+        max_tokens=1024,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0
@@ -47,128 +38,62 @@ def query(prompt, data, to_print=True):
         print(payload)
     return payload
 
-
-def get_entity_analysis(x: str):
+def get_named_entity(x: str):
     res = query(
-        "Extract knowledge graph and summary in a tree structure with nodes along with reasoning", x)
+        "Extract top three financial named entities from following text", x)
     return res
 
-
-def get_opinion(x: str):
-    # res = query(
-    # "Extract US market sentiment from the text on a scale of 1 to 10", x)
+def get_equity_sentiment(x: str):
     res = query(
-        "Recognize all opinion terms in the following review with the format ['opinion_1', 'opinion_2', ...]:", x)
+        "Extract the important financial entities mentioned in the text below along with sentiment. First extract all company names, then extract all people names, then extract specific topics which fit the content and finally extract general overarching themes", x)
     return res
 
-
-def get_sentiment(x: str):
-    # res = query(
-    # "Extract US market sentiment from the text on a scale of 1 to 10", x)
-    res = query(
-        "Recognize the sentiment polarity for aspect term 'US market' in the following review with the format ['aspect', 'sentiment']:", x)
-    return res
-
-
-def get_entity_surprise(x: str):
-    res = query(
-        "Extract surpise level on a scale from 0 to 10 along with reasoning", x)
-    return res
-
-
-def get_aspect_opinion(x: str):
-    res = query(
-        "Recognize the opinion term for aspect term 'market' in the following review with the format ['opinion_1', 'opinion_2', ...]:", x)
-    return res
-
-
-def get_aspect(x: str):
-    res = query(
-        "Recognize all aspect terms in the following review with the format ['aspect_1', 'aspect_2', ...]:", x)
-    return res
-
-
-def get_aspect_sentiment(x: str):
-    res = query(
-        "Recognize all aspect terms with their corresponding sentiment polarity in the following review with the format ['aspect', 'sentiment_polarity']: ", x)
-    return res
-
-
-openai.api_key = os.environ["OPENAI_API_KEY"]
-openai.verify_ssl_certs = False
-
-from neo4j import GraphDatabase
-
-host = 'bolt://neo4j:7687'
-user = 'neo4j'
-password = 'pleaseletmein'
-driver = GraphDatabase.driver(host, auth=(user, password))
-
-def read_query(query, params={}):
-    with driver.session() as session:
-        result = session.run(query, params)
-        response = [r.values()[0] for r in result]
-        return response
-
-def get_conversation_ids():
-    text = read_query(
-        "MATCH (n:Conversation)-[CONTAINS] - (t:Tweet) return n.id, min(t.pubdate) as start_date, max(t.pubdate) as end_date order by start_date")
-    return text
-
-def get_tweets(conv_id):
-    text = read_query(
-        f"MATCH(c:Conversation {id:{conv_id}})-[CONTAINS]->(t:Tweet) return t.raw_content as text order by t.pubdate")
-    logging.error(f'text:text')
-    return text
-
-
-def read_dataset():
-    """Load spam training dataset without any labels."""
-    conversation_ids = get_conversation_ids()
-    df = pd.DataFrame(columns = ['conv_id', 'text'])
-    for conv_id in conversation_ids:
-        tweets = get_tweets(conv_id)
-        df = df.append({'conv_id' : conv_id, 'text' : tweets.join("\n")}, ignore_index = True)
+def parse_csv(data, names):
+    lines = data.split(";")
+    names_dict = { name:[] for name in names}
+    for line in lines:
+        if line:
+        cols = line.split(",")
+        for i, col in enumerate(cols):
+            names_dict[names[i]].append(col) 
+    logging.info(f'dict:{names_dict}')
+    df = pd.DataFrame(names_dict)
     return df
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='A script to add GPT annotation'
+    )
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
 
-tweets_df1 = read_dataset()
-# make sure indexes pair with number of rows
-tweets_df1 = tweets_df1.reset_index()
+    args = parser.parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
 
-if args.max_rows > 0:
-    tweets_df1 = tweets_df1.iloc[1:args.max_rows]
-tweets_df1['aspect'] = tweets_df1['text'].map(
-    lambda x: get_aspect(x))
-tweets_df1['opinion'] = tweets_df1['text'].map(
-    lambda x: get_opinion(x))
-tweets_df1['aspect_opinion'] = tweets_df1['text'].map(
-    lambda x: get_aspect_opinion(x))
-tweets_df1['sentiment'] = tweets_df1['text'].map(lambda x: get_sentiment(x))
-tweets_df1['aspect_sentiment'] = tweets_df1['text'].map(lambda x: get_aspect_sentiment(x))
-tweets_df1['entity_surprise'] = tweets_df1['text'].map(
-    lambda x: get_entity_surprise(x))
-tweets_df1['entity_analysis'] = tweets_df1['text'].map(
-    lambda x: get_entity_analysis(x))
+    api_key = os.environ["OPENAI_API_KEY"]
+    model = OpenAI(api_key)  # or `HubModel()` for Huggingface-based inference
+    nlp_prompter = Prompter(model)
 
-rels_query ="""
-UNWIND $data as row
-MATCH (s:Entity {id: row.source})
-MATCH (t:Entity {id: row.target})
-CALL apoc.merge.relationship(s, row.type,
-  {},
-  {},
-  t,
-  {}
-)
-YIELD rel
-RETURN distinct 'done';
-"""
-
-for i, row in tweets_df1[['entity', 'property', 'value']].iterrows():
-    source = row['entity']['name'] if len(row['entity']['allUris']) == 0 else row['entity']['allUris'][0]
-    target = row['value']['name'] if len(row['value']['allUris']) == 0 else row['value']['allUris'][0]
-    type = row['property']['name'].replace(' ', '_').upper()
-    relParams.append({'source':source,'target':target,'type':type})
-    run_query(rels_query, {'data': relParams})
-
+    logging_utils.init_logging()
+    while True:
+        data = get_gpt_unprocessed_replied_tweets()
+        logging.error(f'unprocess_data:{data}')
+        neo4j_util = Neo4j()
+        for i, row in data.iterrows():
+            logging.info(f'link:{row["perma_link"]}')
+            logging.info(f'text:{row["text"]}')
+            #result = get_named_entity(row["text"])            
+            #logging.info(f'result:{result}')
+            #entity_df = parse_csv(result, ["entity_name"])
+            #logging.info(f'entity_df:{entity_df}')
+            result = get_equity_sentiment(row["text"])
+            logging.info(f'result:{result}')
+            sentiment_df = parse_csv(result, ["entity_name", "entity_class", "sentiment_class", "sentiment_score"])
+            sentiment_df["tweet_id"] = row["tweet_id"]
+            logging.info(f'sentiment_df:{sentiment_df}')
+            # Output
+            #logging.info(f'equity_sentiment_result:{equity_sentiment_result}')
+            #logging.error(f'process_data:{data}')
+            neo4j_util.update_gpt_entities(sentiment_df)        
+        
