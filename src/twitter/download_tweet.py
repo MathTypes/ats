@@ -11,8 +11,8 @@ import os
 import pandas as pd
 
 import snscrape.modules.twitter as sntwitter
-from neo4j_util.neo4j_tweet_util import Neo4j
-from neo4j_util.sentiment_api import get_tweet_id_by_range
+from neo4j.neo4j_tweet_util import Neo4j
+from neo4j.sentiment_api import get_tweet_id_by_range
 from util import config_utils
 from util import logging_utils
 

@@ -9,8 +9,8 @@ from ratelimiter import RateLimiter
 from promptify import OpenAI
 from promptify import Prompter
 
-from neo4j_util.sentiment_api import get_gpt_unprocessed_replied_tweets
-from neo4j_util.neo4j_tweet_util import Neo4j
+from neo4j.sentiment_api import get_gpt_unprocessed_replied_tweets
+from neo4j.neo4j_tweet_util import Neo4j
 from util import logging_utils
 import openai
 

@@ -19,7 +19,7 @@ from PIL import Image
 from data.front_end_utils import (data_process,
                                   subject_analysis)
 from market_data import ts_read_api
-from neo4j_util.sentiment_api import (get_processed_tweets)
+from neo4j.sentiment_api import (get_processed_tweets)
 from util import config_utils
 from util import logging_utils
 from util import nlp_utils
