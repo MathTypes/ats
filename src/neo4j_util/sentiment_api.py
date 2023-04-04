@@ -3,7 +3,6 @@ import logging
 from neo4j import GraphDatabase
 
 import pandas as pd
-from data import keyword_util
 from data.front_end_utils import (
     data_process,
     feature_extraction,
@@ -12,6 +11,7 @@ from data.front_end_utils import (
     get_list_ner,
     display_text, subject_analysis, result_to_df, analyze_token_sentiment,
 )
+from nlp import keyword_util
 from util import config_utils
 
 DEFAULT_HOST = 'bolt://10.0.0.18:7687'
