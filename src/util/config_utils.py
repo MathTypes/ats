@@ -1,4 +1,4 @@
-
+import argparse
 
 args = None
 
@@ -14,6 +14,16 @@ def set_args(new_args):
 def get_args():
     global args
     return args
+
+def get_arg_parser(description):
+    parser = argparse.ArgumentParser(
+        description=description
+    )
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
+    parser.add_argument("--neo4j_host", type=str, required=False)
+    parser.add_argument("--neo4j_password", type=str, required=False)
+    return parser
 
 def get_neo4j_host():
     args = get_args()

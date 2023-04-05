@@ -14,12 +14,7 @@ from data.front_end_utils import (
 )
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description='A test script for http://stackoverflow.com/q/14097061/78845'
-    )
-    parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                        action="store_true")
-    parser.add_argument("--neo4j_host", type=str, required=False)
+    parser = config_utils.get_arg_parser("Preprocess tweet")
 
     args = parser.parse_args()
     if args.verbose:
@@ -34,8 +29,16 @@ if __name__ == "__main__":
         data = add_subject_keyword(data)
         data = subject_analysis(data)
         #logging.error(f'process_data:{data}')
-        neo4j_util = Neo4j()
-        neo4j_util.update_processed_text(data)
+        count = 0
+        RETRIES = 5
+        while count < RETRIES:
+            try:
+                neo4j_util = Neo4j()
+                neo4j_util.update_processed_text(data)
+                break
+            except Exception as e:
+                logging.error(f"caught exception: {e}")
+            count = count + 1
         #break
     #conv_data = get_tweet_replies_v2()
     #conv_data = add_subject_keyword(conv_data)

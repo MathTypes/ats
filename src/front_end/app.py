@@ -27,6 +27,7 @@ from util import nlp_utils
 
 parser = argparse.ArgumentParser(description='This app lists animals')
 parser.add_argument("--neo4j_host", type=str, required=False)
+parser.add_argument("--neo4j_password", type=str, required=False)
 
 try:
     args = parser.parse_args()

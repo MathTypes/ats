@@ -409,6 +409,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         @st.cache_resource
         def altair_histogram(hist_data):
+            logging.info(f'hist_data:{hist_data}')
             tick_range = list(
                 range(int(hist_data["Low"].min()), int(hist_data["High"].max()), 100))
             color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('analystRating:N', scale=alt.Scale(
