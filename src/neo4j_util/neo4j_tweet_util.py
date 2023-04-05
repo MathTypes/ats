@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 import sys
 
 from datetime import datetime
@@ -191,6 +192,12 @@ class Neo4j:
         #            tweet_node, "TAG", hashtag_node)
         #        tx.create(contains_hashtag)
 
+    # Yield successive n-sized
+    # chunks from l.
+    def divide_chunks(self, l, n):        
+        # looping till length l
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
 
     def bulk_load(self, tweets):
         """
@@ -200,14 +207,25 @@ class Neo4j:
         :return:
         """
         # begin transaction
-        tx = self.graph.begin()
-        for t in tweets:
-            self.load_data(tx, t)
-            print("Tweet loaded into neo4j")
-        # commit transaction
-        logging.info('before commit')
-        tx.commit()
-        logging.info('after commit')
+        RETRIES = 3
+        x = list(self.divide_chunks(tweets, 1000))
+        for i, chunk in enumerate(x):
+            count = 0
+            while count < RETRIES:
+                try:
+                    tx = self.graph.begin()
+                    for t in chunk:
+                        self.load_data(tx, t)
+                        print("Tweet loaded into neo4j")
+                    # commit transaction
+                    logging.info(f'before commit chunk {i}')
+                    tx.commit()
+                    logging.info(f'after commit chunk {i}')
+                    break
+                except Exception as e:
+                    logging.error(f"bulk_load exception: {e}")
+                    time.sleep(3)
+                count = count + 1
 
     def prune_graph(self):
         self.graph.evaluate('MATCH (t:Tweet)-[:CONTAINS]->(n) WITH n as n, count(t) as tweet_count WHERE tweet_count '
