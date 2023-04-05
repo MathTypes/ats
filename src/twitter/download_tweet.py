@@ -62,6 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                         action="store_true")
     parser.add_argument("--neo4j_host", type=str, required=False)
+    parser.add_argument("--neo4j_password", type=str, required=False)
     parser.add_argument("--username", type=str)
     parser.add_argument("--hash_tag", type=str)
     parser.add_argument("--stock", type=str)

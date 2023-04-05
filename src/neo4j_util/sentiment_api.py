@@ -13,12 +13,7 @@ from data.front_end_utils import (
 )
 from nlp import keyword_util
 from util import config_utils
-
-DEFAULT_HOST = 'bolt://10.0.0.18:7687'
-# host = 'bolt://host.docker.internal:7687'
-user = 'neo4j'
-password = 'password'
-
+from neo4j_util import driver
 
 def map_to_market(x):
     for word in x:
@@ -32,17 +27,8 @@ def map_to_market(x):
     return "ES"
 
 
-def get_driver():
-    args = config_utils.get_args()
-    host = DEFAULT_HOST
-    if args and args.neo4j_host:
-        host = args.neo4j_host
-    driver = GraphDatabase.driver(host, auth=(user, password))
-    return driver
-
-
 def read_query(query, params={}):
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         response = [r.values()[0] for r in result]
         return response
@@ -84,7 +70,7 @@ def get_tweets():
             LIMIT 5
             """
     params = {}
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         result_dict = [r.values() for r in result]
         # logging.info(f"result:{result_dict}")
@@ -129,7 +115,7 @@ def get_processed_tweets():
             LIMIT 10000
             """
     params = {}
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         result_dict = [r.values() for r in result]
         # logging.info(f"result:{result_dict}")
@@ -164,7 +150,7 @@ def get_unprocessed_tweets():
             LIMIT 100
             """
     params = {}
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
@@ -186,7 +172,7 @@ def get_gpt_unprocessed_tweets():
             LIMIT 1000
             """
     params = {}
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
@@ -244,7 +230,7 @@ def get_gpt_sentiments():
     ORDER BY t.created_at DESC
             """
     params = {}
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         # df["assetName"] = df["assetName"].lower()
@@ -290,7 +276,7 @@ def get_gpt_unprocessed_replied_tweets():
             LIMIT 10;
             """
     params = {}
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
@@ -323,7 +309,7 @@ def get_tweet_replies():
 def get_tweet_replies_v2():
     query = "MATCH (t:Tweet) with t.in_reply_to_tweet_id as tweet_id, min(datetime({epochMillis: t.created_at})) as time, count(*) as replies,collect(t.raw_content) as text WHERE replies > 1 and t.created_at is not null RETURN tweet_id, time, replies, text"
     params = {}
-    with get_driver().session() as session:
+    with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["text"] = df["text"].apply(lambda x: "\n".join(x))

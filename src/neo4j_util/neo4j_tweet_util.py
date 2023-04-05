@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from py2neo import Graph, Node, NodeMatcher, Relationship
 from ratelimiter import RateLimiter
+from util import config_utils
 
 # https://github.com/akashjorss/Twitter_Sentiment_Analysis_Using_Neo4j
 
@@ -12,8 +13,9 @@ from ratelimiter import RateLimiter
 class Neo4j:
     def __init__(self):
         # initialize the self.graph
-        self.graph = Graph("bolt://host.docker.internal:7687",
-                           auth=("neo4j", "password"))
+        host = config_utils.get_args
+        self.graph = Graph(config_utils.get_neo4j_host(),
+                           auth=("neo4j", config_utils.get_neo4j_password()))
         # self.graph = Graph(scheme="bolt", host="localhost", port=7687, secure=True, auth=('neo4j', 'password'))
         self.matcher = NodeMatcher(self.graph)
 
@@ -90,7 +92,7 @@ class Neo4j:
                 })
         tx.commit()
 
-    #@RateLimiter(max_calls=1, period=1)
+    @RateLimiter(max_calls=1, period=3)
     def load_data(self, tx, tweet):
         """
         Loads one tweet at a time
@@ -110,6 +112,14 @@ class Neo4j:
         }
         :return: None
         """
+        # repeat above for all nodes
+        tweet_node = self.graph.evaluate(
+            "MATCH(n:Tweet {id:$tweet_id}) RETURN n",
+            tweet_id=tweet.id)
+        if tweet_node is not None:
+            logging.error(f'found tweet_node:{tweet_node}')
+            return
+
         # retrieve company node from the remote self.graph
         user_node = self.graph.evaluate(
             "MATCH(n:User {name:$user}) RETURN n",
@@ -122,14 +132,6 @@ class Neo4j:
                              last_update=int(datetime.now().timestamp() * 1000))
             tx.create(user_node)
             # print("Node created:", company)
-
-        # repeat above for all nodes
-        tweet_node = self.graph.evaluate(
-            "MATCH(n:Tweet {id:$tweet_id}) RETURN n",
-            tweet_id=tweet.id)
-        if tweet_node is not None:
-            logging.error(f'found tweet_node:{tweet_node}')
-            return
 
         retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
         tweet_node = Node("Tweet", id=tweet.id,
@@ -160,10 +162,6 @@ class Neo4j:
             tx.create(conversation_node)
             child = Relationship(conversation_node, "CONTAINS", tweet_node)
             tx.create(child)
-
-            # contains_tweet = Relationship(
-            #    tweet_node, "CONTAINS", conversation_node)
-            # tx.create(contains_tweet)
 
         # create relationships
         # check if describes already exists
@@ -202,13 +200,13 @@ class Neo4j:
         :return:
         """
         # begin transaction
-        tx = self.graph.begin()
         for t in tweets:
+            tx = self.graph.begin()
             self.load_data(tx, t)
+            tx.commit()
             print("Tweet loaded into neo4j")
         # commit transaction
         logging.info('before commit')
-        tx.commit()
         logging.info('after commit')
 
     def prune_graph(self):
