@@ -410,39 +410,31 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         @st.cache_resource
         def altair_histogram(hist_data):
             logging.info(f'hist_data:{hist_data}')
-            tick_range = list(
-                range(int(hist_data["Low"].min()), int(hist_data["High"].max()), 100))
+            #rolling = hist_data.rolling(1, center=True, win_type="triang").mean()
+            domain = [int(hist_data["Low"].min()), int(hist_data["High"].max())]
             color = alt.condition(alt.datum.slice == 'high-loss', alt.Color('analystRating:N', scale=alt.Scale(
                 domain=df.analystRating.unique().tolist()), legend=None), alt.value("lightgray"))
-            selector = alt.selection_interval(encodings=["x"], name="brushed")
+            # brushed = alt.selection_interval(encodings=["time"], name="brushed")
             # opacity = alt.condition(brushed, alt.value(0.7), alt.value(0.25))
             # selected = alt.selection_single(on="mouseover", empty="none")
             # selected = alt.selection_single(on="click", empty="none", fields=['x'])
-            base = alt.Chart(hist_data).mark_rule(size=2).encode(
-                x='eventTime:T',
-                y='sentiment:Q',
-                y2='High:Q',
-                color='assetName:N'
+            base = alt.Chart(hist_data).encode(
+                alt.X('eventTime:T', axis=alt.Axis(title=None))
             )
-            #base = alt.Chart(hist_data).encode(
-            #    x = alt.X('eventTime:T', timeUnit='yearmonthdatehoursminutes',
-            #          axis=alt.Axis(title=None))
-            #)
-            line1 = base.mark_line(interpolate='monotone').encode(
+            line1 = base.mark_line(opacity=0.75, interpolate="basis").encode(
                 y=alt.Y('sentiment:Q', scale=alt.Scale(
                     zero=True), title="Sentiment"),
-                shape=alt.Shape('analystRating:N', scale=alt.Scale(
-                    range=['circle', 'diamond'])),
+                color='analystRating:N',
                 tooltip=['eventTime:T', 'y:N',
                          'assetName:N', 'label:N', 'pred:N', 'analystRating:N'],
                 # opacity=opacity
                 # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
-            ).properties(selection=selector)
-            line2 = base.mark_line(stroke='#5276A7', interpolate='monotone').encode(
-                alt.Y('Open:Q',
-                      axis=alt.Axis(
-                          title='Open', titleColor='#5276A7',
-                          values=tick_range)))
+            )
+            line2 = base.mark_line(stroke='#5276A7', opacity=0.75, interpolate="basis").encode(
+                alt.Y('Open:Q', scale=alt.Scale(domain=domain),
+                      axis=alt.Axis(title='Open', titleColor='#5276A7')),
+                color='assetName:N',
+            )
             callout = alt.Chart(hist_data.iloc[7:8]).mark_point(
                 color='red', size=300, tooltip="Tooltip text here"
             ).encode(
@@ -450,18 +442,13 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 y='y:Q'
             )
             # return line1
-            # return alt.layer(line1).resolve_scale(
-            #    y='independent'
-            # ).add_selection(brushed).properties(
-            #    width=1000,
-            #    height=400,
-            #    title="Market Sentiment Watch!"
-            # )
-            return line1.properties(
+            return alt.layer(line1, line2).resolve_scale(
+                y='independent'
+            ).properties(
                 width=1000,
                 height=400,
                 title="Market Sentiment Watch!"
-            )
+            )    
 
         # gc.collect()
         # data_update()

@@ -213,7 +213,7 @@ class Neo4j:
             count = 0
             while count < RETRIES:
                 try:
-                    tx = self.graph.begin()
+                    tx = self.graph.begin(imeout=30)
                     for t in chunk:
                         self.load_data(tx, t)
                         print("Tweet loaded into neo4j")
