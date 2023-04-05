@@ -326,10 +326,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             assets,
             default=['ES']
         )
-        logging.info(f'sentiment analysis:{from_date}, to_date:{to_date}')
-
         start_date, end_date = st.sidebar.date_input("Time period (from/to)",
                                                      [from_date, to_date], min_value=min_date, max_value=max_date)
+        logging.info(f'sentiment analysis:{start_date}, to_date:{end_date}')
 
         sentiment_dict = dict(
             negative="-1",
@@ -355,7 +354,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 yaxis=dict(title=f"{sentiment} sentiment count")
             )
             return dict(data=data, layout=layout)
-        period = datetime.timedelta(hours=1)
+        period = datetime.timedelta(minutes=5)
 
         def calculate_mean_sentiment(asset, period, analyst_rating):
             X = []
@@ -396,7 +395,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         # @functools.lru_cache(maxsize=32)
         # st.cache_data()
-        def get_analysis(exchange, asset, indication, market):
+        def get_analysis(exchange, asset, indication, market, start_date, end_date`):
             logging.info(
                 f'calling get_analysis, exchange:{exchange}, asset:{asset}, indication:{indication}, market:{market}')
             action_model = cached_load_model("action_prediction_model.h5")
@@ -405,7 +404,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 exchange, "5 Minute", asset, indication, action_model, price_model, market)
             analysis_day = Indications(exchange, '1 Day', asset, market)
             prediction_fig = analysis.prediction_graph(asset)
-            return analysis, analysis_day, prediction_fig
+            return analysis, analysis_day, prediction_fig 
 
         @st.cache_resource
         def altair_histogram(hist_data):
@@ -430,7 +429,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 # opacity=opacity
                 # color=alt.condition(selected, alt.value("red"), alt.value("steelblue"))
             )
-            line2 = base.mark_line(stroke='#5276A7', opacity=0.75, interpolate="basis").encode(
+            line2 = base.mark_line(stroke='#5276A7').encode(
                 alt.Y('Open:Q', scale=alt.Scale(domain=domain),
                       axis=alt.Axis(title='Open', titleColor='#5276A7')),
                 color='assetName:N',
@@ -458,11 +457,6 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         # warnings.filterwarnings("ignore")
         # gc.collect()
 
-        app_data = Data_Sourcing()
-        indication = 'Predicted'
-        exchange = 'Yahoo! Finance'
-        app_data.exchange_data(exchange)
-
         st.sidebar.subheader(f'Analyst:')
         analysts = news_df.user.unique().tolist()
         # stock_indexes = app_data.stock_indexes
@@ -479,7 +473,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         asset = selected_assets[0]
 
         analysis, analysis_day, prediction_fig = get_analysis(
-            exchange, asset, indication, market)
+            exchange, asset, indication, market, start_date, end_date)
         requested_date = analysis.df.index[-1]
         current_price = float(analysis.df['Adj Close'][-1])
         change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
@@ -499,10 +493,10 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             news_df = news_df[news_df["user"].isin(selected_analysts)]
             # logging.info(f'news_df:{news_df}')
         selections = {}
-        rating_period = datetime.timedelta(hours=4)
+        rating_period = datetime.timedelta(hours=1)
+        df_vec = []
         for asset in selected_assets:
             analyst_rating = news_df.analyst_rating.unique().tolist()
-            analyst_rating = [0]
             for rating in analyst_rating:
                 df = calculate_mean_sentiment(asset, rating_period, rating)
                 df["analystRating"] = rating
@@ -517,14 +511,16 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 new_df["eventTime"] = new_df.index
                 new_df["eventTime"] = new_df["eventTime"].apply(
                     lambda x: x.timestamp()*1000)
-                # logging.info(f"new_df_shape:{new_df.shape}")
-                # new_df = new_df.rename({"Adj Close":"Close"})
-                # new_df['sentiment'] = new_df.x.apply(lambda sentiment: x.value // 10**9)
-                # logging.info(f'new_df:{new_df}')
-                # new_df = new_df.reindex(["x", "analystRating"])
-                # new_df.index = new_df.index.value // 10**9
-                selection = altair_component(altair_histogram(new_df))
-                selections[rating] = selection
+                df_vec.append(new_df)
+        viz_df = pd.concat(df_vec)
+        # logging.info(f"new_df_shape:{new_df.shape}")
+        # new_df = new_df.rename({"Adj Close":"Close"})
+        # new_df['sentiment'] = new_df.x.apply(lambda sentiment: x.value // 10**9)
+        # logging.info(f'new_df:{new_df}')
+        # new_df = new_df.reindex(["x", "analystRating"])
+        # new_df.index = new_df.index.value // 10**9
+        selection = altair_component(altair_histogram(viz_df))
+        selections[rating] = selection
 
         logging.info(f'selections:{selections}')
         for rating, selection in selections.items():
