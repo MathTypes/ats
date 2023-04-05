@@ -92,7 +92,7 @@ class Neo4j:
                 })
         tx.commit()
 
-    @RateLimiter(max_calls=1, period=3)
+    #@RateLimiter(max_calls=1, period=3)
     def load_data(self, tx, tweet):
         """
         Loads one tweet at a time
@@ -121,16 +121,16 @@ class Neo4j:
             return
 
         # retrieve company node from the remote self.graph
-        user_node = self.graph.evaluate(
-            "MATCH(n:User {name:$user}) RETURN n",
-            user=tweet.user.username)
+        #user_node = self.graph.evaluate(
+        #    "MATCH(n:User {name:$user}) RETURN n",
+        #    user=tweet.user.username)
         # if remote node is null, create company node
-        if user_node is None:
-            user_node = Node("User", name=tweet.user.username,
-                             source="tw",
-                             id=tweet.user.id,
-                             last_update=int(datetime.now().timestamp() * 1000))
-            tx.create(user_node)
+        #if user_node is None:
+        #    user_node = Node("User", name=tweet.user.username,
+        #                     source="tw",
+        #                     id=tweet.user.id,
+        #                     last_update=int(datetime.now().timestamp() * 1000))
+        #    tx.create(user_node)
             # print("Node created:", company)
 
         retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
@@ -153,43 +153,43 @@ class Neo4j:
                           rendered_content=tweet.renderedContent)
         tx.create(tweet_node)
 
-        conversation_node = self.graph.evaluate(
-            "MATCH(n:Conversation {id:$conv_id}) RETURN n",
-            conv_id=tweet.conversationId)
-        if conversation_node is None:
-            conversation_node = Node("Conversation", id=tweet.conversationId,
-                                     last_update=int(datetime.now().timestamp()*1000))
-            tx.create(conversation_node)
-            child = Relationship(conversation_node, "CONTAINS", tweet_node)
-            tx.create(child)
+        #conversation_node = self.graph.evaluate(
+        #    "MATCH(n:Conversation {id:$conv_id}) RETURN n",
+        #    conv_id=tweet.conversationId)
+        #if conversation_node is None:
+        #    conversation_node = Node("Conversation", id=tweet.conversationId,
+        #                             last_update=int(datetime.now().timestamp()*1000))
+        #    tx.create(conversation_node)
+        #    child = Relationship(conversation_node, "CONTAINS", tweet_node)
+        #    tx.create(child)
 
         # create relationships
         # check if describes already exists
-        post = Relationship(
-            user_node, "POST", tweet_node,
-            created_at=int(tweet.date.timestamp() * 1000),
-            last_update=int(datetime.now().timestamp() * 1000))
-        tx.create(post)
+        #post = Relationship(
+        #    user_node, "POST", tweet_node,
+        #    created_at=int(tweet.date.timestamp() * 1000),
+        #    last_update=int(datetime.now().timestamp() * 1000))
+        #tx.create(post)
         # created_on = Relationship(tweet_node, "CREATED_ON", datetime)
         # tx.create(describes)
         # tx.create(created_on)
         # print("Relationships created")
 
         # create hashtag nodes and connect them with tweet nodes
-        if tweet.hashtags:
-            for hashtag in tweet.hashtags:
-                hashtag_node = self.matcher.match(
-                    "Hashtag", name=hashtag).first()
-                # hashtag_node = self.graph.evaluate("MATCH(n) WHERE n.name = {hashtag} return n", hashtag=hashtag)
-                if hashtag_node is None:
-                    hashtag_node = Node("Hashtag", name=hashtag)
-                    tx.create(hashtag_node)
+        #if tweet.hashtags:
+        #    for hashtag in tweet.hashtags:
+        #        hashtag_node = self.matcher.match(
+        #            "Hashtag", name=hashtag).first()
+        #        # hashtag_node = self.graph.evaluate("MATCH(n) WHERE n.name = {hashtag} return n", hashtag=hashtag)
+        #        if hashtag_node is None:
+        #            hashtag_node = Node("Hashtag", name=hashtag)
+        #            tx.create(hashtag_node)
                     # about = Relationship(hashtag_node, "ABOUT", tweet_node)
                     # tx.create(about)
 
-                contains_hashtag = Relationship(
-                    tweet_node, "TAG", hashtag_node)
-                tx.create(contains_hashtag)
+        #        contains_hashtag = Relationship(
+        #            tweet_node, "TAG", hashtag_node)
+        #        tx.create(contains_hashtag)
 
 
     def bulk_load(self, tweets):
@@ -200,13 +200,13 @@ class Neo4j:
         :return:
         """
         # begin transaction
+        tx = self.graph.begin()
         for t in tweets:
-            tx = self.graph.begin()
             self.load_data(tx, t)
-            tx.commit()
             print("Tweet loaded into neo4j")
         # commit transaction
         logging.info('before commit')
+        tx.commit()
         logging.info('after commit')
 
     def prune_graph(self):
