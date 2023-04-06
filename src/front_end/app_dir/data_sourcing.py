@@ -41,6 +41,10 @@ def date_utc(date_):
 class Data_Sourcing:
     def __init__(self):
         pass
+
+    def intervals(self, selected_interval):
+        self.selected_interval = selected_interval
+        self.period = None        
             
     def apis(self, asset):
         self.asset = asset

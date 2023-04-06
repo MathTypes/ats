@@ -10,8 +10,8 @@ pd.set_option("display.precision", 8)
 
 class Prediction(Preprocessing):
     
-    def __init__(self, exchange, interval, asset, action_model, price_model, market = None):
-        super().__init__(exchange, interval, asset, market)
+    def __init__(self, interval, asset, action_model, price_model):
+        super().__init__(interval, asset)
 
         self.start_date = self.df.index[-3]
         self.action_model = action_model

@@ -3,12 +3,12 @@ import logging
 
 class Indications(Technical_Calculations):
 
-    def __init__(self, exchange, interval, asset, market = None):
+    def __init__(self, interval, asset):
         self.engulfing_period = -5
         self.sma = -15
         self.lma = -20
         
-        super().__init__(exchange, interval, asset, market)
+        super().__init__(interval, asset)
         super(Indications, self).pivot_point()
         super(Indications, self).on_balance_volume()
         super(Indications, self).moving_average_convergence_divergence()

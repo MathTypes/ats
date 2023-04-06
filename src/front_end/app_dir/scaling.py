@@ -5,8 +5,8 @@ import numpy as np
 
 class Preprocessing(Indications):
     
-    def __init__(self, exchange, interval, asset, market = None):
-        super().__init__(exchange, interval, asset, market)
+    def __init__(self, interval, asset):
+        super().__init__(interval, asset)
         super(Preprocessing, self).engulfing_analysis()
         super(Preprocessing, self).support_resistance()
         super(Preprocessing, self).moving_average_analysis()

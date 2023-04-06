@@ -2,7 +2,7 @@ from app_dir.data_sourcing import Data_Sourcing
 
 class Technical_Calculations(Data_Sourcing):
     
-    def __init__(self, exchange, interval, asset, market = None):  
+    def __init__(self, interval, asset):  
         self.fast_length = 12
         self.slow_length = 26
         self.signal_smoothing = 9
@@ -11,8 +11,6 @@ class Technical_Calculations(Data_Sourcing):
         self.rsi_period = 14
         
         super().__init__()
-        super(Technical_Calculations, self).exchange_data(exchange)
-        super(Technical_Calculations, self).market_data(market)
         super(Technical_Calculations, self).intervals(interval)
         super(Technical_Calculations, self).apis(asset)
 
