@@ -410,31 +410,49 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         def altair_histogram(hist_data):
             logging.info(f'hist_data:{hist_data}')
             chart = st.vega_lite_chart(hist_data, {
-                "width": 1200,
-                "height": 600,
-                "resolve": {"scale": {"y": "independent"}},
-                "layer": [
-                  {
-                    "mark": "line",
-                    "encoding": {
-                        "x": { "field": "eventTime", "type": "temporal"},
-                        "y": {"field": "Open", "type": "quantitative",
-                        "scale": {
-                            "domain": [int(hist_data["Low"].min()), int(hist_data["High"].max())],
-                        }},
-                        'color': {'field': 'assetName', 'type': 'nominal'},
-                    }
-                  },
-                  {
-                    'mark': {'type': 'line', 'tooltip': True},
+                "params": [{
+                    "name": "measure",
+                    "value": "Open",
+                    "bind": {"input": "select", "options": ["Open", "Adj Close", "High", "Low"]}
+                }],
+                "vconcat": [{
+                    "width": 1200,
+                    "height": 400,
+                    "params": [
+                        {"name": "xbrush",
+                        "select": {"type": "interval", "encodings": ["x"]}
+                        }
+                    ],                    
                     'encoding': {
                         'x': {'field': 'eventTime', 'type': 'temporal'},
-                        'y': {'field': 'sentiment', 'type': 'quantitative', "axis": { "orient": "right"}},
-                        'color': {'field': 'analystRating', 'type': 'ordinal'}
-                    }
-                  }
-                ]
-            })            
+                        'y': {
+                            "datum": { "expr": "datum[measure]"},
+                            'type': 'quantitative',
+                            "axis": { "orient": "left"},
+                            "scale": {"domain": [int(hist_data["Low"].min()), int(hist_data["Low"].max())]}},
+                    },
+                    "mark": {"type" : "line", "point" : True, "interpolate": "monotone"}
+                    },
+                    {
+                    "params": [
+                        { "name": "select", "select": "point"},
+                    ],                    
+                    "width": 1200,
+                    "height": 100,
+                    'encoding': {
+                        'x': {'field': 'eventTime', 'type': 'temporal', "scale": {"domain": {"param": "xbrush"}}},
+                        'y': {'field': 'sentiment', 'type': 'quantitative', "axis": { "orient": "left"}},
+                         "fillOpacity": {
+                              "condition": {"param": "select", "value": 1}, "value": 0.3
+                        },
+                        'color': {
+                            "field" : "analystRating",
+                            "type": "nominal"
+                        },
+                    },
+                    "mark": "line",
+                    "config": {"view": {"stroke": ""}}  
+                    }]}, theme="streamlit", use_container_width=True)
             return chart
         # gc.collect()
         # data_update()
@@ -483,11 +501,12 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         rating_period = datetime.timedelta(hours=1)
         df_vec = []
         for asset in selected_assets:
+            if not asset:
+                continue
             analyst_rating = news_df.analyst_rating.unique().tolist()
             for rating in analyst_rating:
                 df = calculate_mean_sentiment(asset, rating_period, rating)
                 df["analystRating"] = rating
-                df["assetName"] = asset
                 # logging.info(f"df_shape:{df.shape}")
                 # logging.info(f"analysis.df_price:{analysis.df_price.shape}")
                 # logging.info(f'df:{df}')
@@ -498,6 +517,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 new_df["eventTime"] = new_df.index
                 new_df["eventTime"] = new_df["eventTime"].apply(
                     lambda x: x.timestamp()*1000)
+                new_df["assetName"] = asset
                 df_vec.append(new_df)
         viz_df = pd.concat(df_vec)
         # logging.info(f"new_df_shape:{new_df.shape}")

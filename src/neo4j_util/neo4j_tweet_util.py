@@ -2,6 +2,8 @@ import json
 import logging
 import time
 import sys
+from neo4j import unit_of_work
+
 
 from datetime import datetime
 from py2neo import Graph, Node, NodeMatcher, Relationship
@@ -25,7 +27,7 @@ class Neo4j:
 
     #@RateLimiter(max_calls=1, period=60)
     def update_processed_text(self, df):
-        tx = self.graph.begin(timeout=600)
+        tx = self.graph.begin()
         for index, row in df.iterrows():
             tweet_id = row["tweet_id"]
             # retrieve company node from the remote self.graph
@@ -199,6 +201,7 @@ class Neo4j:
         for i in range(0, len(l), n):
             yield l[i:i + n]
 
+    #@unit_of_work(timeout=60, metadata={"app_name": "tweet_upload"})
     def bulk_load(self, tweets):
         """
         Bulk loads list of tweets
@@ -213,7 +216,7 @@ class Neo4j:
             count = 0
             while count < RETRIES:
                 try:
-                    tx = self.graph.begin(timeout=600)
+                    tx = self.graph.begin()
                     for t in chunk:
                         self.load_data(tx, t)
                         print("Tweet loaded into neo4j")
