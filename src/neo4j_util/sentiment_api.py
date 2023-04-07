@@ -127,6 +127,7 @@ def get_processed_tweets():
         # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["text_ner_names"] = df["text_ner_names"].apply(lambda x: str(x))        
+        df["text_ner_count"] = df["text_ner_count"].apply(lambda x: str(x))        
         df["assetName"] = df["keyword_subject"].apply(map_to_market)
         df["assetCode"] = df["assetName"]
         df["analyst_rating"] = df['analyst_rating'].fillna(0)

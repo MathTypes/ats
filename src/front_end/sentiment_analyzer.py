@@ -6,7 +6,7 @@ import logging
 import os
 import spacy_streamlit
 import altair as alt
-from streamlit_vega_lite import altair_component
+from streamlit_vega_lite import altair_component, vega_lite_component
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
 import panel as pn
@@ -454,9 +454,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 height=150
             ).add_selection(sentiment_brush)
 
-            # Base chart for data tables
+            text_brush = alt.selection(type='single', encodings=['x'])  
             ranked_text = alt.Chart(sentiment_data).mark_text(align='right').encode(
-                y=alt.Y('row_number:O', axis=None)
+                y=alt.Y('row_number:O', axis=None),
             ).transform_filter(
                 sentiment_brush
             ).transform_window(
@@ -464,20 +464,16 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).transform_filter(
                 'datum.row_number < 15'
             )
-            text_brush = alt.selection(type='single', encodings=['y'])  
             tweet_id = ranked_text.encode(text='id:N').properties(
                 title=alt.TitleParams(text='Id', align='right')
-            ).add_selection(text_brush)
+            )
             user = ranked_text.encode(text='user:N').properties(
                 title=alt.TitleParams(text='User', align='right')
-            )
-            content = ranked_text.encode(text='text:N').properties(
-                title=alt.TitleParams(text='Text', align='right')
             )
             polarity = ranked_text.encode(text='polarity:Q').properties(
                 title=alt.TitleParams(text='Polarity', align='right')
             )
-            text = alt.hconcat(tweet_id, user, content, polarity) # Combine data tables
+            text = alt.hconcat(tweet_id, user, polarity).add_selection(text_brush) # Combine data tables
             return (market & sentiment & text)
         # gc.collect()
         # data_update()
@@ -532,30 +528,31 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         #pn_row = pn.Row(vega_pane, pn.bind(filtered_table, vega_pane.selection.param.brush))
         #tabs = pn.Tabs(hvplot_pane)
         #st.vega_lite_chart(pn_row, use_container_width=True)
-        if selected_assets:
-            asset = selected_assets[0]
-            analyst_rating = news_df.analyst_rating.unique().tolist()
-            #for rating in analyst_rating:
-            #    df = calculate_mean_sentiment(asset, rating_period, rating)
-            #    df["analystRating"] = rating
-            #    # logging.info(f"df_shape:{df.shape}")
-                # logging.info(f"analysis.df_price:{analysis.df_price.shape}")
-                # logging.info(f'df:{df}')
-                # logging.info(f'analysis.df_price[1:5]:{analysis.df_price.iloc[1:5]}')
-                # new_df = pd.concat([df, analysis.df_price], axis=1)
-                # new_df = analysis.df_price.join(df)
-            #    new_df = analysis.df_price.join(df)
-            #    new_df["eventTime"] = new_df.index
-            #    new_df["eventTime"] = new_df["eventTime"].apply(
-            #        lambda x: x.timestamp()*1000)
-            #    new_df["assetName"] = asset
-            #    df_vec.append(new_df)
-            viz_market_df = analysis.df_price[start_date:end_date]
-            viz_market_df = viz_market_df.rename(columns={"Adj Close" : "Close"})
-            viz_market_df["eventTime"] = viz_market_df.index
-            viz_market_df["eventTime"] = viz_market_df["eventTime"].apply(
-                        lambda x: x.timestamp()*1000)
-            viz_market_df["assetName"] = asset
+        if not selected_assets:
+            return
+        asset = selected_assets[0]
+        analyst_rating = news_df.analyst_rating.unique().tolist()
+        #for rating in analyst_rating:
+        #    df = calculate_mean_sentiment(asset, rating_period, rating)
+        #    df["analystRating"] = rating
+        #    # logging.info(f"df_shape:{df.shape}")
+            # logging.info(f"analysis.df_price:{analysis.df_price.shape}")
+            # logging.info(f'df:{df}')
+            # logging.info(f'analysis.df_price[1:5]:{analysis.df_price.iloc[1:5]}')
+            # new_df = pd.concat([df, analysis.df_price], axis=1)
+            # new_df = analysis.df_price.join(df)
+        #    new_df = analysis.df_price.join(df)
+        #    new_df["eventTime"] = new_df.index
+        #    new_df["eventTime"] = new_df["eventTime"].apply(
+        #        lambda x: x.timestamp()*1000)
+        #    new_df["assetName"] = asset
+        #    df_vec.append(new_df)
+        viz_market_df = analysis.df_price[start_date:end_date]
+        viz_market_df = viz_market_df.rename(columns={"Adj Close" : "Close"})
+        viz_market_df["eventTime"] = viz_market_df.index
+        viz_market_df["eventTime"] = viz_market_df["eventTime"].apply(
+                    lambda x: x.timestamp()*1000)
+        viz_market_df["assetName"] = asset
         # logging.info(f"new_df_shape:{new_df.shape}")
         # new_df = new_df.rename({"Adj Close":"Close"})
         # new_df['sentiment'] = new_df.x.apply(lambda sentiment: x.value // 10**9)
@@ -563,28 +560,72 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         # new_df = new_df.reindex(["x", "analystRating"])
         # new_df.index = new_df.index.value // 10**9
         #selection = altair_component(altair_histogram(viz_df))
-            sentiment_df = news_df[(news_df["assetName"] == asset)]
-            sentiment_df.index = pd.to_datetime(sentiment_df.index)
-            sentiment_df["eventTime"]=sentiment_df["time"]
-            sentiment_df["eventTime"] = sentiment_df["eventTime"].apply(lambda x: x.timestamp()*1000)
-            sentiment_df = sentiment_df.set_index(["time"])
-            sentiment_df = sentiment_df.sort_index()
-            sentiment_df = sentiment_df[start_date:end_date]
-            logging.info(f'viz_market_df:{viz_market_df}')
-            logging.info(f'sentiment_df:{sentiment_df}')
+        sentiment_df = news_df[(news_df["assetName"] == asset)]
+        sentiment_df.index = pd.to_datetime(sentiment_df.index)
+        sentiment_df["eventTime"]=sentiment_df["time"]
+        sentiment_df["eventTime"] = sentiment_df["eventTime"].apply(lambda x: x.timestamp()*1000)
+        sentiment_df = sentiment_df.set_index(["time"])
+        sentiment_df = sentiment_df.sort_index()
+        sentiment_df = sentiment_df[start_date:end_date]
+        logging.info(f'viz_market_df:{viz_market_df}')
+        logging.info(f'sentiment_df:{sentiment_df}')
+
+        row1_1, row1_2 = st.columns(2)
+        with row1_1:
             chart = altair_histogram(viz_market_df, sentiment_df)
             event_dict = altair_component(altair_chart=chart)
             logging.info(f'event_dict:{event_dict}')
-            #selections[rating] = selection
-            models = ["en_core_web_sm", "en_core_web_md"]
-            default_text = "Sundar Pichai is the CEO of Google."
-            spacy_streamlit.visualize(models, default_text)
 
-            #    data = grid_response['data']
-            #    selected = grid_response['selected_rows']
-            #    logging.info(f'grid_response_selected:{selected}')
-            #    df = pd.DataFrame(selected)
-                # logging.info(f'selected_df:{df}')
-            #    if not df.empty:
-            #        visualization.render_visualization_df(df)
-            #    # st.write(filtered)
+        #start_day = datetime.datetime.fromtimestamp(r[0]*1000)
+        start_day = pd.to_datetime(start_date).tz_localize('utc')
+        #to_day = datetime.datetime.fromtimestamp(r[1]*1000)
+        to_day = pd.to_datetime(end_date).tz_localize('utc')
+        filtered = news_df[(news_df.index >= start_day) & (news_df.index < to_day)]
+        gb = GridOptionsBuilder.from_dataframe(filtered)
+        gb.configure_pagination(
+            paginationAutoPageSize=True)  # Add pagination
+        gb.configure_side_bar()  # Add a sidebar
+        # Enable multi-row selection
+        gb.configure_selection(
+            'multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children")
+        gridOptions = gb.build()
+
+        with row1_2:
+            grid_response = AgGrid(
+                filtered,
+                gridOptions=gridOptions,
+                data_return_mode='AS_INPUT',
+                update_mode='MODEL_CHANGED',
+                fit_columns_on_grid_load=False,
+                theme='alpine',  # Add theme color to the table
+                enable_enterprise_modules=True,
+                height=350,
+                width='100%',
+                reload_data=True
+            )
+            visualization.render_visualization_df(filtered)
+
+            data = grid_response['data']
+            selected = grid_response['selected_rows']
+            logging.info(f'grid_response_selected:{selected}')
+            df = pd.DataFrame(selected)
+            # logging.info(f'selected_df:{df}')
+            if not df.empty:
+                selected = news_df[news_df['id'] == df[0]]
+                logging.info(f'selected:{selected}')
+                models = ["en_core_web_sm", "en_core_web_md"]
+                #default_text = "Sundar Pichai is the CEO of Google."
+                spacy_streamlit.visualize(models, selected["text"])
+        # st.write(filtered)            
+        #r = event_dict.get("x")
+        #if r:
+        #selections[rating] = selection
+
+        #    data = grid_response['data']
+        #    selected = grid_response['selected_rows']
+        #    logging.info(f'grid_response_selected:{selected}')
+        #    df = pd.DataFrame(selected)
+            # logging.info(f'selected_df:{df}')
+        #    if not df.empty:
+        #        visualization.render_visualization_df(df)
+        #    # st.write(filtered)

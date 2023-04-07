@@ -74,13 +74,14 @@ def text_process(text, word_cloud=False, stemming=False, lemmetization=False):
     # text = convert_number(text)
     parag = ""
     for text in text.split(', ')[1:]:
-        if text[-1] == "'" or text[-1] == '"':
-            parag += ' ' + text[:-1]
-        if text[0] == "'" or text[0] == '"':
+        if text:
             if text[-1] == "'" or text[-1] == '"':
-                parag += ' ' + text[1:-1]
-            else:
-                parag += ' ' + text[1:]
+                parag += ' ' + text[:-1]
+            if text[0] == "'" or text[0] == '"':
+                if text[-1] == "'" or text[-1] == '"':
+                    parag += ' ' + text[1:-1]
+                else:
+                    parag += ' ' + text[1:]
     return parag[1:]
 
 

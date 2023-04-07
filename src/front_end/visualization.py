@@ -32,7 +32,7 @@ def render_visualization(news_df, start_day, end_day):
 
 def render_visualization_df(sub_data):
     count = sub_data.shape[0]
-    logging.info(f'rendering:{sub_data}')
+    #logging.info(f'rendering:{sub_data}')
     # =================================================================================== #
     #                                General                                              #
     # =================================================================================== #

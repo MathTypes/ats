@@ -96,7 +96,6 @@ def get_list_ner(df):
 
     for i in range(df.shape[0]):
         text_ner.append(list(df['text_ner_names'].iloc[i][1:-1].replace("'", "").split(', ')))
-
         text_c = list(df['text_ner_count'].iloc[i][1:-1].replace("'", "").split(', '))
         if text_c[0] == "":
             text_ner_count.append([0])
