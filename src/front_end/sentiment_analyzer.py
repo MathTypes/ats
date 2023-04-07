@@ -9,6 +9,8 @@ import altair as alt
 from streamlit_vega_lite import altair_component
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
+import panel as pn
+pn.extension('vega')
 import visualization
 import matplotlib.pyplot as plt
 from util import nlp_utils
@@ -407,53 +409,74 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             return analysis, analysis_day, prediction_fig 
 
         @st.cache_resource
-        def altair_histogram(hist_data):
+        def altair_histogram(hist_data, sentiment_data):
             logging.info(f'hist_data:{hist_data}')
-            chart = st.vega_lite_chart(hist_data, {
-                "params": [{
-                    "name": "measure",
-                    "value": "Open",
-                    "bind": {"input": "select", "options": ["Open", "Adj Close", "High", "Low"]}
-                }],
-                "vconcat": [{
-                    "width": 1200,
-                    "height": 400,
-                    "params": [
-                        {"name": "xbrush",
-                        "select": {"type": "interval", "encodings": ["x"]}
-                        }
-                    ],                    
-                    'encoding': {
-                        'x': {'field': 'eventTime', 'type': 'temporal'},
-                        'y': {
-                            "datum": { "expr": "datum[measure]"},
-                            'type': 'quantitative',
-                            "axis": { "orient": "left"},
-                            "scale": {"domain": [int(hist_data["Low"].min()), int(hist_data["Low"].max())]}},
-                    },
-                    "mark": {"type" : "line", "point" : True, "interpolate": "monotone"}
-                    },
-                    {
-                    "params": [
-                        { "name": "select", "select": "point"},
-                    ],                    
-                    "width": 1200,
-                    "height": 100,
-                    'encoding': {
-                        'x': {'field': 'eventTime', 'type': 'temporal', "scale": {"domain": {"param": "xbrush"}}},
-                        'y': {'field': 'sentiment', 'type': 'quantitative', "axis": { "orient": "left"}},
-                         "fillOpacity": {
-                              "condition": {"param": "select", "value": 1}, "value": 0.3
-                        },
-                        'color': {
-                            "field" : "analystRating",
-                            "type": "nominal"
-                        },
-                    },
-                    "mark": "line",
-                    "config": {"view": {"stroke": ""}}  
-                    }]}, theme="streamlit", use_container_width=True)
-            return chart
+            logging.info(f'sentiment_data:{sentiment_data}')
+
+            brush = alt.selection(type='interval', encodings=['x'])
+            open_close_color = alt.condition("datum.Open <= datum.Close",
+                                     alt.value("#06982d"),
+                                     alt.value("#ae1325"))
+
+            base = alt.Chart(hist_data).mark_line(interpolate="monotone").encode(
+                x = 'eventTime:T',
+                y = alt.Y('Close:Q', scale=alt.Scale(domain=[int(hist_data["Low"].min()), int(hist_data["Low"].max())])),
+                color=open_close_color,
+                tooltip = 'High:Q'
+            ).properties(
+                width=1200,
+                height=300
+            ).add_selection(brush)
+            
+            rule = base.mark_rule().encode(
+                alt.Y(
+                    'Low:Q',
+                    title='Price',
+                    scale=alt.Scale(zero=False),
+                ),
+                alt.Y2('High:Q')
+            )
+
+            bar = base.mark_bar().encode(
+                alt.Y('Open:Q'),
+                alt.Y2('Close:Q')
+            )
+
+            #market = (rule + bar)
+            market = base
+
+            sentiment_brush = alt.selection(type='interval', encodings=['x'])            
+            sentiment = alt.Chart(sentiment_data).mark_line(interpolate="monotone").encode(
+                x = alt.X('eventTime:T', scale=alt.Scale(domain=brush)),
+                y = alt.Y('mean(sentimentClass):Q'),
+                color = alt.Color('analyst_rating:N')
+            ).properties(
+                width=800,
+                height=150
+            ).add_selection(sentiment_brush)
+
+            # Base chart for data tables
+            ranked_text = alt.Chart(sentiment_data).mark_text(align='right').encode(
+                y=alt.Y('row_number:O', axis=None)
+            ).transform_filter(
+                sentiment_brush
+            ).transform_window(
+                row_number='row_number()'
+            ).transform_filter(
+                'datum.row_number < 15'
+            )
+            user = ranked_text.encode(text='user:N').properties(
+                title=alt.TitleParams(text='User', align='right')
+            )
+            content = ranked_text.encode(text='text:N').properties(
+                title=alt.TitleParams(text='Text', align='right')
+            )
+            polarity = ranked_text.encode(text='polarity:Q').properties(
+                title=alt.TitleParams(text='Polarity', align='right')
+            )
+            text = alt.hconcat(user, content, polarity) # Combine data tables
+
+            return market & sentiment & text
         # gc.collect()
         # data_update()
 
@@ -500,26 +523,37 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         selections = {}
         rating_period = datetime.timedelta(hours=1)
         df_vec = []
-        for asset in selected_assets:
-            if not asset:
-                continue
+        logging.info(f'selected_assets:{selected_assets}')
+        #st.altair_chart(chart, use_container_width=True)
+        #df = pd.read_json(penguins_url)
+
+        #pn_row = pn.Row(vega_pane, pn.bind(filtered_table, vega_pane.selection.param.brush))
+        #tabs = pn.Tabs(hvplot_pane)
+        #st.vega_lite_chart(pn_row, use_container_width=True)
+        if selected_assets:
+            asset = selected_assets[0]
             analyst_rating = news_df.analyst_rating.unique().tolist()
-            for rating in analyst_rating:
-                df = calculate_mean_sentiment(asset, rating_period, rating)
-                df["analystRating"] = rating
-                # logging.info(f"df_shape:{df.shape}")
+            #for rating in analyst_rating:
+            #    df = calculate_mean_sentiment(asset, rating_period, rating)
+            #    df["analystRating"] = rating
+            #    # logging.info(f"df_shape:{df.shape}")
                 # logging.info(f"analysis.df_price:{analysis.df_price.shape}")
                 # logging.info(f'df:{df}')
                 # logging.info(f'analysis.df_price[1:5]:{analysis.df_price.iloc[1:5]}')
                 # new_df = pd.concat([df, analysis.df_price], axis=1)
                 # new_df = analysis.df_price.join(df)
-                new_df = analysis.df_price.join(df)
-                new_df["eventTime"] = new_df.index
-                new_df["eventTime"] = new_df["eventTime"].apply(
-                    lambda x: x.timestamp()*1000)
-                new_df["assetName"] = asset
-                df_vec.append(new_df)
-        viz_df = pd.concat(df_vec)
+            #    new_df = analysis.df_price.join(df)
+            #    new_df["eventTime"] = new_df.index
+            #    new_df["eventTime"] = new_df["eventTime"].apply(
+            #        lambda x: x.timestamp()*1000)
+            #    new_df["assetName"] = asset
+            #    df_vec.append(new_df)
+            viz_market_df = analysis.df_price
+            viz_market_df = viz_market_df.rename(columns={"Adj Close" : "Close"})
+            viz_market_df["eventTime"] = viz_market_df.index
+            viz_market_df["eventTime"] = viz_market_df["eventTime"].apply(
+                        lambda x: x.timestamp()*1000)
+            viz_market_df["assetName"] = asset
         # logging.info(f"new_df_shape:{new_df.shape}")
         # new_df = new_df.rename({"Adj Close":"Close"})
         # new_df['sentiment'] = new_df.x.apply(lambda sentiment: x.value // 10**9)
@@ -527,47 +561,24 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         # new_df = new_df.reindex(["x", "analystRating"])
         # new_df.index = new_df.index.value // 10**9
         #selection = altair_component(altair_histogram(viz_df))
-        selection = altair_histogram(viz_df)
-        selections[rating] = selection
+            sentiment_df = news_df[(news_df["assetName"] == asset)]
+            sentiment_df.index = pd.to_datetime(sentiment_df.index)
+            sentiment_df["eventTime"]=sentiment_df["time"]
+            sentiment_df["eventTime"] = sentiment_df["eventTime"].apply(lambda x: x.timestamp()*1000)
+            sentiment_df = sentiment_df.set_index(["time"])
+            sentiment_df = sentiment_df.sort_index()
+            logging.info(f'viz_market_df:{viz_market_df}')
+            logging.info(f'sentiment_df:{sentiment_df}')
+            chart = altair_histogram(viz_market_df, sentiment_df)
+            event_dict = altair_component(altair_chart=chart)
+            logging.info(f'event_dict:{event_dict}')
+            #selections[rating] = selection
 
-        logging.info(f'selections:{selections}')
-        for rating, selection in selections.items():
-            r = None
-            #r = selection.get("x")
-            if r:
-                start_day = datetime.datetime.fromtimestamp(r[0]*1000)
-                start_day = pd.to_datetime(start_day).tz_localize('utc')
-                to_day = datetime.datetime.fromtimestamp(r[1]*1000)
-                to_day = pd.to_datetime(to_day).tz_localize('utc')
-                filtered = news_df[(news_df.index >= start_day) & (
-                    news_df.index < to_day) & (news_df.analyst_rating == rating)]
-                gb = GridOptionsBuilder.from_dataframe(filtered)
-                gb.configure_pagination(
-                    paginationAutoPageSize=True)  # Add pagination
-                gb.configure_side_bar()  # Add a sidebar
-                # Enable multi-row selection
-                gb.configure_selection(
-                    'multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children")
-                gridOptions = gb.build()
-
-                grid_response = AgGrid(
-                    filtered,
-                    gridOptions=gridOptions,
-                    data_return_mode='AS_INPUT',
-                    update_mode='MODEL_CHANGED',
-                    fit_columns_on_grid_load=False,
-                    theme='alpine',  # Add theme color to the table
-                    enable_enterprise_modules=True,
-                    height=350,
-                    width='100%',
-                    reload_data=True
-                )
-
-                data = grid_response['data']
-                selected = grid_response['selected_rows']
-                logging.info(f'grid_response_selected:{selected}')
-                df = pd.DataFrame(selected)
+            #    data = grid_response['data']
+            #    selected = grid_response['selected_rows']
+            #    logging.info(f'grid_response_selected:{selected}')
+            #    df = pd.DataFrame(selected)
                 # logging.info(f'selected_df:{df}')
-                if not df.empty:
-                    visualization.render_visualization_df(df)
-                # st.write(filtered)
+            #    if not df.empty:
+            #        visualization.render_visualization_df(df)
+            #    # st.write(filtered)

@@ -58,7 +58,7 @@ to_date = datetime.date(2023, 3, 29)
 min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=600, persist = True)
 def load_data(from_date, to_date):
     df_vec = []
     for asset in futureAssetCodes:
