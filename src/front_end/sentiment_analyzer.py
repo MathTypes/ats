@@ -410,23 +410,18 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         @st.cache_resource
         def altair_histogram(hist_data, sentiment_data):
-            logging.info(f'hist_data:{hist_data}')
-            logging.info(f'sentiment_data:{sentiment_data}')
+            #logging.info(f'hist_data:{hist_data}')
+            #logging.info(f'sentiment_data:{sentiment_data}')
 
             brush = alt.selection(type='interval', encodings=['x'])
             open_close_color = alt.condition("datum.Open <= datum.Close",
                                      alt.value("#06982d"),
                                      alt.value("#ae1325"))
 
-            base = alt.Chart(hist_data).mark_line(interpolate="monotone").encode(
+            base = alt.Chart(hist_data).encode(
                 x = 'eventTime:T',
-                y = alt.Y('Close:Q', scale=alt.Scale(domain=[int(hist_data["Low"].min()), int(hist_data["Low"].max())])),
                 color=open_close_color,
-                tooltip = 'High:Q'
-            ).properties(
-                width=1200,
-                height=300
-            ).add_selection(brush)
+            )
             
             rule = base.mark_rule().encode(
                 alt.Y(
@@ -442,8 +437,12 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 alt.Y2('Close:Q')
             )
 
-            #market = (rule + bar)
-            market = base
+            market = (rule + bar).properties(
+                width=800,
+                height=300
+            ).add_selection(brush)
+            #market = rule
+            #market = base
 
             sentiment_brush = alt.selection(type='interval', encodings=['x'])            
             sentiment = alt.Chart(sentiment_data).mark_line(interpolate="monotone").encode(
@@ -464,6 +463,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 row_number='row_number()'
             ).transform_filter(
                 'datum.row_number < 15'
+            ).properties(
+                width=800,
+                height=150
             )
             user = ranked_text.encode(text='user:N').properties(
                 title=alt.TitleParams(text='User', align='right')
