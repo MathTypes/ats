@@ -4,7 +4,7 @@ import functools
 import gc
 import logging
 import os
-
+import spacy_streamlit
 import altair as alt
 from streamlit_vega_lite import altair_component
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
@@ -463,10 +463,11 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 row_number='row_number()'
             ).transform_filter(
                 'datum.row_number < 15'
-            ).properties(
-                width=800,
-                height=150
             )
+            text_brush = alt.selection(type='single', encodings=['y'])  
+            tweet_id = ranked_text.encode(text='id:N').properties(
+                title=alt.TitleParams(text='Id', align='right')
+            ).add_selection(text_brush)
             user = ranked_text.encode(text='user:N').properties(
                 title=alt.TitleParams(text='User', align='right')
             )
@@ -476,9 +477,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             polarity = ranked_text.encode(text='polarity:Q').properties(
                 title=alt.TitleParams(text='Polarity', align='right')
             )
-            text = alt.hconcat(user, content, polarity) # Combine data tables
-
-            return market & sentiment & text
+            text = alt.hconcat(tweet_id, user, content, polarity) # Combine data tables
+            return (market & sentiment & text)
         # gc.collect()
         # data_update()
 
@@ -504,9 +504,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         analysis, analysis_day, prediction_fig = get_analysis(
             asset, start_date, end_date)
-        requested_date = analysis.df.index[-1]
-        current_price = float(analysis.df['Adj Close'][-1])
-        change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
+        #requested_date = analysis.df.index[-1]
+        #current_price = float(analysis.df['Adj Close'][-1])
+        #change = float(analysis.df['Adj Close'].pct_change()[-1]) * 100
         # logging.info(f'requested_date:{requested_date}')
         # logging.info(f'current_price:{current_price}')
         # logging.info(f'change:{change}')
@@ -550,7 +550,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             #        lambda x: x.timestamp()*1000)
             #    new_df["assetName"] = asset
             #    df_vec.append(new_df)
-            viz_market_df = analysis.df_price
+            viz_market_df = analysis.df_price[start_date:end_date]
             viz_market_df = viz_market_df.rename(columns={"Adj Close" : "Close"})
             viz_market_df["eventTime"] = viz_market_df.index
             viz_market_df["eventTime"] = viz_market_df["eventTime"].apply(
@@ -569,12 +569,16 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             sentiment_df["eventTime"] = sentiment_df["eventTime"].apply(lambda x: x.timestamp()*1000)
             sentiment_df = sentiment_df.set_index(["time"])
             sentiment_df = sentiment_df.sort_index()
+            sentiment_df = sentiment_df[start_date:end_date]
             logging.info(f'viz_market_df:{viz_market_df}')
             logging.info(f'sentiment_df:{sentiment_df}')
             chart = altair_histogram(viz_market_df, sentiment_df)
             event_dict = altair_component(altair_chart=chart)
             logging.info(f'event_dict:{event_dict}')
             #selections[rating] = selection
+            models = ["en_core_web_sm", "en_core_web_md"]
+            default_text = "Sundar Pichai is the CEO of Google."
+            spacy_streamlit.visualize(models, default_text)
 
             #    data = grid_response['data']
             #    selected = grid_response['selected_rows']
