@@ -1,7 +1,7 @@
 from functools import lru_cache
 import logging
 from neo4j import GraphDatabase
-
+import os
 import pandas as pd
 from data.front_end_utils import (
     data_process,
@@ -90,9 +90,33 @@ def get_tweets():
         # df = keyword_util.add_subject_keyword(df)
         return df
 
+@lru_cache
+def get_processed_tweets_from_monthly(from_date, end_date):
+    df_vec = []
+    for month in pd.period_range(from_date, end_date, freq='M'):
+        logging.info(f'month:{month}')
+        path_dir = os.path.join(config_utils.get_ts_root(), "..", "news", "monthly", "twitter")
+        month_file = os.path.join(path_dir,
+                             month.strftime("%Y%m") + '.parquet')
+        logging.info(f'reading:{month_file}')
+        df_vec.append(pd.read_parquet(month_file))
+    df = pd.concat(df_vec)
+    logging.info(f'reading_df:{df}')
+    logging.info(f'df_columns:{df.columns}')
+    df = df.sort_index()
+    logging.info(f'duplicate index:{df[df.index.duplicated()]}')
+    df = df[from_date:end_date]
+    df["time"] = df.index
+    #df.index = df.index.astype('str')
+    #df.drop_duplicates(subset=None, keep="first", inplace=True)
+    # TODO(jeremy): Replace following line with proper duplicate. We should
+    # keep one instead of dropping them all
+    df = df[~df.index.duplicated()]
+    return df
+
 
 @lru_cache
-def get_processed_tweets():
+def get_processed_tweets(start_date, end_date):
     query = """
             MATCH (t:Tweet)
             MATCH (p:Person)
@@ -114,6 +138,7 @@ def get_processed_tweets():
             ORDER BY t.created_at DESC
             LIMIT 10000
             """
+    #params={"start_date": start_date, "end_date": end_date}
     params = {}
     with driver.get_driver().session() as session:
         result = session.run(query, params)
@@ -136,6 +161,9 @@ def get_processed_tweets():
         # df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         # df["assetName"] = "Stocks"
         # df = keyword_util.add_subject_keyword(df)
+        df['index_time'] = df["time"]
+        df = df.set_index("index_time")
+        df = df.sort_index()
         return df
 
 

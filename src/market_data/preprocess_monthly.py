@@ -75,7 +75,6 @@ if __name__ == "__main__":
         type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
         required=True,
         help='Set a end date')
-    parser.add_argument("--ts_root", type=str)
 
     args = parser.parse_args()
     config_utils.set_args(args)

@@ -1,3 +1,6 @@
+# Usage
+#   PYTHONPATH=.. streamlit run app.py -- --neo4j_host=bolt://34.94.237.162:7687 --neo4j_pass=Tq7ks8zY --ts_root=../../ts/1_min
+#
 import argparse
 import functools
 import datetime
@@ -19,15 +22,13 @@ from PIL import Image
 from data.front_end_utils import (data_process,
                                   subject_analysis)
 from market_data import ts_read_api
-from neo4j_util.sentiment_api import (get_processed_tweets)
+from neo4j_util import sentiment_api
 from util import config_utils
 from util import logging_utils
 from util import nlp_utils
 
 
-parser = argparse.ArgumentParser(description='This app lists animals')
-parser.add_argument("--neo4j_host", type=str, required=False)
-parser.add_argument("--neo4j_password", type=str, required=False)
+parser = config_utils.get_arg_parser("Preprocess tweet")
 
 try:
     args = parser.parse_args()
@@ -62,18 +63,14 @@ max_date = datetime.date.today()
 def load_data(from_date, to_date):
     df_vec = []
     for asset in futureAssetCodes:
-        date_df = ts_read_api.get_time_series_by_range(
+        date_df = ts_read_api.get_time_series_from_monthly(
             asset, from_date, to_date)
         df_vec.append(date_df)
     market_df = pd.concat(df_vec)
     #logging.info(f'market_index:{market_df.index}')
     #logging.info(f'false index:{market_df[market_df.index==False]}')
-    news_df = get_processed_tweets()
+    news_df = sentiment_api.get_processed_tweets_from_monthly(from_date, to_date)
     logging.info(f'news_df:{news_df}')
-    news_df['index_time'] = news_df["time"]
-    news_df = news_df.set_index("index_time")
-    news_df = news_df.sort_index()
-    news_df = subject_analysis(news_df)
     return market_df, news_df
 
 market_df, news_df = load_data(from_date, to_date)

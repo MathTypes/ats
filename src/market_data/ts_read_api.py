@@ -42,7 +42,32 @@ def get_time_series_by_instr_date(instr_name, asof_date):
             f"can not open {instr_name} for {asof_date} at {file_path}, e:{e}")
     return None
 
-@functools.lru_cache(maxsize=64)
+#@functools.lru_cache(maxsize=64)
+def get_time_series_from_monthly(instr_name, from_date, end_date):
+    df_vec = []
+    for month in pd.period_range(from_date, end_date, freq='M'):
+        logging.info(f'month:{month}')
+        path_dir = os.path.join(config_utils.get_ts_root(), "monthly", instr_name)
+        month_file = os.path.join(path_dir,
+                             month.strftime("%Y%m") + '.parquet')
+        logging.info(f'reading:{month_file}')
+        df_vec.append(pd.read_parquet(month_file))
+    df = pd.concat(df_vec)
+    logging.info(f'reading_df:{df}')
+    logging.info(f'df_columns:{df.columns}')
+    #df = df.set_index(["idx_time"])
+    df = df.sort_index()
+    logging.info(f'duplicate index:{df[df.index.duplicated()]}')
+    df = df[from_date:end_date]
+    df["time"] = df.index
+    #df.index = df.index.astype('str')
+    df.drop_duplicates(subset=None, keep="first", inplace=True)
+    # TODO(jeremy): Replace following line with proper duplicate. We should
+    # keep one instead of dropping them all
+    df = df[~df.index.duplicated()]
+    return df
+
+#@functools.lru_cache(maxsize=64)
 def get_time_series_by_range(instr_name, from_date, end_date):
     df_vec = []
     #logging.info(f'instr_name:{instr_name}, from_date:{from_date}, end_date:{end_date}')

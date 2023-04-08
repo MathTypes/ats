@@ -44,8 +44,8 @@ def render_trading_data():
         st.dataframe(coins_df)
 
     with st.expander('Exchanges data'):
-        es_market_df = ts_read_api.get_time_series('ES', from_date, to_date)
-        nq_market_df = ts_read_api.get_time_series('NQ', from_date, to_date)
+        es_market_df = ts_read_api.get_time_series_from_monthly('ES', from_date, to_date)
+        nq_market_df = ts_read_api.get_time_series_from_monthly('NQ', from_date, to_date)
         exchanges_df = pd.concat([es_market_df, nq_market_df])
         st.dataframe(exchanges_df)
 

@@ -28,6 +28,7 @@ def get_arg_parser(description):
     parser.add_argument("--neo4j_host", type=str, required=False)
     parser.add_argument("--neo4j_password", type=str, required=False)
     parser.add_argument("--data_root", type=str, required=False)
+    parser.add_argument("--ts_root", type=str)
     return parser
 
 def get_data_root():
