@@ -93,7 +93,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         self.reqHistoricalData(
             cid,  # tickerId, used to identify incoming data
             contract,
-            self.current.strftime("%Y%m%d-00:00:00"),  # always go to midnight
+            self.current.strftime("%Y%m%d-23:59:59"),  # always go to midnight
             self.duration,  # amount of time to go back
             self.args.size,  # bar size
             self.args.data_type,  # historical data type

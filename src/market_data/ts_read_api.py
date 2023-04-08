@@ -1,16 +1,20 @@
+import argparse
+import datetime
+import functools
 import logging
 import os
 import time
-import functools
-import time
-
 import traceback
-import datetime
+
 import pandas as pd
 
-FIVE_SECS_ROOT_DIR = '../../data/FUT/5_secs'
-ONE_MIN_ROOT_DIR = '../../data/FUT/1_min'
+from util import config_utils
+from util import logging_utils
 
+from dateutil.parser import parse, ParserError
+class DateParser(argparse.Action):
+    def __call__(self, parser, namespace, values, option_strings=None):
+        setattr(namespace, self.dest, parse(values).date())
 
 def get_time_series_by_instr_date(instr_name, asof_date):
     df_vec = []
@@ -20,36 +24,37 @@ def get_time_series_by_instr_date(instr_name, asof_date):
     elif asof_date < datetime.date(2023, 6, 15):
         post_fix = 'M3'
     assetCode = instr_name + post_fix
-    file_path = os.path.join(ONE_MIN_ROOT_DIR, assetCode,
+    file_path = os.path.join(config_utils.get_data_root(), assetCode,
                              asof_date.strftime("%Y%m%d") + '.csv')
     try:
         market_df = pd.read_csv(file_path)
+        logging.info(f'openning:{file_path}')
         market_df['assetName'] = instr_name
         market_df['assetCode'] = instr_name
         market_df["time"] = pd.to_datetime(
             market_df["date"], format="%Y%m%d  %H:%M:%S").dt.tz_localize("UTC")
         market_df['idx_time'] = market_df["time"]
-        market_df = market_df.set_index(["idx_time"])
         market_df = market_df.rename(columns={'date':'Date', 'close': 'Adj Close', 'high': 'High',
                                               'low': 'Low', 'volume': 'Volume', 'open': 'Open'})
-        market_df = market_df[['High', 'Low', 'Open',
-                               'Volume', 'Adj Close']].apply(pd.to_numeric)
-        market_df = market_df.sort_index()
-        #market_df = market_df.set_index('Date')
         return market_df
     except Exception as e:
         logging.warn(
             f"can not open {instr_name} for {asof_date} at {file_path}, e:{e}")
     return None
 
-@functools.lru_cache
+@functools.lru_cache(maxsize=64)
 def get_time_series_by_range(instr_name, from_date, end_date):
     df_vec = []
     #logging.info(f'instr_name:{instr_name}, from_date:{from_date}, end_date:{end_date}')
-    for cur_date in pd.date_range(start=from_date, end=end_date, freq="D"):
+    for cur_date in pd.date_range(start=from_date-datetime.timedelta(days=2),
+             end=end_date+datetime.timedelta(days=2), freq="D"):
         date_df = get_time_series_by_instr_date(instr_name, cur_date.date())
         df_vec.append(date_df)
     market_df = pd.concat(df_vec)
+    market_df = market_df.set_index(["idx_time"])
+    market_df = market_df.sort_index()
+    market_df = market_df[['High', 'Low', 'Open',
+                            'Volume', 'Adj Close']].apply(pd.to_numeric)
     #logging.info(f'market_time:{market_df}')
     #logging.info(f'total_market_shape:{market_df.shape}') 
     #logging.info(f'duplicate index:{market_df[market_df.index.duplicated()]}')
@@ -57,4 +62,22 @@ def get_time_series_by_range(instr_name, from_date, end_date):
     market_df = market_df.drop_duplicates(keep='last')
     #traceback.print_stack()
     #logging.info(f'deduped_total_market_shape:{market_df.shape}') 
-    return market_df
+    return market_df[from_date:end_date]
+
+if __name__ == "__main__":
+    parser = config_utils.get_arg_parser("Preprocess tweet")
+    parser.add_argument("--instr", type=str)
+    parser.add_argument("--start_date",
+        type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
+        required=True,
+        help='Set a start date')
+    parser.add_argument("--end_date",
+        type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
+        required=True,
+        help='Set a end date')
+
+    args = parser.parse_args()
+    config_utils.set_args(args)
+    logging_utils.init_logging()
+    price_df = get_time_series_by_range(args.instr, args.start_date, args.end_date)
+    logging.info(f'price_df_time:{price_df.index}')
