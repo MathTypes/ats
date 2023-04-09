@@ -410,8 +410,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         @st.cache_resource
         def altair_histogram(hist_data, sentiment_data):
-            #logging.info(f'hist_data:{hist_data}')
-            #logging.info(f'sentiment_data:{sentiment_data}')
+            logging.info(f'hist_data:{hist_data}')
+            logging.info(f'sentiment_data:{sentiment_data}')
 
             brush = alt.selection(type='interval', encodings=['x'])
             open_close_color = alt.condition("datum.Open <= datum.Close",
@@ -438,19 +438,21 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
 
             market = (rule + bar).properties(
-                width=800,
+                width=400,
                 height=300
             ).add_selection(brush)
             #market = rule
             #market = base
 
             sentiment_brush = alt.selection(type='interval', encodings=['x'])            
-            sentiment = alt.Chart(sentiment_data).mark_line(interpolate="monotone").encode(
-                x = alt.X('eventTime:T', scale=alt.Scale(domain=brush)),
+            sentiment = alt.Chart(sentiment_data).mark_line(interpolate="monotone", point=True).encode(
+                x = alt.X('yearmonthdatehoursminutes(eventTime):T', scale=alt.Scale(domain=brush)),
                 y = alt.Y('mean(sentimentClass):Q'),
                 color = alt.Color('analyst_rating:N')
+            ).transform_filter(
+                brush
             ).properties(
-                width=800,
+                width=400,
                 height=150
             ).add_selection(sentiment_brush)
 
@@ -458,7 +460,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ranked_text = alt.Chart(sentiment_data).mark_text(align='right').encode(
                 y=alt.Y('row_number:O', axis=None),
             ).transform_filter(
-                sentiment_brush
+                brush
             ).transform_window(
                 row_number='row_number()'
             ).transform_filter(
@@ -473,8 +475,11 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             polarity = ranked_text.encode(text='polarity:Q').properties(
                 title=alt.TitleParams(text='Polarity', align='right')
             )
-            text = alt.hconcat(tweet_id, user, polarity).add_selection(text_brush) # Combine data tables
-            return (market & sentiment & text)
+            sentiment_text = ranked_text.encode(text='sentimentClass:N').properties(
+                title=alt.TitleParams(text='Sentiment', align='right')
+            )
+            text = alt.hconcat(tweet_id, user, polarity, sentiment_text).add_selection(text_brush) # Combine data tables
+            return (market & sentiment & text), brush
         # gc.collect()
         # data_update()
 
@@ -572,7 +577,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         row1_1, row1_2 = st.columns(2)
         with row1_1:
-            chart = altair_histogram(viz_market_df, sentiment_df)
+            chart, brush = altair_histogram(viz_market_df, sentiment_df)
             event_dict = altair_component(altair_chart=chart)
             logging.info(f'event_dict:{event_dict}')
 
