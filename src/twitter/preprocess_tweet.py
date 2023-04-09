@@ -13,6 +13,19 @@ from data.front_end_utils import (
     subject_analysis
 )
 
+import re
+
+def find_symbol(x):
+    x = str(x).lower()
+    logging.info(f'x:{x}')
+    m = re.search('\$([a-z]{1,4})\W+', x)
+    logging.info(f'm:{m}')
+    if m:
+        return m.group(1)
+    else:
+        return ""
+
+
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Preprocess tweet")
 
@@ -26,9 +39,10 @@ if __name__ == "__main__":
         logging.info(f'unprocess_data:{data["tweet_id"]}')
         if data.empty:
             break
+        data["symbol"] = data["text"].apply(lambda x: find_symbol(x))
         data = add_subject_keyword(data)
         data = subject_analysis(data)
-        #logging.error(f'process_data:{data}')
+        logging.error(f'process_data:{data}')
         count = 0
         RETRIES = 5
         while count < RETRIES:

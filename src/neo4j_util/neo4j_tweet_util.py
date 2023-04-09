@@ -37,6 +37,7 @@ class Neo4j:
                     t.subject=$subject,
                     t.lemma_text=$lemma_text,
                     t.keyword_text=$keyword_text,
+                    t.symbol=$symbol,
                     t.full_text=t.raw_content + " " + $full_text,
                     t.text_ner_names=$text_ner_names,
                     t.text_ner_count=$text_ner_count,
@@ -54,6 +55,7 @@ class Neo4j:
                     "subject": row["subject"],
                     "lemma_text": row["lemma_text"],
                     "keyword_text": row["keyword_text"],
+                    "symbol": row["symbol"],
                     "text_ner_names": row["text_ner_names"],
                     "text_ner_count": row["text_ner_count"],
                     "lemma_subject": row["lemma_subject"],
@@ -156,8 +158,8 @@ class Neo4j:
                           rendered_content=tweet.renderedContent)
         tx.create(tweet_node)
 
-        #conversation_node = self.graph.evaluate(
-        #    "MATCH(n:Conversation {id:$conv_id}) RETURN n",
+        #reply_node = self.graph.evaluate(
+        #    "MATCH(n:Reply {id:$conv_id}) RETURN n",
         #    conv_id=tweet.conversationId)
         #if conversation_node is None:
         #    conversation_node = Node("Conversation", id=tweet.conversationId,

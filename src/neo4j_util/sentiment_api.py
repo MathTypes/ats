@@ -166,13 +166,36 @@ def get_processed_tweets(start_date, end_date):
         df = df.sort_index()
         return df
 
+def update_tweets_unprocessed_for_reply():
+    query = """
+            MATCH (rt:Tweet) with rt
+            MATCH (t:Tweet)            
+            WHERE t.reply_process_time is null and rt.in_reply_to_tweet_id=t.id
+            MERGE (rt)-[r:Reply]->(t)
+            SET t.reply_process_time=datetime()
+            RETURN t
+            LIMIT 10S;
+            RETURN tweet_id, time, text
+            LIMIT 100
+            """
+    params = {}
+    with driver.get_driver().session() as session:
+        result = session.run(query, params)
+        df = pd.DataFrame([r.values() for r in result], columns=result.keys())
+        df["time"] = df["time"].apply(lambda x: x.to_native())
+        df["time"] = pd.to_datetime(
+            df["time"], infer_datetime_format=True)
+        df["text"] = df["text"].apply(lambda x: str(x))
+        # df = keyword_util.add_subject_keyword(df)
+        return df
 
 def get_unprocessed_tweets():
     query = """
-            MATCH (rt:Tweet) with rt order by rt.created_at
-            MATCH (t:Tweet)            
-            WHERE t.annotation_time is null and rt.in_reply_to_tweet_id=t.id
-            and t.raw_content is not null
+            MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
+            WHERE t.annotation_time is null and t.raw_content is not null
+            WITH t
+            LIMIT 100
+            MATCH (rt:Tweet )-[r:Reply*..3]-(t)            
             with t.id as tweet_id, t.raw_content + collect(rt.raw_content) as text,
             datetime({epochMillis: t.created_at}) as time
             RETURN tweet_id, time, text
