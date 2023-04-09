@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 import numpy as np
 
@@ -23,8 +24,8 @@ def add_subject_keyword(df):
     #df = pd.read_csv(data_path, index_col=0)
     df['subject'] = np.nan
     for i in range(df.shape[0]):
-        parag = list(df['text'][i].split(", "))
-        df['subject'][i] = parag[0][2:]
+        parag = list(df.iloc[i]['text'].split(", "))
+        df.iloc[i]['subject'] = parag[0][2:]
 
     df['text'] = df['text'].apply(lambda x: text_process(x))
 
@@ -60,6 +61,9 @@ def name_entity_recognition(text, obj=None):
 
 
 def text_process(text, word_cloud=False, stemming=False, lemmetization=False):
+    if not isinstance(text, str):
+        text = str(text)
+    logging.info(f'text:{text}')
     if lemmetization:
         text = "".join([i for i in text if i not in string.punctuation])
         text = text.lower()

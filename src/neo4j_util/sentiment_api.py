@@ -104,6 +104,7 @@ def get_processed_tweets_from_monthly(from_date, end_date):
     logging.info(f'reading_df:{df}')
     logging.info(f'df_columns:{df.columns}')
     df = df.sort_index()
+    df["text"] = df["text"].apply(lambda x : x[:2000])
     logging.info(f'duplicate index:{df[df.index.duplicated()]}')
     df = df[from_date:end_date]
     df["time"] = df.index
@@ -194,12 +195,12 @@ def get_unprocessed_tweets():
             MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
             WHERE t.annotation_time is null and t.raw_content is not null
             WITH t
-            LIMIT 100
+            LIMIT 50
             MATCH (rt:Tweet )-[r:Reply*..3]-(t)            
             with t.id as tweet_id, t.raw_content + collect(rt.raw_content) as text,
             datetime({epochMillis: t.created_at}) as time
             RETURN tweet_id, time, text
-            LIMIT 100
+            LIMIT 50
             """
     params = {}
     with driver.get_driver().session() as session:
