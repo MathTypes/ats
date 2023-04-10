@@ -410,8 +410,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
 
         @st.cache_resource
         def altair_histogram(hist_data, sentiment_data):
-            logging.info(f'hist_data:{hist_data}')
-            logging.info(f'sentiment_data:{sentiment_data}')
+            logging.info(f'hist_data:{hist_data.describe()}')
+            logging.info(f'sentiment_data:{sentiment_data.describe()}')
 
             brush = alt.selection(type='interval', encodings=['x'])
             open_close_color = alt.condition("datum.Open <= datum.Close",
@@ -438,8 +438,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
 
             market = (rule + bar).properties(
-                width=400,
-                height=300
+                width=300,
+                height=200
             ).add_selection(brush)
             #market = rule
             #market = base
@@ -452,7 +452,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).transform_filter(
                 brush
             ).properties(
-                width=400,
+                width=300,
                 height=150
             ).add_selection(sentiment_brush)
 
@@ -479,7 +479,64 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 title=alt.TitleParams(text='Sentiment', align='right')
             )
             text = alt.hconcat(tweet_id, user, polarity, sentiment_text).add_selection(text_brush) # Combine data tables
-            return (market & sentiment & text), brush
+            base_filter = alt.Chart(sentiment_data).transform_filter(
+                brush
+            ).transform_joinaggregate(
+                total='count(*)'
+            ).transform_calculate(
+                pct='1 / datum.total'
+            )
+            polarity = base_filter.mark_bar().transform_bin(
+                "pbin",
+                field="polarity",
+                bin=alt.Bin(maxbins=20)
+            ).encode(
+                x='pbin:N',
+                y="sum(pct):Q",
+            ).properties(
+                width=200,
+                height=100
+            )
+            sentiment_hg = base_filter.mark_bar().encode(
+                alt.X('sentimentClass:N'),
+                alt.Y('sum(pct):Q', axis=alt.Axis(format='%'))
+            ).properties(
+                width=200,
+                height=100
+            )
+            #return (market & sentiment & text) | (polarity & sentiment_hg), brush
+            return (market & sentiment & text  & polarity & sentiment_hg), brush
+
+
+        #@st.cache_resource
+        def altair_histogram_sentiment(sentiment_data, brush):
+            base = alt.Chart(sentiment_data).encode(
+                x = 'eventTime:T',
+            )
+            polarity = base.mark_bar().encode(
+                x='pbin:N',
+                y="count()",
+            ).properties(
+                width=300,
+                height=300
+            )
+            sentiment = base.mark_bar().encode(
+                x='sentiment:N',
+                y="count()",
+                color=alt.condition(brush, alt.value("black"), alt.value("lightgray"))
+            ).properties(
+                width=300,
+                height=300
+            )
+            return alt.hconcat(
+                    polarity,
+                    sentiment,
+                    data=sentiment_data
+                ).transform_bin(
+                "pbin",
+                field="polarity",
+                bin=alt.Bin(maxbins=20)
+            )
         # gc.collect()
         # data_update()
 
@@ -575,12 +632,17 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         logging.info(f'viz_market_df:{viz_market_df}')
         logging.info(f'sentiment_df:{sentiment_df}')
 
-        row1_1, row1_2 = st.columns(2)
+        row1_1, row1_2 = st.columns([1, 0.5])
         with row1_1:
             chart, brush = altair_histogram(viz_market_df, sentiment_df)
             event_dict = altair_component(altair_chart=chart)
-            logging.info(f'event_dict:{event_dict}')
+            #logging.info(f'event_dict:{event_dict}')
 
+        #with row1_2:
+            #hist_chart = altair_histogram_sentiment(sentiment_df, brush)
+            #hist_event_dict = altair_component(altair_chart=hist_chart)
+            #logging.info(f'event_dict:{hist_event_dict}')
+        #    pass
         #start_day = datetime.datetime.fromtimestamp(r[0]*1000)
         start_day = pd.to_datetime(start_date).tz_localize('utc')
         #to_day = datetime.datetime.fromtimestamp(r[1]*1000)
