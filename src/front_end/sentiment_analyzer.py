@@ -412,8 +412,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         def altair_histogram(hist_data, sentiment_data):
             logging.info(f'hist_data:{hist_data.describe()}')
             logging.info(f'sentiment_data:{sentiment_data.describe()}')
-
-            brush = alt.selection(type='interval', encodings=['x'])
+            x_init = pd.to_datetime([hist_data["eventTime"].min(), hist_data["eventTime"].max()]).astype(int)
+            logging.info(f'x_init:{x_init}')
+            brush = alt.selection(type='interval', encodings=['x'], init={'x':list(x_init)})
             open_close_color = alt.condition("datum.Open <= datum.Close",
                                      alt.value("#06982d"),
                                      alt.value("#ae1325"))
@@ -438,8 +439,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
 
             market = (rule + bar).properties(
-                width=300,
-                height=200
+                width=400,
+                height=300
             ).add_selection(brush)
             #market = rule
             #market = base
@@ -452,9 +453,19 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).transform_filter(
                 brush
             ).properties(
-                width=300,
+                width=400,
                 height=150
             ).add_selection(sentiment_brush)
+            polarity = alt.Chart(sentiment_data).mark_line(interpolate="monotone", point=True).encode(
+                x = alt.X('yearmonthdatehoursminutes(eventTime):T', scale=alt.Scale(domain=brush), bin=True),
+                y = alt.Y('mean(sentimentClass):Q'),
+                color=alt.Color('polarity', bin=alt.Bin(step=20), legend=None),
+            ).transform_filter(
+                brush
+            ).properties(
+                width=400,
+                height=150
+            )
 
             text_brush = alt.selection(type='single', encodings=['x'])  
             ranked_text = alt.Chart(sentiment_data).mark_text(align='right').encode(
@@ -465,6 +476,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 row_number='row_number()'
             ).transform_filter(
                 'datum.row_number < 15'
+            ).properties(
+                height=300
             )
             tweet_id = ranked_text.encode(text='id:N').properties(
                 title=alt.TitleParams(text='Id', align='right')
@@ -473,12 +486,10 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 title=alt.TitleParams(text='User', align='right')
             )
             polarity = ranked_text.encode(text='polarity:Q').properties(
-                title=alt.TitleParams(text='Polarity', align='right')
+                title=alt.TitleParams(text='Polarity', align='right'),
+                width=30,
             )
-            sentiment_text = ranked_text.encode(text='sentimentClass:N').properties(
-                title=alt.TitleParams(text='Sentiment', align='right')
-            )
-            text = alt.hconcat(tweet_id, user, polarity, sentiment_text).add_selection(text_brush) # Combine data tables
+            text = alt.hconcat(tweet_id, user, polarity).add_selection(text_brush)
             base_filter = alt.Chart(sentiment_data).transform_filter(
                 brush
             ).transform_joinaggregate(
@@ -486,7 +497,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).transform_calculate(
                 pct='1 / datum.total'
             )
-            polarity = base_filter.mark_bar().transform_bin(
+            polarity_hg = base_filter.mark_bar().transform_bin(
                 "pbin",
                 field="polarity",
                 bin=alt.Bin(maxbins=20)
@@ -494,18 +505,31 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 x='pbin:N',
                 y="sum(pct):Q",
             ).properties(
-                width=200,
+                width=300,
                 height=100
             )
             sentiment_hg = base_filter.mark_bar().encode(
                 alt.X('sentimentClass:N'),
                 alt.Y('sum(pct):Q', axis=alt.Axis(format='%'))
             ).properties(
-                width=200,
+                width=300,
                 height=100
             )
+            chart = alt.vconcat(data=hist_data)
+            row1 = alt.hconcat()
+            row1 |= market
+            row1 |= text
+            chart &= row1
+            row2 = alt.hconcat()
+            row2 |= polarity_hg
+            row2 |= sentiment_hg
+            chart &= row2
+            #row3 = alt.hconcat()
+            #row3 |= polarity_hg
+            #chart &= row3
             #return (market & sentiment & text) | (polarity & sentiment_hg), brush
-            return (market & sentiment & text  & polarity & sentiment_hg), brush
+            #return (market & sentiment & text  & polarity & sentiment_hg), brush
+            return chart, brush
 
 
         #@st.cache_resource
