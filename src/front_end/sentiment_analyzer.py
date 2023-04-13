@@ -438,7 +438,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
 
             market = (rule + bar).properties(
-                width=800,
+                width=400,
                 height=300
             ).add_selection(brush)
             #market = rule
@@ -450,7 +450,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 y = alt.Y('mean(sentimentClass):Q'),
                 color = alt.Color('analyst_rating:N')
             ).properties(
-                width=800,
+                width=400,
                 height=150
             ).add_selection(sentiment_brush)
 
@@ -475,6 +475,16 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
             text = alt.hconcat(tweet_id, user, polarity).add_selection(text_brush) # Combine data tables
             return (market & sentiment & text)
+    
+        def map_dt_to_dow(x):
+            return x.weekday()
+
+        def remove_sunday():
+            global viz_market_df
+            viz_market_df["eventTime"] = viz_market_df["eventTime"].apply(
+                lambda x: map_dt_to_dow(x)
+            )
+            viz_market_df["eventTime"].drop(labels=['6'])
         # gc.collect()
         # data_update()
 
@@ -550,9 +560,13 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         viz_market_df = analysis.df_price[start_date:end_date]
         viz_market_df = viz_market_df.rename(columns={"Adj Close" : "Close"})
         viz_market_df["eventTime"] = viz_market_df.index
+        viz_market_df["dow"] = viz_market_df["eventTime"].apply(
+                    lambda x:map_dt_to_dow(x)
+        )
         viz_market_df["eventTime"] = viz_market_df["eventTime"].apply(
                     lambda x: x.timestamp()*1000)
         viz_market_df["assetName"] = asset
+
         # logging.info(f"new_df_shape:{new_df.shape}")
         # new_df = new_df.rename({"Adj Close":"Close"})
         # new_df['sentiment'] = new_df.x.apply(lambda sentiment: x.value // 10**9)
@@ -615,7 +629,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 logging.info(f'selected:{selected}')
                 models = ["en_core_web_sm", "en_core_web_md"]
                 #default_text = "Sundar Pichai is the CEO of Google."
-                spacy_streamlit.visualize(models, selected["text"])
+                spacy_streamlit.visualize(models, selected["full_text"])
         # st.write(filtered)            
         #r = event_dict.get("x")
         #if r:
