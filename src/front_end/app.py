@@ -54,8 +54,8 @@ market_df = None
 news_df = None
 assetNames = ["ES", "NQ", "RTY"]
 futureAssetCodes = ["ES", "NQ", "RTY"]
-from_date = datetime.date(2023, 3, 1)
-to_date = datetime.date(2023, 3, 29)
+to_date = datetime.date.today()
+from_date = to_date - datetime.timedelta(days=14)
 min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
