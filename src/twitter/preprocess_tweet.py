@@ -28,6 +28,14 @@ def find_symbol(x):
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Preprocess tweet")
+    parser.add_argument("--start_date",
+        type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
+        required=True,
+        help='Set a start date')
+    parser.add_argument("--end_date",
+        type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
+        required=True,
+        help='Set a end date')
 
     args = parser.parse_args()
     if args.verbose:
@@ -35,7 +43,7 @@ if __name__ == "__main__":
     config_utils.set_args(args)
     logging_utils.init_logging()
     while True:
-        data = get_unprocessed_tweets()
+        data = get_unprocessed_tweets(args.start_date, args.end_date)
         logging.info(f'unprocess_data:{data["tweet_id"]}')
         if data.empty:
             break

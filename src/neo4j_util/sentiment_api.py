@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from functools import lru_cache
 import logging
 from neo4j import GraphDatabase
@@ -15,7 +16,9 @@ from nlp import keyword_util
 from util import config_utils
 from neo4j_util import driver
 
-def map_to_market(x):
+def map_to_market(symbol, x):
+    if symbol:
+        return symbol
     for word in x:
         word = word.lower()
         if word in ["wfc", "bac", "banks", "market", "equity"]:
@@ -65,7 +68,7 @@ def get_tweets():
                 t.perma_link as perma_link, t.like_count as like_count,
                 t.source_url as source_url, (rt.raw_content + t.raw_content) as text,
                 t.last_update as last_update, t.keyword_subject as keyword_subject,
-                t.lemma_text as lemma_text, t.keyword_text as keyword_text
+                t.lemma_text as lemma_text, t.keyword_text as keyword_text, t.symbol as symbol
             ORDER BY t.created_at DESC
             LIMIT 5
             """
@@ -81,7 +84,7 @@ def get_tweets():
             df["time"], infer_datetime_format=True)
         # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
-        df["assetName"] = df["keyword_subject"].apply(map_to_market)
+        df['assetName'] = df.apply(lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1)
         df["assetCode"] = df["assetName"]
         # logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
@@ -116,7 +119,10 @@ def get_processed_tweets_from_monthly(from_date, end_date):
     df = df[~df.index.duplicated()]
     return df
 
-
+def timestamp(dt):
+    dt = datetime.combine(dt, datetime.min.time())
+    return dt.replace(tzinfo=timezone.utc).timestamp() * 1000
+ 
 @lru_cache
 def get_processed_tweets(start_date, end_date):
     query = """
@@ -124,7 +130,9 @@ def get_processed_tweets(start_date, end_date):
             MATCH (p:Person)
             WHERE t.created_at is not null and t.full_text is not null
              and not ("" in t.keyword_subject)
-             and p.name=t.user and t.symbol in ("es", "spx", "spy", "qqq", "nq")
+             and p.name=t.user and t.symbol in ["es", "spx", "spy", "qqq", "nq", ""]
+             and t.created_at>=$start_date
+             and t.created_at<$end_date
             RETURN t.id as id, t.user as user,
                 datetime({epochMillis: t.created_at}) as time,
                 t.perma_link as perma_link, t.like_count as like_count,
@@ -136,12 +144,14 @@ def get_processed_tweets(start_date, end_date):
                 t.text_ner_count as text_ner_count,
                 t.subject_ner_names as subject_ner_names,
                 t.subject_ner_count as subject_ner_count,
-                p.rating as analyst_rating
+                p.rating as analyst_rating,
+                t.symbol as symbol
             ORDER BY t.created_at DESC
-            LIMIT 10000
+            LIMIT 30000
             """
-    #params={"start_date": start_date, "end_date": end_date}
-    params = {}
+    params={"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
+    logging.info(f'start_date:{start_date}, {type(start_date)}')
+    #params = {}
     with driver.get_driver().session() as session:
         result = session.run(query, params)
         result_dict = [r.values() for r in result]
@@ -154,11 +164,10 @@ def get_processed_tweets(start_date, end_date):
         # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
         df["text_ner_names"] = df["text_ner_names"].apply(lambda x: str(x))        
-        df["text_ner_count"] = df["text_ner_count"].apply(lambda x: str(x))        
-        df["assetName"] = df["keyword_subject"].apply(map_to_market)
+        df["text_ner_count"] = df["text_ner_count"].apply(lambda x: str(x))
+        df['assetName'] = df.apply(lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1)
         df["assetCode"] = df["assetName"]
         df["analyst_rating"] = df['analyst_rating'].fillna(0)
-        # logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
         # df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         # df["assetName"] = "Stocks"
@@ -166,35 +175,33 @@ def get_processed_tweets(start_date, end_date):
         df['index_time'] = df["time"]
         df = df.set_index("index_time")
         df = df.sort_index()
+        logging.info(f'df:{df}')
         return df
 
-def update_tweets_unprocessed_for_reply():
+def update_tweets_unprocessed_for_reply(start_date, end_date):
     query = """
-            MATCH (rt:Tweet) with rt
-            MATCH (t:Tweet)            
-            WHERE t.reply_process_time is null and rt.in_reply_to_tweet_id=t.id
-            MERGE (rt)-[r:Reply]->(t)
-            SET t.reply_process_time=datetime()
-            RETURN t
-            LIMIT 10S;
-            RETURN tweet_id, time, text
+            MATCH (rt:Tweet)
+            WHERE rt.reply_process_time is null and rt.in_reply_to_tweet_id is not null
+             and rt.created_at>=$start_date and rt.created_at<$end_date
+            with rt
             LIMIT 1000
+            MATCH (t:Tweet)       
+            WHERE rt.in_reply_to_tweet_id=t.id
+            CREATE (rt)-[:Reply]->(t) SET rt.reply_process_time=datetime()
+            return rt.id as reply_tweet_id;
             """
-    params = {}
+    params={"start_date": timestamp(start_date), "end_date": timestamp(end_date)}    
     with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
-        df["time"] = df["time"].apply(lambda x: x.to_native())
-        df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
-        df["text"] = df["text"].apply(lambda x: str(x))
-        # df = keyword_util.add_subject_keyword(df)
         return df
 
-def get_unprocessed_tweets():
+def get_unprocessed_tweets(start_date, end_date):
     query = """
             MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
             WHERE t.annotation_time is null and t.raw_content is not null
+             and t.created_at>=$start_date
+             and t.created_at<$end_date
             WITH t
             LIMIT 50
             MATCH (rt:Tweet )-[r:Reply*..3]-(t)            
@@ -203,7 +210,7 @@ def get_unprocessed_tweets():
             RETURN tweet_id, time, text
             LIMIT 50
             """
-    params = {}
+    params={"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
     with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
@@ -293,7 +300,7 @@ def get_gpt_sentiments():
         df["time"] = pd.to_datetime(
             #    df["time"], infer_datetime_format=True).dt.date
             df["time"], infer_datetime_format=True)
-        df["assetName"] = df["assetName"].apply(map_to_market)
+        df['assetName'] = df.apply(lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1)    
         df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         df["assetCode"] = df["assetName"]
         # df["assetName"] = "Stocks"
