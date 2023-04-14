@@ -458,8 +458,9 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).add_selection(sentiment_brush)
             polarity = alt.Chart(sentiment_data).mark_line(interpolate="monotone", point=True).encode(
                 x = alt.X('yearmonthdatehoursminutes(eventTime):T', scale=alt.Scale(domain=brush), bin=True),
-                y = alt.Y('mean(sentimentClass):Q'),
-                color=alt.Color('polarity', bin=alt.Bin(step=20), legend=None),
+                y = alt.Y('mean(polarity):Q'),
+                tooltip=['permanent_link:N', 'text:N']
+                #color=alt.Color('polarity', bin=alt.Bin(step=20), legend=None),
             ).transform_filter(
                 brush
             ).properties(
@@ -479,17 +480,17 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).properties(
                 height=300
             )
-            tweet_id = ranked_text.encode(text='id:N').properties(
+            tweet_id_text = ranked_text.encode(text='id:N').properties(
                 title=alt.TitleParams(text='Id', align='right')
             )
-            user = ranked_text.encode(text='user:N').properties(
+            user_text = ranked_text.encode(text='user:N').properties(
                 title=alt.TitleParams(text='User', align='right')
             )
-            polarity = ranked_text.encode(text='polarity:Q').properties(
+            polarity_text = ranked_text.encode(text='polarity:Q').properties(
                 title=alt.TitleParams(text='Polarity', align='right'),
                 width=30,
             )
-            text = alt.hconcat(tweet_id, user, polarity).add_selection(text_brush)
+            text = alt.hconcat(tweet_id_text, user_text, polarity_text).add_selection(text_brush)
             base_filter = alt.Chart(sentiment_data).transform_filter(
                 brush
             ).transform_joinaggregate(
@@ -521,8 +522,8 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             row1 |= text
             chart &= row1
             row2 = alt.hconcat()
+            row2 |= polarity
             row2 |= polarity_hg
-            row2 |= sentiment_hg
             chart &= row2
             #row3 = alt.hconcat()
             #row3 |= polarity_hg
