@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import sys
@@ -36,6 +37,8 @@ if __name__ == "__main__":
         type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
         required=True,
         help='Set a end date')
+    parser.add_argument("--update", help="reprocess existing ones",
+                        action="store_true")
 
     args = parser.parse_args()
     if args.verbose:
@@ -43,7 +46,7 @@ if __name__ == "__main__":
     config_utils.set_args(args)
     logging_utils.init_logging()
     while True:
-        data = get_unprocessed_tweets(args.start_date, args.end_date)
+        data = get_unprocessed_tweets(args.start_date, args.end_date, args.update)
         logging.info(f'unprocess_data:{data["tweet_id"]}')
         if data.empty:
             break

@@ -109,6 +109,8 @@ def get_processed_tweets_from_monthly(from_date, end_date):
     df = df.sort_index()
     #df = df[df.symbol.isin("es", "spx", "spy", "qqq", "nq")]
     df["text"] = df["text"].apply(lambda x : x[:2000])
+    df["keyword_text"] = df["keyword_text"].apply(lambda x: str(x))        
+    df["keyword_subject"] = df["keyword_subject"].apply(lambda x: str(x))        
     logging.info(f'duplicate index:{df[df.index.duplicated()]}')
     df = df[from_date:end_date]
     df["time"] = df.index
@@ -187,7 +189,7 @@ def update_tweets_unprocessed_for_reply(start_date, end_date):
             WHERE rt.reply_process_time is null and rt.in_reply_to_tweet_id is not null
              and rt.created_at>=$start_date and rt.created_at<$end_date
             with rt
-            LIMIT 1000
+            LIMIT 50000
             MATCH (t:Tweet)       
             WHERE rt.in_reply_to_tweet_id=t.id
             CREATE (rt)-[:Reply]->(t) SET rt.reply_process_time=datetime()
@@ -199,12 +201,19 @@ def update_tweets_unprocessed_for_reply(start_date, end_date):
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         return df
 
-def get_unprocessed_tweets(start_date, end_date):
-    query = """
+def get_unprocessed_tweets(start_date, end_date, update):
+    tweet_query = """
             MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
-            WHERE t.annotation_time is null and t.raw_content is not null
+            WHERE t.raw_content is not null
              and t.created_at>=$start_date
              and t.created_at<$end_date
+             """ if update else  """
+            MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
+            WHERE t.raw_content is not null
+             and t.created_at>=$start_date
+             and t.created_at<$end_date
+             """   
+    query = tweet_query + """
             WITH t
             LIMIT 50
             MATCH (rt:Tweet )-[r:Reply*..3]-(t)            
