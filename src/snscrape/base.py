@@ -187,7 +187,11 @@ class Scraper:
 		return self._get_entity()
 
 	def _request(self, method, url, params = None, data = None, headers = None, timeout = 10, responseOkCallback = None, allowRedirects = True, proxies = None):
-		proxies = proxies or self._proxies or {}
+		#proxies = proxies or self._proxies or {}
+		proxies = {
+			'http': 'http://host.docker.internal:8118',
+			'https': 'http://host.docker.internal:8118',
+		}
 		errors = []
 		for attempt in range(self._retries + 1):
 			# The request is newly prepared on each retry because of potential cookie updates.
