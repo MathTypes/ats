@@ -439,7 +439,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
 
             market = (rule + bar).properties(
-                width=400,
+                width=600,
                 height=300
             ).add_selection(brush)
             #market = rule
@@ -453,18 +453,24 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).transform_filter(
                 brush
             ).properties(
-                width=400,
+                width=600,
                 height=150
             ).add_selection(sentiment_brush)
-            polarity = alt.Chart(sentiment_data).mark_line(interpolate="monotone", point=True).encode(
+            polarity = alt.Chart(sentiment_data).mark_line(interpolate="monotone", point=True).transform_window(
+                # The field to average
+                rolling_mean='mean(polarity:Q)',
+                # The number of values before and after the current value to include.
+                frame=[-9, 0]
+            ).encode(
                 x = alt.X('yearmonthdatehoursminutes(eventTime):T', scale=alt.Scale(domain=brush), bin=True),
                 y = alt.Y('mean(polarity):Q'),
-                tooltip=['permanent_link:N', 'text:N']
+                y2='rolling_mean:Q',
+                tooltip=['keyword_subject:N', 'lemma_text:N', 'keyword_text:N', 'subject:N', 'text_ner_names:N', 'subject_ner_names:N', 'text:N']
                 #color=alt.Color('polarity', bin=alt.Bin(step=20), legend=None),
             ).transform_filter(
                 brush
             ).properties(
-                width=400,
+                width=600,
                 height=150
             )
 
@@ -478,7 +484,7 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             ).transform_filter(
                 'datum.row_number < 15'
             ).properties(
-                height=300
+                height=500
             )
             tweet_id_text = ranked_text.encode(text='id:N').properties(
                 title=alt.TitleParams(text='Id', align='right')
@@ -488,9 +494,21 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             )
             polarity_text = ranked_text.encode(text='polarity:Q').properties(
                 title=alt.TitleParams(text='Polarity', align='right'),
-                width=30,
             )
-            text = alt.hconcat(tweet_id_text, user_text, polarity_text).add_selection(text_brush)
+            keyword_subject_text = ranked_text.encode(text='keyword_subject:N').properties(
+                title=alt.TitleParams(text='keyword_subject', align='right'),
+            )
+            keyword_text = ranked_text.encode(text='keyword_text:N').properties(
+                title=alt.TitleParams(text='keyword_text', align='right'),
+            )
+            text_ner_names_text = ranked_text.encode(text='text_ner_names:N').properties(
+                title=alt.TitleParams(text='text_ner_names', align='right'),
+            )
+            subject_ner_names_text = ranked_text.encode(text='subject_ner_names:N').properties(
+                title=alt.TitleParams(text='subject_ner_names', align='right'),
+            )
+            text = alt.hconcat(tweet_id_text, user_text, polarity_text, keyword_subject_text,
+                keyword_text, text_ner_names_text, subject_ner_names_text).add_selection(text_brush)
             base_filter = alt.Chart(sentiment_data).transform_filter(
                 brush
             ).transform_joinaggregate(
@@ -506,25 +524,27 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 x='pbin:N',
                 y="sum(pct):Q",
             ).properties(
-                width=300,
+                width=500,
                 height=100
             )
             sentiment_hg = base_filter.mark_bar().encode(
                 alt.X('sentimentClass:N'),
                 alt.Y('sum(pct):Q', axis=alt.Axis(format='%'))
             ).properties(
-                width=300,
+                width=500,
                 height=100
             )
             chart = alt.vconcat(data=hist_data)
             row1 = alt.hconcat()
             row1 |= market
-            row1 |= text
+            row1 |= polarity
             chart &= row1
             row2 = alt.hconcat()
-            row2 |= polarity
-            row2 |= polarity_hg
+            row2 |= text
             chart &= row2
+            row3 = alt.hconcat()
+            row3 |= polarity_hg
+            chart &= row3
             #row3 = alt.hconcat()
             #row3 |= polarity_hg
             #chart &= row3
@@ -532,48 +552,15 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             #return (market & sentiment & text  & polarity & sentiment_hg), brush
             return chart, brush
 
-
-        #@st.cache_resource
-        def altair_histogram_sentiment(sentiment_data, brush):
-            base = alt.Chart(sentiment_data).encode(
-                x = 'eventTime:T',
-            )
-            polarity = base.mark_bar().encode(
-                x='pbin:N',
-                y="count()",
-            ).properties(
-                width=300,
-                height=300
-            )
-            sentiment = base.mark_bar().encode(
-                x='sentiment:N',
-                y="count()",
-                color=alt.condition(brush, alt.value("black"), alt.value("lightgray"))
-            ).properties(
-                width=300,
-                height=300
-            )
-            return alt.hconcat(
-                    polarity,
-                    sentiment,
-                    data=sentiment_data
-                ).transform_bin(
-                "pbin",
-                field="polarity",
-                bin=alt.Bin(maxbins=20)
-            )
-            text = alt.hconcat(tweet_id, user, polarity).add_selection(text_brush) # Combine data tables
-            return (market & sentiment & text)
-    
         def map_dt_to_dow(x):
             return x.weekday()
 
-        def remove_sunday():
-            global viz_market_df
+        def remove_sunday(viz_market_df):
             viz_market_df["eventTime"] = viz_market_df["eventTime"].apply(
                 lambda x: map_dt_to_dow(x)
             )
             viz_market_df["eventTime"].drop(labels=['6'])
+            return viz_market_df
         # gc.collect()
         # data_update()
 
@@ -673,10 +660,10 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
         logging.info(f'viz_market_df:{viz_market_df}')
         logging.info(f'sentiment_df:{sentiment_df}')
 
-        row1_1, row1_2 = st.columns([1, 0.5])
-        with row1_1:
-            chart, brush = altair_histogram(viz_market_df, sentiment_df)
-            event_dict = altair_component(altair_chart=chart)
+        #row1_1, row1_2 = st.columns([1, 0.5])
+        #with row1_1:
+        chart, brush = altair_histogram(viz_market_df, sentiment_df)
+        event_dict = altair_component(altair_chart=chart)
             #logging.info(f'event_dict:{event_dict}')
 
         #with row1_2:
@@ -698,32 +685,32 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
             'multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children")
         gridOptions = gb.build()
 
-        with row1_2:
-            grid_response = AgGrid(
-                filtered,
-                gridOptions=gridOptions,
-                data_return_mode='AS_INPUT',
-                update_mode='MODEL_CHANGED',
-                fit_columns_on_grid_load=False,
-                theme='alpine',  # Add theme color to the table
-                enable_enterprise_modules=True,
-                height=350,
-                width='100%',
-                reload_data=True
-            )
-            visualization.render_visualization_df(filtered)
+        #with row1_2:
+        grid_response = AgGrid(
+            filtered,
+            gridOptions=gridOptions,
+            data_return_mode='AS_INPUT',
+            update_mode='MODEL_CHANGED',
+            fit_columns_on_grid_load=False,
+            theme='alpine',  # Add theme color to the table
+            enable_enterprise_modules=True,
+            height=350,
+            width='100%',
+            reload_data=True
+        )
+        visualization.render_visualization_df(filtered)
 
-            data = grid_response['data']
-            selected = grid_response['selected_rows']
-            logging.info(f'grid_response_selected:{selected}')
-            df = pd.DataFrame(selected)
-            # logging.info(f'selected_df:{df}')
-            if not df.empty:
-                selected = news_df[news_df['id'] == df[0]]
-                logging.info(f'selected:{selected}')
-                models = ["en_core_web_sm", "en_core_web_md"]
-                #default_text = "Sundar Pichai is the CEO of Google."
-                spacy_streamlit.visualize(models, selected["full_text"])
+        data = grid_response['data']
+        selected = grid_response['selected_rows']
+        logging.info(f'grid_response_selected:{selected}')
+        df = pd.DataFrame(selected)
+        # logging.info(f'selected_df:{df}')
+        if not df.empty:
+            selected = news_df[news_df['id'] == df[0]]
+            logging.info(f'selected:{selected}')
+            models = ["en_core_web_sm", "en_core_web_md"]
+            #default_text = "Sundar Pichai is the CEO of Google."
+            spacy_streamlit.visualize(models, selected["full_text"])
         # st.write(filtered)            
         #r = event_dict.get("x")
         #if r:
