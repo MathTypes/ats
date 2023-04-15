@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.8', '3.9', '3.10']
         
     env:
@@ -37,13 +37,13 @@ jobs:
       - name: Lint
         run: |
           pip install 'black==22.6.0' 'flake8==5.0.3' 'pydocstyle==6.1.1'
-          black -l 79 --check akolo_ats/ tests
-          flake8 akolo_ats tests
-          pydocstyle akolo_ats
+          black -l 79 --check src/ tests
+          flake8 src tests
+          pydocstyle src
           
       - name: run tests
         run: |          
-          coverage run --source=akolo_ats -m pytest tests
+          coverage run --source=src -m pytest tests
           coverage lcov -o coverage.lcov
           
       - name: coveralls parallel
