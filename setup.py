@@ -25,7 +25,7 @@ if sys.version_info.major != 3:
 
 akolo_ats_directory = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(akolo_ats_directory, 'akolo_ats', 'version.py'), 'r') as filehandle:
+with open(os.path.join(akolo_ats_directory, 'src', 'version.py'), 'r') as filehandle:
     for line in filehandle:
         if line.startswith('__version__'):
             version = line[15:-2]
@@ -36,12 +36,12 @@ setup(
     description='Akolo ATS: automated trading system.',
     long_description='Akolo ATS: automated trading system.',
     long_description_content_type='text/markdown',
-    author='Johnny Chen <johnnychen762@gmail.com>',
-    maintainer='Johnny Chen <johnnychen762@gmail.com>',
+    author='Ling Zhou <lingzhou762@gmail.com>',
+    maintainer='Ling Zhou <lingzhou762@gmail.com>',
     url='https://github.com/MathTypes/ats',
     packages=[
         package for package in find_packages(exclude=('tests', 'docs'))
-        if package.startswith('akolo_ats')
+        if package.startswith('src')
     ],
     license='Apache 2.0',
     python_requires='>=3.7',
