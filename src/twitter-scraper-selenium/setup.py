@@ -34,16 +34,15 @@ setuptools.setup(
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Internet :: WWW/HTTP"
-
+        "Topic :: Internet :: WWW/HTTP",
     ],
     python_requires=">=3.6",
     install_requires=[
-        'python-dateutil==2.8.2',
-        'selenium==4.7.0',
-        'selenium-wire==5.1.0',
-        'webdriver-manager==3.2.2',
-        'fake-headers==1.0.2',
-        'requests==2.27.1'
-    ]
+        "python-dateutil==2.8.2",
+        "selenium==4.7.0",
+        "selenium-wire==5.1.0",
+        "webdriver-manager==3.2.2",
+        "fake-headers==1.0.2",
+        "requests==2.27.1",
+    ],
 )

@@ -80,18 +80,20 @@ class Order(TimedIdentifiable, Observable):
         Raised if the given quantity has a size of 0.
     """
 
-    def __init__(self,
-                 step: int,
-                 side: TradeSide,
-                 trade_type: TradeType,
-                 exchange_pair: 'ExchangePair',
-                 quantity: 'Quantity',
-                 portfolio: 'Portfolio',
-                 price: float,
-                 criteria: 'Callable[[Order, Exchange], bool]' = None,
-                 path_id: str = None,
-                 start: int = None,
-                 end: int = None):
+    def __init__(
+        self,
+        step: int,
+        side: TradeSide,
+        trade_type: TradeType,
+        exchange_pair: "ExchangePair",
+        quantity: "Quantity",
+        portfolio: "Portfolio",
+        price: float,
+        criteria: "Callable[[Order, Exchange], bool]" = None,
+        path_id: str = None,
+        start: int = None,
+        end: int = None,
+    ):
         super().__init__()
         Observable.__init__(self)
 
@@ -117,7 +119,7 @@ class Order(TimedIdentifiable, Observable):
 
         wallet = portfolio.get_wallet(
             self.exchange_pair.exchange.id,
-            self.side.instrument(self.exchange_pair.pair)
+            self.side.instrument(self.exchange_pair.pair),
         )
 
         if self.path_id not in wallet.locked.keys():
@@ -126,24 +128,24 @@ class Order(TimedIdentifiable, Observable):
         self.remaining = self.quantity
 
     @property
-    def size(self) -> 'Decimal':
+    def size(self) -> "Decimal":
         """The size of the order. (`Decimal`, read-only)"""
         if not self.quantity or self.quantity is None:
             return Decimal(-1)
         return self.quantity.size
 
     @property
-    def pair(self) -> 'TradingPair':
+    def pair(self) -> "TradingPair":
         """The trading pair of the order. (`TradingPair`, read-only)"""
         return self.exchange_pair.pair
 
     @property
-    def base_instrument(self) -> 'Instrument':
+    def base_instrument(self) -> "Instrument":
         """The base instrument of the pair being traded."""
         return self.exchange_pair.pair.base
 
     @property
-    def quote_instrument(self) -> 'Instrument':
+    def quote_instrument(self) -> "Instrument":
         """The quote instrument of the pair being traded."""
         return self.exchange_pair.pair.quote
 
@@ -170,7 +172,9 @@ class Order(TimedIdentifiable, Observable):
     @property
     def is_executable(self) -> bool:
         """If this order is executable. (bool, read-only)"""
-        is_satisfied = self.criteria is None or self.criteria(self, self.exchange_pair.exchange)
+        is_satisfied = self.criteria is None or self.criteria(
+            self, self.exchange_pair.exchange
+        )
         clock = self.exchange_pair.exchange.clock
         return is_satisfied and clock.step >= self.start
 
@@ -189,7 +193,9 @@ class Order(TimedIdentifiable, Observable):
     @property
     def is_active(self) -> bool:
         """If this order is active. (bool, read-only)"""
-        return self.status != OrderStatus.FILLED and self.status != OrderStatus.CANCELLED
+        return (
+            self.status != OrderStatus.FILLED and self.status != OrderStatus.CANCELLED
+        )
 
     @property
     def is_complete(self) -> bool:
@@ -199,13 +205,13 @@ class Order(TimedIdentifiable, Observable):
 
         wallet = self.portfolio.get_wallet(
             self.exchange_pair.exchange.id,
-            self.side.instrument(self.exchange_pair.pair)
+            self.side.instrument(self.exchange_pair.pair),
         )
         quantity = wallet.locked.get(self.path_id, None)
 
         return (quantity and quantity.size == 0) or self.remaining.size <= 0
 
-    def add_order_spec(self, order_spec: 'OrderSpec') -> 'Order':
+    def add_order_spec(self, order_spec: "OrderSpec") -> "Order":
         """Adds an order specification to the order.
 
         Parameters
@@ -233,7 +239,7 @@ class Order(TimedIdentifiable, Observable):
 
         self.exchange_pair.exchange.execute_order(self, self.portfolio)
 
-    def fill(self, trade: 'Trade') -> None:
+    def fill(self, trade: "Trade") -> None:
         """Fills the order.
 
         Parameters
@@ -251,7 +257,7 @@ class Order(TimedIdentifiable, Observable):
         for listener in self.listeners or []:
             listener.on_fill(self, trade)
 
-    def complete(self) -> 'Order':
+    def complete(self) -> "Order":
         """Completes an order.
 
         Returns
@@ -331,7 +337,7 @@ class Order(TimedIdentifiable, Observable):
             "price": self.price,
             "criteria": self.criteria,
             "path_id": self.path_id,
-            "created_at": self.created_at
+            "created_at": self.created_at,
         }
 
     def to_json(self) -> dict:
@@ -357,12 +363,12 @@ class Order(TimedIdentifiable, Observable):
             "price": float(self.price),
             "criteria": str(self.criteria),
             "path_id": str(self.path_id),
-            "created_at": str(self.created_at)
+            "created_at": str(self.created_at),
         }
 
     def __str__(self) -> str:
-        data = ['{}={}'.format(k, v) for k, v in self.to_dict().items()]
-        return '<{}: {}>'.format(self.__class__.__name__, ', '.join(data))
+        data = ["{}={}".format(k, v) for k, v in self.to_dict().items()]
+        return "<{}: {}>".format(self.__class__.__name__, ", ".join(data))
 
     def __repr__(self) -> str:
         return str(self)

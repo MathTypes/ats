@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 
 import numpy as np
@@ -28,7 +29,12 @@ from tensortrade.trades import Trade, TradeType
 class MultiDiscreteActionStrategy(ActionStrategy):
     """Discrete strategy, which calculates the trade amount as a fraction of the total balance for each instrument provided."""
 
-    def __init__(self, instrument_symbols: List[str], actions_per_instrument: int = 20, max_allowed_slippage_percent: float = 1.0):
+    def __init__(
+        self,
+        instrument_symbols: List[str],
+        actions_per_instrument: int = 20,
+        max_allowed_slippage_percent: float = 1.0,
+    ):
         """
         Arguments:
             instrument_symbols: The exchange symbols of the instruments being traded.
@@ -51,7 +57,8 @@ class MultiDiscreteActionStrategy(ActionStrategy):
     @dtype.setter
     def dtype(self, dtype: DTypeString):
         raise ValueError(
-            'Cannot change the dtype of a `SimpleDiscreteStrategy` due to the requirements of `gym.spaces.Discrete` spaces. ')
+            "Cannot change the dtype of a `SimpleDiscreteStrategy` due to the requirements of `gym.spaces.Discrete` spaces. "
+        )
 
     def get_trade(self, action: TradeActionUnion) -> Trade:
         """The trade type is determined by `action % len(TradeType)`, and the trade amount is determined by the multiplicity of the action.
@@ -63,8 +70,9 @@ class MultiDiscreteActionStrategy(ActionStrategy):
 
         n_splits = int(self._actions_per_instrument / len(TradeType))
         trade_type = TradeType(action % len(TradeType))
-        trade_amount = int(action / len(TradeType)) * \
-            float(1 / n_splits) + (1 / n_splits)
+        trade_amount = int(action / len(TradeType)) * float(1 / n_splits) + (
+            1 / n_splits
+        )
         trade_amount = trade_amount - instrument_index
 
         current_price = self._exchange.current_price(symbol=instrument_symbol)
@@ -76,9 +84,13 @@ class MultiDiscreteActionStrategy(ActionStrategy):
 
         if trade_type is TradeType.MARKET_BUY or trade_type is TradeType.LIMIT_BUY:
             price_adjustment = 1 + (self._max_allowed_slippage_percent / 100)
-            price = max(round(current_price * price_adjustment, base_precision), base_precision)
-            amount = round(self._exchange.balance * 0.99 *
-                           trade_amount / price, instrument_precision)
+            price = max(
+                round(current_price * price_adjustment, base_precision), base_precision
+            )
+            amount = round(
+                self._exchange.balance * 0.99 * trade_amount / price,
+                instrument_precision,
+            )
 
         elif trade_type is TradeType.MARKET_SELL or trade_type is TradeType.LIMIT_SELL:
             price_adjustment = 1 - (self._max_allowed_slippage_percent / 100)

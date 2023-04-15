@@ -6,6 +6,7 @@ import argparse
 import logging
 import traceback
 from datetime import datetime, timedelta
+
 # MAX: necessary imports for multi-threading
 from threading import Thread
 from queue import Queue
@@ -63,14 +64,14 @@ class DownloadApp(EClient, wrapper.EWrapper):
 
     # MAX: function to send the termination signal
     def send_done(self, code):
-        print(f'Sending code {code}')
+        print(f"Sending code {code}")
         self.queue.put(code)
 
     # MAX: function to wait for the termination signal
     def wait_done(self):
-        print('Waiting for thread to finish ...')
+        print("Waiting for thread to finish ...")
         code = self.queue.get()
-        print(f'Received code {code}')
+        print(f"Received code {code}")
         self.queue.task_done()
         return code
 
@@ -86,7 +87,9 @@ class DownloadApp(EClient, wrapper.EWrapper):
         self.reqHistoricalData(
             cid,  # tickerId, used to identify incoming data
             contract,
-            self.current.strftime("%Y%m%d 00:00:00 US/Eastern"),  # always go to midnight
+            self.current.strftime(
+                "%Y%m%d 00:00:00 US/Eastern"
+            ),  # always go to midnight
             self.duration,  # amount of time to go back
             self.args.size,  # bar size
             self.args.data_type,  # historical data type
@@ -97,12 +100,19 @@ class DownloadApp(EClient, wrapper.EWrapper):
         )
 
     def save_data(self, contract: Contract, bars: BarDataList) -> None:
-        logging.error(f'save_data, contract:{contract}, bars:{bars}')
+        logging.error(f"save_data, contract:{contract}, bars:{bars}")
         data = [
             # MAX: IBAPI 10.15 does not provide bar.average anymore
             # MAX: IBAPI 10.15 has an attribute bar.wap (weighted average)
-            [b.date, b.open, b.high, b.low, b.close, b.volume, b.barCount
-             #, b.wap
+            [
+                b.date,
+                b.open,
+                b.high,
+                b.low,
+                b.close,
+                b.volume,
+                b.barCount
+                # , b.wap
             ]
             for b in bars
         ]
@@ -118,7 +128,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
                 "close",
                 "volume",
                 "barCount",
-                #"wap"
+                # "wap"
             ],
         )
         if self.daily_files():
@@ -152,7 +162,9 @@ class DownloadApp(EClient, wrapper.EWrapper):
         # if we are getting daily data or longer, we'll grab the entire amount at once
         if self.daily_files():
             days = (self.args.end_date - self.args.start_date).days
-            logging.info(f'days:{days}, start_date:{self.args.start_date}, end_date:{self.args.end_date}')
+            logging.info(
+                f"days:{days}, start_date:{self.args.start_date}, end_date:{self.args.end_date}"
+            )
             if days < 365:
                 self.duration = "%d D" % days
             else:
@@ -180,7 +192,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
             for rid, bars in self.bar_data.items():
                 self.save_data(self.requests[rid], bars)
             self.current = datetime.strptime(start, "%Y%m%d  %H:%M:%S")
-            print(f'XXX {self.current} - {self.args.start_date}')
+            print(f"XXX {self.current} - {self.args.start_date}")
             if self.current <= self.args.start_date:
                 # MAX: send termination signal
                 self.send_done(0)
@@ -213,7 +225,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
 
     @iswrapper
     # MAX: IBAPI 10.15 defines an additional parameter: advancedOrderRejectJson
-    #def error(self, req_id: TickerId, error_code: int, error: str, advancedOrderRejectJson: str):
+    # def error(self, req_id: TickerId, error_code: int, error: str, advancedOrderRejectJson: str):
     def error(self, req_id: TickerId, error_code: int, error: str):
         logging.debug("Error. Id: %s Code %s Msg: %s", req_id, error_code, error)
         super().error(req_id, error_code, error)
@@ -226,7 +238,9 @@ class DownloadApp(EClient, wrapper.EWrapper):
             self.send_done(error_code)
 
 
-def make_contract(symbol: str, sec_type: str, currency: str, exchange: str, localsymbol: str) -> Contract:
+def make_contract(
+    symbol: str, sec_type: str, currency: str, exchange: str, localsymbol: str
+) -> Contract:
     contract = Contract()
     contract.symbol = symbol
     contract.secType = sec_type
@@ -314,9 +328,7 @@ def main():
     argp.add_argument(
         "-d", "--debug", action="store_true", help="turn on debug logging"
     )
-    argp.add_argument(
-        "--logfile", help="log to file"
-    )
+    argp.add_argument("--logfile", help="log to file")
     argp.add_argument(
         "-p", "--port", type=int, default=7496, help="local port for TWS connection"
     )
@@ -357,16 +369,18 @@ def main():
     )
     args = argp.parse_args()
 
-    logargs = dict(format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                   datefmt='%H:%M:%S')
+    logargs = dict(
+        format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
     if args.debug:
-        logargs['level'] = logging.DEBUG
+        logargs["level"] = logging.DEBUG
     else:
-        logargs['level'] = logging.INFO
+        logargs["level"] = logging.INFO
 
     if args.logfile:
-        logargs['filemode'] = 'a'
-        logargs['filename'] = args.logfile
+        logargs["filemode"] = "a"
+        logargs["filename"] = args.logfile
 
     logging.basicConfig(**logargs)
 
@@ -382,7 +396,9 @@ def main():
     logging.debug(f"args={args}")
     contracts = []
     for s in args.symbol:
-        contract = make_contract(s, args.security_type, args.currency, args.exchange, args.localsymbol)
+        contract = make_contract(
+            s, args.security_type, args.currency, args.exchange, args.localsymbol
+        )
         contracts.append(contract)
         os.makedirs(make_download_path(args, contract), exist_ok=True)
     app = DownloadApp(contracts, args)

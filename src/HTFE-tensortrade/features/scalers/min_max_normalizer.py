@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 
 import pandas as pd
@@ -29,11 +30,13 @@ from tensortrade.features.feature_transformer import FeatureTransformer
 class MinMaxNormalizer(FeatureTransformer):
     """A transformer for normalizing values within a feature pipeline by the column-wise extrema."""
 
-    def __init__(self,
-                 columns: Union[List[str], str, None] = None,
-                 feature_min=0,
-                 feature_max=1,
-                 inplace=True):
+    def __init__(
+        self,
+        columns: Union[List[str], str, None] = None,
+        feature_min=0,
+        feature_max=1,
+        inplace=True,
+    ):
         """
         Arguments:
             columns (optional): A list of column names to normalize.
@@ -65,7 +68,7 @@ class MinMaxNormalizer(FeatureTransformer):
         return output_space
 
     def transform(self, X: pd.DataFrame, input_space: Space) -> pd.DataFrame:
-        #这里只传进来一行吗？
+        # 这里只传进来一行吗？
         if self.columns is None:
             self.columns = list(X.columns)
 
@@ -73,12 +76,14 @@ class MinMaxNormalizer(FeatureTransformer):
             low = input_space.low[idx]
             high = input_space.high[idx]
             scale = (self._feature_max - self._feature_min) + self._feature_min
-            normalized_column = (X[column] - low) / (high - low + 1E-9) * scale
+            normalized_column = (X[column] - low) / (high - low + 1e-9) * scale
 
             if self._inplace:
                 X[column] = normalized_column
             else:
-                column_name = '{}_minmax_{}_{}'.format(column, self._feature_min, self._feature_max)
+                column_name = "{}_minmax_{}_{}".format(
+                    column, self._feature_min, self._feature_max
+                )
                 X[column_name] = normalized_column
 
         return X

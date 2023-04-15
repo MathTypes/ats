@@ -16,7 +16,8 @@
 #                   Chapter 5 (Pg. 82) - Fractionally Differentiated Features
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 
 import pandas as pd
@@ -32,11 +33,13 @@ from tensortrade.features.feature_transformer import FeatureTransformer
 class FractionalDifference(FeatureTransformer):
     """A transformer for differencing values within a feature pipeline by a fractional order."""
 
-    def __init__(self,
-                 columns: Union[List[str], str, None] = None,
-                 difference_order: float = 0.5,
-                 difference_threshold: float = 1e-1,
-                 inplace: bool = True):
+    def __init__(
+        self,
+        columns: Union[List[str], str, None] = None,
+        difference_order: float = 0.5,
+        difference_threshold: float = 1e-1,
+        inplace: bool = True,
+    ):
         """
         Arguments:
             columns (optional): A list of column names to difference.
@@ -108,7 +111,8 @@ class FractionalDifference(FeatureTransformer):
                 continue
 
             diff_series[index] = np.dot(
-                weights[-(current_index + 1):, :].T, curr_series.loc[:index])[0]
+                weights[-(current_index + 1) :, :].T, curr_series.loc[:index]
+            )[0]
 
         return diff_series
 
@@ -119,7 +123,7 @@ class FractionalDifference(FeatureTransformer):
             self._history = self._history.append(X, ignore_index=True)
 
         if len(self._history) > len(X):
-            self._history = self._history.iloc[-len(X) + 1:]
+            self._history = self._history.iloc[-len(X) + 1 :]
 
         if self.columns is None:
             self.columns = list(X.columns)
@@ -128,9 +132,9 @@ class FractionalDifference(FeatureTransformer):
             diffed_series = self._fractional_difference(self._history[column])
 
             if self._inplace:
-                X[column] = diffed_series.fillna(method='bfill')
+                X[column] = diffed_series.fillna(method="bfill")
             else:
-                column_name = '{}_diff_{}'.format(column, self._difference_order)
-                X[column_name] = diffed_series.fillna(method='bfill')
+                column_name = "{}_diff_{}".format(column, self._difference_order)
+                X[column_name] = diffed_series.fillna(method="bfill")
 
-        return X.iloc[-len(X):]
+        return X.iloc[-len(X) :]

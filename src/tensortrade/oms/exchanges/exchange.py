@@ -39,13 +39,15 @@ class ExchangeOptions:
         Whether live orders should be submitted to the exchange.
     """
 
-    def __init__(self,
-                 commission: float = 0.003,
-                 min_trade_size: float = 1e-6,
-                 max_trade_size: float = 1e6,
-                 min_trade_price: float = 1e-8,
-                 max_trade_price: float = 1e8,
-                 is_live: bool = False):
+    def __init__(
+        self,
+        commission: float = 0.003,
+        min_trade_size: float = 1e-6,
+        max_trade_size: float = 1e6,
+        min_trade_price: float = 1e-8,
+        max_trade_price: float = 1e8,
+        is_live: bool = False,
+    ):
         self.commission = commission
         self.min_trade_size = min_trade_size
         self.max_trade_size = max_trade_size
@@ -69,10 +71,7 @@ class Exchange(Component, TimedIdentifiable):
 
     registered_name = "exchanges"
 
-    def __init__(self,
-                 name: str,
-                 service: Callable,
-                 options: ExchangeOptions = None):
+    def __init__(self, name: str, service: Callable, options: ExchangeOptions = None):
         super().__init__()
         self.name = name
         self._service = service
@@ -123,18 +122,23 @@ class Exchange(Component, TimedIdentifiable):
         """
         price = Decimal(self._price_streams[str(trading_pair)].value)
         if price == 0:
-            raise ValueError("Price of trading pair {} is 0. Please check your input data to make sure there always is "
-                             "a valid (nonzero) price.".format(trading_pair))
+            raise ValueError(
+                "Price of trading pair {} is 0. Please check your input data to make sure there always is "
+                "a valid (nonzero) price.".format(trading_pair)
+            )
 
         price = price.quantize(Decimal(10) ** -trading_pair.base.precision)
         if price == 0:
-            raise ValueError("Price quantized in base currency precision ({}) would amount to 0 {}. "
-                             "Please consider defining a custom instrument with a higher precision."
-                             .format(trading_pair.base.precision, trading_pair.base))
+            raise ValueError(
+                "Price quantized in base currency precision ({}) would amount to 0 {}. "
+                "Please consider defining a custom instrument with a higher precision.".format(
+                    trading_pair.base.precision, trading_pair.base
+                )
+            )
 
         return price
 
-    def is_pair_tradable(self, trading_pair: 'TradingPair') -> bool:
+    def is_pair_tradable(self, trading_pair: "TradingPair") -> bool:
         """Whether or not the specified trading pair is tradable on this
         exchange.
 
@@ -150,7 +154,7 @@ class Exchange(Component, TimedIdentifiable):
         """
         return str(trading_pair) in self._price_streams.keys()
 
-    def execute_order(self, order: 'Order', portfolio: 'Portfolio') -> None:
+    def execute_order(self, order: "Order", portfolio: "Portfolio") -> None:
         """Execute an order on the exchange.
 
         Parameters
@@ -166,7 +170,7 @@ class Exchange(Component, TimedIdentifiable):
             quote_wallet=portfolio.get_wallet(self.id, order.pair.quote),
             current_price=self.quote_price(order.pair),
             options=self.options,
-            clock=self.clock
+            clock=self.clock,
         )
 
         if trade:

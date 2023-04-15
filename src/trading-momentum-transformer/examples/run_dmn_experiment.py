@@ -101,14 +101,10 @@ def main(
 
         if changepoint_lbws:
             features_file_path = os.path.join(
-                "data",
-                f"quandl_cpd_{np.max(changepoint_lbws)}lbw.csv",
+                "data", f"quandl_cpd_{np.max(changepoint_lbws)}lbw.csv",
             )
         else:
-            features_file_path = os.path.join(
-                "data",
-                "quandl_cpd_nonelbw.csv",
-            )
+            features_file_path = os.path.join("data", "quandl_cpd_nonelbw.csv",)
 
         run_all_windows(
             PROJECT_NAME,

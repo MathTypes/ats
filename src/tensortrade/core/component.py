@@ -1,4 +1,3 @@
-
 from abc import ABC, ABCMeta
 from typing import Any
 
@@ -15,7 +14,7 @@ class InitContextMeta(ABCMeta):
     subclassed `Component`.
     """
 
-    def __call__(cls, *args, **kwargs) -> 'InitContextMeta':
+    def __call__(cls, *args, **kwargs) -> "InitContextMeta":
         """
 
         Parameters
@@ -37,7 +36,7 @@ class InitContextMeta(ABCMeta):
         config = {**context.shared, **data}
 
         instance = cls.__new__(cls, *args, **kwargs)
-        setattr(instance, 'context', Context(**config))
+        setattr(instance, "context", Context(**config))
         instance.__init__(*args, **kwargs)
 
         return instance

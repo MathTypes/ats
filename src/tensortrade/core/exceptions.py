@@ -20,8 +20,7 @@ class InvalidNegativeQuantity(Exception):
 
     def __init__(self, size: float, *args) -> None:
         super().__init__(
-            "Invalid Quantity: {}. Amounts cannot be negative.".format(size),
-            *args
+            "Invalid Quantity: {}. Amounts cannot be negative.".format(size), *args
         )
 
 
@@ -39,8 +38,7 @@ class InvalidNonNumericQuantity(Exception):
 
     def __init__(self, size: Union[float, int, Number], *args) -> None:
         super().__init__(
-            "Invalid Quantity: {}. Amounts cannot be non-numeric.".format(size),
-            *args
+            "Invalid Quantity: {}. Amounts cannot be non-numeric.".format(size), *args
         )
 
 
@@ -61,7 +59,8 @@ class QuantityOpPathMismatch(Exception):
     def __init__(self, left_id: str, right_id: str, *args) -> None:
         super().__init__(
             "Invalid operation between quantities with unequal path id: {} {}.".format(
-                left_id, right_id),
+                left_id, right_id
+            ),
             *args
         )
 
@@ -79,7 +78,9 @@ class DoubleLockedQuantity(Exception):
 
     def __init__(self, quantity: "Quantity", *args) -> None:
         super().__init__(
-            "Cannot lock quantity that has previously been locked: {}.".format(quantity),
+            "Cannot lock quantity that has previously been locked: {}.".format(
+                quantity
+            ),
             *args
         )
 
@@ -97,7 +98,9 @@ class DoubleUnlockedQuantity(Exception):
 
     def __init__(self, quantity: "Quantity", *args) -> None:
         super().__init__(
-            "Cannot unlock quantity that has previously been unlocked: {}.".format(quantity),
+            "Cannot unlock quantity that has previously been unlocked: {}.".format(
+                quantity
+            ),
             *args
         )
 
@@ -116,7 +119,9 @@ class QuantityNotLocked(Exception):
 
     def __init__(self, quantity: "Quantity", *args) -> None:
         super().__init__(
-            "Cannot unlock quantity that has not been locked in this wallet: {}.".format(quantity),
+            "Cannot unlock quantity that has not been locked in this wallet: {}.".format(
+                quantity
+            ),
             *args
         )
 
@@ -158,7 +163,7 @@ class InvalidOrderQuantity(Exception):
         More positional arguments for the exception.
     """
 
-    def __init__(self, quantity: 'Quantity', *args) -> None:
+    def __init__(self, quantity: "Quantity", *args) -> None:
         super().__init__(
             "Invalid Quantity: {}. Order sizes must be positive.".format(quantity),
             *args
@@ -181,9 +186,11 @@ class InsufficientFunds(Exception):
         More positional arguments for the exception.
     """
 
-    def __init__(self, balance: 'Quantity', size: 'Quantity', *args) -> None:
+    def __init__(self, balance: "Quantity", size: "Quantity", *args) -> None:
         super().__init__(
-            "Insufficient funds for allocating size {} with balance {}.".format(size, balance),
+            "Insufficient funds for allocating size {} with balance {}.".format(
+                size, balance
+            ),
             *args
         )
 
@@ -204,8 +211,5 @@ class InvalidTradingPair(Exception):
         More positional arguments for the exception.
     """
 
-    def __init__(self, base: 'Instrument', quote: 'Instrument', *args) -> None:
-        super().__init__(
-            "Invalid instrument pair {}/{}.".format(base, quote),
-            *args
-        )
+    def __init__(self, base: "Instrument", quote: "Instrument", *args) -> None:
+        super().__init__("Invalid instrument pair {}/{}.".format(base, quote), *args)

@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import pandas as pd
 import numpy as np
@@ -54,5 +55,3 @@ class SimpleProfitStrategy(RewardStrategy):
             return profit_sign * (1 + (5 ** np.log10(abs(profit))))
 
         return -1
-
-

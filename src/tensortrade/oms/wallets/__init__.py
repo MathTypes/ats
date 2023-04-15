@@ -16,5 +16,8 @@ def get(identifier: str) -> Portfolio:
     """
     if identifier not in _registry.keys():
         raise KeyError(
-            'Identifier {} is not associated with any `TradingStrategy`.'.format(identifier))
+            "Identifier {} is not associated with any `TradingStrategy`.".format(
+                identifier
+            )
+        )
     return _registry[identifier]

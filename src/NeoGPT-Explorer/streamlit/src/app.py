@@ -9,12 +9,12 @@ from train_cypher import examples
 
 st.title("NeoGPT : GPT3 + Neo4j")
 
-openai.api_key = os.environ.get('OPENAI_KEY')
+openai.api_key = os.environ.get("OPENAI_KEY")
 
 
 def generate_response(prompt, cypher=True):
     if cypher:
-        logging.error(f'prompt:{prompt}')
+        logging.error(f"prompt:{prompt}")
         completions = openai.Completion.create(
             engine="text-davinci-003",
             prompt=examples + "\n#" + prompt,
@@ -23,9 +23,9 @@ def generate_response(prompt, cypher=True):
             stop=None,
             temperature=0.5,
         )
-        logging.error(f'completions:{completions}')
+        logging.error(f"completions:{completions}")
         cypher_query = completions.choices[0].text
-        logging.error(f'cypher_query:{cypher_query}')
+        logging.error(f"cypher_query:{cypher_query}")
         message = read_query(cypher_query)
         return message, cypher_query
     else:
@@ -42,16 +42,15 @@ def generate_response(prompt, cypher=True):
 
 
 # Storing the chat
-if 'generated' not in st.session_state:
-    st.session_state['generated'] = []
+if "generated" not in st.session_state:
+    st.session_state["generated"] = []
 
-if 'past' not in st.session_state:
-    st.session_state['past'] = []
+if "past" not in st.session_state:
+    st.session_state["past"] = []
 
 
 def get_text():
-    input_text = st.text_input(
-        "Ask away", "", key="input")
+    input_text = st.text_input("Ask away", "", key="input")
     return input_text
 
 
@@ -73,7 +72,8 @@ if user_input:
         if not article_text:
             st.session_state.past.append(user_input)
             st.session_state.generated.append(
-                (["Couldn't find any text for the given article"], ""))
+                (["Couldn't find any text for the given article"], "")
+            )
         else:
             output, cypher_query = generate_response(user_input, cypher=False)
             st.session_state.past.append(user_input)
@@ -87,14 +87,16 @@ if user_input:
 
 # Message placeholder
 with placeholder.container():
-    if st.session_state['generated']:
-        message(st.session_state['past'][-1],
-                is_user=True, key=str(-1) + '_user')
-        for j, text in enumerate(st.session_state['generated'][-1][0]):
+    if st.session_state["generated"]:
+        message(st.session_state["past"][-1], is_user=True, key=str(-1) + "_user")
+        for j, text in enumerate(st.session_state["generated"][-1][0]):
             message(text, key=str(-1) + str(j))
 
 # Generated Cypher statements
 with another_placeholder.container():
-    if st.session_state['generated']:
-        st.text_area("Generated Cypher statement",
-                     st.session_state['generated'][-1][1], height=240)
+    if st.session_state["generated"]:
+        st.text_area(
+            "Generated Cypher statement",
+            st.session_state["generated"][-1][1],
+            height=240,
+        )

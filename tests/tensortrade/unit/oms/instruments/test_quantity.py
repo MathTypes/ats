@@ -1,4 +1,3 @@
-
 import pytest
 import unittest.mock as mock
 
@@ -450,7 +449,7 @@ def test_invalid_lt():
     q1 = Quantity(BTC, 5)
     q2 = "ETH"
     with pytest.raises(InvalidNonNumericQuantity):
-        assert (q1 < q2)
+        assert q1 < q2
 
 
 # Greater than
@@ -484,7 +483,7 @@ def test_invalid_gt():
     q1 = Quantity(BTC, 50)
     q2 = "ETH"
     with pytest.raises(InvalidNonNumericQuantity):
-        assert (q1 > q2)
+        assert q1 > q2
 
 
 # Equals
@@ -596,7 +595,7 @@ def test_free():
 def test_convert(mock_exchange_pair):
 
     exchange_pair = mock_exchange_pair.return_value
-    exchange_pair.pair = USD/BTC
+    exchange_pair.pair = USD / BTC
     exchange_pair.price = 9000
 
     # Test converts to Quote

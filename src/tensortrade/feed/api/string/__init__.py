@@ -1,4 +1,3 @@
-
 from typing import List
 
 from tensortrade.feed.core import Stream
@@ -34,10 +33,12 @@ class String:
         Callable
             A decorated function.
         """
+
         def wrapper(func):
             StringMethods.register_method(func, names)
             StringMixin.register_method(func, names)
             return func
+
         return wrapper
 
 

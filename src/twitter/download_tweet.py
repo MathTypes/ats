@@ -16,14 +16,17 @@ from neo4j_util.sentiment_api import get_tweet_id_by_range
 from util import config_utils
 from util import logging_utils
 
-def upload_tweet_to_neo4j(username, since, until, existing_tweets):
-    if until == '':
-        until = datetime.datetime.strftime(datetime.date.today(), '%Y-%m-%d')
-    if since == '':
-        since = datetime.datetime.strftime(datetime.datetime.strptime(
-            until, '%Y-%m-%d') - datetime.timedelta(days=7), '%Y-%m-%d')
 
-    logging.info(f'existing_tweets:{len(existing_tweets)}')
+def upload_tweet_to_neo4j(username, since, until, existing_tweets):
+    if until == "":
+        until = datetime.datetime.strftime(datetime.date.today(), "%Y-%m-%d")
+    if since == "":
+        since = datetime.datetime.strftime(
+            datetime.datetime.strptime(until, "%Y-%m-%d") - datetime.timedelta(days=7),
+            "%Y-%m-%d",
+        )
+
+    logging.info(f"existing_tweets:{len(existing_tweets)}")
     empty_tweets = set()
     # Creating list to append tweet data
     tweets_list1 = []
@@ -32,28 +35,33 @@ def upload_tweet_to_neo4j(username, since, until, existing_tweets):
         usernames = args.username.split(",")
         query = f"from:{args.username} since:{since} until:{until}"
         tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-        tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+        tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
         neo4j.bulk_load(tweet_urls)
         query = f"to:{args.username} since:{since} until:{until}"
         tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-        tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+        tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
         neo4j.bulk_load(tweet_urls)
 
     if args.hash_tag:
         hash_tags = args.hash_tag.split(",")
         for hash_tag in hash_tags:
             query = f"f#{hash_tag} since:{since} until:{until}"
-            tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-            tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+            tweet_urls = sntwitter.TwitterSearchScraper(
+                query, existing_tweets
+            ).get_items()
+            tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
             neo4j.bulk_load(tweet_urls)
 
     if args.stock:
         stocks = args.stock.split(",")
         for stock in stocks:
             query = f"f${stock} since:{since} until:{until}"
-            tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-            tweet_urls = [ t for t in tweet_urls if not t.id in existing_tweets]
+            tweet_urls = sntwitter.TwitterSearchScraper(
+                query, existing_tweets
+            ).get_items()
+            tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
             neo4j.bulk_load(tweet_urls)
+
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
@@ -69,6 +77,6 @@ if __name__ == "__main__":
     if not args.username and not args.hash_tag and not args.stock:
         logging.error("Must specify at least one of username, hash_Tag or stock")
         exit(-1)
-    
+
     existing_tweets = set(get_tweet_id_by_range(args.since, args.until))
     upload_tweet_to_neo4j(args.username, args.since, args.until, existing_tweets)

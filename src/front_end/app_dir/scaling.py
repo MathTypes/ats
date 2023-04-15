@@ -3,8 +3,8 @@ from sklearn.preprocessing import scale, StandardScaler
 from collections import deque
 import numpy as np
 
+
 class Preprocessing(Indications):
-    
     def __init__(self, interval, asset):
         super().__init__(interval, asset)
         super(Preprocessing, self).engulfing_analysis()
@@ -17,30 +17,30 @@ class Preprocessing(Indications):
 
     def scaling(self, df_values):
         training_window = 60
-        #training_window = 120
+        # training_window = 120
         df_predictors = df_values
         predictors = df_predictors.iloc[:, :-1].columns
         df_predictors = df_predictors.replace([np.inf, -np.inf], 0)
-        
+
         scaler = StandardScaler()
         df_predictors[predictors] = scale(df_predictors[predictors])
         df_predictors[predictors] = scaler.fit_transform(df_predictors[predictors])
 
         training_sequence = []
-        previous_days = deque(maxlen = training_window)
+        previous_days = deque(maxlen=training_window)
         for i in df_predictors.values:
             previous_days.append([x for x in i[:-1]])
             if len(previous_days) == training_window:
                 training_sequence.append([np.array(previous_days), i[-1:]])
-                
+
         X = []
         y = []
-        
+
         for features, action in training_sequence:
             X.append(features)
             y.append(action)
-            
+
         X = np.array(X)
         y = np.array(y)
-                                               
+
         return X, y

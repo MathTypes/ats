@@ -57,7 +57,7 @@ class ActionStrategy(object, metaclass=ABCMeta):
         self._dtype = dtype
 
     @property
-    def exchange(self) -> 'InstrumentExchange':
+    def exchange(self) -> "InstrumentExchange":
         """The exchange being used by the current trading environment.
 
         This will be set by the trading environment upon initialization. Setting the exchange causes the strategy to reset.
@@ -65,7 +65,7 @@ class ActionStrategy(object, metaclass=ABCMeta):
         return self._exchange
 
     @exchange.setter
-    def exchange(self, exchange: 'InstrumentExchange'):
+    def exchange(self, exchange: "InstrumentExchange"):
         self._exchange = exchange
         self.reset()
 

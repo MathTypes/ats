@@ -30,7 +30,7 @@ class Identifiable(object, metaclass=ABCMeta):
         str
            The identifier for the object.
         """
-        if not hasattr(self, '_id'):
+        if not hasattr(self, "_id"):
             self._id = str(uuid.uuid4())
         return self._id
 

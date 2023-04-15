@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 
 import pandas as pd
@@ -29,7 +30,13 @@ from tensortrade.features.feature_transformer import FeatureTransformer
 class StandardNormalizer(FeatureTransformer):
     """A transformer for normalizing values within a feature pipeline by removing the mean and scaling to unit variance."""
 
-    def __init__(self, columns: Union[List[str], str, None] = None, feature_min=0, feature_max=1, inplace=True):
+    def __init__(
+        self,
+        columns: Union[List[str], str, None] = None,
+        feature_min=0,
+        feature_max=1,
+        inplace=True,
+    ):
         """
         Arguments:
             columns (optional): A list of column names to normalize.

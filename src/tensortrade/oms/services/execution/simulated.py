@@ -9,12 +9,14 @@ from tensortrade.oms.orders import Order, Trade, TradeType, TradeSide
 from typing import Union
 
 
-def execute_buy_order(order: 'Order',
-                      base_wallet: 'Wallet',
-                      quote_wallet: 'Wallet',
-                      current_price: float,
-                      options: 'ExchangeOptions',
-                      clock: 'Clock') -> Union[None, 'Trade']:
+def execute_buy_order(
+    order: "Order",
+    base_wallet: "Wallet",
+    quote_wallet: "Wallet",
+    current_price: float,
+    options: "ExchangeOptions",
+    clock: "Clock",
+) -> Union[None, "Trade"]:
     """Executes a buy order on the exchange.
 
     Parameters
@@ -52,9 +54,11 @@ def execute_buy_order(order: 'Order',
     # than the instrument precision, otherwise the minimum precision value is used.
     minimum_commission = Decimal(10) ** -filled.instrument.precision
     if options.commission > 0 and commission < minimum_commission:
-        logging.warning("Commission is > 0 but less than instrument precision. "
-                        "Setting commission to the minimum allowed amount. "
-                        "Consider defining a custom instrument with a higher precision.")
+        logging.warning(
+            "Commission is > 0 but less than instrument precision. "
+            "Setting commission to the minimum allowed amount. "
+            "Consider defining a custom instrument with a higher precision."
+        )
         commission.size = minimum_commission
 
     quantity = filled - commission
@@ -65,7 +69,7 @@ def execute_buy_order(order: 'Order',
         quantity=quantity,
         commission=commission,
         exchange_pair=order.exchange_pair,
-        reason="BUY"
+        reason="BUY",
     )
 
     trade = Trade(
@@ -76,18 +80,20 @@ def execute_buy_order(order: 'Order',
         trade_type=order.type,
         quantity=transfer.quantity,
         price=transfer.price,
-        commission=transfer.commission
+        commission=transfer.commission,
     )
 
     return trade
 
 
-def execute_sell_order(order: 'Order',
-                       base_wallet: 'Wallet',
-                       quote_wallet: 'Wallet',
-                       current_price: float,
-                       options: 'ExchangeOptions',
-                       clock: 'Clock') -> Union[None, 'Trade']:
+def execute_sell_order(
+    order: "Order",
+    base_wallet: "Wallet",
+    quote_wallet: "Wallet",
+    current_price: float,
+    options: "ExchangeOptions",
+    clock: "Clock",
+) -> Union[None, "Trade"]:
     """Executes a sell order on the exchange.
 
     Parameters
@@ -121,9 +127,11 @@ def execute_sell_order(order: 'Order',
     # than the instrument precision, otherwise the minimum precision value is used.
     minimum_commission = Decimal(10) ** -filled.instrument.precision
     if options.commission > 0 and commission < minimum_commission:
-        logging.warning("Commission is > 0 but less than instrument precision. "
-                        "Setting commission to the minimum allowed amount. "
-                        "Consider defining a custom instrument with a higher precision.")
+        logging.warning(
+            "Commission is > 0 but less than instrument precision. "
+            "Setting commission to the minimum allowed amount. "
+            "Consider defining a custom instrument with a higher precision."
+        )
         commission.size = minimum_commission
 
     quantity = filled - commission
@@ -135,7 +143,7 @@ def execute_sell_order(order: 'Order',
         quantity=quantity,
         commission=commission,
         exchange_pair=order.exchange_pair,
-        reason="SELL"
+        reason="SELL",
     )
 
     trade = Trade(
@@ -146,18 +154,20 @@ def execute_sell_order(order: 'Order',
         trade_type=order.type,
         quantity=transfer.quantity,
         price=transfer.price,
-        commission=transfer.commission
+        commission=transfer.commission,
     )
 
     return trade
 
 
-def execute_order(order: 'Order',
-                  base_wallet: 'Wallet',
-                  quote_wallet: 'Wallet',
-                  current_price: float,
-                  options: 'Options',
-                  clock: 'Clock') -> 'Trade':
+def execute_order(
+    order: "Order",
+    base_wallet: "Wallet",
+    quote_wallet: "Wallet",
+    current_price: float,
+    options: "Options",
+    clock: "Clock",
+) -> "Trade":
     """Executes an order on the exchange.
 
     Parameters
@@ -180,12 +190,14 @@ def execute_order(order: 'Order',
     `Trade`
         The executed trade that was made.
     """
-    kwargs = {"order": order,
-              "base_wallet": base_wallet,
-              "quote_wallet": quote_wallet,
-              "current_price": current_price,
-              "options": options,
-              "clock": clock}
+    kwargs = {
+        "order": order,
+        "base_wallet": base_wallet,
+        "quote_wallet": quote_wallet,
+        "current_price": current_price,
+        "options": options,
+        "clock": clock,
+    }
 
     if order.is_buy:
         trade = execute_buy_order(**kwargs)

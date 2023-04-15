@@ -1,4 +1,3 @@
-
 from typing import List
 
 from tensortrade.feed.core import Stream
@@ -34,10 +33,12 @@ class Boolean:
         Callable
             A decorated function.
         """
+
         def wrapper(func):
             BooleanMethods.register_method(func, names)
             BooleanMixin.register_method(func, names)
             return func
+
         return wrapper
 
 

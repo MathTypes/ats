@@ -28,7 +28,7 @@ TypeString = Union[type, str]
 class AssetExchange(object, metaclass=ABCMeta):
     """An abstract asset exchange for use within a trading environment."""
 
-    def __init__(self, base_asset: str = 'USD', dtype: TypeString = np.float16):
+    def __init__(self, base_asset: str = "USD", dtype: TypeString = np.float16):
         """
         Arguments:
             base_asset: The exchange symbol of the asset to store/measure value in.

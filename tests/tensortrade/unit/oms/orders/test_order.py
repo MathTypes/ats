@@ -1,4 +1,3 @@
-
 import re
 import unittest.mock as mock
 
@@ -11,7 +10,7 @@ from tensortrade.oms.exchanges import ExchangeOptions
 from tensortrade.oms.wallets import Wallet, Portfolio
 
 
-@mock.patch('tensortrade.exchanges.Exchange')
+@mock.patch("tensortrade.exchanges.Exchange")
 def test_init(mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
@@ -22,13 +21,15 @@ def test_init(mock_exchange_class):
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5000 * USD,
-                  price=7000,
-                  portfolio=portfolio)
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5000 * USD,
+        price=7000,
+        portfolio=portfolio,
+    )
 
     assert order
     assert order.id
@@ -41,7 +42,7 @@ def test_init(mock_exchange_class):
     assert order.pair.quote == BTC
 
 
-@mock.patch('tensortrade.exchanges.Exchange')
+@mock.patch("tensortrade.exchanges.Exchange")
 def test_properties(mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
@@ -52,13 +53,15 @@ def test_properties(mock_exchange_class):
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.LIMIT,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=7000.00)
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.LIMIT,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=7000.00,
+    )
 
     assert order
     assert order.step == 0
@@ -73,7 +76,7 @@ def test_properties(mock_exchange_class):
     assert order.is_limit_order
 
 
-@mock.patch('tensortrade.exchanges.Exchange')
+@mock.patch("tensortrade.exchanges.Exchange")
 def test_is_executable_on(mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
@@ -86,13 +89,15 @@ def test_is_executable_on(mock_exchange_class):
     # Market order
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     exchange.quote_price = mock.Mock(return_value=Decimal(6800.00))
     assert order.is_executable
@@ -103,13 +108,15 @@ def test_is_executable_on(mock_exchange_class):
     # Limit order
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.LIMIT,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.LIMIT,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     exchange.quote_price = mock.Mock(return_value=Decimal(6800.00))
     assert order.is_executable
@@ -120,14 +127,16 @@ def test_is_executable_on(mock_exchange_class):
     # Stop Order
     wallets = [Wallet(exchange, 0 * USD), Wallet(exchange, 2 * BTC)]
     portfolio = Portfolio(USD, wallets)
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.SELL,
-                  trade_type=TradeType.LIMIT,
-                  quantity=1 * BTC,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00),
-                  criteria=Stop("down", 0.03))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.SELL,
+        trade_type=TradeType.LIMIT,
+        quantity=1 * BTC,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+        criteria=Stop("down", 0.03),
+    )
 
     exchange.quote_price = mock.Mock(return_value=Decimal(1 - 0.031) * order.price)
     assert order.is_executable
@@ -150,13 +159,15 @@ def test_is_complete(mock_exchange_class):
     portfolio = Portfolio(USD, wallets)
 
     # Market order
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     assert not order.is_complete
 
@@ -179,13 +190,15 @@ def test_add_order_spec(mock_order_spec_class, mock_exchange_class):
     portfolio = Portfolio(USD, wallets)
 
     # Market order
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     order_spec = mock_order_spec_class.return_value
 
@@ -210,13 +223,15 @@ def test_attach(mock_exchange_class, mock_order_listener_class):
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     listener = mock_order_listener_class.return_value
 
@@ -240,13 +255,15 @@ def test_detach(mock_exchange_class, mock_order_listener_class):
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     listener = mock_order_listener_class.return_value
     order.attach(listener)
@@ -258,10 +275,9 @@ def test_detach(mock_exchange_class, mock_order_listener_class):
     assert listener not in order.listeners
 
 
-@mock.patch('tensortrade.exchanges.Exchange')
-@mock.patch('tensortrade.orders.OrderListener')
-def test_execute(mock_order_listener_class,
-                 mock_exchange_class):
+@mock.patch("tensortrade.exchanges.Exchange")
+@mock.patch("tensortrade.orders.OrderListener")
+def test_execute(mock_order_listener_class, mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
     exchange.options = ExchangeOptions()
@@ -273,13 +289,15 @@ def test_execute(mock_order_listener_class,
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     listener = mock_order_listener_class.return_value
     listener.on_execute = mock.Mock(return_value=None)
@@ -303,9 +321,7 @@ def test_execute(mock_order_listener_class,
 @mock.patch("tensortrade.exchanges.Exchange")
 @mock.patch("tensortrade.orders.Trade")
 @mock.patch("tensortrade.orders.OrderListener")
-def test_fill(mock_order_listener_class,
-              mock_trade_class,
-              mock_exchange_class):
+def test_fill(mock_order_listener_class, mock_trade_class, mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
     exchange.options = ExchangeOptions()
@@ -317,13 +333,15 @@ def test_fill(mock_order_listener_class,
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     listener = mock_order_listener_class.return_value
     listener.on_fill = mock.Mock(return_value=None)
@@ -348,9 +366,9 @@ def test_fill(mock_order_listener_class,
 @mock.patch("tensortrade.exchanges.Exchange")
 @mock.patch("tensortrade.orders.Trade")
 @mock.patch("tensortrade.orders.OrderListener")
-def test_complete_basic_order(mock_order_listener_class,
-                              mock_trade_class,
-                              mock_exchange_class):
+def test_complete_basic_order(
+    mock_order_listener_class, mock_trade_class, mock_exchange_class
+):
 
     exchange = mock_exchange_class.return_value
     exchange.options = ExchangeOptions()
@@ -362,13 +380,15 @@ def test_complete_basic_order(mock_order_listener_class,
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     listener = mock_order_listener_class.return_value
     listener.on_complete = mock.Mock(return_value=None)
@@ -393,8 +413,7 @@ def test_complete_basic_order(mock_order_listener_class,
 
 @mock.patch("tensortrade.exchanges.Exchange")
 @mock.patch("tensortrade.orders.Trade")
-def test_complete_complex_order(mock_trade_class,
-                                mock_exchange_class):
+def test_complete_complex_order(mock_trade_class, mock_exchange_class):
     exchange = mock_exchange_class.return_value
     exchange.options = ExchangeOptions()
     exchange.id = "fake_exchange_id"
@@ -408,20 +427,24 @@ def test_complete_complex_order(mock_trade_class,
 
     side = TradeSide.BUY
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     risk_criteria = Stop("down", 0.03) ^ Stop("up", 0.02)
 
-    risk_management = OrderSpec(side=TradeSide.SELL if side == TradeSide.BUY else TradeSide.BUY,
-                                trade_type=TradeType.MARKET,
-                                exchange_pair=ExchangePair(exchange, USD / BTC),
-                                criteria=risk_criteria)
+    risk_management = OrderSpec(
+        side=TradeSide.SELL if side == TradeSide.BUY else TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        criteria=risk_criteria,
+    )
 
     order.add_order_spec(risk_management)
 
@@ -447,12 +470,10 @@ def test_complete_complex_order(mock_trade_class,
     quote_size = (order.price / trade.price) * (trade.size / trade.price)
 
     base_wallet.withdraw(
-        quantity=Quantity(USD, size=base_size, path_id=order.path_id),
-        reason="test"
+        quantity=Quantity(USD, size=base_size, path_id=order.path_id), reason="test"
     )
     quote_wallet.deposit(
-        quantity=Quantity(BTC, size=quote_size, path_id=order.path_id),
-        reason="test"
+        quantity=Quantity(BTC, size=quote_size, path_id=order.path_id), reason="test"
     )
 
     # Fill fake trade
@@ -475,9 +496,7 @@ def test_complete_complex_order(mock_trade_class,
 @mock.patch("tensortrade.exchanges.Exchange")
 @mock.patch("tensortrade.orders.Trade")
 @mock.patch("tensortrade.orders.OrderListener")
-def test_cancel(mock_order_listener_class,
-                mock_trade_class,
-                mock_exchange_class):
+def test_cancel(mock_order_listener_class, mock_trade_class, mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
     exchange.options = ExchangeOptions()
@@ -490,13 +509,15 @@ def test_cancel(mock_order_listener_class,
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     listener = mock_order_listener_class.return_value
     listener.on_cancel = mock.Mock(return_value=None)
@@ -522,12 +543,10 @@ def test_cancel(mock_order_listener_class,
     quote_size = (order.price / trade.price) * (trade.size / trade.price)
 
     base_wallet.withdraw(
-        quantity=Quantity(USD, size=base_size, path_id=order.path_id),
-        reason="test"
+        quantity=Quantity(USD, size=base_size, path_id=order.path_id), reason="test"
     )
     quote_wallet.deposit(
-        quantity=Quantity(BTC, size=quote_size, path_id=order.path_id),
-        reason="test"
+        quantity=Quantity(BTC, size=quote_size, path_id=order.path_id), reason="test"
     )
 
     order.fill(trade)
@@ -560,13 +579,15 @@ def test_release(mock_exchange_class):
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     order.execute()
 
@@ -596,13 +617,15 @@ def test_to_json(mock_exchange_class):
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     d = {
         "id": str(order.id),
@@ -619,7 +642,7 @@ def test_to_json(mock_exchange_class):
         "price": float(order.price),
         "criteria": str(order.criteria),
         "path_id": str(order.path_id),
-        "created_at": str(order.created_at)
+        "created_at": str(order.created_at),
     }
 
     assert order.to_json() == d
@@ -641,13 +664,15 @@ def test_iadd(mock_exchange_class, mock_order_spec_class):
     portfolio = Portfolio(USD, wallets)
 
     # Market order
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5000.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5000.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     order_spec = mock_order_spec_class.return_value
 
@@ -672,13 +697,15 @@ def test_str(mock_exchange_class):
     wallets = [Wallet(exchange, 10000 * USD), Wallet(exchange, 0 * BTC)]
     portfolio = Portfolio(USD, wallets)
 
-    order = Order(step=0,
-                  exchange_pair=ExchangePair(exchange, USD / BTC),
-                  side=TradeSide.BUY,
-                  trade_type=TradeType.MARKET,
-                  quantity=5200.00 * USD,
-                  portfolio=portfolio,
-                  price=Decimal(7000.00))
+    order = Order(
+        step=0,
+        exchange_pair=ExchangePair(exchange, USD / BTC),
+        side=TradeSide.BUY,
+        trade_type=TradeType.MARKET,
+        quantity=5200.00 * USD,
+        portfolio=portfolio,
+        price=Decimal(7000.00),
+    )
 
     pattern = re.compile("<[A-Z][a-zA-Z]*:\\s(\\w+=.*,\\s)*(\\w+=.*)>")
 

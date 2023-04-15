@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import numpy as np
 
@@ -24,7 +25,11 @@ from tensortrade.trades import Trade, TradeType
 class RandomUniformSlippageModel(SlippageModel):
     """A uniform random slippage model."""
 
-    def __init__(self, max_price_slippage_percent: float = 3.0, max_amount_slippage_percent: float = 0.0):
+    def __init__(
+        self,
+        max_price_slippage_percent: float = 3.0,
+        max_amount_slippage_percent: float = 0.0,
+    ):
         """
         Arguments:
             max_price_slippage_percent: The maximum random slippage to be applied to the fill price. Defaults to 3.0 (i.e. 3%).
@@ -58,4 +63,10 @@ class RandomUniformSlippageModel(SlippageModel):
                 fill_price = trade.price
                 fill_amount *= fill_price / trade.price
 
-        return Trade(trade.symbol, trade.trade_type, amount=fill_amount, price=fill_price, next_price = trade.next_price)
+        return Trade(
+            trade.symbol,
+            trade.trade_type,
+            amount=fill_amount,
+            price=fill_price,
+            next_price=trade.next_price,
+        )

@@ -1,4 +1,3 @@
-
 from tensortrade.feed.core.base import Stream
 from tensortrade.feed.api.boolean import Boolean
 

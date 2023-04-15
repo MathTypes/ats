@@ -1,16 +1,16 @@
 import logging
 from neo4j import GraphDatabase
 
-host = 'bolt://host.docker.internal:7687'
-user = 'neo4j'
-password = 'password'
+host = "bolt://host.docker.internal:7687"
+user = "neo4j"
+password = "password"
 driver = GraphDatabase.driver(host, auth=(user, password))
 
 
 def read_query(query, params={}):
     with driver.session() as session:
-        logging.error(f'query:{query}')
-        logging.error(f'params:{params}')
+        logging.error(f"query:{query}")
+        logging.error(f"params:{params}")
         result = session.run(query, params)
         response = [r.values()[0] for r in result]
         return response
@@ -18,5 +18,7 @@ def read_query(query, params={}):
 
 def get_article_text(title):
     text = read_query(
-        "MATCH (a:Article {webTitle:$title}) RETURN a.bodyContent as response", {'title': title})
+        "MATCH (a:Article {webTitle:$title}) RETURN a.bodyContent as response",
+        {"title": title},
+    )
     return text

@@ -15,34 +15,34 @@ from intents.trade_reconciliation import TradeReconciliation
 from lib.environment import Environment
 
 # get environment variables
-TRADING_MODE = environ.get('TRADING_MODE', 'paper')
-TWS_INSTALL_LOG = environ.get('TWS_INSTALL_LOG')
+TRADING_MODE = environ.get("TRADING_MODE", "paper")
+TWS_INSTALL_LOG = environ.get("TWS_INSTALL_LOG")
 
-if TRADING_MODE not in ['live', 'paper']:
-    raise ValueError('Unknown trading mode')
+if TRADING_MODE not in ["live", "paper"]:
+    raise ValueError("Unknown trading mode")
 
 # set constants
 INTENTS = {
-    'allocation': Allocation,
-    'cash-balancer': CashBalancer,
-    'close-all': CloseAll,
-    'collect-market-data': CollectMarketData,
-    'summary': Summary,
-    'trade-reconciliation': TradeReconciliation
+    "allocation": Allocation,
+    "cash-balancer": CashBalancer,
+    "close-all": CloseAll,
+    "collect-market-data": CollectMarketData,
+    "summary": Summary,
+    "trade-reconciliation": TradeReconciliation,
 }
 
 # build IBC config from environment variables
 env = {
-    key: environ.get(key) for key in
-    ['ibcIni', 'ibcPath', 'javaPath', 'twsPath', 'twsSettingsPath']
+    key: environ.get(key)
+    for key in ["ibcIni", "ibcPath", "javaPath", "twsPath", "twsSettingsPath"]
 }
-env['javaPath'] += f"/{listdir(env['javaPath'])[0]}/bin"
-with open(TWS_INSTALL_LOG, 'r') as fp:
+env["javaPath"] += f"/{listdir(env['javaPath'])[0]}/bin"
+with open(TWS_INSTALL_LOG, "r") as fp:
     install_log = fp.read()
 ibc_config = {
-    'gateway': True,
-    'twsVersion': re.search('IB Gateway ([0-9]{3})', install_log).group(1),
-    **env
+    "gateway": True,
+    "twsVersion": re.search("IB Gateway ([0-9]{3})", install_log).group(1),
+    **env,
 }
 Environment(TRADING_MODE, ibc_config)
 
@@ -72,22 +72,22 @@ class Main:
 
         try:
             if intent is None or intent not in INTENTS.keys():
-                logging.warning('Unknown intent')
+                logging.warning("Unknown intent")
                 intent_instance = Intent()
             else:
                 intent_instance = INTENTS[intent](**kwargs)
             result = intent_instance.run()
             response.status = falcon.HTTP_200
         except Exception as e:
-            error_str = f'{e.__class__.__name__}: {e}'
-            result = {'error': error_str}
+            error_str = f"{e.__class__.__name__}: {e}"
+            result = {"error": error_str}
             response.status = falcon.HTTP_500
 
-        result['utcTimestamp'] = datetime.utcnow().isoformat()
+        result["utcTimestamp"] = datetime.utcnow().isoformat()
         response.content_type = falcon.MEDIA_JSON
-        response.text = json.dumps(result) + '\n'
+        response.text = json.dumps(result) + "\n"
 
 
 # instantiante Falcon App and define route for intent
 app = falcon.App()
-app.add_route('/{intent}', Main())
+app.add_route("/{intent}", Main())

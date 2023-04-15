@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from tensortrade.feed.core.base import Stream

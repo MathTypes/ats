@@ -14,12 +14,22 @@
 
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
+
+
 class Trade(object):
     """A trade object for use within trading environments."""
 
-    def __init__(self, symbol: str, trade_type: 'TradeType', amount: float, price: float, next_price = 0):
+    def __init__(
+        self,
+        symbol: str,
+        trade_type: "TradeType",
+        amount: float,
+        price: float,
+        next_price=0,
+    ):
         """
         Arguments:
             symbol: The exchange symbol of the instrument in the trade (AAPL, ETH/USD, NQ1!, etc).
@@ -33,9 +43,15 @@ class Trade(object):
         self._next_price = next_price
         self._price = price
 
-    def copy(self) -> 'Trade':
+    def copy(self) -> "Trade":
         """Return a copy of the current trade object."""
-        return Trade(symbol=self._symbol, trade_type=self._trade_type, amount=self._amount, price=self._price, next_price = self._next_price)
+        return Trade(
+            symbol=self._symbol,
+            trade_type=self._trade_type,
+            amount=self._amount,
+            price=self._price,
+            next_price=self._next_price,
+        )
 
     @property
     def symbol(self) -> str:
@@ -47,12 +63,12 @@ class Trade(object):
         self._symbol = symbol
 
     @property
-    def trade_type(self) -> 'TradeType':
+    def trade_type(self) -> "TradeType":
         """The type of trade ("buy", "sell", "hold", etc)."""
         return self._trade_type
 
     @trade_type.setter
-    def trade_type(self, trade_type: 'TradeType'):
+    def trade_type(self, trade_type: "TradeType"):
         self._trade_type = trade_type
 
     @property

@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from tensortrade.feed.core.base import Stream, T, Placeholder, IterableStream

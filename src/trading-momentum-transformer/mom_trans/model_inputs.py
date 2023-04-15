@@ -84,7 +84,7 @@ class ModelFeatures:
         time_features=False,
         lags=None,
         asset_class_dictionary=None,
-        static_ticker_type_feature = False,
+        static_ticker_type_feature=False,
     ):
         """Initialises formatter. Splits data frame into training-validation-test data frames.
         This also calibrates scaling object, and transforms data for each split."""

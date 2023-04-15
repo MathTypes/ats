@@ -22,11 +22,10 @@ from snorkel.augmentation import ApplyOnePolicy, PandasTFApplier
 DISPLAY_ALL_TEXT = True
 pd.set_option("display.max_colwidth", 0 if DISPLAY_ALL_TEXT else 50)
 
-parser = argparse.ArgumentParser(
-    description='Train label generation'
+parser = argparse.ArgumentParser(description="Train label generation")
+parser.add_argument(
+    "-v", "--verbose", help="increase output verbosity", action="store_true"
 )
-parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                    action="store_true")
 parser.add_argument("--input_path", type=str, required=True)
 
 args = parser.parse_args()
@@ -76,8 +75,15 @@ def lf_keyword_down(x):
 
 
 # Define the set of labeling functions (LFs)
-lfs = [lf_keyword_up, lf_keyword_strong, lf_keyword_weak,
-       lf_keyword_down, lf_keyword_crash, lf_keyword_long, lf_keyword_short]
+lfs = [
+    lf_keyword_up,
+    lf_keyword_strong,
+    lf_keyword_weak,
+    lf_keyword_down,
+    lf_keyword_crash,
+    lf_keyword_long,
+    lf_keyword_short,
+]
 
 # Apply the LFs to the unlabeled training data
 applier = PandasLFApplier(lfs)
@@ -91,7 +97,7 @@ df_train["label"] = label_model.predict(L=L_train, tie_break_policy="abstain")
 
 # %%
 df_train = df_train[df_train.label != ABSTAIN]
-print(f'df_train:{df_train}')
+print(f"df_train:{df_train}")
 
 
 nltk.download("wordnet", quiet=True)
@@ -110,7 +116,7 @@ def tf_replace_word_with_synonym(x):
     idx = random.choice(range(len(words)))
     synonyms = get_synonyms(words[idx])
     if len(synonyms) > 0:
-        x.text = " ".join(words[:idx] + [synonyms[0]] + words[idx + 1:])
+        x.text = " ".join(words[:idx] + [synonyms[0]] + words[idx + 1 :])
         return x
 
 

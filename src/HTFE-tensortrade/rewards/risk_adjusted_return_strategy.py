@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import pandas as pd
 import numpy as np
@@ -28,7 +29,12 @@ class RiskAdjustedReturnStrategy(RewardStrategy):
     """A reward strategy that rewards the agent for increasing its net worth, while penalizing more volatile strategies.
     """
 
-    def __init__(self, return_algorithm: str = 'sharpe', risk_free_rate: float = 0., target_returns: float = 0.):
+    def __init__(
+        self,
+        return_algorithm: str = "sharpe",
+        risk_free_rate: float = 0.0,
+        target_returns: float = 0.0,
+    ):
         """
         Args:
             return_algorithm (optional): The risk-adjusted return metric to use. Options are 'sharpe' and 'sortino'. Defaults to 'sharpe'.
@@ -39,10 +45,12 @@ class RiskAdjustedReturnStrategy(RewardStrategy):
         self._risk_free_rate = risk_free_rate
         self._target_returns = target_returns
 
-    def _return_algorithm_from_str(self, algorithm_str: str) -> Callable[[pd.DataFrame], float]:
-        if algorithm_str is 'sharpe':
+    def _return_algorithm_from_str(
+        self, algorithm_str: str
+    ) -> Callable[[pd.DataFrame], float]:
+        if algorithm_str is "sharpe":
             return self._sharpe_ratio
-        elif algorithm_str is 'sortino':
+        elif algorithm_str is "sortino":
             return self._sortino_ratio
 
     def _sharpe_ratio(self, returns: pd.Series) -> float:
@@ -50,7 +58,7 @@ class RiskAdjustedReturnStrategy(RewardStrategy):
 
         https://en.wikipedia.org/wiki/Sharpe_ratio
         """
-        return (returns.mean() - self._risk_free_rate) / (returns.std() + 1E-9)
+        return (returns.mean() - self._risk_free_rate) / (returns.std() + 1e-9)
 
     def _sortino_ratio(self, returns: pd.Series) -> float:
         """Return the sortino ratio for a given series of a returns.
@@ -64,11 +72,11 @@ class RiskAdjustedReturnStrategy(RewardStrategy):
         expected_return = returns.mean()
         downside_std = np.sqrt(downside_returns.mean())
 
-        return (expected_return - self._risk_free_rate) / (downside_std + 1E-9)
+        return (expected_return - self._risk_free_rate) / (downside_std + 1e-9)
 
     def get_reward(self, current_step: int, trade: Trade) -> float:
         """Return the reward corresponding to the selected risk-adjusted return metric."""
-        returns = self._exchange.performance['net_worth'].diff()
+        returns = self._exchange.performance["net_worth"].diff()
 
         risk_adjusted_return = self._return_algorithm(returns)
 

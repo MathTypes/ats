@@ -13,7 +13,6 @@
 # limitations under the License
 
 
-
 import numpy as np
 
 from typing import Union
@@ -26,7 +25,12 @@ from tensortrade.trades import Trade, TradeType
 class ContinuousActionStrategy(ActionStrategy):
     """Simple continuous strategy, which calculates the trade amount as a fraction of the total balance."""
 
-    def __init__(self, instrument_symbol: str = 'BTC', max_allowed_slippage_percent: float = 1.0, dtype: DTypeString = np.float16):
+    def __init__(
+        self,
+        instrument_symbol: str = "BTC",
+        max_allowed_slippage_percent: float = 1.0,
+        dtype: DTypeString = np.float16,
+    ):
         """
         Arguments:
             instrument_symbol: The exchange symbol of the instrument being traded. Defaults to 'BTC'.
@@ -52,9 +56,13 @@ class ContinuousActionStrategy(ActionStrategy):
 
         if trade_type is TradeType.MARKET_BUY or trade_type is TradeType.LIMIT_BUY:
             price_adjustment = 1 + (self.max_allowed_slippage_percent / 100)
-            price = max(round(current_price * price_adjustment, base_precision), base_precision)
-            amount = round(self._exchange.balance * 0.99 *
-                           trade_amount / price, instrument_precision)
+            price = max(
+                round(current_price * price_adjustment, base_precision), base_precision
+            )
+            amount = round(
+                self._exchange.balance * 0.99 * trade_amount / price,
+                instrument_precision,
+            )
 
         elif trade_type is TradeType.MARKET_SELL or trade_type is TradeType.LIMIT_SELL:
             price_adjustment = 1 - (self.max_allowed_slippage_percent / 100)

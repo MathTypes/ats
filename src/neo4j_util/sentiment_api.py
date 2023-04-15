@@ -10,11 +10,15 @@ from data.front_end_utils import (
     visualize_ner,
     get_top_n_bigram,
     get_list_ner,
-    display_text, subject_analysis, result_to_df, analyze_token_sentiment,
+    display_text,
+    subject_analysis,
+    result_to_df,
+    analyze_token_sentiment,
 )
 from nlp import keyword_util
 from util import config_utils
 from neo4j_util import driver
+
 
 def map_to_market(symbol, x):
     if symbol:
@@ -39,7 +43,9 @@ def read_query(query, params={}):
 
 def get_article_text(title):
     text = read_query(
-        "MATCH (a:Article {webTitle:$title}) RETURN a.bodyContent as response", {'title': title})
+        "MATCH (a:Article {webTitle:$title}) RETURN a.bodyContent as response",
+        {"title": title},
+    )
     return text
 
 
@@ -50,8 +56,7 @@ def get_tweet_id_by_range(start_date, end_date):
               and datetime({epochMillis: t.created_at})  < datetime($end_date)
             RETURN t.id as id
             """
-    text = read_query(query, params={"start_date": start_date,
-                                     "end_date": end_date})
+    text = read_query(query, params={"start_date": start_date, "end_date": end_date})
     return text
 
 
@@ -81,10 +86,14 @@ def get_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             #    df["time"], infer_datetime_format=True).dt.date
-            df["time"], infer_datetime_format=True)
+            df["time"],
+            infer_datetime_format=True,
+        )
         # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
-        df['assetName'] = df.apply(lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1)
+        df["assetName"] = df.apply(
+            lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1
+        )
         df["assetCode"] = df["assetName"]
         # logging.info(f'df_text:{df["text"]}')
         df = subject_analysis(df)
@@ -93,38 +102,42 @@ def get_tweets():
         # df = keyword_util.add_subject_keyword(df)
         return df
 
+
 @lru_cache
 def get_processed_tweets_from_monthly(from_date, end_date):
     df_vec = []
-    for month in pd.period_range(from_date, end_date, freq='M'):
-        logging.info(f'month:{month}')
-        path_dir = os.path.join(config_utils.get_ts_root(), "..", "news", "monthly", "twitter")
-        month_file = os.path.join(path_dir,
-                             month.strftime("%Y%m") + '.parquet')
-        logging.info(f'reading:{month_file}')
+    for month in pd.period_range(from_date, end_date, freq="M"):
+        logging.info(f"month:{month}")
+        path_dir = os.path.join(
+            config_utils.get_ts_root(), "..", "news", "monthly", "twitter"
+        )
+        month_file = os.path.join(path_dir, month.strftime("%Y%m") + ".parquet")
+        logging.info(f"reading:{month_file}")
         df_vec.append(pd.read_parquet(month_file))
     df = pd.concat(df_vec)
-    logging.info(f'reading_df:{df}')
-    logging.info(f'df_columns:{df.columns}')
+    logging.info(f"reading_df:{df}")
+    logging.info(f"df_columns:{df.columns}")
     df = df.sort_index()
-    #df = df[df.symbol.isin("es", "spx", "spy", "qqq", "nq")]
-    df["text"] = df["text"].apply(lambda x : x[:2000])
-    df["keyword_text"] = df["keyword_text"].apply(lambda x: str(x))        
-    df["keyword_subject"] = df["keyword_subject"].apply(lambda x: str(x))        
-    logging.info(f'duplicate index:{df[df.index.duplicated()]}')
+    # df = df[df.symbol.isin("es", "spx", "spy", "qqq", "nq")]
+    df["text"] = df["text"].apply(lambda x: x[:2000])
+    df["keyword_text"] = df["keyword_text"].apply(lambda x: str(x))
+    df["keyword_subject"] = df["keyword_subject"].apply(lambda x: str(x))
+    logging.info(f"duplicate index:{df[df.index.duplicated()]}")
     df = df[from_date:end_date]
     df["time"] = df.index
-    #df.index = df.index.astype('str')
-    #df.drop_duplicates(subset=None, keep="first", inplace=True)
+    # df.index = df.index.astype('str')
+    # df.drop_duplicates(subset=None, keep="first", inplace=True)
     # TODO(jeremy): Replace following line with proper duplicate. We should
     # keep one instead of dropping them all
     df = df[~df.index.duplicated()]
     return df
 
+
 def timestamp(dt):
     dt = datetime.combine(dt, datetime.min.time())
     return dt.replace(tzinfo=timezone.utc).timestamp() * 1000
- 
+
+
 @lru_cache
 def get_processed_tweets(start_date, end_date):
     query = """
@@ -151,9 +164,9 @@ def get_processed_tweets(start_date, end_date):
             ORDER BY t.created_at DESC
             LIMIT 30000
             """
-    params={"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
-    logging.info(f'start_date:{start_date}, {type(start_date)}')
-    #params = {}
+    params = {"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
+    logging.info(f"start_date:{start_date}, {type(start_date)}")
+    # params = {}
     with driver.get_driver().session() as session:
         result = session.run(query, params)
         result_dict = [r.values() for r in result]
@@ -162,26 +175,31 @@ def get_processed_tweets(start_date, end_date):
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             #    df["time"], infer_datetime_format=True).dt.date
-            df["time"], infer_datetime_format=True)
+            df["time"],
+            infer_datetime_format=True,
+        )
         # logging.info(f'original_df_text:{df["text"]}')
         df["text"] = df["text"].apply(lambda x: str(x))
-        df["subject_ner_names"] = df["subject_ner_names"].apply(lambda x: str(x))        
-        df["keyword_text"] = df["keyword_text"].apply(lambda x: str(x))        
-        df["keyword_subject"] = df["keyword_subject"].apply(lambda x: str(x))        
-        df["text_ner_names"] = df["text_ner_names"].apply(lambda x: str(x))        
+        df["subject_ner_names"] = df["subject_ner_names"].apply(lambda x: str(x))
+        df["keyword_text"] = df["keyword_text"].apply(lambda x: str(x))
+        df["keyword_subject"] = df["keyword_subject"].apply(lambda x: str(x))
+        df["text_ner_names"] = df["text_ner_names"].apply(lambda x: str(x))
         df["text_ner_count"] = df["text_ner_count"].apply(lambda x: str(x))
-        df['assetName'] = df.apply(lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1)
+        df["assetName"] = df.apply(
+            lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1
+        )
         df["assetCode"] = df["assetName"]
-        df["analyst_rating"] = df['analyst_rating'].fillna(0)
+        df["analyst_rating"] = df["analyst_rating"].fillna(0)
         df = subject_analysis(df)
         # df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         # df["assetName"] = "Stocks"
         # df = keyword_util.add_subject_keyword(df)
-        df['index_time'] = df["time"]
+        df["index_time"] = df["time"]
         df = df.set_index("index_time")
         df = df.sort_index()
-        logging.info(f'df:{df}')
+        logging.info(f"df:{df}")
         return df
+
 
 def update_tweets_unprocessed_for_reply(start_date, end_date):
     query = """
@@ -195,25 +213,32 @@ def update_tweets_unprocessed_for_reply(start_date, end_date):
             CREATE (rt)-[:Reply]->(t) SET rt.reply_process_time=datetime()
             return rt.id as reply_tweet_id;
             """
-    params={"start_date": timestamp(start_date), "end_date": timestamp(end_date)}    
+    params = {"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
     with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         return df
 
+
 def get_unprocessed_tweets(start_date, end_date, update):
-    tweet_query = """
+    tweet_query = (
+        """
             MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
             WHERE t.raw_content is not null
              and t.created_at>=$start_date
              and t.created_at<$end_date
-             """ if update else  """
+             """
+        if update
+        else """
             MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
             WHERE t.raw_content is not null
              and t.created_at>=$start_date
              and t.created_at<$end_date
-             """   
-    query = tweet_query + """
+             """
+    )
+    query = (
+        tweet_query
+        + """
             WITH t
             LIMIT 50
             MATCH (rt:Tweet )-[r:Reply*..3]-(t)            
@@ -222,13 +247,13 @@ def get_unprocessed_tweets(start_date, end_date, update):
             RETURN tweet_id, time, text
             LIMIT 50
             """
-    params={"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
+    )
+    params = {"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
     with driver.get_driver().session() as session:
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
-        df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
+        df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True)
         df["text"] = df["text"].apply(lambda x: str(x))
         # df = keyword_util.add_subject_keyword(df)
         return df
@@ -249,27 +274,29 @@ def get_gpt_unprocessed_tweets():
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
-        df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
+        df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True)
         return df
 
 
 def get_conversation_ids():
     text = read_query(
-        "MATCH (n:Conversation)-[CONTAINS] - (t:Tweet) return n.id, min(t.pubdate) as start_date, max(t.pubdate) as end_date order by start_date")
+        "MATCH (n:Conversation)-[CONTAINS] - (t:Tweet) return n.id, min(t.pubdate) as start_date, max(t.pubdate) as end_date order by start_date"
+    )
     return text
 
 
 def get_tweet_ids_with_reply():
     text = read_query(
-        "MATCH (n:Tweet) with n.in_reply_to_tweet_id as tweet_id, count(*) as replies where replies > 1 return tweet_id")
+        "MATCH (n:Tweet) with n.in_reply_to_tweet_id as tweet_id, count(*) as replies where replies > 1 return tweet_id"
+    )
     return text
 
 
 def get_tweets_by_conv_id(conv_id):
     text = read_query(
         "MATCH(c:Conversation {id:$conv_id})-[CONTAINS]->(t:Tweet) return t.raw_content as text order by t.created_at DESC",
-        params={"conv_id": conv_id})
+        params={"conv_id": conv_id},
+    )
     # logging.error(f'text:{text}')
     return text
 
@@ -277,7 +304,8 @@ def get_tweets_by_conv_id(conv_id):
 def get_tweets_replied_to(tweet_id):
     text = read_query(
         "MATCH(t:Tweet {in_reply_to_tweet_id:$tweet_id}) return t.raw_content as text order by t.created_at DESC",
-        params={"tweet_id": tweet_id})
+        params={"tweet_id": tweet_id},
+    )
     return text
 
 
@@ -311,8 +339,12 @@ def get_gpt_sentiments():
         df["text"] = df["text"].apply(lambda x: str(x))
         df["time"] = pd.to_datetime(
             #    df["time"], infer_datetime_format=True).dt.date
-            df["time"], infer_datetime_format=True)
-        df['assetName'] = df.apply(lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1)    
+            df["time"],
+            infer_datetime_format=True,
+        )
+        df["assetName"] = df.apply(
+            lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1
+        )
         df["sentimentClass"] = df["sentimentClass"].apply(map_sentiment)
         df["assetCode"] = df["assetName"]
         # df["assetName"] = "Stocks"
@@ -333,8 +365,7 @@ def get_gpt_processed_replied_tweets():
         result = session.run(query, params)
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
-        df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
+        df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True)
         # df = keyword_util.add_subject_keyword(df)
         return df
 
@@ -355,27 +386,31 @@ def get_gpt_unprocessed_replied_tweets():
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(
             #    df["time"], infer_datetime_format=True).dt.date
-            df["time"], infer_datetime_format=True)
+            df["time"],
+            infer_datetime_format=True,
+        )
         return df
 
 
 def get_conversations():
     conversation_ids = get_conversation_ids()
-    df = pd.DataFrame(columns=['conv_id', 'text'])
+    df = pd.DataFrame(columns=["conv_id", "text"])
     for conv_id in conversation_ids:
         tweets = get_tweets_by_conv_id(conv_id)
         df = df.append(
-            {'conv_id': conv_id, 'text': "\n".join(tweets)}, ignore_index=True)
+            {"conv_id": conv_id, "text": "\n".join(tweets)}, ignore_index=True
+        )
     return df
 
 
 def get_tweet_replies():
     tweet_ids = get_tweet_ids_with_reply()
-    df = pd.DataFrame(columns=['conv_id', 'text'])
+    df = pd.DataFrame(columns=["conv_id", "text"])
     for conv_id in tweet_ids:
         tweets = get_tweets_replied_to(conv_id)
         df = df.append(
-            {'conv_id': conv_id, 'text': "\n".join(tweets)}, ignore_index=True)
+            {"conv_id": conv_id, "text": "\n".join(tweets)}, ignore_index=True
+        )
     return df
 
 
@@ -388,8 +423,7 @@ def get_tweet_replies_v2():
         df["text"] = df["text"].apply(lambda x: "\n".join(x))
         # logging.info(f'df:{df}')
         df["time"] = df["time"].apply(lambda x: x.to_native())
-        df["time"] = pd.to_datetime(
-            df["time"], infer_datetime_format=True)
+        df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True)
         df = df.set_index("time")
         df = df.sort_index()
         # df = keyword_util.add_subject_keyword(df)

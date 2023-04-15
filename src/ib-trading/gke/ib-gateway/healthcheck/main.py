@@ -5,7 +5,7 @@ import logging
 
 
 # setup logging
-logger = logging.getLogger('ib-gw.healthcheck')
+logger = logging.getLogger("ib-gw.healthcheck")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(ContainerEngineHandler())
 
@@ -14,32 +14,43 @@ ib_gw = IB()
 
 
 class HealthCheck:
-
     def __init__(self):
-        logger.info('IB Gateway healthcheck is active.')
+        logger.info("IB Gateway healthcheck is active.")
 
     @staticmethod
     def on_get(_, response):
         try:
-            ib_gw.connect('localhost', 4003, 999)
+            ib_gw.connect("localhost", 4003, 999)
 
             if ib_gw.isConnected() and ib_gw.client.isReady():
-                logger.info('IB Gateway healthcheck succeded.')
+                logger.info("IB Gateway healthcheck succeded.")
                 logger.info(ib_gw.client.connectionStats())
-                response.body = '{"connState": "{' + str(ib_gw.client.connState) + '}", "currentTime": "{' + ib_gw.reqCurrentTime().isoformat() + '}"}'
+                response.body = (
+                    '{"connState": "{'
+                    + str(ib_gw.client.connState)
+                    + '}", "currentTime": "{'
+                    + ib_gw.reqCurrentTime().isoformat()
+                    + '}"}'
+                )
                 response.status = falcon.HTTP_200
             else:
-                logger.warning('IB Gateway healthcheck failed.')
+                logger.warning("IB Gateway healthcheck failed.")
                 response.body = '{"connState": "{' + str(ib_gw.client.connState) + '}"}'
                 response.status = falcon.HTTP_503
         except Exception as e:
-            logger.warning('IB Gateway healthcheck failed.')
+            logger.warning("IB Gateway healthcheck failed.")
             logger.error(e)
-            response.body = '{"connState": "{' + str(ib_gw.client.connState) + '}", "error": "{' + str(e) + '}"}'
+            response.body = (
+                '{"connState": "{'
+                + str(ib_gw.client.connState)
+                + '}", "error": "{'
+                + str(e)
+                + '}"}'
+            )
             response.status = falcon.HTTP_503
         finally:
             ib_gw.disconnect()
 
 
 api = falcon.API()
-api.add_route('/', HealthCheck())
+api.add_route("/", HealthCheck())

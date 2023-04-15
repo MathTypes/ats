@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from tensortrade.feed.core.base import Stream
@@ -92,9 +91,9 @@ def log(s: "Stream[float]") -> "Stream[float]":
 
 
 @Float.register(["pct_change"])
-def pct_change(s: "Stream[float]",
-               periods: int = 1,
-               fill_method: str = "pad") -> "Stream[float]":
+def pct_change(
+    s: "Stream[float]", periods: int = 1, fill_method: str = "pad"
+) -> "Stream[float]":
     """Computes the percent change of a float stream.
 
     Parameters

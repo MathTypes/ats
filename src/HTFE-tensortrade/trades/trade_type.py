@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 from enum import Enum
 
@@ -51,9 +52,10 @@ class TradeType(Enum):
         """
         return self == TradeType.MARKET_SELL or self == TradeType.LIMIT_SELL
 
+
 class FutureTradeType(Enum):
     """A trade type for future trades. Created by Songhao"""
-    
+
     SELL = 0
     HOLD = 1
     BUY = 2

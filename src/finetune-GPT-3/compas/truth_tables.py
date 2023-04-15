@@ -30,9 +30,9 @@ class PeekyReader:
 class Person:
     def __init__(self, reader):
         self.__rows = []
-        self.__idx = reader.peek()['id']
+        self.__idx = reader.peek()["id"]
         try:
-            while reader.peek()['id'] == self.__idx:
+            while reader.peek()["id"] == self.__idx:
                 self.__rows.append(next(reader))
         except StopIteration:
             pass
@@ -41,22 +41,20 @@ class Person:
     def lifetime(self):
         memo = 0
         for it in self.__rows:
-            memo += int(it['end']) - int(it['start'])
+            memo += int(it["end"]) - int(it["start"])
         return memo
 
     @property
     def recidivist(self):
-        return (self.__rows[0]['is_recid'] == "1" and
-                self.lifetime <= 730)
+        return self.__rows[0]["is_recid"] == "1" and self.lifetime <= 730
 
     @property
     def violent_recidivist(self):
-        return (self.__rows[0]['is_violent_recid'] == "1" and
-                self.lifetime <= 730)
+        return self.__rows[0]["is_violent_recid"] == "1" and self.lifetime <= 730
 
     @property
     def low(self):
-        return self.__rows[0]['score_text'] == "Low"
+        return self.__rows[0]["score_text"] == "Low"
 
     @property
     def high(self):
@@ -72,7 +70,7 @@ class Person:
 
     @property
     def vlow(self):
-        return self.__rows[0]['v_score_text'] == "Low"
+        return self.__rows[0]["v_score_text"] == "Low"
 
     @property
     def vhigh(self):
@@ -88,25 +86,27 @@ class Person:
 
     @property
     def score(self):
-        return self.__rows[0]['score_text']
+        return self.__rows[0]["score_text"]
 
     @property
     def vscore(self):
-        return self.__rows[0]['v_score_text']
+        return self.__rows[0]["v_score_text"]
 
     @property
     def race(self):
-        return self.__rows[0]['race']
+        return self.__rows[0]["race"]
 
     @property
     def valid(self):
-        return (self.__rows[0]['is_recid'] != "-1" and
-                (self.recidivist and self.lifetime <= 730) or
-                self.lifetime > 730)
+        return (
+            self.__rows[0]["is_recid"] != "-1"
+            and (self.recidivist and self.lifetime <= 730)
+            or self.lifetime > 730
+        )
 
     @property
     def compas_felony(self):
-        return 'F' in self.__rows[0]['c_charge_degree']
+        return "F" in self.__rows[0]["c_charge_degree"]
 
     @property
     def score_valid(self):
@@ -145,31 +145,31 @@ def t(tn, fp, fn, tp):
     print("PPV: %.2f" % ppv)
     print("NPV: %.2f" % npv)
     print("LR+: %.2f" % (sens / (1 - spec)))
-    print("LR-: %.2f" % ((1-sens) / spec))
+    print("LR-: %.2f" % ((1 - sens) / spec))
 
 
-def table(recid, surv, prefix=''):
-    tn = count(lambda i: getattr(i, prefix + 'low'), surv)
-    fp = count(lambda i: getattr(i, prefix + 'high'), surv)
-    fn = count(lambda i: getattr(i, prefix + 'low'), recid)
-    tp = count(lambda i: getattr(i, prefix + 'high'), recid)
+def table(recid, surv, prefix=""):
+    tn = count(lambda i: getattr(i, prefix + "low"), surv)
+    fp = count(lambda i: getattr(i, prefix + "high"), surv)
+    fn = count(lambda i: getattr(i, prefix + "low"), recid)
+    tp = count(lambda i: getattr(i, prefix + "high"), recid)
     t(tn, fp, fn, tp)
 
 
-def hightable(recid, surv, prefix=''):
-    tn = count(lambda i: getattr(i, prefix + 'low_med'), surv)
-    fp = count(lambda i: getattr(i, prefix + 'true_high'), surv)
-    fn = count(lambda i: getattr(i, prefix + 'low_med'), recid)
-    tp = count(lambda i: getattr(i, prefix + 'true_high'), recid)
+def hightable(recid, surv, prefix=""):
+    tn = count(lambda i: getattr(i, prefix + "low_med"), surv)
+    fp = count(lambda i: getattr(i, prefix + "true_high"), surv)
+    fn = count(lambda i: getattr(i, prefix + "low_med"), recid)
+    tp = count(lambda i: getattr(i, prefix + "true_high"), recid)
     t(tn, fp, fn, tp)
 
 
 def vtable(recid, surv):
-    table(recid, surv, prefix='v')
+    table(recid, surv, prefix="v")
 
 
 def vhightable(recid, surv):
-    hightable(recid, surv, prefix='v')
+    hightable(recid, surv, prefix="v")
 
 
 def is_race(race):
@@ -178,23 +178,23 @@ def is_race(race):
 
 def write_two_year_file(f, pop, test, headers):
     headers = list(headers)
-    headers.append('two_year_recid')
-    with open(f, 'w') as o:
+    headers.append("two_year_recid")
+    with open(f, "w") as o:
         writer = DictWriter(o, fieldnames=headers)
         writer.writeheader()
         for person in pop:
             row = person.rows[0]
             if getattr(person, test):
-                row['two_year_recid'] = 1
+                row["two_year_recid"] = 1
             else:
-                row['two_year_recid'] = 0
+                row["two_year_recid"] = 0
 
             if person.compas_felony:
-                row['c_charge_degree'] = 'F'
+                row["c_charge_degree"] = "F"
             else:
-                row['c_charge_degree'] = 'M'
+                row["c_charge_degree"] = "M"
             writer.writerow(row)
-            stdout.write('.')
+            stdout.write(".")
 
 
 def create_two_year_files():
@@ -211,18 +211,24 @@ def create_two_year_files():
             pass
         headers = reader.reader.fieldnames
 
-    pop = list(filter(lambda i: (i.recidivist and i.lifetime <= 730) or
-                      i.lifetime > 730,
-                      filter(lambda x: x.score_valid, people)))
+    pop = list(
+        filter(
+            lambda i: (i.recidivist and i.lifetime <= 730) or i.lifetime > 730,
+            filter(lambda x: x.score_valid, people),
+        )
+    )
 
-    vpop = list(filter(lambda i: (i.violent_recidivist and i.lifetime <= 730) or
-                       i.lifetime > 730,
-                       filter(lambda x: x.vscore_valid, people)))
+    vpop = list(
+        filter(
+            lambda i: (i.violent_recidivist and i.lifetime <= 730) or i.lifetime > 730,
+            filter(lambda x: x.vscore_valid, people),
+        )
+    )
 
-    write_two_year_file("./compas-scores-two-years.csv", pop,
-                        'recidivist', headers)
-    write_two_year_file("./compas-scores-two-years-violent.csv", vpop,
-                        'violent_recidivist', headers)
+    write_two_year_file("./compas-scores-two-years.csv", pop, "recidivist", headers)
+    write_two_year_file(
+        "./compas-scores-two-years-violent.csv", vpop, "violent_recidivist", headers
+    )
 
 
 if __name__ == "__main__":

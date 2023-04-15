@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#import talib
+# import talib
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 
 import numpy as np
@@ -28,13 +29,23 @@ from typing import Union, List, Callable
 
 from tensortrade.features.feature_transformer import FeatureTransformer
 
+
 class TAlibIndicator(FeatureTransformer):
     """Adds one or more TAlib indicators to a data frame, based on existing open, high, low, and close column values."""
 
-    def __init__(self, indicators: List[str], lows: Union[List[float], List[int]] = None, highs: Union[List[float], List[int]] = None):
+    def __init__(
+        self,
+        indicators: List[str],
+        lows: Union[List[float], List[int]] = None,
+        highs: Union[List[float], List[int]] = None,
+    ):
         self._indicator_names = indicators
         self._indicators = list(
-            map(lambda indicator_name: self._str_to_indicator(indicator_name), indicators))
+            map(
+                lambda indicator_name: self._str_to_indicator(indicator_name),
+                indicators,
+            )
+        )
 
         self._lows = lows or np.zeros(len(indicators))
         self._highs = highs or np.ones(len(indicators))
@@ -59,6 +70,8 @@ class TAlibIndicator(FeatureTransformer):
             indicator_name = self._indicator_names[i]
             indicator = self._indicators[i]
 
-            X[indicator_name.upper()] = indicator(X['open'], X['high'], X['low'], X['close'])
+            X[indicator_name.upper()] = indicator(
+                X["open"], X["high"], X["low"], X["close"]
+            )
 
         return X

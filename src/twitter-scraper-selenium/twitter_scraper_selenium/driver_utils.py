@@ -9,8 +9,7 @@ from random import randint
 import logging
 
 logger = logging.getLogger(__name__)
-format = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
@@ -33,19 +32,23 @@ class Utilities:
         """
         try:
             logging.error("before waiting")
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, '[data-testid="tweet"]')))
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, '[data-testid="tweet"]')
+                )
+            )
             logging.error("after waiting")
         except WebDriverException:
             logger.exception(
-                "Tweets did not appear!, Try setting headless=False to see what is happening")
+                "Tweets did not appear!, Try setting headless=False to see what is happening"
+            )
 
     @staticmethod
     def scroll_down(driver) -> None:
         """Helps to scroll down web page"""
         try:
             logging.error("search body")
-            body = driver.find_element(By.CSS_SELECTOR, 'body')
+            body = driver.find_element(By.CSS_SELECTOR, "body")
             for _ in range(randint(1, 3)):
                 body.send_keys(Keys.PAGE_DOWN)
             logging.error("found body")
@@ -62,5 +65,5 @@ class Utilities:
                 logging.error("waiting for complete")
                 state = driver.execute_script("return document.readyState")
         except Exception as ex:
-            logger.exception('Error at wait_until_completion: {}'.format(ex))
+            logger.exception("Error at wait_until_completion: {}".format(ex))
         logging.error("complete")

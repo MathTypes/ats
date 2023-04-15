@@ -30,7 +30,12 @@ class FuturePositionStrategy(ActionStrategy):
     I will make more tests and verify this argument.
     """
 
-    def __init__(self, n_actions: int = 3, instrument_symbol: str = 'BTC', max_allowed_slippage_percent: float = 1.0):
+    def __init__(
+        self,
+        n_actions: int = 3,
+        instrument_symbol: str = "BTC",
+        max_allowed_slippage_percent: float = 1.0,
+    ):
         """
         Arguments:
             instrument_symbol: The exchange symbol of the instrument being traded. Defaults to 'BTC'.
@@ -52,7 +57,8 @@ class FuturePositionStrategy(ActionStrategy):
     @dtype.setter
     def dtype(self, dtype: DTypeString):
         raise ValueError(
-            'Cannot change the dtype of a `SimpleDiscreteStrategy` due to the requirements of `gym.spaces.Discrete` spaces. ')
+            "Cannot change the dtype of a `SimpleDiscreteStrategy` due to the requirements of `gym.spaces.Discrete` spaces. "
+        )
 
     def get_trade(self, action: TradeActionUnion) -> Trade:
         """
@@ -60,12 +66,12 @@ class FuturePositionStrategy(ActionStrategy):
         hold, buy and sell, implied by FutureTradeType.
         将action转化成position和trade
         """
-        size = (self.action_space.n -1)/2
+        size = (self.action_space.n - 1) / 2
         position = (action - size) / size
 
-        '''
+        """
         比如说n = 5， 生成01234五种动作，实际上对应的持仓大小应该是-1 -0.5 0 0.5 1
-        '''
+        """
         change = position - self.last_position
 
         if change > 0.001:

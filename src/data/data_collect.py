@@ -9,19 +9,13 @@ from src.data.utils import bbc_content
 link, author, date, text, images = [], [], [], [], []
 
 
-def information_extraction(
-    json_content=None, ind=None, content=None, inp_type=None
-):
+def information_extraction(json_content=None, ind=None, content=None, inp_type=None):
     if inp_type == "json":
         try:
             link.append(json_content[ind]["url"])
             try:
                 images.append(
-                    [
-                        json_content[ind]["image"]["ichefHref"].replace(
-                            "{width}", "240"
-                        )
-                    ]
+                    [json_content[ind]["image"]["ichefHref"].replace("{width}", "240")]
                 )
             except:
                 images.append(["nan"])
@@ -29,9 +23,9 @@ def information_extraction(
         except:
             pass
     else:
-        width = content.find("div", {"class": "gs-o-media-island"}).find(
-            "img"
-        )["src-widths"][1:4]
+        width = content.find("div", {"class": "gs-o-media-island"}).find("img")[
+            "src-widths"
+        ][1:4]
         images.append(
             [
                 content.find("div", {"class": "gs-o-media-island"})
@@ -83,7 +77,7 @@ def news_scraping(path):
                 for i in range(len(content)):
                     information_extraction(content=content[i])
 
-    print('loop over pages:')
+    print("loop over pages:")
     for i in tq(range(0, 50, 3)):
         url = (
             api[0]
@@ -118,7 +112,7 @@ def news_page_scraping(path):
             del link[index]
             del text[index]
             del images[index]
-    print('loop over news links:')
+    print("loop over news links:")
 
     for i in tq(range(len(link))):
         url = link[i]
@@ -141,9 +135,7 @@ def news_page_scraping(path):
 
             IMG = soup.findAll("div", {"src-component": "image-block"})
             for j in range(len(IMG)):
-                images[i].append(
-                    list(IMG[j].find("img")["srcset"].split(" "))[0]
-                )
+                images[i].append(list(IMG[j].find("img")["srcset"].split(" "))[0])
             TEXT = soup.findAll("div", {"src-component": "text-block"})
             for j in range(len(TEXT)):
                 text[i].append(TEXT[j].find("p").text)
@@ -151,13 +143,13 @@ def news_page_scraping(path):
             sleep(10)
             continue
 
-    return  link, author, date, text, images
+    return link, author, date, text, images
+
 
 def data_collection():
     path = "https://www.bbc.com"
     print("Scrape news links:")
     news_scraping(path)
 
-    print('Scrape content of news pages:')
+    print("Scrape content of news pages:")
     return news_page_scraping(path)
-

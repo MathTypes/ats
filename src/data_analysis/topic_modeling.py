@@ -13,11 +13,13 @@ class LatentDirichletAllocation:
     def __init__(self, df):
         self.dataset = df
         self.data = self.dataset.text.values.tolist()
-        #logging.info(f'data:{self.data}')
+        # logging.info(f'data:{self.data}')
 
-        self.en = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
+        self.en = spacy.load("en_core_web_sm", disable=["parser", "ner"])
         self.stopwords = list(self.en.Defaults.stop_words)
-        self.stopwords.extend(['from', 'subject', 're', 'edu', 'use', 'say', "said", "would", "also"])
+        self.stopwords.extend(
+            ["from", "subject", "re", "edu", "use", "say", "said", "would", "also"]
+        )
 
         self.lemma_data = self.data_process()
         self.id_word = corpora.Dictionary(self.lemma_data)
@@ -31,10 +33,16 @@ class LatentDirichletAllocation:
 
     def lemmatization(self, texts, allowed_posttags=None):
         if allowed_posttags is None:
-            allowed_posttags = ['NOUN', 'ADJ', 'VERB', 'ADV']
+            allowed_posttags = ["NOUN", "ADJ", "VERB", "ADV"]
         out = []
         for text in texts:
-            out.append([token.lemma_ for token in self.en(" ".join(text)) if token.pos_ in allowed_posttags])
+            out.append(
+                [
+                    token.lemma_
+                    for token in self.en(" ".join(text))
+                    if token.pos_ in allowed_posttags
+                ]
+            )
         return out
 
     def data_process(self):
@@ -54,19 +62,25 @@ class LatentDirichletAllocation:
         return [self.id_word.doc2bow(text) for text in self.lemma_data]
 
     def lda(self):
-        self.lda_model = ldamodel.LdaModel(corpus=self.corpus,
-                                           id2word=self.id_word,
-                                           num_topics=5,
-                                           random_state=100,
-                                           update_every=1,
-                                           chunksize=100,
-                                           passes=10,
-                                           alpha='auto',
-                                           per_word_topics=True)
+        self.lda_model = ldamodel.LdaModel(
+            corpus=self.corpus,
+            id2word=self.id_word,
+            num_topics=5,
+            random_state=100,
+            update_every=1,
+            chunksize=100,
+            passes=10,
+            alpha="auto",
+            per_word_topics=True,
+        )
 
         perplexity = self.lda_model.log_perplexity(self.corpus)
-        coherance_model = CoherenceModel(model=self.lda_model, texts=self.lemma_data, dictionary=self.id_word,
-                                         coherence='c_v')
+        coherance_model = CoherenceModel(
+            model=self.lda_model,
+            texts=self.lemma_data,
+            dictionary=self.id_word,
+            coherence="c_v",
+        )
         coherance_lda = coherance_model.get_coherence()
 
         return perplexity, coherance_lda

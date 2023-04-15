@@ -1,4 +1,3 @@
-
 import unittest.mock as mock
 
 from tensortrade.oms.orders.criteria import Limit
@@ -11,15 +10,15 @@ def test_init():
     assert criteria.limit_price == 7000.00
 
 
-@mock.patch('tensortrade.exchanges.Exchange')
-@mock.patch('tensortrade.orders.Order')
+@mock.patch("tensortrade.exchanges.Exchange")
+@mock.patch("tensortrade.orders.Order")
 def test_call_with_buy_order(mock_order_class, mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
     exchange.quote_price = mock.Mock(return_value=7000.00)
 
     order = mock_order_class.return_value
-    order.pair = USD/BTC
+    order.pair = USD / BTC
     order.side = TradeSide.BUY
 
     criteria = Limit(limit_price=6800.00)
@@ -32,15 +31,15 @@ def test_call_with_buy_order(mock_order_class, mock_exchange_class):
     assert criteria(order, exchange)
 
 
-@mock.patch('tensortrade.exchanges.Exchange')
-@mock.patch('tensortrade.orders.Order')
+@mock.patch("tensortrade.exchanges.Exchange")
+@mock.patch("tensortrade.orders.Order")
 def test_call_with_sell_order(mock_order_class, mock_exchange_class):
 
     exchange = mock_exchange_class.return_value
     exchange.quote_price.return_value = 7000.00
 
     order = mock_order_class.return_value
-    order.pair = USD/BTC
+    order.pair = USD / BTC
     order.side = TradeSide.SELL
 
     criteria = Limit(limit_price=6800.00)

@@ -73,5 +73,5 @@ UNWIND row.fact AS fact
 batch_step = 100
 
 for offset in range(0, len(nlp_output), batch_step):
-    batch = nlp_output[offset: offset + batch_step]
+    batch = nlp_output[offset : offset + batch_step]
     gds.run_cypher(nlp_import_query, {"data": batch})

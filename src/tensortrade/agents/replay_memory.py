@@ -20,12 +20,14 @@ from collections import namedtuple
 from typing import List
 
 
-Transition = namedtuple('Transition', ['state', 'action', 'reward', 'done'])
+Transition = namedtuple("Transition", ["state", "action", "reward", "done"])
 
 
-@deprecated(version='1.0.4', reason="Builtin agents are being deprecated in favor of external implementations (ie: Ray)")
+@deprecated(
+    version="1.0.4",
+    reason="Builtin agents are being deprecated in favor of external implementations (ie: Ray)",
+)
 class ReplayMemory(object):
-
     def __init__(self, capacity: int, transition_type: namedtuple = Transition):
         self.capacity = capacity
         self.Transition = transition_type

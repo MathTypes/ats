@@ -190,7 +190,7 @@ def changepoint_loc_and_score(
     k1_lengthscale: float = None,
     k2_variance: float = None,
     k2_lengthscale: float = None,
-    kC_likelihood_variance=1.0, #TODO note this seems to work better by resetting this
+    kC_likelihood_variance=1.0,  # TODO note this seems to work better by resetting this
     # kC_likelihood_variance=None,
     kC_changepoint_location=None,
     kC_steepness=1.0,
@@ -231,10 +231,7 @@ def changepoint_loc_and_score(
             raise BaseException(
                 "Retry with default hyperparameters - already using default parameters."
             ) from ex
-        (
-            kM_nlml,
-            kM_params,
-        ) = fit_matern_kernel(time_series_data)
+        (kM_nlml, kM_params,) = fit_matern_kernel(time_series_data)
 
     is_cp_location_default = (
         (not kC_changepoint_location)
@@ -288,11 +285,9 @@ def changepoint_loc_and_score(
             raise BaseException(
                 "Retry with default hyperparameters - already using default parameters."
             ) from ex
-        (
-            changepoint_location,
-            kC_nlml,
-            kC_params,
-        ) = fit_changepoint_kernel(time_series_data)
+        (changepoint_location, kC_nlml, kC_params,) = fit_changepoint_kernel(
+            time_series_data
+        )
 
     cp_score = changepoint_severity(kC_nlml, kM_nlml)
     cp_loc_normalised = (time_series_data["X"].iloc[-1] - changepoint_location) / (

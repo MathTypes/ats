@@ -7,8 +7,7 @@ import json
 from .keyword import Keyword, json_to_csv
 
 logger = logging.getLogger(__name__)
-format = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
@@ -23,7 +22,7 @@ def scrape_topic(
     output_format: str = "json",
     directory: str = None,
     headless: bool = True,
-    browser_profile=None
+    browser_profile=None,
 ):
     """
     Returns tweets data in CSV or JSON.
@@ -48,34 +47,33 @@ def scrape_topic(
         headless=headless,
         proxy=proxy,
         tweets_count=tweets_count,
-        browser_profile=browser_profile
+        browser_profile=browser_profile,
     )
     data = keyword_bot.scrap()
     if output_format.lower() == "json":
-        if filename == '':
+        if filename == "":
             # if filename was not provided
             return json.dumps(data)
-        elif filename != '':
+        elif filename != "":
             # if filename was provided
-            mode = 'w'
-            output_path = os.path.join(directory, filename+".json")
+            mode = "w"
+            output_path = os.path.join(directory, filename + ".json")
             if os.path.exists(output_path):
-                mode = 'r'
-            with open(output_path, mode, encoding='utf-8') as file:
-                if mode == 'r':
+                mode = "r"
+            with open(output_path, mode, encoding="utf-8") as file:
+                if mode == "r":
                     try:
                         file_content = file.read()
                         content = json.loads(file_content)
                     except json.decoder.JSONDecodeError:
-                        logger.warning('Invalid JSON Detected!')
+                        logger.warning("Invalid JSON Detected!")
                         content = {}
                     file.close()
                     data.update(content)
-                    with open(output_path, 'w', encoding='utf-8') as file_in_write_mode:
+                    with open(output_path, "w", encoding="utf-8") as file_in_write_mode:
                         json.dump(data, file_in_write_mode)
                         logger.setLevel(logging.INFO)
-                        logger.info('Data Successfully Saved to {}'.format(
-                            output_path))
+                        logger.info("Data Successfully Saved to {}".format(output_path))
     elif output_format == "csv":
         json_to_csv(filename=filename, json_data=data, directory=directory)
     else:

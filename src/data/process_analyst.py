@@ -9,16 +9,15 @@ from neo4j_util.sentiment_api import get_unprocessed_tweets, get_tweet_replies_v
 from neo4j_util.neo4j_tweet_util import Neo4j
 from util import config_utils
 from util import logging_utils
-from data.front_end_utils import (
-    subject_analysis
-)
+from data.front_end_utils import subject_analysis
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='A test script for http://stackoverflow.com/q/14097061/78845'
+        description="A test script for http://stackoverflow.com/q/14097061/78845"
     )
-    parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                        action="store_true")
+    parser.add_argument(
+        "-v", "--verbose", help="increase output verbosity", action="store_true"
+    )
     parser.add_argument("--neo4j_host", type=str, required=False)
 
     args = parser.parse_args()
@@ -33,11 +32,9 @@ if __name__ == "__main__":
             break
         data = add_subject_keyword(data)
         data = subject_analysis(data)
-        #logging.error(f'process_data:{data}')
+        # logging.error(f'process_data:{data}')
         neo4j_util = Neo4j()
         neo4j_util.update_processed_text(data)
-        #break
-    #conv_data = get_tweet_replies_v2()
-    #conv_data = add_subject_keyword(conv_data)
-
-
+        # break
+    # conv_data = get_tweet_replies_v2()
+    # conv_data = add_subject_keyword(conv_data)

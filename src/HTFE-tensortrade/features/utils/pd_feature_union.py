@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import pandas as pd
 
@@ -40,10 +41,12 @@ class PDFeatureUnion(FeatureUnion):
             transformed = transformer.transform(X)
             return transformed if weight is None else transformed * weight
 
-        transformed_X = Parallel(n_jobs=self.n_jobs)(delayed(inner_transform_with_weights)(trans, weight, X)
-                                                     for _, trans, weight in self._iter())
+        transformed_X = Parallel(n_jobs=self.n_jobs)(
+            delayed(inner_transform_with_weights)(trans, weight, X)
+            for _, trans, weight in self._iter()
+        )
 
-        return pd.concat(transformed_X, axis=1, join='inner')
+        return pd.concat(transformed_X, axis=1, join="inner")
 
     def fit_transform(self, X: TransformableList, y: TransformableList = None):
         """Fit the model to the data set, then transform the data set with the fit model.

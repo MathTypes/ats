@@ -7,16 +7,15 @@ from tensortrade.oms.instruments import BTC, USD, ExchangePair
 from tensortrade.oms.orders import Order, TradeSide, TradeType, OrderStatus
 from tensortrade.oms.exchanges import ExchangeOptions
 
-from tensortrade.oms.services.execution.simulated import execute_buy_order, execute_sell_order
+from tensortrade.oms.services.execution.simulated import (
+    execute_buy_order,
+    execute_sell_order,
+)
 
 
-def assert_execute_order(current_price,
-                         base_balance,
-                         quote_balance,
-                         order_side,
-                         order_quantity,
-                         order_price,
-                         ):
+def assert_execute_order(
+    current_price, base_balance, quote_balance, order_side, order_quantity, order_price,
+):
     mock_clock = mock.Mock()
     clock = mock_clock.return_value
     clock.step = 3
@@ -37,20 +36,17 @@ def assert_execute_order(current_price,
     base_wallet = Wallet(exchange, base_balance)
     quote_wallet = Wallet(exchange, quote_balance)
 
-    portfolio = Portfolio(USD, [
-        base_wallet,
-        quote_wallet
-    ])
+    portfolio = Portfolio(USD, [base_wallet, quote_wallet])
 
     order = Order(
         step=1,
         side=order_side,
         trade_type=TradeType.MARKET,
-        exchange_pair=ExchangePair(exchange, base/quote),
+        exchange_pair=ExchangePair(exchange, base / quote),
         quantity=order_quantity,
         portfolio=portfolio,
         price=order_price,
-        path_id="fake_id"
+        path_id="fake_id",
     )
     order.status = OrderStatus.OPEN
 
@@ -65,14 +61,20 @@ def assert_execute_order(current_price,
             clock=clock,
         )
 
-        base_balance = base_wallet.locked['fake_id'].size
-        quote_balance = quote_wallet.locked['fake_id'].size
+        base_balance = base_wallet.locked["fake_id"].size
+        quote_balance = quote_wallet.locked["fake_id"].size
 
-        expected_base_balance = order_quantity.size - (trade.size + trade.commission.size)
+        expected_base_balance = order_quantity.size - (
+            trade.size + trade.commission.size
+        )
         expected_quote_balance = trade.size / current_price
 
-        expected_base_balance = expected_base_balance.quantize(Decimal(10) ** -base.precision)
-        expected_quote_balance = expected_quote_balance.quantize(Decimal(10) ** -quote.precision)
+        expected_base_balance = expected_base_balance.quantize(
+            Decimal(10) ** -base.precision
+        )
+        expected_quote_balance = expected_quote_balance.quantize(
+            Decimal(10) ** -quote.precision
+        )
 
         assert base_balance == expected_base_balance
         assert quote_balance == expected_quote_balance
@@ -87,11 +89,13 @@ def assert_execute_order(current_price,
             clock=clock,
         )
 
-        base_balance = base_wallet.locked['fake_id'].size
-        quote_balance = quote_wallet.locked['fake_id'].size
+        base_balance = base_wallet.locked["fake_id"].size
+        quote_balance = quote_wallet.locked["fake_id"].size
 
         expected_base_balance = trade.size * current_price
-        expected_base_balance = expected_base_balance.quantize(Decimal(10)**-base.precision)
+        expected_base_balance = expected_base_balance.quantize(
+            Decimal(10) ** -base.precision
+        )
 
         assert base_balance == expected_base_balance
         assert quote_balance == 0
@@ -106,7 +110,7 @@ def test_simple_values_execute_buy_order():
         quote_balance=1.7 * BTC,
         order_side=TradeSide.BUY,
         order_quantity=3000 * USD,
-        order_price=9200
+        order_price=9200,
     )
 
     # Test: current_price > order_price
@@ -116,7 +120,7 @@ def test_simple_values_execute_buy_order():
         quote_balance=1.7 * BTC,
         order_side=TradeSide.BUY,
         order_quantity=3000 * USD,
-        order_price=9200
+        order_price=9200,
     )
 
 
@@ -129,7 +133,7 @@ def test_simple_values_execute_sell_order():
         quote_balance=1.7 * BTC,
         order_side=TradeSide.SELL,
         order_quantity=0.5 * BTC,
-        order_price=9200
+        order_price=9200,
     )
 
     # Test: current_price > order_price
@@ -139,7 +143,7 @@ def test_simple_values_execute_sell_order():
         quote_balance=1.7 * BTC,
         order_side=TradeSide.SELL,
         order_quantity=0.5 * BTC,
-        order_price=9200
+        order_price=9200,
     )
 
 
@@ -152,7 +156,7 @@ def test_complex_values_execute_buy_order():
         quote_balance=2.39682929 * BTC,
         order_side=TradeSide.BUY,
         order_quantity=56789.33 * USD,
-        order_price=9678.43
+        order_price=9678.43,
     )
 
     # Test: current_price > order_price
@@ -162,7 +166,7 @@ def test_complex_values_execute_buy_order():
         quote_balance=2.39682929 * BTC,
         order_side=TradeSide.BUY,
         order_quantity=56789.33 * USD,
-        order_price=9678.43
+        order_price=9678.43,
     )
 
 
@@ -175,7 +179,7 @@ def test_complex_values_execute_sell_order():
         quote_balance=3.33829407 * BTC,
         order_side=TradeSide.SELL,
         order_quantity=2.39682929 * BTC,
-        order_price=9678.43
+        order_price=9678.43,
     )
 
     # Test: current_price > order_price
@@ -185,5 +189,5 @@ def test_complex_values_execute_sell_order():
         quote_balance=3.33829407 * BTC,
         order_side=TradeSide.SELL,
         order_quantity=2.39682929 * BTC,
-        order_price=9678.43
+        order_price=9678.43,
     )

@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -7,34 +6,52 @@ from defillama import DefiLlama
 
 
 def render_tvl_mcap():
-    MIN_TVL = 1000000.
-    MIN_MCAP = 1000000.
+    MIN_TVL = 1000000.0
+    MIN_MCAP = 1000000.0
 
     @st.cache_data()
     def get_tvl_mcap_data():
         llama = DefiLlama()
         df = pd.DataFrame(llama.get_all_protocols())
-        tvl_mcap_df = df.loc[(df["tvl"] > 0) & (df["mcap"] > 0), [
-            "name", "tvl", "mcap", "chain", "category", "slug"]].sort_values(by=["mcap"], ascending=False)
-        return tvl_mcap_df[(tvl_mcap_df["tvl"] > MIN_TVL) & (tvl_mcap_df["mcap"] > MIN_MCAP)]
+        tvl_mcap_df = df.loc[
+            (df["tvl"] > 0) & (df["mcap"] > 0),
+            ["name", "tvl", "mcap", "chain", "category", "slug"],
+        ].sort_values(by=["mcap"], ascending=False)
+        return tvl_mcap_df[
+            (tvl_mcap_df["tvl"] > MIN_TVL) & (tvl_mcap_df["mcap"] > MIN_MCAP)
+        ]
 
-    def get_protocols_by_chain_category(protocols: pd.DataFrame, group_by: list, nth: list):
-        return protocols.sort_values('tvl', ascending=False).groupby(group_by).nth(nth).reset_index()
+    def get_protocols_by_chain_category(
+        protocols: pd.DataFrame, group_by: list, nth: list
+    ):
+        return (
+            protocols.sort_values("tvl", ascending=False)
+            .groupby(group_by)
+            .nth(nth)
+            .reset_index()
+        )
 
     st.title("TVL vs MCAP Analysis")
     st.write("---")
     st.code("💡 Source: [DefiLlama](https://defillama.com/)")
-    with st.spinner(text='In progress'):
+    with st.spinner(text="In progress"):
         tvl_mcap_df = get_tvl_mcap_data()
 
-    default_chains = ["Ethereum", "Solana", "Binance",
-                      "Polygon", "Multi-Chain", "Avalanche"]
+    default_chains = [
+        "Ethereum",
+        "Solana",
+        "Binance",
+        "Polygon",
+        "Multi-Chain",
+        "Avalanche",
+    ]
 
     st.sidebar.write("### Chains filter")
     chains = st.sidebar.multiselect(
         "Select the chains to analyze:",
         options=tvl_mcap_df["chain"].unique(),
-        default=default_chains)
+        default=default_chains,
+    )
 
     scatter = px.scatter(
         data_frame=tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)],
@@ -48,30 +65,32 @@ def render_tvl_mcap():
         hover_data=["name"],
         template="plotly_dark",
         title="TVL vs MCAP",
-        labels={
-            "tvl": 'TVL (USD)',
-            'mcap': 'Market Cap (USD)'
-        })
+        labels={"tvl": "TVL (USD)", "mcap": "Market Cap (USD)"},
+    )
 
     st.plotly_chart(scatter, use_container_width=True)
 
     st.sidebar.write("---")
     st.sidebar.write("### SunBurst filter")
     groupby = st.sidebar.selectbox(
-        'Group by:', [['chain', 'category'], ['category', 'chain']])
-    nth = st.sidebar.slider('Top protocols by Category',
-                            min_value=1, max_value=5)
+        "Group by:", [["chain", "category"], ["category", "chain"]]
+    )
+    nth = st.sidebar.slider("Top protocols by Category", min_value=1, max_value=5)
 
     proto_agg = get_protocols_by_chain_category(
-        tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)], groupby, np.arange(0, nth, 1).tolist())
+        tvl_mcap_df[tvl_mcap_df["chain"].isin(chains)],
+        groupby,
+        np.arange(0, nth, 1).tolist(),
+    )
     groupby.append("slug")
     sunburst = px.sunburst(
         proto_agg,
         path=groupby,
-        values='tvl',
+        values="tvl",
         height=800,
         title="SunBurst",
-        template="plotly_dark",)
+        template="plotly_dark",
+    )
 
     st.plotly_chart(sunburst, use_container_width=True)
 

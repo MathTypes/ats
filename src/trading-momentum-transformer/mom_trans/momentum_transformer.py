@@ -24,6 +24,7 @@ from settings.hp_grid import (
     HP_MINIBATCH_SIZE,
 )
 
+
 def tf_stack(x, axis=0):
     if not isinstance(x, list):
         x = [x]
@@ -316,7 +317,9 @@ class InterpretableMultiHeadAttention(keras.layers.Layer):
 
 
 class TftDeepMomentumNetworkModel(DeepMomentumNetworkModel):
-    def __init__(self, project_name, hp_directory, hp_minibatch_size=HP_MINIBATCH_SIZE, **params):
+    def __init__(
+        self, project_name, hp_directory, hp_minibatch_size=HP_MINIBATCH_SIZE, **params
+    ):
         params = params.copy()
 
         self._input_placeholder = None
@@ -353,11 +356,7 @@ class TftDeepMomentumNetworkModel(DeepMomentumNetworkModel):
         # encoder_steps = self.num_encoder_steps
 
         all_inputs = keras.layers.Input(
-            shape=(
-                time_steps,
-                combined_input_size,
-            ),
-            name="input",
+            shape=(time_steps, combined_input_size,), name="input",
         )
 
         (
@@ -369,19 +368,10 @@ class TftDeepMomentumNetworkModel(DeepMomentumNetworkModel):
 
         if unknown_inputs is not None:
             historical_inputs = concat(
-                [
-                    unknown_inputs,
-                    known_combined_layer,
-                ],
-                axis=-1,
+                [unknown_inputs, known_combined_layer,], axis=-1,
             )
         else:
-            historical_inputs = concat(
-                [
-                    known_combined_layer,
-                ],
-                axis=-1,
-            )
+            historical_inputs = concat([known_combined_layer,], axis=-1,)
 
         def static_combine_and_mask(embedding):
             """Applies variable selection network to static inputs.
@@ -578,7 +568,7 @@ class TftDeepMomentumNetworkModel(DeepMomentumNetworkModel):
 
         mask = get_decoder_mask(enriched)
         x, self_att = self_attn_layer(enriched, enriched, enriched, mask=mask)
-        
+
         x, _ = apply_gating_layer(
             x, self.hidden_layer_size, dropout_rate=self.dropout_rate, activation=None
         )
@@ -616,7 +606,7 @@ class TftDeepMomentumNetworkModel(DeepMomentumNetworkModel):
                     activation=tf.nn.tanh,
                     kernel_constraint=keras.constraints.max_norm(3),
                 )
-            )(transformer_layer[Ellipsis, -self.force_output_sharpe_length:, :])
+            )(transformer_layer[Ellipsis, -self.force_output_sharpe_length :, :])
         else:
             outputs = keras.layers.TimeDistributed(
                 keras.layers.Dense(
@@ -781,8 +771,8 @@ class TftDeepMomentumNetworkModel(DeepMomentumNetworkModel):
         )
 
         return unknown_inputs, known_combined_layer, static_inputs
-    
-    def get_attention(self, data, batch_size, mask = None):
+
+    def get_attention(self, data, batch_size, mask=None):
         """Computes TFT attention weights for a given dataset.
         Args:
           df: Input dataframe

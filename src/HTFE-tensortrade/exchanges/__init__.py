@@ -9,7 +9,7 @@ from . import simulated
 
 
 _registry = {
-    'simulated': simulated.SimulatedExchange,
+    "simulated": simulated.SimulatedExchange,
 }
 
 
@@ -27,13 +27,13 @@ def get(identifier: str) -> InstrumentExchange:
         KeyError: if identifier is not associated with any `InstrumentExchange`
     """
     if identifier in _registry.keys():
-        if identifier == 'simulated':
+        if identifier == "simulated":
             data_url = "http://www.cryptodatadownload.com/cdd/Coinbase_BTCUSD_1h.csv"
             data = pd.read_csv(data_url, skiprows=[0])[::-1]
-            data = data.get(['Open', 'High', 'Low', 'Close', 'Volume BTC'])
-            data = data.rename({'Volume BTC': 'volume'}, axis=1)
+            data = data.get(["Open", "High", "Low", "Close", "Volume BTC"])
+            data = data.rename({"Volume BTC": "volume"}, axis=1)
             data = data.rename({name: name.lower() for name in data.columns}, axis=1)
-            return _registry['simulated'](data_frame=data)
+            return _registry["simulated"](data_frame=data)
 
         return _registry[identifier]()
 
@@ -41,4 +41,8 @@ def get(identifier: str) -> InstrumentExchange:
         ccxt_exchange = getattr(ccxt, identifier)()
         return live.CCXTExchange(exchange=ccxt_exchange)
 
-    raise KeyError('Identifier {} is not associated with any `InstrumentExchange`.'.format(identifier))
+    raise KeyError(
+        "Identifier {} is not associated with any `InstrumentExchange`.".format(
+            identifier
+        )
+    )

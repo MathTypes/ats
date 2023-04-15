@@ -128,7 +128,7 @@ def deep_momentum_strategy_features(df_asset: pd.DataFrame) -> pd.DataFrame:
         df_asset["month_of_year"] = []
         df_asset["year"] = []
         df_asset["date"] = []
-        
+
     return df_asset.dropna()
 
 

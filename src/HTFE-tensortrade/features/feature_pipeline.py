@@ -13,7 +13,8 @@
 # limitations under the License.
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 
 import pandas as pd
@@ -37,7 +38,7 @@ class FeaturePipeline(object):
         """
         self._steps = steps
 
-        self._dtype: DTypeString = kwargs.get('dtype', np.float16)
+        self._dtype: DTypeString = kwargs.get("dtype", np.float16)
 
     @property
     def steps(self) -> List[FeatureTransformer]:
@@ -79,7 +80,9 @@ class FeaturePipeline(object):
 
         return output_space
 
-    def _transform(self, observations: pd.DataFrame, input_space: Space) -> pd.DataFrame:
+    def _transform(
+        self, observations: pd.DataFrame, input_space: Space
+    ) -> pd.DataFrame:
         """Utility method for transforming observations via a list of `FeatureTransformer` objects."""
         for transformer in self._steps:
             observations = transformer.transform(observations, input_space)
@@ -102,8 +105,12 @@ class FeaturePipeline(object):
         features = self._transform(observation, input_space)
 
         if not isinstance(features, pd.DataFrame):
-            raise ValueError("A FeaturePipeline must transform a pandas.DataFrame into another pandas.DataFrame.\n \
+            raise ValueError(
+                "A FeaturePipeline must transform a pandas.DataFrame into another pandas.DataFrame.\n \
                                Expected return type: {} `\n \
-                               Actual return type: {}.".format(type(pd.DataFrame([])), type(features)))
+                               Actual return type: {}.".format(
+                    type(pd.DataFrame([])), type(features)
+                )
+            )
 
         return features

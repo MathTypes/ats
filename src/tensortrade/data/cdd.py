@@ -29,12 +29,14 @@ class CryptoDataDownload:
     def __init__(self) -> None:
         self.url = "https://www.cryptodatadownload.com/cdd/"
 
-    def fetch_default(self,
-                      exchange_name: str,
-                      base_symbol: str,
-                      quote_symbol: str,
-                      timeframe: str,
-                      include_all_volumes: bool = False) -> pd.DataFrame:
+    def fetch_default(
+        self,
+        exchange_name: str,
+        base_symbol: str,
+        quote_symbol: str,
+        timeframe: str,
+        include_all_volumes: bool = False,
+    ) -> pd.DataFrame:
         """Fetches data from all exchanges that match the evaluation structure.
 
         Parameters
@@ -57,16 +59,22 @@ class CryptoDataDownload:
             cryptocurrency pair.
         """
 
-        filename = "{}_{}{}_{}.csv".format(exchange_name, quote_symbol, base_symbol, timeframe)
+        filename = "{}_{}{}_{}.csv".format(
+            exchange_name, quote_symbol, base_symbol, timeframe
+        )
         base_vc = "Volume {}".format(base_symbol)
         new_base_vc = "volume_base"
         quote_vc = "Volume {}".format(quote_symbol)
         new_quote_vc = "volume_quote"
-        storage_options = {'User-Agent': 'Mozilla/5.0'}
-        df = pd.read_csv(self.url + filename, storage_options=storage_options, skiprows=1)
+        storage_options = {"User-Agent": "Mozilla/5.0"}
+        df = pd.read_csv(
+            self.url + filename, storage_options=storage_options, skiprows=1
+        )
         df = df[::-1]
         df = df.drop(["symbol"], axis=1)
-        df = df.rename({base_vc: new_base_vc, quote_vc: new_quote_vc, "Date": "date"}, axis=1)
+        df = df.rename(
+            {base_vc: new_base_vc, quote_vc: new_quote_vc, "Date": "date"}, axis=1
+        )
 
         df["unix"] = df["unix"].astype(int)
         df["unix"] = df["unix"].apply(
@@ -83,10 +91,9 @@ class CryptoDataDownload:
             return df
         return df
 
-    def fetch_gemini(self,
-                     base_symbol: str,
-                     quote_symbol: str,
-                     timeframe: str) -> pd.DataFrame:
+    def fetch_gemini(
+        self, base_symbol: str, quote_symbol: str, timeframe: str
+    ) -> pd.DataFrame:
         """
         Fetches data from the gemini exchange.
 
@@ -107,7 +114,9 @@ class CryptoDataDownload:
         """
         if timeframe.endswith("h"):
             timeframe = timeframe[:-1] + "hr"
-        filename = "{}_{}{}_{}.csv".format("gemini", quote_symbol, base_symbol, timeframe)
+        filename = "{}_{}{}_{}.csv".format(
+            "gemini", quote_symbol, base_symbol, timeframe
+        )
         df = pd.read_csv(self.url + filename, skiprows=1)
         df = df[::-1]
         df = df.drop(["Symbol", "Unix Timestamp"], axis=1)
@@ -116,12 +125,14 @@ class CryptoDataDownload:
         df = df.reset_index()
         return df
 
-    def fetch(self,
-              exchange_name: str,
-              base_symbol: str,
-              quote_symbol: str,
-              timeframe: str,
-              include_all_volumes: bool = False) -> pd.DataFrame:
+    def fetch(
+        self,
+        exchange_name: str,
+        base_symbol: str,
+        quote_symbol: str,
+        timeframe: str,
+        include_all_volumes: bool = False,
+    ) -> pd.DataFrame:
         """Fetches data for different exchanges and cryptocurrency pairs.
 
         Parameters
@@ -145,8 +156,10 @@ class CryptoDataDownload:
         """
         if exchange_name.lower() == "gemini":
             return self.fetch_gemini(base_symbol, quote_symbol, timeframe)
-        return self.fetch_default(exchange_name,
-                                  base_symbol,
-                                  quote_symbol,
-                                  timeframe,
-                                  include_all_volumes=include_all_volumes)
+        return self.fetch_default(
+            exchange_name,
+            base_symbol,
+            quote_symbol,
+            timeframe,
+            include_all_volumes=include_all_volumes,
+        )

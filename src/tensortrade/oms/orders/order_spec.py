@@ -34,17 +34,19 @@ class OrderSpec(Identifiable):
         The criteria for executing the order after its been created.
     """
 
-    def __init__(self,
-                 side: 'TradeSide',
-                 trade_type: 'TradeType',
-                 exchange_pair: 'ExchangePair',
-                 criteria: 'Callable[[Order, Exchange], bool]' = None):
+    def __init__(
+        self,
+        side: "TradeSide",
+        trade_type: "TradeType",
+        exchange_pair: "ExchangePair",
+        criteria: "Callable[[Order, Exchange], bool]" = None,
+    ):
         self.side = side
         self.type = trade_type
         self.exchange_pair = exchange_pair
         self.criteria = criteria
 
-    def create_order(self, order: 'Order') -> 'Order':
+    def create_order(self, order: "Order") -> "Order":
         """Creates an order following from another order.
 
         Parameters
@@ -68,16 +70,18 @@ class OrderSpec(Identifiable):
         if not quantity or quantity.size == 0:
             return None
 
-        return Order(step=exchange.clock.step,
-                     side=self.side,
-                     trade_type=self.type,
-                     exchange_pair=self.exchange_pair,
-                     quantity=quantity,
-                     portfolio=order.portfolio,
-                     price=self.exchange_pair.price,
-                     criteria=self.criteria,
-                     end=order.end,
-                     path_id=order.path_id)
+        return Order(
+            step=exchange.clock.step,
+            side=self.side,
+            trade_type=self.type,
+            exchange_pair=self.exchange_pair,
+            quantity=quantity,
+            portfolio=order.portfolio,
+            price=self.exchange_pair.price,
+            criteria=self.criteria,
+            end=order.end,
+            path_id=order.path_id,
+        )
 
     def to_dict(self) -> dict:
         """Creates dictionary representation of specification.
@@ -91,12 +95,12 @@ class OrderSpec(Identifiable):
             "id": self.id,
             "type": self.type,
             "exchange_pair": self.exchange_pair,
-            "criteria": self.criteria
+            "criteria": self.criteria,
         }
 
     def __str__(self) -> str:
-        data = ['{}={}'.format(k, v) for k, v in self.to_dict().items()]
-        return '<{}: {}>'.format(self.__class__.__name__, ', '.join(data))
+        data = ["{}={}".format(k, v) for k, v in self.to_dict().items()]
+        return "<{}: {}>".format(self.__class__.__name__, ", ".join(data))
 
     def __repr__(self) -> str:
         return str(self)

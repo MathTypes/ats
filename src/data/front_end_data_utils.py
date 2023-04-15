@@ -22,30 +22,23 @@ def bbc_content(soup):
     # =================================================================================== #
     #                             2. global climates                                      #
     # =================================================================================== #
-    Global = cont2.find(
-        "div", {"aria-labelledby": "nw-c-Globalclimatesummit__title"}
-    )
+    Global = cont2.find("div", {"aria-labelledby": "nw-c-Globalclimatesummit__title"})
     Global_cont = Global.find(
-        "div",
-        {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
+        "div", {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
     )
     # =================================================================================== #
     #                             3. climates                                             #
     # =================================================================================== #
-    climate = cont2.find(
-        "div", {"aria-labelledby": "nw-c-Climatebasics__title"}
-    )
+    climate = cont2.find("div", {"aria-labelledby": "nw-c-Climatebasics__title"})
     climate_cont = climate.find(
-        "div",
-        {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
+        "div", {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
     )
     # =================================================================================== #
     #                             4. features                                             #
     # =================================================================================== #
     features = cont2.find("div", {"aria-labelledby": "nw-c-Features__title"})
     features_cont = features.find(
-        "div",
-        {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
+        "div", {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
     )
     # =================================================================================== #
     #                             5. Latest Updates                                       #
@@ -55,7 +48,8 @@ def bbc_content(soup):
         "https://push.api.bbci.co.uk/batch?t=%2Fdata%2Fbbc-morph-%7Blx-commentary-data-paged%2Fabout%2Fe6369e45-f838-49cc-b5ac-857ed182e549%2FisUk%2Ffalse%2Flimit%2F20%2FnitroKey%2Flx-nitro%2FpageNumber%",
         "2F",
         "%2Fversion%2F1.5.6%2Clx-commentary-src-paged%2Fabout%2Fe6369e45-f838-49cc-b5ac-857ed182e549%2FisUk%2Ffalse%2Flimit%2F20%2FnitroKey%2Flx-nitro%2FpageNumber%",
-        "%2Fversion%2F1.5.6%7D?timeout=5"]
+        "%2Fversion%2F1.5.6%7D?timeout=5",
+    ]
 
     class1 = [
         "gel-layout__item gs-u-pb+@m gel-1/3@m gel0-1/4@xl gel-1/3@xxl nw-o-keyline nw-o-no-keyline@m",
@@ -72,4 +66,14 @@ def bbc_content(soup):
         "gel-layout__item gel-1/2@xs gel-1/1@l gel-1/2@xxl",
     ]
 
-    return main1, main2, Global_cont, climate_cont, features_cont, api, class1, class2,sub_class2
+    return (
+        main1,
+        main2,
+        Global_cont,
+        climate_cont,
+        features_cont,
+        api,
+        class1,
+        class2,
+        sub_class2,
+    )

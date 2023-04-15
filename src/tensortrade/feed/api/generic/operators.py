@@ -11,16 +11,14 @@ from tensortrade.feed.core.operators import (
     Freeze,
     Accumulator,
     Copy,
-    TypeVar
+    TypeVar,
 )
 
 K = TypeVar("K")
 
 
 @Stream.register_generic_method(["apply"])
-def apply(s: "Stream[T]",
-          func: Callable[[T], K],
-          dtype: str = None) -> "Stream[K]":
+def apply(s: "Stream[T]", func: Callable[[T], K], dtype: str = None) -> "Stream[K]":
     """Creates an apply stream.
 
     Parameters

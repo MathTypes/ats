@@ -332,11 +332,7 @@ class DeepMomentumNetworkModel(ABC):
                 epochs=self.num_epochs,
                 # batch_size=minibatch_size,
                 # covered by Tuner class
-                validation_data=(
-                    val_data,
-                    val_labels,
-                    val_flags,
-                ),
+                validation_data=(val_data, val_labels, val_flags,),
                 callbacks=callbacks,
                 shuffle=True,
                 use_multiprocessing=True,
@@ -348,10 +344,7 @@ class DeepMomentumNetworkModel(ABC):
         best_model = self.tuner.get_best_models(num_models=1)[0]
         return best_hp, best_model
 
-    def load_model(
-        self,
-        hyperparameters,
-    ) -> tf.keras.Model:
+    def load_model(self, hyperparameters,) -> tf.keras.Model:
         hyp = kt.engine.hyperparameters.HyperParameters()
         hyp.values = hyperparameters
         return self.tuner.hypermodel.build(hyp)
@@ -412,11 +405,7 @@ class DeepMomentumNetworkModel(ABC):
                 sample_weight=active_flags,
                 epochs=self.num_epochs,
                 batch_size=hyperparameters["batch_size"],
-                validation_data=(
-                    val_data,
-                    val_labels,
-                    val_flags,
-                ),
+                validation_data=(val_data, val_labels, val_flags,),
                 callbacks=callbacks,
                 shuffle=True,
                 use_multiprocessing=True,
@@ -546,8 +535,6 @@ class LstmDeepMomentumNetworkModel(DeepMomentumNetworkModel):
         sharpe_loss = SharpeLoss(self.output_size).call
 
         model.compile(
-            loss=sharpe_loss,
-            optimizer=adam,
-            sample_weight_mode="temporal",
+            loss=sharpe_loss, optimizer=adam, sample_weight_mode="temporal",
         )
         return model

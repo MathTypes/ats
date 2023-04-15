@@ -16,6 +16,7 @@ from tensortrade.slippage import RandomUniformSlippageModel
 
 import datetime
 
+
 class FutureExchangePosition(InstrumentExchange):
     """
     Exchange environment to be used on future markets. 
@@ -38,67 +39,72 @@ class FutureExchangePosition(InstrumentExchange):
     """
 
     def __init__(self, data_frame: pd.DataFrame = None, **kwargs):
-        super().__init__(base_instrument=kwargs.get('base_instrument', 'USD'),
-                         dtype=kwargs.get('dtype', np.float16),
-                         feature_pipeline=kwargs.get('feature_pipeline', None))
-        self._observe_position = kwargs.get('observe_position', False)
-        self._should_pretransform_obs = kwargs.get('should_pretransform_obs', False)
-        self._feature_pipeline = kwargs.get('feature_pipeline', None)
-        self._commission_percent = kwargs.get('commission_percent', 0.3)
-        self._base_precision = kwargs.get('base_precision', 2)
-        self._instrument_precision = kwargs.get('instrument_precision', 8)
-        self._initial_balance = kwargs.get('initial_balance', 1E4)
-        self._min_order_amount = kwargs.get('min_order_amount', 1E-3)
-        self._window_size = kwargs.get('window_size', 1)
-        self._min_trade_price = kwargs.get('min_trade_price', 1E-6)
-        self._max_trade_price = kwargs.get('max_trade_price', 1E6)
-        self._min_trade_amount = kwargs.get('min_trade_amount', 1E-3)
-        self._max_trade_amount = kwargs.get('max_trade_amount', 1E6)
-        self._feature_pipeline = kwargs.get('feature_pipeline', None)
-        self._response_time = kwargs.get('response_time', 0)
-        self._exclude_close = kwargs.get('exclude_close', False)
+        super().__init__(
+            base_instrument=kwargs.get("base_instrument", "USD"),
+            dtype=kwargs.get("dtype", np.float16),
+            feature_pipeline=kwargs.get("feature_pipeline", None),
+        )
+        self._observe_position = kwargs.get("observe_position", False)
+        self._should_pretransform_obs = kwargs.get("should_pretransform_obs", False)
+        self._feature_pipeline = kwargs.get("feature_pipeline", None)
+        self._commission_percent = kwargs.get("commission_percent", 0.3)
+        self._base_precision = kwargs.get("base_precision", 2)
+        self._instrument_precision = kwargs.get("instrument_precision", 8)
+        self._initial_balance = kwargs.get("initial_balance", 1e4)
+        self._min_order_amount = kwargs.get("min_order_amount", 1e-3)
+        self._window_size = kwargs.get("window_size", 1)
+        self._min_trade_price = kwargs.get("min_trade_price", 1e-6)
+        self._max_trade_price = kwargs.get("max_trade_price", 1e6)
+        self._min_trade_amount = kwargs.get("min_trade_amount", 1e-3)
+        self._max_trade_amount = kwargs.get("max_trade_amount", 1e6)
+        self._feature_pipeline = kwargs.get("feature_pipeline", None)
+        self._response_time = kwargs.get("response_time", 0)
+        self._exclude_close = kwargs.get("exclude_close", False)
         self._active_holds = 0
         self._passive_holds = 0
-        #self._episode_trades = pd.DataFrame([],columns = ['trades','active_holds','passive_holds'])
+        # self._episode_trades = pd.DataFrame([],columns = ['trades','active_holds','passive_holds'])
 
-        max_allowed_slippage_percent = kwargs.get('max_allowed_slippage_percent', 1.0)
+        max_allowed_slippage_percent = kwargs.get("max_allowed_slippage_percent", 1.0)
 
-        SlippageModelClass = kwargs.get('slippage_model', RandomUniformSlippageModel)
+        SlippageModelClass = kwargs.get("slippage_model", RandomUniformSlippageModel)
         self._slippage_model = SlippageModelClass(max_allowed_slippage_percent)
         if data_frame is not None:
             self.data_frame = data_frame.astype(self._dtype)
             self.price = data_frame.astype(self._dtype)
+
     @property
     def price(self) -> pd.DataFrame:
         """The price from the original DataFrame."""
         return self._price
-        
+
     @price.setter
     def price(self, data_frame: pd.DataFrame):
-        self._price = data_frame[['close']]
+        self._price = data_frame[["close"]]
+
     @property
     def data_frame(self) -> pd.DataFrame:
         """The underlying data model backing the price and volume simulation."""
         return self._data_frame
-    
+
     @data_frame.setter
     def data_frame(self, data_frame: pd.DataFrame):
         if self._exclude_close:
-            self._data_frame = data_frame.drop(columns = ['close'])
+            self._data_frame = data_frame.drop(columns=["close"])
         else:
             self._data_frame = data_frame
-        
+
         if self._observe_position:
-            self._data_frame['position'] = np.zeros(len(self._data_frame))
+            self._data_frame["position"] = np.zeros(len(self._data_frame))
         else:
             pass
-        
+
         if self._should_pretransform_obs and self._feature_pipeline is not None:
             self._data_frame = self._feature_pipeline.transform(
-                self._data_frame, self.generated_space)
-            print('DataFrame set: pipeline used')
+                self._data_frame, self.generated_space
+            )
+            print("DataFrame set: pipeline used")
         else:
-            print('DataFrame set: pipeline unused')
+            print("DataFrame set: pipeline unused")
 
     @property
     def initial_balance(self) -> float:
@@ -122,14 +128,17 @@ class FutureExchangePosition(InstrumentExchange):
 
     @property
     def generated_space(self) -> Space:
-        low = np.array([0]*self.data_frame.shape[1],dtype = 'float16')#np.array(self.data_frame.min() / 10000)
-        high = np.array([np.inf]*self.data_frame.shape[1],dtype = 'float16')#np.array(self.data_frame.max() * 10000)
-        return Box(low=low, high=high, dtype='float')
+        low = np.array(
+            [0] * self.data_frame.shape[1], dtype="float16"
+        )  # np.array(self.data_frame.min() / 10000)
+        high = np.array(
+            [np.inf] * self.data_frame.shape[1], dtype="float16"
+        )  # np.array(self.data_frame.max() * 10000)
+        return Box(low=low, high=high, dtype="float")
 
     @property
     def generated_columns(self) -> List[str]:
         return list(self._data_frame.columns)
-
 
     @property
     def has_next_observation(self) -> bool:
@@ -140,7 +149,7 @@ class FutureExchangePosition(InstrumentExchange):
             data = np.array(self._data_frame).T
             for step in range(self._current_step, data.shape[1]):
                 self._current_step = step
-                obs = np.zeros(data.shape[0],dtype = 'float16')
+                obs = np.zeros(data.shape[0], dtype="float16")
                 for i in range(0, data.shape[0]):
                     obs[i] = data[i][self._current_step]
                 obs = pd.DataFrame(obs).T
@@ -148,73 +157,82 @@ class FutureExchangePosition(InstrumentExchange):
                 if not self._observe_position:
                     pass
                 else:
-                    obs['position'] = self._portfolio.get('BTC', 0)
-                    #这个btc是默认的产品标识
-                #print(obs)
+                    obs["position"] = self._portfolio.get("BTC", 0)
+                    # 这个btc是默认的产品标识
+                # print(obs)
                 yield obs
-            
+
         else:
             for step in range(self._current_step, len(self._data_frame)):
                 self._current_step = step
-                
-                obs = self._data_frame.iloc[step - self._window_size + 1:step + 1]
-    
-                if not self._should_pretransform_obs and self._feature_pipeline is not None:
+
+                obs = self._data_frame.iloc[step - self._window_size + 1 : step + 1]
+
+                if (
+                    not self._should_pretransform_obs
+                    and self._feature_pipeline is not None
+                ):
                     obs = self._feature_pipeline.transform(obs, self.generated_space)
 
                 if self._observe_position:
-                    raise NotImplementedError('Please implement this by the same logic as shown in windowsize == 1 ----Songhao')
-    
+                    raise NotImplementedError(
+                        "Please implement this by the same logic as shown in windowsize == 1 ----Songhao"
+                    )
+
                 yield obs
 
         raise StopIteration
 
     def current_price(self, symbol: str) -> float:
-        #if len(self._data_frame) is 0:
-            #self.next_observation()
-        return float(self.price['close'].values[self._current_step])
+        # if len(self._data_frame) is 0:
+        # self.next_observation()
+        return float(self.price["close"].values[self._current_step])
 
     def next_price(self, symbol: str) -> float:
         if self._current_step < len(self.price) - 1:
-            return float(self.price['close'].values[self._current_step + 1])
+            return float(self.price["close"].values[self._current_step + 1])
         else:
-            return float(self.price['close'].values[self._current_step])
-    
+            return float(self.price["close"].values[self._current_step])
+
     def _is_valid_trade(self, trade: Trade) -> bool:
-        '''
+        """
         open_amount = self._portfolio.get(trade.symbol, 0)
         if abs(open_amount * trade.price) < self.net_worth:
             return True
         else:
             print('not valid trade')
             return False
-        '''
+        """
         return True
-
 
     def _update_account(self, trade: Trade):
 
         if trade.is_buy:
             self._balance -= trade.amount * (1.0003) * trade.price
-            self._portfolio[trade.symbol] = self._portfolio.get(trade.symbol, 0) + trade.amount
-            #print('buy:' + str(trade.amount))
+            self._portfolio[trade.symbol] = (
+                self._portfolio.get(trade.symbol, 0) + trade.amount
+            )
+            # print('buy:' + str(trade.amount))
         elif trade.is_sell:
             self._balance += trade.amount * (0.9997) * trade.price
-            self._portfolio[trade.symbol] = self._portfolio.get(trade.symbol, 0) - trade.amount
-            #print('sell:' + str(trade.amount))
+            self._portfolio[trade.symbol] = (
+                self._portfolio.get(trade.symbol, 0) - trade.amount
+            )
+            # print('sell:' + str(trade.amount))
         elif trade.is_hold:
             pass
-        
+
         self._portfolio[self._base_instrument] = self._balance
         step = self._current_step
         self._performance[0][step] = self.balance
         self._performance[1][step] = self.net_worth
-        self._performance[2][step] = self._portfolio.get(trade.symbol,0)
-        #print(self._portfolio.get(trade.symbol,0))
-        assert self._portfolio.get(trade.symbol,0) <= 1.001 and self._portfolio.get(trade.symbol,0) >= -1.001
+        self._performance[2][step] = self._portfolio.get(trade.symbol, 0)
+        # print(self._portfolio.get(trade.symbol,0))
+        assert (
+            self._portfolio.get(trade.symbol, 0) <= 1.001
+            and self._portfolio.get(trade.symbol, 0) >= -1.001
+        )
         self._performance[3][step] = trade.price
-
-
 
     def execute_trade(self, trade: Trade) -> Trade:
         current_price = self.current_price(symbol=trade.symbol)
@@ -222,10 +240,10 @@ class FutureExchangePosition(InstrumentExchange):
         commission = self._commission_percent / 100
 
         filled_trade = trade.copy()
-        
+
         if filled_trade.is_hold or not self._is_valid_trade(filled_trade):
             filled_trade.amount = 0
-        '''
+        """
         elif filled_trade.is_buy:
             price_adjustment = price_adjustment = (1 + commission)
             filled_trade.price = max(round(current_price * price_adjustment,
@@ -236,7 +254,7 @@ class FutureExchangePosition(InstrumentExchange):
             price_adjustment = (1 - commission)
             filled_trade.price = round(current_price * price_adjustment, self._base_precision)
             filled_trade.amount = round(filled_trade.amount, self._instrument_precision)
-        '''
+        """
         filled_trade = self._slippage_model.fill_order(filled_trade, current_price)
 
         self._update_account(filled_trade)
@@ -248,7 +266,7 @@ class FutureExchangePosition(InstrumentExchange):
 
         self._balance = self._initial_balance
         self._portfolio = {self._base_instrument: self._balance}
-        '''
+        """
         #和上面trades的部分一样注释掉
         if hasattr(self, 'trades'):
             self._episode_trades = self._episode_trades.append({
@@ -260,11 +278,14 @@ class FutureExchangePosition(InstrumentExchange):
             print(self._performance.tail())
         else:
             pass
-        '''
-        if hasattr(self, '_performance'):
-            performance =(pd.DataFrame(data = self._performance.T, columns = ['balance','net_worth','open_amount','price']))
+        """
+        if hasattr(self, "_performance"):
+            performance = pd.DataFrame(
+                data=self._performance.T,
+                columns=["balance", "net_worth", "open_amount", "price"],
+            )
             print(performance.tail(5))
-        #self._trades = pd.DataFrame([], columns=['step', 'symbol', 'type', 'amount', 'price','volume'])
+        # self._trades = pd.DataFrame([], columns=['step', 'symbol', 'type', 'amount', 'price','volume'])
         self._performance = np.zeros([4, len(self._data_frame) - 1])
         # 1 = balance
         # 2 = net_worth

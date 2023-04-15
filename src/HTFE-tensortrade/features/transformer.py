@@ -13,7 +13,8 @@
 # limitations under the License.
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import numpy as np
 import pandas as pd

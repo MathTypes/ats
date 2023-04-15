@@ -10,17 +10,16 @@ from neo4j_util.sentiment_api import get_unprocessed_tweets, get_tweet_replies_v
 from neo4j_util.neo4j_tweet_util import Neo4j
 from util import config_utils
 from util import logging_utils
-from data.front_end_utils import (
-    subject_analysis
-)
+from data.front_end_utils import subject_analysis
 
 import re
 
+
 def find_symbol(x):
     x = str(x).lower()
-    logging.info(f'x:{x}')
-    m = re.search('\$([a-z]{1,4})\W+', x)
-    logging.info(f'm:{m}')
+    logging.info(f"x:{x}")
+    m = re.search("\$([a-z]{1,4})\W+", x)
+    logging.info(f"m:{m}")
     if m:
         return m.group(1)
     else:
@@ -29,16 +28,19 @@ def find_symbol(x):
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Preprocess tweet")
-    parser.add_argument("--start_date",
-        type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
+    parser.add_argument(
+        "--start_date",
+        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
         required=True,
-        help='Set a start date')
-    parser.add_argument("--end_date",
-        type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d').date(),
+        help="Set a start date",
+    )
+    parser.add_argument(
+        "--end_date",
+        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
         required=True,
-        help='Set a end date')
-    parser.add_argument("--update", help="reprocess existing ones",
-                        action="store_true")
+        help="Set a end date",
+    )
+    parser.add_argument("--update", help="reprocess existing ones", action="store_true")
 
     args = parser.parse_args()
     if args.verbose:
@@ -53,7 +55,7 @@ if __name__ == "__main__":
         data["symbol"] = data["text"].apply(lambda x: find_symbol(x))
         data = add_subject_keyword(data)
         data = subject_analysis(data)
-        logging.error(f'process_data:{data}')
+        logging.error(f"process_data:{data}")
         count = 0
         RETRIES = 5
         while count < RETRIES:
@@ -64,8 +66,6 @@ if __name__ == "__main__":
             except Exception as e:
                 logging.error(f"caught exception: {e}")
             count = count + 1
-        #break
-    #conv_data = get_tweet_replies_v2()
-    #conv_data = add_subject_keyword(conv_data)
-
-
+        # break
+    # conv_data = get_tweet_replies_v2()
+    # conv_data = add_subject_keyword(conv_data)

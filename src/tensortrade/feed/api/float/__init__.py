@@ -1,4 +1,3 @@
-
 from typing import List
 
 from tensortrade.feed.core import Stream
@@ -34,10 +33,12 @@ class Float:
         Callable
             A decorated function.
         """
+
         def wrapper(func):
             FloatMethods.register_method(func, names)
             FloatMixin.register_method(func, names)
             return func
+
         return wrapper
 
 

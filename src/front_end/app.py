@@ -19,8 +19,7 @@ import trading_data
 import visualization
 from PIL import Image
 
-from data.front_end_utils import (data_process,
-                                  subject_analysis)
+from data.front_end_utils import data_process, subject_analysis
 from market_data import ts_read_api
 from neo4j_util import sentiment_api
 from util import config_utils
@@ -47,8 +46,9 @@ st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 # =================================================================================== #
 #                                Sidebar                                              #
 # =================================================================================== #
-navigated = st.sidebar.radio("Navigation:", [
-    "Overview", "Trading Data", "New Analysis"], index=0)
+navigated = st.sidebar.radio(
+    "Navigation:", ["Overview", "Trading Data", "New Analysis"], index=0
+)
 
 market_df = None
 news_df = None
@@ -59,19 +59,20 @@ from_date = to_date - datetime.timedelta(days=14)
 min_date = datetime.date(2022, 9, 1)
 max_date = datetime.date.today()
 
+
 @st.cache_data(ttl=600)
 def load_data(from_date, to_date):
     df_vec = []
     for asset in futureAssetCodes:
-        date_df = ts_read_api.get_time_series_from_monthly(
-            asset, from_date, to_date)
+        date_df = ts_read_api.get_time_series_from_monthly(asset, from_date, to_date)
         df_vec.append(date_df)
     market_df = pd.concat(df_vec)
-    #logging.info(f'market_index:{market_df.index}')
-    #logging.info(f'false index:{market_df[market_df.index==False]}')
+    # logging.info(f'market_index:{market_df.index}')
+    # logging.info(f'false index:{market_df[market_df.index==False]}')
     news_df = sentiment_api.get_processed_tweets_from_monthly(from_date, to_date)
-    logging.info(f'news_df:{news_df}')
+    logging.info(f"news_df:{news_df}")
     return market_df, news_df
+
 
 market_df, news_df = load_data(from_date, to_date)
 news_df = data_process(news_df)
@@ -93,7 +94,8 @@ if navigated == "TVL vs MCAP Analysis":
 
 if navigated == "Overview":
     sentiment_analyzer.render_sentiment_analysis(
-        market_df, news_df, assetNames, from_date, to_date, min_date, max_date)
+        market_df, news_df, assetNames, from_date, to_date, min_date, max_date
+    )
 
 if navigated == "Visualization":
     visualization.render_visualization(news_df)

@@ -31,6 +31,7 @@ physical_devices = tf.config.list_physical_devices("GPU")
 if physical_devices:
     tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
 
+
 def _get_directory_name(
     experiment_name: str, train_interval: Tuple[int, int, int] = None
 ) -> str:
@@ -48,10 +49,7 @@ def _get_directory_name(
             "results", experiment_name, f"{train_interval[1]}-{train_interval[2]}"
         )
     else:
-        return os.path.join(
-            "results",
-            experiment_name,
-        )
+        return os.path.join("results", experiment_name,)
 
 
 def _basis_point_suffix(basis_points: float = None) -> str:

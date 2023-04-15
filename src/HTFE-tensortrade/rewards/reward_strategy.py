@@ -13,7 +13,8 @@
 # limitations under the License
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import pandas as pd
 
@@ -23,17 +24,16 @@ from tensortrade.trades import Trade
 
 
 class RewardStrategy(object, metaclass=ABCMeta):
-
     def __init__(self):
         pass
 
     @property
-    def exchange(self) -> 'InstrumentExchange':
+    def exchange(self) -> "InstrumentExchange":
         """The exchange being used by the current trading environment. Setting the exchange causes the strategy to reset."""
         return self._exchange
 
     @exchange.setter
-    def exchange(self, exchange: 'InstrumentExchange'):
+    def exchange(self, exchange: "InstrumentExchange"):
         self._exchange = exchange
         self.reset()
 

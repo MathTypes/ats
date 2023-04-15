@@ -28,7 +28,11 @@ class RollingNode(Stream[float]):
         rolling = self.inputs[0]
         history = rolling.value
 
-        output = np.nan if rolling.n - rolling.nan < rolling.min_periods else self.func(history)
+        output = (
+            np.nan
+            if rolling.n - rolling.nan < rolling.min_periods
+            else self.func(history)
+        )
 
         return output
 
@@ -67,9 +71,7 @@ class Rolling(Stream[List[float]]):
 
     generic_name = "rolling"
 
-    def __init__(self,
-                 window: int,
-                 min_periods: int = 1) -> None:
+    def __init__(self, window: int, min_periods: int = 1) -> None:
         super().__init__()
         assert min_periods <= window
         self.window = window
@@ -150,8 +152,13 @@ class Rolling(Stream[List[float]]):
         `Stream[float]`
             A rolling variance stream.
         """
-        def func1(x): return np.nanvar(x, ddof=1)
-        def func2(x): return np.var(x, ddof=1)
+
+        def func1(x):
+            return np.nanvar(x, ddof=1)
+
+        def func2(x):
+            return np.var(x, ddof=1)
+
         func = func1 if self.min_periods < self.window else func2
         return self.agg(func).astype("float")
 
@@ -206,9 +213,9 @@ class Rolling(Stream[List[float]]):
 
 
 @Float.register(["rolling"])
-def rolling(s: "Stream[float]",
-            window: int,
-            min_periods: int = 1) -> "Stream[List[float]]":
+def rolling(
+    s: "Stream[float]", window: int, min_periods: int = 1
+) -> "Stream[List[float]]":
     """Creates a stream that generates a rolling window of values from a stream.
 
     Parameters
@@ -221,7 +228,4 @@ def rolling(s: "Stream[float]",
         The number of periods to wait before producing values from the aggregation
         function.
     """
-    return Rolling(
-        window=window,
-        min_periods=min_periods
-    )(s)
+    return Rolling(window=window, min_periods=min_periods)(s)

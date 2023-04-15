@@ -1,4 +1,3 @@
-
 from tensortrade.feed.api.generic.imputation import FillNa, ForwardFill
 from tensortrade.feed.core.base import Stream
 from tensortrade.feed.api.float import Float

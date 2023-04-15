@@ -34,12 +34,14 @@ from tensortrade.trades import Trade
 class TradingEnvironment(gym.Env):
     """A trading environment made for use with Gym-compatible reinforcement learning algorithms."""
 
-    def __init__(self,
-                 exchange: Union[InstrumentExchange, str],
-                 action_strategy: Union[ActionStrategy, str],
-                 reward_strategy: Union[RewardStrategy, str],
-                 feature_pipeline: Union[FeaturePipeline, str] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        exchange: Union[InstrumentExchange, str],
+        action_strategy: Union[ActionStrategy, str],
+        reward_strategy: Union[RewardStrategy, str],
+        feature_pipeline: Union[FeaturePipeline, str] = None,
+        **kwargs
+    ):
         """
         Arguments:
             exchange: The `InstrumentExchange` that will be used to feed data from and execute trades within.
@@ -50,13 +52,24 @@ class TradingEnvironment(gym.Env):
         """
         super().__init__()
 
-        self._exchange = exchanges.get(exchange) if isinstance(exchange, str) else exchange
-        self._action_strategy = actions.get(action_strategy) if isinstance(
-            action_strategy, str) else action_strategy
-        self._reward_strategy = rewards.get(reward_strategy) if isinstance(
-            reward_strategy, str) else reward_strategy
-        self._feature_pipeline = features.get(feature_pipeline) if isinstance(
-            feature_pipeline, str) else feature_pipeline
+        self._exchange = (
+            exchanges.get(exchange) if isinstance(exchange, str) else exchange
+        )
+        self._action_strategy = (
+            actions.get(action_strategy)
+            if isinstance(action_strategy, str)
+            else action_strategy
+        )
+        self._reward_strategy = (
+            rewards.get(reward_strategy)
+            if isinstance(reward_strategy, str)
+            else reward_strategy
+        )
+        self._feature_pipeline = (
+            features.get(feature_pipeline)
+            if isinstance(feature_pipeline, str)
+            else feature_pipeline
+        )
 
         if feature_pipeline is not None:
             self._exchange.feature_pipeline = feature_pipeline
@@ -69,10 +82,12 @@ class TradingEnvironment(gym.Env):
         self.observation_space = self._exchange.observation_space
         self.action_space = self._action_strategy.action_space
 
-        self.logger = logging.getLogger(kwargs.get('logger_name', __name__))
-        self.logger.setLevel(kwargs.get('log_level', logging.DEBUG))
+        self.logger = logging.getLogger(kwargs.get("logger_name", __name__))
+        self.logger.setLevel(kwargs.get("log_level", logging.DEBUG))
 
-        logging.getLogger('tensorflow').disabled = kwargs.get('disable_tensorflow_logger', True)
+        logging.getLogger("tensorflow").disabled = kwargs.get(
+            "disable_tensorflow_logger", True
+        )
 
     @property
     def exchange(self) -> InstrumentExchange:
@@ -145,11 +160,15 @@ class TradingEnvironment(gym.Env):
         Returns:
             A float corresponding to the benefit earned by the action taken this step.
         """
-        reward = self._reward_strategy.get_reward(current_step=self._current_step, trade=trade)
+        reward = self._reward_strategy.get_reward(
+            current_step=self._current_step, trade=trade
+        )
         reward = np.nan_to_num(reward)
 
         if np.bitwise_not(np.isfinite(reward)):
-            raise ValueError('Reward returned by the reward strategy must by a finite float.')
+            raise ValueError(
+                "Reward returned by the reward strategy must by a finite float."
+            )
 
         return reward
 
@@ -169,10 +188,12 @@ class TradingEnvironment(gym.Env):
         Returns:
             info: A dictionary containing the exchange used, the current timestep, and the filled trade, if any.
         """
-        return {'current_step': self._current_step,
-                'exchange': self._exchange,
-                'executed_trade': executed_trade,
-                'filled_trade': filled_trade}
+        return {
+            "current_step": self._current_step,
+            "exchange": self._exchange,
+            "executed_trade": executed_trade,
+            "filled_trade": filled_trade,
+        }
 
     def step(self, action) -> Tuple[pd.DataFrame, float, bool, dict]:
         """Run one timestep within the environment based on the specified action.
@@ -207,8 +228,8 @@ class TradingEnvironment(gym.Env):
 
         self._current_step = 0
 
-        return self._next_observation(Trade('N/A', 'hold', 0, 0))
+        return self._next_observation(Trade("N/A", "hold", 0, 0))
 
-    def render(self, mode='none'):
+    def render(self, mode="none"):
         """Renders the environment."""
         pass

@@ -184,6 +184,4 @@ def expanding(s: "Stream[float]", min_periods: int = 1) -> "Stream[List[float]]"
         The number of periods to wait before producing values from the aggregation
         function.
     """
-    return Expanding(
-        min_periods=min_periods
-    )(s)
+    return Expanding(min_periods=min_periods)(s)

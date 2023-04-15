@@ -1,17 +1,7 @@
-
 import inspect
 
 from abc import abstractmethod
-from typing import (
-    Generic,
-    Iterable,
-    TypeVar,
-    Dict,
-    Any,
-    Callable,
-    List,
-    Tuple
-)
+from typing import Generic, Iterable, TypeVar, Dict, Any, Callable, List, Tuple
 
 from tensortrade.core import Observable
 from tensortrade.feed.core.accessors import CachedAccessor
@@ -214,7 +204,7 @@ class Stream(Generic[T], Named, Observable):
         for listener in self.listeners:
             if hasattr(listener, "reset"):
                 listener.reset()
-        
+
         for stream in self.inputs:
             stream.reset()
 
@@ -267,9 +257,9 @@ class Stream(Generic[T], Named, Observable):
         return Group()(*streams)
 
     @staticmethod
-    def sensor(obj: "Any",
-               func: "Callable[[Any], T]",
-               dtype: str = None) -> "Stream[T]":
+    def sensor(
+        obj: "Any", func: "Callable[[Any], T]", dtype: str = None
+    ) -> "Stream[T]":
         """Creates a stream from observing a value from an object.
 
         Parameters
@@ -290,8 +280,9 @@ class Stream(Generic[T], Named, Observable):
         return Sensor(obj, func, dtype=dtype)
 
     @staticmethod
-    def select(streams: "List[Stream[T]]",
-               func: "Callable[[Stream[T]], bool]") -> "Stream[T]":
+    def select(
+        streams: "List[Stream[T]]", func: "Callable[[Stream[T]], bool]"
+    ) -> "Stream[T]":
         """Selects a stream satisfying particular criteria from a list of
         streams.
 
@@ -352,9 +343,9 @@ class Stream(Generic[T], Named, Observable):
         return Placeholder(dtype=dtype)
 
     @staticmethod
-    def _gather(stream: "Stream",
-                vertices: "List[Stream]",
-                edges: "List[Tuple[Stream, Stream]]") -> "List[Tuple[Stream, Stream]]":
+    def _gather(
+        stream: "Stream", vertices: "List[Stream]", edges: "List[Tuple[Stream, Stream]]"
+    ) -> "List[Tuple[Stream, Stream]]":
         """Gathers all the edges relating back to this particular node.
 
         Parameters
@@ -431,10 +422,12 @@ class Stream(Generic[T], Named, Observable):
         name : str
             The name of the data type.
         """
+
         def wrapper(accessor):
             setattr(cls, name, CachedAccessor(name, accessor))
             cls._accessors += [name]
             return accessor
+
         return wrapper
 
     @classmethod
@@ -447,9 +440,11 @@ class Stream(Generic[T], Named, Observable):
         dtype : str
             The name of the data type the mixin is being registered for.
         """
+
         def wrapper(mixin):
             cls._mixins[dtype] = mixin
             return mixin
+
         return wrapper
 
     @classmethod
@@ -464,13 +459,16 @@ class Stream(Generic[T], Named, Observable):
         names : `List[str]`
             The list of names to be used as aliases for the same method.
         """
+
         def wrapper(func):
             def method(self, *args, **kwargs):
                 args = (self,) + args
                 return func(*args, **kwargs)
+
             for name in names:
                 setattr(Stream, name, method)
             return method
+
         return wrapper
 
     @staticmethod
@@ -522,7 +520,7 @@ class IterableStream(Stream[T]):
             self.generator = iter(source)
 
         self.stop = False
-        
+
         try:
             self.current = next(self.generator)
         except StopIteration:
@@ -548,7 +546,7 @@ class IterableStream(Stream[T]):
         if self.is_gen:
             self.generator = self.gen_fn()
         else:
-            self.generator = iter(self.iterable[self._random_start:])
+            self.generator = iter(self.iterable[self._random_start :])
         self.stop = False
 
         try:
@@ -621,10 +619,10 @@ class Placeholder(Stream[T]):
     def __init__(self, dtype: str = None) -> None:
         super().__init__(dtype=dtype)
 
-    def push(self, value: 'T') -> None:
+    def push(self, value: "T") -> None:
         self.value = value
 
-    def forward(self) -> 'T':
+    def forward(self) -> "T":
         return self.value
 
     def has_next(self) -> bool:

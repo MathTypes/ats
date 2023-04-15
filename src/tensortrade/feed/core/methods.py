@@ -1,4 +1,3 @@
-
 from typing import List, Callable
 
 
@@ -29,9 +28,11 @@ class Methods:
         names : `List[str]`
             The names to be given to the function.
         """
+
         def method(self, *args, **kwargs):
             args = (self.stream,) + args
             return func(*args, **kwargs)
+
         for name in names:
             setattr(cls, name, method)
         return method

@@ -13,7 +13,8 @@
 # limitations under the License.
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import pandas as pd
 import numpy as np
@@ -26,7 +27,7 @@ class TradingStrategy(object, metaclass=ABCMeta):
     """An abstract trading strategy capable of self tuning, training, and evaluating."""
 
     @abstractmethod
-    def __init__(self, environment: 'TradingEnvironment'):
+    def __init__(self, environment: "TradingEnvironment"):
         """
         Arguments:
             environment: A `TradingEnvironment` instance for the agent to trade within.
@@ -34,12 +35,12 @@ class TradingStrategy(object, metaclass=ABCMeta):
         self._environment = environment
 
     @property
-    def environment(self) -> 'TradingEnvironment':
+    def environment(self) -> "TradingEnvironment":
         """A `TradingEnvironment` instance for the agent to trade within."""
         return self._environment
 
     @environment.setter
-    def environment(self, environment: 'TradingEnvironment'):
+    def environment(self, environment: "TradingEnvironment"):
         self._environment = environment
 
     @abstractmethod
@@ -61,7 +62,9 @@ class TradingStrategy(object, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def tune(self, steps_per_train: int, steps_per_test: int, episode_callback=None) -> pd.DataFrame:
+    def tune(
+        self, steps_per_train: int, steps_per_test: int, episode_callback=None
+    ) -> pd.DataFrame:
         """Tune the agent's hyper-parameters and feature set for the environment.
 
         Arguments:
@@ -75,7 +78,13 @@ class TradingStrategy(object, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def run(self, steps: int = None, episodes: int = None, testing: bool = False, episode_callback=None) -> pd.DataFrame:
+    def run(
+        self,
+        steps: int = None,
+        episodes: int = None,
+        testing: bool = False,
+        episode_callback=None,
+    ) -> pd.DataFrame:
         """Evaluate the agent's performance within the environment.
 
         Arguments:

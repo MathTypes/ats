@@ -13,7 +13,8 @@
 # limitations under the License.
 import os
 import sys
-ttpath = os.path.abspath('..')
+
+ttpath = os.path.abspath("..")
 sys.path.append(ttpath)
 import os
 import gym
@@ -37,12 +38,14 @@ from tensortrade.strategies import TradingStrategy
 class StableBaselinesTradingStrategy(TradingStrategy):
     """A trading strategy capable of self tuning, training, and evaluating with stable-baselines."""
 
-    def __init__(self,
-                 environment: TradingEnvironment,
-                 model: BaseRLModel = DQN,
-                 policy: Union[str, BasePolicy] = 'MlpPolicy',
-                 model_kwargs: any = {},
-                 **kwargs):
+    def __init__(
+        self,
+        environment: TradingEnvironment,
+        model: BaseRLModel = DQN,
+        policy: Union[str, BasePolicy] = "MlpPolicy",
+        model_kwargs: any = {},
+        **kwargs
+    ):
         """
         Arguments:
             environment: A `TradingEnvironment` instance for the agent to trade within.
@@ -73,13 +76,24 @@ class StableBaselinesTradingStrategy(TradingStrategy):
         """
         self._agent.save(path)
 
-    def tune(self, steps: int = None, episodes: int = None, callback: Callable[[pd.DataFrame], bool] = None) -> pd.DataFrame:
+    def tune(
+        self,
+        steps: int = None,
+        episodes: int = None,
+        callback: Callable[[pd.DataFrame], bool] = None,
+    ) -> pd.DataFrame:
         raise NotImplementedError
 
-    def run(self, steps: int = None, episodes: int = None, episode_callback: Callable[[pd.DataFrame], bool] = None) -> pd.DataFrame:
+    def run(
+        self,
+        steps: int = None,
+        episodes: int = None,
+        episode_callback: Callable[[pd.DataFrame], bool] = None,
+    ) -> pd.DataFrame:
         if steps is None and episodes is None:
             raise ValueError(
-                'You must set the number of `steps` or `episodes` to run the strategy.')
+                "You must set the number of `steps` or `episodes` to run the strategy."
+            )
 
         steps_completed = 0
         episodes_completed = 0
@@ -89,7 +103,9 @@ class StableBaselinesTradingStrategy(TradingStrategy):
 
         performance = {}
 
-        while (steps is not None and (steps == 0 or steps_completed < steps)) or (episodes is not None and episodes_completed < episodes):
+        while (steps is not None and (steps == 0 or steps_completed < steps)) or (
+            episodes is not None and episodes_completed < episodes
+        ):
             actions, state = self._agent.predict(obs, state=state, mask=dones)
             obs, rewards, dones, info = self._environment.step(actions)
 
@@ -97,18 +113,26 @@ class StableBaselinesTradingStrategy(TradingStrategy):
             average_reward -= average_reward / steps_completed
             average_reward += rewards[0] / (steps_completed + 1)
 
-            exchange_performance = info[0].get('exchange').performance
-            performance = exchange_performance if len(exchange_performance) > 0 else performance
+            exchange_performance = info[0].get("exchange").performance
+            performance = (
+                exchange_performance if len(exchange_performance) > 0 else performance
+            )
 
             if dones[0]:
-                if episode_callback is not None and episode_callback(self._environment._exchange.performance):
+                if episode_callback is not None and episode_callback(
+                    self._environment._exchange.performance
+                ):
                     break
 
                 episodes_completed += 1
                 obs = self._environment.reset()
 
         print("Finished running strategy.")
-        print("Total episodes: {} ({} timesteps).".format(episodes_completed, steps_completed))
+        print(
+            "Total episodes: {} ({} timesteps).".format(
+                episodes_completed, steps_completed
+            )
+        )
         print("Average reward: {}.".format(average_reward))
 
         return performance
