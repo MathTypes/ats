@@ -7,7 +7,7 @@ clean:
 	find . | grep -E '(__pycache__|\.pyc|\.pyo$$)' | xargs rm -rf
 
 test:
-	PYTHONPATH=akolo_ats pytest tests/
+	PYTHONPATH=src pytest tests/
 
 test-parallel:
 	pytest --workers auto tests/
@@ -31,7 +31,7 @@ build-cpu:
 	docker build -t ${CPU_IMAGE} .
 
 build-ib:
-	cd akolo_ats/ib-trading/gke/ib-gateway/ibc; docker build -t ${IB_IMAGE} --build-arg TWS_USERID=${TWS_USERID} --build-arg TWS_PASSWORD=${TWS_PASSWORD} .
+	cd src/ib-trading/gke/ib-gateway/ibc; docker build -t ${IB_IMAGE} --build-arg TWS_USERID=${TWS_USERID} --build-arg TWS_PASSWORD=${TWS_PASSWORD} .
 
 build-gpu:
 	docker build -t ${GPU_IMAGE} . --build-arg gpu_tag="-gpu"
@@ -43,7 +43,7 @@ build-gpu-if-not-built:
 	if [ ! $$(docker images -q ${GPU_IMAGE}) ]; then $(MAKE) build-gpu; fi;
 
 run-notebook: build-cpu
-	docker run -it --rm -p=8888:8888 -p=6006:6006 -v ${PWD}/examples:/examples -v ${PWD}:/akolo_ats --shm-size=${SHM_SIZE} ${CPU_IMAGE} jupyter notebook --ip='*' --port=8888 --no-browser --allow-root ./examples/
+	docker run -it --rm -p=8888:8888 -p=6006:6006 -v ${PWD}/examples:/examples -v ${PWD}:/src --shm-size=${SHM_SIZE} ${CPU_IMAGE} jupyter notebook --ip='*' --port=8888 --no-browser --allow-root ./examples/
 
 run-docs: build-cpu
 	if [ $$(docker ps -aq --filter name=akolo_ats_docs) ]; then docker rm $$(docker ps -aq --filter name=akolo_ats_docs); fi;

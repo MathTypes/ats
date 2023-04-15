@@ -1,5 +1,5 @@
 
-from tensortrade.stochastic import cox
+from tensortrade.stochastic.processes.cox import cox
 
 
 def test_shape():
