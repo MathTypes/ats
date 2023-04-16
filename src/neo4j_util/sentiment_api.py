@@ -240,12 +240,12 @@ def get_unprocessed_tweets(start_date, end_date, update):
         tweet_query
         + """
             WITH t
-            LIMIT 50
+            LIMIT 500
             MATCH (rt:Tweet )-[r:Reply*..3]-(t)            
             with t.id as tweet_id, t.raw_content + collect(rt.raw_content) as text,
             datetime({epochMillis: t.created_at}) as time
             RETURN tweet_id, time, text
-            LIMIT 50
+            LIMIT 500
             """
     )
     params = {"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
