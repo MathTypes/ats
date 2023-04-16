@@ -42,7 +42,7 @@ data = data[data.index % 30 == 0]
 data = data.reset_index(drop = True)
 data = data.tail(50)
 
-exchange = FutureExchange(data, base_instrument = 'RMB', exclude_close = True,
+exchange = FutureExchange(data, base_instrument = 'RMB', exclude_close = True)
 data = pd.read_csv('Data/TAfun.csv',index_col = 0)
 
 data = data[data.index % 60 == 0]
