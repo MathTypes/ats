@@ -103,14 +103,15 @@ def get_tweets():
         return df
 
 
-@lru_cache
+#@lru_cache
 def get_processed_tweets_from_monthly(from_date, end_date):
     df_vec = []
     for month in pd.period_range(from_date, end_date, freq="M"):
         logging.info(f"month:{month}")
         path_dir = os.path.join(
-            config_utils.get_ts_root(), "..", "news", "monthly", "twitter"
+            config_utils.get_ts_root(), "monthly", "twitter"
         )
+        logging.info(f'reading tweets from {path_dir}')
         month_file = os.path.join(path_dir, month.strftime("%Y%m") + ".parquet")
         logging.info(f"reading:{month_file}")
         df_vec.append(pd.read_parquet(month_file))
@@ -225,6 +226,7 @@ def get_unprocessed_tweets(start_date, end_date, update):
         """
             MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
             WHERE t.raw_content is not null
+             and t.annotation_time is null
              and t.created_at>=$start_date
              and t.created_at<$end_date
              """
@@ -232,6 +234,7 @@ def get_unprocessed_tweets(start_date, end_date, update):
         else """
             MATCH (t:Tweet)<-[r:Reply]-(t1:Tweet)
             WHERE t.raw_content is not null
+             and t.annotation_time is null
              and t.created_at>=$start_date
              and t.created_at<$end_date
              """
@@ -240,12 +243,12 @@ def get_unprocessed_tweets(start_date, end_date, update):
         tweet_query
         + """
             WITH t
-            LIMIT 500
+            LIMIT 1000
             MATCH (rt:Tweet )-[r:Reply*..3]-(t)            
             with t.id as tweet_id, t.raw_content + collect(rt.raw_content) as text,
             datetime({epochMillis: t.created_at}) as time
             RETURN tweet_id, time, text
-            LIMIT 500
+            LIMIT 1000
             """
     )
     params = {"start_date": timestamp(start_date), "end_date": timestamp(end_date)}
