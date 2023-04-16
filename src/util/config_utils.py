@@ -10,6 +10,7 @@ DEFAULT_PASSWORD = "password"
 FIVE_SECS_ROOT_DIR = "../../data/FUT/5_secs"
 ONE_MIN_ROOT_DIR = "../../data/FUT/1_min"
 TS_ROOT_DIR = "../../ts/1_min"
+ATS_ROOT_DIR = "../.."
 
 
 def set_args(new_args):
@@ -48,6 +49,14 @@ def get_ts_root():
     if args and args.ts_root:
         ts_root = args.ts_root
     return ts_root
+
+
+def get_ats_root():
+    args = get_args()
+    ats_root = ATS_ROOT_DIR
+    if args and args.ats_root:
+        ats_root = args.ats_root
+    return ats_root
 
 
 def get_neo4j_host():
