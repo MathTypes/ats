@@ -74,7 +74,7 @@ class Data_Sourcing:
 
         to_date = datetime.date.today()
         from_date = to_date - datetime.timedelta(days=limit)
-        self.df = ts_read_api.get_time_series_from_monthly(asset, from_date, to_date)
+        self.df = ts_read_api.get_time_series_from_monthly(asset, from_date, to_date, '1_min')
         logging.info(
             f"duplicate data source index:{self.df[self.df.index.duplicated()]}"
         )
