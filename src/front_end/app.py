@@ -65,6 +65,8 @@ def load_data(from_date, to_date):
     df_vec = []
     for asset in futureAssetCodes:
         date_df = ts_read_api.get_time_series_from_monthly(asset, from_date, to_date)
+        date_df["assetName"] = asset
+        date_df["assetCode"] = asset
         df_vec.append(date_df)
     market_df = pd.concat(df_vec)
     # logging.info(f'market_index:{market_df.index}')
