@@ -475,10 +475,11 @@ def render_sentiment_analysis(
                     y2="rolling_mean:Q",
                     color=alt.Color("analyst_rating:N"),
                     tooltip=[
-                        "keyword_subject:N",
+                        #"keyword_subject:N",
+                        "user:N",
                         "lemma_text:N",
                         "keyword_text:N",
-                        "subject:N",
+                        #"subject:N",
                         "text_ner_names:N",
                         "subject_ner_names:N",
                         "text:N",
@@ -550,7 +551,9 @@ def render_sentiment_analysis(
                 )
                 .properties(width=500, height=100)
             )
-            chart = alt.vconcat(data=hist_data)
+            chart = alt.vconcat(data=hist_data).configure_view(
+                strokeOpacity=0
+            )
             row1 = alt.hconcat()
             row1 |= market
             row1 |= polarity
