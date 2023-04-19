@@ -1,0 +1,1 @@
+gcloud container clusters update ib-trading --enable-autoscaling --node-pool=default-pool --min-nodes=1  --max-nodes=10 --region=us-west1-a
