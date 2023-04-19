@@ -16,11 +16,11 @@ data "local_file" "fluentd_config_yaml" {
   filename = "${path.module}/config/fluentd_config.yaml"
 }
 
-#resource "kubernetes_namespace" "ml" {
-#  metadata {
-#    name = var.namespace
-#  }
-#}
+resource "kubernetes_namespace" "ml" {
+  metadata {
+    name = var.namespace
+  }
+}
 
 resource "kubectl_manifest" "fluentd_config" {
   override_namespace = var.namespace

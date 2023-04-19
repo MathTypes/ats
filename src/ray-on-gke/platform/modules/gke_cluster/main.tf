@@ -45,7 +45,7 @@ resource "google_container_node_pool" "cpu_pool" {
   name       = "cpu-pool"
   location   = var.region
   cluster    = google_container_cluster.ml_cluster.name
-  node_count = var.num_gpu_nodes
+  node_count = var.num_cpu_nodes
 
   autoscaling {
     min_node_count = "3"

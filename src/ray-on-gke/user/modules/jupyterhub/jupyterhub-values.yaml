@@ -23,7 +23,7 @@ hub:
         - user4
     # ...
     DummyAuthenticator:
-      password: password
+      password: qiu7788lz
     JupyterHub:
       authenticator_class: dummy
 
