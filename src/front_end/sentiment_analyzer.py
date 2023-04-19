@@ -551,7 +551,9 @@ def render_sentiment_analysis(
                 )
                 .properties(width=500, height=100)
             )
-            chart = alt.vconcat(data=hist_data)
+            chart = alt.vconcat(data=hist_data).configure_view(
+                strokeOpacity=0
+            )
             row1 = alt.hconcat()
             row1 |= market
             row1 |= polarity
