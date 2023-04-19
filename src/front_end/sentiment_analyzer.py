@@ -473,6 +473,7 @@ def render_sentiment_analysis(
                     ),
                     y=alt.Y("mean(polarity):Q"),
                     y2="rolling_mean:Q",
+                    color=alt.Color("analyst_rating:N"),
                     tooltip=[
                         "keyword_subject:N",
                         "lemma_text:N",
@@ -482,10 +483,9 @@ def render_sentiment_analysis(
                         "subject_ner_names:N",
                         "text:N",
                     ]
-                    # color=alt.Color('polarity', bin=alt.Bin(step=20), legend=None),
                 )
                 .transform_filter(brush)
-                .properties(width=600, height=150)
+                .properties(width=400, height=350)
             )
 
             text_brush = alt.selection(type="single", encodings=["x"])
