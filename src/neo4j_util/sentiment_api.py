@@ -22,9 +22,17 @@ from neo4j_util import driver
 
 def map_to_market(symbol, x):
     if symbol:
+        if symbol in ["spy", "spx", "es"]:
+            return "ES"
+        if symbol in ["qqq", "nq"]:
+            return "NQ"
         return symbol
     for word in x:
         word = word.lower()
+        if word in ["gold"]:
+            return "GC"
+        if word in ["opec"]:
+            return "CL"
         if word in ["wfc", "bac", "banks", "market", "equity"]:
             return "ES"
         if word in ["nvda", "tsla", "tesla"]:
@@ -123,6 +131,10 @@ def get_processed_tweets_from_monthly(from_date, end_date):
     df["text"] = df["text"].apply(lambda x: x[:2000])
     df["keyword_text"] = df["keyword_text"].apply(lambda x: str(x))
     df["keyword_subject"] = df["keyword_subject"].apply(lambda x: str(x))
+    df["assetName"] = df.apply(
+        lambda x: map_to_market(x.symbol, x.keyword_subject), axis=1
+    )
+    df["assetCode"] = df["assetName"]
     logging.info(f"duplicate index:{df[df.index.duplicated()]}")
     df = df[from_date:end_date]
     df["time"] = df.index
@@ -257,7 +269,7 @@ def get_unprocessed_tweets(start_date, end_date, update):
         df = pd.DataFrame([r.values() for r in result], columns=result.keys())
         df["time"] = df["time"].apply(lambda x: x.to_native())
         df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True)
-        df["text"] = df["text"].apply(lambda x: str(x))
+        df["text"] = df["text"].apply(lambda x: str(x)[:64000])
         # df = keyword_util.add_subject_keyword(df)
         return df
 

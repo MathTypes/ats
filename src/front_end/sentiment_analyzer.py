@@ -437,34 +437,36 @@ def render_sentiment_analysis(market_df, news_df, assetNames, from_date, to_date
                 alt.Y('Open:Q'),
                 alt.Y2('Close:Q')
             )
-
-            market = (rule + bar).properties(
-                width=400,
-                height=300
-            ).add_selection(brush)
-            #market = rule
-            #market = base
-
-            sentiment_brush = alt.selection(type='interval', encodings=['x'])            
-            sentiment = alt.Chart(sentiment_data).mark_line(interpolate="monotone", point=True).encode(
-                x = alt.X('yearmonthdatehoursminutes(eventTime):T', scale=alt.Scale(domain=brush)),
-                y = alt.Y('mean(sentimentClass):Q'),
-                color = alt.Color('analyst_rating:N')
-            ).transform_filter(
-                brush
-            ).properties(
-                width=400,
-                height=150
-            ).add_selection(sentiment_brush)
-            polarity = alt.Chart(sentiment_data).mark_line(interpolate="monotone", point=True).encode(
-                x = alt.X('yearmonthdatehoursminutes(eventTime):T', scale=alt.Scale(domain=brush), bin=True),
-                y = alt.Y('mean(sentimentClass):Q'),
-                color=alt.Color('polarity', bin=alt.Bin(step=20), legend=None),
-            ).transform_filter(
-                brush
-            ).properties(
-                width=400,
-                height=150
+            polarity = (
+                alt.Chart(sentiment_data)
+                .mark_line(interpolate="monotone", point=True)
+                .transform_window(
+                    # The field to average
+                    rolling_mean="mean(polarity:Q)",
+                    # The number of values before and after the current value to include.
+                    frame=[-9, 0],
+                )
+                .encode(
+                    x=alt.X(
+                        "yearmonthdatehoursminutes(eventTime):T",
+                        scale=alt.Scale(domain=brush),
+                        bin=True,
+                    ),
+                    y=alt.Y("mean(polarity):Q"),
+                    y2="rolling_mean:Q",
+                    color=alt.Color("analyst_rating:N"),
+                    tooltip=[
+                        "keyword_subject:N",
+                        "lemma_text:N",
+                        "keyword_text:N",
+                        "subject:N",
+                        "text_ner_names:N",
+                        "subject_ner_names:N",
+                        "text:N",
+                    ]
+                )
+                .transform_filter(brush)
+                .properties(width=400, height=350)
             )
 
             text_brush = alt.selection(type='single', encodings=['x'])  
