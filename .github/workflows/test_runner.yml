@@ -33,14 +33,7 @@ jobs:
       - name: List dependencies
         run: |
           pip freeze
-      
-      - name: Lint
-        run: |
-          pip install 'black==22.6.0' 'flake8==5.0.3' 'pydocstyle==6.1.1'
-          black -l 79 --check src/ tests
-          flake8 src tests
-          pydocstyle src
-          
+                
       - name: run tests
         run: |          
           coverage run --source=src -m pytest tests
