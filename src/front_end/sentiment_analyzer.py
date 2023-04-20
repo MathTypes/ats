@@ -436,35 +436,14 @@ def render_sentiment_analysis(
 
             bar = base.mark_bar().encode(alt.Y("Open:Q"), alt.Y2("Close:Q"))
 
-            market = (rule + bar).properties(width=600, height=300).add_selection(brush)
+            market = (rule + bar).properties(width=300, height=300).add_selection(brush)
             # market = rule
             # market = base
 
             sentiment_brush = alt.selection(type="interval", encodings=["x"])
-            sentiment = (
-                alt.Chart(sentiment_data)
-                .mark_line(interpolate="monotone", point=True)
-                .encode(
-                    x=alt.X(
-                        "yearmonthdatehoursminutes(eventTime):T",
-                        scale=alt.Scale(domain=brush),
-                    ),
-                    y=alt.Y("mean(sentimentClass):Q"),
-                    color=alt.Color("analyst_rating:N"),
-                )
-                .transform_filter(brush)
-                .properties(width=600, height=150)
-                .add_selection(sentiment_brush)
-            )
             polarity = (
                 alt.Chart(sentiment_data)
                 .mark_line(interpolate="monotone", point=True)
-                .transform_window(
-                    # The field to average
-                    rolling_mean="mean(polarity:Q)",
-                    # The number of values before and after the current value to include.
-                    frame=[-9, 0],
-                )
                 .encode(
                     x=alt.X(
                         "yearmonthdatehoursminutes(eventTime):T",
@@ -472,7 +451,7 @@ def render_sentiment_analysis(
                         bin=True,
                     ),
                     y=alt.Y("mean(polarity):Q"),
-                    y2="rolling_mean:Q",
+                    #y2="rolling_mean:Q",
                     color=alt.Color("analyst_rating:N"),
                     tooltip=[
                         #"keyword_subject:N",
@@ -486,7 +465,7 @@ def render_sentiment_analysis(
                     ]
                 )
                 .transform_filter(brush)
-                .properties(width=400, height=350)
+                .properties(width=500, height=300)
             )
 
             text_brush = alt.selection(type="single", encodings=["x"])
@@ -508,12 +487,9 @@ def render_sentiment_analysis(
             polarity_text = ranked_text.encode(text="polarity:Q").properties(
                 title=alt.TitleParams(text="Polarity", align="right"),
             )
-            keyword_subject_text = ranked_text.encode(
-                text="keyword_subject:N"
-            ).properties(title=alt.TitleParams(text="keyword_subject", align="right"),)
-            keyword_text = ranked_text.encode(text="keyword_text:N").properties(
-                title=alt.TitleParams(text="keyword_text", align="right"),
-            )
+            #keyword_text = ranked_text.encode(text="keyword_text:N").properties(
+                #title=alt.TitleParams(text="Keyword_text", align="right"),
+            #)
             text_ner_names_text = ranked_text.encode(
                 text="text_ner_names:N"
             ).properties(title=alt.TitleParams(text="text_ner_names", align="right"),)
@@ -526,11 +502,10 @@ def render_sentiment_analysis(
                 tweet_id_text,
                 user_text,
                 polarity_text,
-                keyword_subject_text,
-                keyword_text,
+                #keyword_text,
                 text_ner_names_text,
                 subject_ner_names_text,
-            ).add_selection(text_brush)
+            )#.add_selection(text_brush)
             base_filter = (
                 alt.Chart(sentiment_data)
                 .transform_filter(brush)
@@ -558,12 +533,15 @@ def render_sentiment_analysis(
             row1 |= market
             row1 |= polarity
             chart &= row1
-            row2 = alt.hconcat()
-            row2 |= text
-            chart &= row2
+
+            chart &= text
+            return chart, brush
+
+
             row3 = alt.hconcat()
             row3 |= polarity_hg
             chart &= row3
+
             # row3 = alt.hconcat()
             # row3 |= polarity_hg
             # chart &= row3
@@ -593,9 +571,23 @@ def render_sentiment_analysis(
         analysts = news_df.user.unique().tolist()
         # stock_indexes = app_data.stock_indexes
         market = "US S&P 500"
-        selected_analysts = st.sidebar.multiselect(
-            "Please select analysts", analysts, default=[]
+        # selected_analysts = st.sidebar.multiselect(
+            # "Please select analysts", analysts, default=[]
+        # )
+
+        sentiment_minus2 = st.sidebar.checkbox(
+            "Show analysts with sentiment of -2"
         )
+        sentiment_minus1 = st.sidebar.checkbox(
+            "Show analysts with sentiment of -1"
+        )
+        sentiment_1 = st.sidebar.checkbox(
+            "Show analysts with sentiment of 1"
+        )
+        sentiment_2 = st.sidebar.checkbox(
+            "Show analysts with sentiment of 2"
+        )
+
 
         # logging.info(f'analyst:{selected_analysts}')
         # app_data.market_data(market)
@@ -620,9 +612,9 @@ def render_sentiment_analysis(
         # st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
         # logging.info(f'asset_size:{selected_assets}')
-        if len(selected_analysts) > 0:
-            news_df = news_df[news_df["user"].isin(selected_analysts)]
-            # logging.info(f'news_df:{news_df}')
+        #if len(selected_analysts) > 0:
+            #news_df = news_df[news_df["user"].isin(selected_analysts)]
+            ## logging.info(f'news_df:{news_df}')
         selections = {}
         rating_period = datetime.timedelta(hours=1)
         df_vec = []
