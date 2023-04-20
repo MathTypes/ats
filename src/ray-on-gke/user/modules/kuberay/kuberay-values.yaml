@@ -85,13 +85,11 @@ head:
   resources:
     limits:
       cpu: "1"
-      nvidia.com/gpu: "1"
       # To avoid out-of-memory issues, never allocate less than 2G memory for the Ray head.
       memory: "2G"
       ephemeral-storage: 20Gi
     requests:
       cpu: "1"
-      nvidia.com/gpu: "1"
       memory: "2G"
       ephemeral-storage: 10Gi
   annotations: {}
@@ -169,12 +167,10 @@ worker:
   resources:
     limits:
       cpu: "1"
-      nvidia.com/gpu: "1"
       memory: "4G"
       ephemeral-storage: 20Gi
     requests:
       cpu: "1"
-      nvidia.com/gpu: "1"
       memory: "4G"
       ephemeral-storage: 10Gi
   annotations:
