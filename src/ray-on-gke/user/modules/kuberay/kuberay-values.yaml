@@ -21,8 +21,8 @@
 
 image:
   # Replace this with your own image, e.g.:
-  repository: gcr.io/ricliu-gke-dev/ray-trainer-gpu
-  tag: ray-2.3.0-py310-python
+  repository: eu.gcr.io/vibrant-retina-379605/ats/dl
+  tag: latest_fix
   #repository: rayproject/ray
   #tag: 2.3.0-py310
   pullPolicy: IfNotPresent
@@ -30,7 +30,8 @@ image:
 nameOverride: "kuberay"
 fullnameOverride: ""
 
-imagePullSecrets: []
+imagePullSecrets:
+  []
   # - name: an-existing-secret
 
 head:
@@ -42,33 +43,34 @@ head:
   # autoscalerOptions is an OPTIONAL field specifying configuration overrides for the Ray autoscaler.
   # The example configuration shown below below represents the DEFAULT values.
   # autoscalerOptions:
-    # upscalingMode: Default
-    # idleTimeoutSeconds: 60
-    # securityContext: {}
-    # env: []
-    # envFrom: []
-    # resources specifies optional resource request and limit overrides for the autoscaler container.
-    # For large Ray clusters, we recommend monitoring container resource usage to determine if overriding the defaults is required.
-    # resources:
-    #   limits:
-    #     cpu: "500m"
-    #     memory: "512Mi"
-    #   requests:
-    #     cpu: "500m"
-    #     memory: "512Mi"
+  # upscalingMode: Default
+  # idleTimeoutSeconds: 60
+  # securityContext: {}
+  # env: []
+  # envFrom: []
+  # resources specifies optional resource request and limit overrides for the autoscaler container.
+  # For large Ray clusters, we recommend monitoring container resource usage to determine if overriding the defaults is required.
+  # resources:
+  #   limits:
+  #     cpu: "500m"
+  #     memory: "512Mi"
+  #   requests:
+  #     cpu: "500m"
+  #     memory: "512Mi"
   labels:
     cloud.google.com/gke-ray-node-type: head
   rayStartParams:
-    dashboard-host: '0.0.0.0'
-    block: 'true'
+    dashboard-host: "0.0.0.0"
+    block: "true"
   # containerEnv specifies environment variables for the Ray container,
   # Follows standard K8s container env schema.
   containerEnv:
-  # - name: EXAMPLE_ENV
-  #   value: "1"
+    # - name: EXAMPLE_ENV
+    #   value: "1"
     - name: RAY_memory_monitor_refresh_ms
       value: "0"
-  envFrom: []
+  envFrom:
+    []
     # - secretRef:
     #     name: my-env-secret
   # ports optionally allows specifying ports for the Ray container.
@@ -125,11 +127,11 @@ head:
           memory: 128Mi
           ephemeral-storage: 4Gi
       volumeMounts:
-      - mountPath: /tmp/ray
-        name: ray-logs
-      - mountPath: /fluent-bit/etc/fluent-bit.conf
-        subPath: fluent-bit.conf
-        name: fluentbit-config
+        - mountPath: /tmp/ray
+          name: ray-logs
+        - mountPath: /fluent-bit/etc/fluent-bit.conf
+          subPath: fluent-bit.conf
+          name: fluentbit-config
 
 worker:
   # If you want to disable the default workergroup
@@ -141,8 +143,8 @@ worker:
   labels:
     cloud.google.com/gke-ray-node-type: worker
   rayStartParams:
-    block: 'true'
-  initContainerImage: 'busybox:1.28'  # Enable users to specify the image for init container. Users can pull the busybox image from their private repositories.
+    block: "true"
+  initContainerImage: "busybox:1.28" # Enable users to specify the image for init container. Users can pull the busybox image from their private repositories.
   # Security context for the init container.
   initContainerSecurityContext: {}
   # containerEnv specifies environment variables for the Ray container,
@@ -150,7 +152,8 @@ worker:
   containerEnv: []
   # - name: EXAMPLE_ENV
   #   value: "1"
-  envFrom: []
+  envFrom:
+    []
     # - secretRef:
     #     name: my-env-secret
   # ports optionally allows specifying ports for the Ray container.
@@ -207,11 +210,11 @@ worker:
           memory: 128Mi
           ephemeral-storage: 4Gi
       volumeMounts:
-      - mountPath: /tmp/ray
-        name: ray-logs
-      - mountPath: /fluent-bit/etc/fluent-bit.conf
-        subPath: fluent-bit.conf
-        name: fluentbit-config
+        - mountPath: /tmp/ray
+          name: ray-logs
+        - mountPath: /fluent-bit/etc/fluent-bit.conf
+          subPath: fluent-bit.conf
+          name: fluentbit-config
 
 # The map's key is used as the groupName.
 # For example, key:small-group in the map below
@@ -226,29 +229,31 @@ additionalWorkerGroups:
     type: worker
     labels: {}
     rayStartParams:
-      block: 'true'
-    initContainerImage: 'busybox:1.28'  # Enable users to specify the image for init container. Users can pull the busybox image from their private repositories.
+      block: "true"
+    initContainerImage: "busybox:1.28" # Enable users to specify the image for init container. Users can pull the busybox image from their private repositories.
     # Security context for the init container.
     initContainerSecurityContext: {}
-  # containerEnv specifies environment variables for the Ray container,
-  # Follows standard K8s container env schema.
-    containerEnv: []
+    # containerEnv specifies environment variables for the Ray container,
+    # Follows standard K8s container env schema.
+    containerEnv:
+      []
       # - name: EXAMPLE_ENV
       #   value: "1"
-    envFrom: []
-        # - secretRef:
-        #     name: my-env-secret
+    envFrom:
+      []
+      # - secretRef:
+      #     name: my-env-secret
     # ports optionally allows specifying ports for the Ray container.
     # ports: []
-  # resource requests and limits for the Ray head container.
-  # Modify as needed for your application.
-  # Note that the resources in this example are much too small for production;
-  # we don't recommend allocating less than 8G memory for a Ray pod in production.
-  # Ray pods should be sized to take up entire K8s nodes when possible.
-  # Always set CPU and memory limits for Ray pods.
-  # It is usually best to set requests equal to limits.
-  # See https://docs.ray.io/en/latest/cluster/kubernetes/user-guides/config.html#resources
-  # for further guidance.
+    # resource requests and limits for the Ray head container.
+    # Modify as needed for your application.
+    # Note that the resources in this example are much too small for production;
+    # we don't recommend allocating less than 8G memory for a Ray pod in production.
+    # Ray pods should be sized to take up entire K8s nodes when possible.
+    # Always set CPU and memory limits for Ray pods.
+    # It is usually best to set requests equal to limits.
+    # See https://docs.ray.io/en/latest/cluster/kubernetes/user-guides/config.html#resources
+    # for further guidance.
     resources:
       limits:
         cpu: 1
@@ -266,7 +271,7 @@ additionalWorkerGroups:
     volumes:
       - name: log-volume
         emptyDir: {}
-  # Ray writes logs to /tmp/ray/session_latests/logs
+    # Ray writes logs to /tmp/ray/session_latests/logs
     volumeMounts:
       - mountPath: /tmp/ray
         name: log-volume
