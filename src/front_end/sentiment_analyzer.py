@@ -437,6 +437,7 @@ def render_sentiment_analysis(
             bar = base.mark_bar().encode(alt.Y("Open:Q"), alt.Y2("Close:Q"))
 
             market = (rule + bar).properties(width=300, height=300).add_selection(brush)
+            logging.info(f'market type:{type(market)}')
             # market = rule
             # market = base
 
@@ -465,13 +466,13 @@ def render_sentiment_analysis(
                     ]
                 )
                 .transform_filter(brush)
-                .properties(width=500, height=300)
+                .properties(width=400, height=300)
             )
 
             text_brush = alt.selection(type="single", encodings=["x"])
             ranked_text = (
                 alt.Chart(sentiment_data)
-                .mark_text(align="right")
+                .mark_text(align="center")
                 .encode(y=alt.Y("row_number:O", axis=None),)
                 .transform_filter(brush)
                 .transform_window(row_number="row_number()")
@@ -479,25 +480,63 @@ def render_sentiment_analysis(
                 .properties(height=500)
             )
             tweet_id_text = ranked_text.encode(text="id:N").properties(
-                title=alt.TitleParams(text="Id", align="right")
+                title=alt.TitleParams(text="Id", align="center")
             )
             user_text = ranked_text.encode(text="user:N").properties(
-                title=alt.TitleParams(text="User", align="right")
+                title=alt.TitleParams(text="User", align="center")
             )
             polarity_text = ranked_text.encode(text="polarity:Q").properties(
-                title=alt.TitleParams(text="Polarity", align="right"),
+                title=alt.TitleParams(text="Polarity", align="center"),
             )
+
+
+            if tweet_id_text | alt.Chart():
+                tweet_id_text = ranked_text.encode(text="id:N").properties(
+                title=alt.TitleParams(text="No Id Data", align="center")
+            )
+
+            if user_text | alt.Chart():
+                user_text = ranked_text.encode(text="user:N").properties(
+                title=alt.TitleParams(text="No User Data", align="center")
+            )
+                
+            if polarity_text | alt.Chart():
+                polarity_text = ranked_text.encode(text="polarity:Q").properties(
+                title=alt.TitleParams(text="No Polarity Data", align="center")
+            )
+
             #keyword_text = ranked_text.encode(text="keyword_text:N").properties(
-                #title=alt.TitleParams(text="Keyword_text", align="right"),
+                #title=alt.TitleParams(text="Keyword_text", align="center"),
             #)
             text_ner_names_text = ranked_text.encode(
                 text="text_ner_names:N"
-            ).properties(title=alt.TitleParams(text="text_ner_names", align="right"),)
+            ).properties(title=alt.TitleParams(
+                text="Text Ner Names", align="center"
+                ),
+            )
             subject_ner_names_text = ranked_text.encode(
                 text="subject_ner_names:N"
             ).properties(
-                title=alt.TitleParams(text="subject_ner_names", align="right"),
+                title=alt.TitleParams(text="Subject Ner Names", align="center"),
             )
+
+
+            if text_ner_names_text | alt.Chart():
+                text_ner_names_text = ranked_text.encode(
+                    text="text_ner_names:N"
+                ).properties(title=alt.TitleParams(
+                    text="No Text Ner Name Data", align="center"
+                    ),
+                )
+            
+            if subject_ner_names_text | alt.Chart():
+                subject_ner_names_text = ranked_text.encode(
+                    text="subject_ner_names:N"
+                ).properties(
+                    title=alt.TitleParams(text="No Subject Ner Name Data", align="center"),
+                )
+            
+
             text = alt.hconcat(
                 tweet_id_text,
                 user_text,
@@ -527,8 +566,8 @@ def render_sentiment_analysis(
                 .properties(width=500, height=100)
             )
             chart = alt.vconcat(data=hist_data).configure_view(
-                strokeOpacity=0
-            )
+                strokeOpacity=0,
+            ).configure_axisLeft()
             row1 = alt.hconcat()
             row1 |= market
             row1 |= polarity
@@ -567,27 +606,15 @@ def render_sentiment_analysis(
         # warnings.filterwarnings("ignore")
         # gc.collect()
 
-        st.sidebar.subheader(f"Analyst:")
+        st.sidebar.subheader(f"Sentiment:")
         analysts = news_df.user.unique().tolist()
         # stock_indexes = app_data.stock_indexes
         market = "US S&P 500"
-        # selected_analysts = st.sidebar.multiselect(
-            # "Please select analysts", analysts, default=[]
-        # )
-
-        sentiment_minus2 = st.sidebar.checkbox(
-            "Show analysts with sentiment of -2"
-        )
-        sentiment_minus1 = st.sidebar.checkbox(
-            "Show analysts with sentiment of -1"
-        )
-        sentiment_1 = st.sidebar.checkbox(
-            "Show analysts with sentiment of 1"
-        )
-        sentiment_2 = st.sidebar.checkbox(
-            "Show analysts with sentiment of 2"
+        selected_rating = st.sidebar.multiselect(
+            "Please select ratings: ", [-2, -1, 1, 2], default=[-2, -1, 1, 2]
         )
 
+        
 
         # logging.info(f'analyst:{selected_analysts}')
         # app_data.market_data(market)
@@ -613,8 +640,10 @@ def render_sentiment_analysis(
 
         # logging.info(f'asset_size:{selected_assets}')
         #if len(selected_analysts) > 0:
-            #news_df = news_df[news_df["user"].isin(selected_analysts)]
-            ## logging.info(f'news_df:{news_df}')
+            # news_df = news_df[news_df["user"].isin(selected_analysts)]
+            # logging.info(f'news_df:{news_df}')
+        if len(selected_rating) > 0:
+            news_df = news_df[news_df["analyst_rating"].isin(selected_rating)]
         selections = {}
         rating_period = datetime.timedelta(hours=1)
         df_vec = []
