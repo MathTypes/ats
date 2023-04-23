@@ -1,0 +1,4 @@
+,tweet_id,tweet_url,username,is_retweet,is_pinned,time,ts,text,replies,retweets,likes
+0,1262160391779598337,/DougKass/status/1262160391779598337#m,DougKass,0.0,0.0,2020-05-17 11:17:00+00:00,1589714220000.0,At 715pm S&p futures +24,18.0,3.0,50.0
+1,1262148561036365832,/DougKass/status/1262148561036365832#m,DougKass,0.0,0.0,2020-05-17 10:30:00+00:00,1589711400000.0,S$p futures +6,6.0,0.0,26.0
+2,1262113341331382272,/DougKass/status/1262113341331382272#m,DougKass,0.0,0.0,2020-05-17 08:10:00+00:00,1589703000000.0,West wing -38 episodes this weekend!,4.0,0.0,16.0

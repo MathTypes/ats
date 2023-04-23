@@ -1,0 +1,4 @@
+,tweet_id,tweet_url,username,is_retweet,is_pinned,time,ts,text,replies,retweets,likes
+0,1231352936938319872,/DougKass/status/1231352936938319872#m,DougKass,0.0,0.0,2020-02-22 10:59:00+00:00,1582369140000.0,I like Mike!,23.0,3.0,97.0
+1,1231334321438543879,/DougKass/status/1231334321438543879#m,DougKass,0.0,0.0,2020-02-22 09:45:00+00:00,1582364700000.0,How long will it be until @realDonaldTrump tweets about Clint Eastwood?,16.0,2.0,57.0
+2,1231287613069373440,/DougKass/status/1231287613069373440#m,DougKass,0.0,0.0,2020-02-22 06:40:00+00:00,1582353600000.0,Restating The Objectives of My Diary on @realmoney realmoney.thestreet.com/doug… @jimcramer @tomkeene @SquawkCNBC,0.0,0.0,1.0

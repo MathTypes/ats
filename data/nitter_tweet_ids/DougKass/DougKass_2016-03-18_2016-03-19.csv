@@ -1,0 +1,4 @@
+,tweet_id,tweet_url,username,is_retweet,is_pinned,time,ts,text,replies,retweets,likes
+0,710632162299650048,/DougKass/status/710632162299650048#m,DougKass,0.0,0.0,2016-03-18 01:01:00+00:00,1458262860000.0,"@FoxNews From TheStreet.com ""Dougie's View of 'The Donald'"" realmoneypro.thestreet.com/d…",1.0,0.0,0.0
+1,710631817515286528,/DougKass/status/710631817515286528#m,DougKass,0.0,0.0,2016-03-18 01:00:00+00:00,1458262800000.0,"@seanhannity From TheStreet.com ""Dougie's View of the Donald"" realmoneypro.thestreet.com/d…",0.0,1.0,2.0
+2,710631108778594304,/DougKass/status/710631108778594304#m,DougKass,0.0,0.0,2016-03-18 12:57:00+00:00,1458305820000.0,"@realDonaldTrump ""Dougie's View on The Donald"" from Thestreet.com realmoneypro.thestreet.com/d…",0.0,0.0,1.0
