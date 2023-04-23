@@ -56,8 +56,20 @@ def get_article_text(title):
     )
     return text
 
+def get_tweet_id_by_user(username, start_id, end_id):
+    logging.info(f"get_tweet_id_by_id_range: start_id={start_id}, end_id={end_id}")
+    query = """
+            MATCH (t:Tweet)
+            WHERE t.id  >= $start_id and t.id<=$end_id
+            and t.user=$username
+            RETURN t.id as id
+            """
+    text = read_query(query, params={"start_id": start_id, "end_id": end_id,
+                                     "username": username})
+    return text
 
 def get_tweet_id_by_range(start_date, end_date):
+    logging.info(f"get_tweet_id_by_range: start_date={start_date}, end_date={end_date}")
     query = """
             MATCH (t:Tweet)
             WHERE datetime({epochMillis: t.created_at})  > datetime($start_date)

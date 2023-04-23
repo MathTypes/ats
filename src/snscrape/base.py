@@ -14,8 +14,10 @@ import datetime
 import functools
 import json
 import logging
+import random
 import requests
 import requests.adapters
+import string
 import urllib3.connection
 import time
 import warnings
@@ -227,22 +229,39 @@ class Scraper:
         allowRedirects=True,
         proxies=None,
     ):
-        # proxies = proxies or self._proxies or {}
-        proxies = {
-            "http": "http://host.docker.internal:8118",
-            "https": "http://host.docker.internal:8118",
-        }
+        proxies = proxies or self._proxies or {}
+        proxies = {}
+        #proxies = {
+        #    "http": "http://host.docker.internal:8118",
+        #    "https": "http://host.docker.internal:8118",
+        #}
         errors = []
+        #self._session.cookies.clear()
+        # v1%3A168203758754724534
+        # 'guest_id=v1%3A168203771402596723
+        # personalization_id="v1_yNDxJ5CSHLYOvRqB7v5KEw=="'
         for attempt in range(self._retries + 1):
             # The request is newly prepared on each retry because of potential cookie updates.
+            _logger.info(f"Retrieving {url}, header:{headers}")
+            user_agent = headers['User-Agent']
+            logging.info(f'user_agent:{user_agent}')
+            #rand_str = "".join(random.choices(string.ascii_lowercase, k=5))
+            #logging.info(f'rand_str:{rand_str}')
+            #new_user_agent = user_agent + rand_str
+            #logging.info(f'new_user_agent:{new_user_agent}')
+            #headers.update(
+            #    {
+            #        'User-Agent': new_user_agent,
+            #    }
+            #)
             req = self._session.prepare_request(
                 requests.Request(method, url, params=params, data=data, headers=headers)
             )
+            _logger.info(f"Preparing req: {req.headers}")
             environmentSettings = self._session.merge_environment_settings(
                 req.url, proxies, None, None, None
             )
-            _logger.info(f"Retrieving {req.url}")
-            _logger.debug(f"... with headers: {headers!r}")
+            _logger.info(f"... with headers: {headers!r}")
             if data:
                 _logger.debug(f"... with data: {data!r}")
             if environmentSettings:
@@ -254,7 +273,9 @@ class Scraper:
                     timeout=timeout,
                     **environmentSettings,
                 )
-            except requests.exceptions.RequestException as exc:
+                logging.info(f'response:{r.headers}')
+            except Exception as exc:
+                logging.info(f'response exception:{exc}')
                 if attempt < self._retries:
                     retrying = ", retrying"
                     level = logging.INFO
@@ -265,14 +286,14 @@ class Scraper:
                 errors.append(repr(exc))
             else:
                 redirected = f" (redirected to {r.url})" if r.history else ""
+                _logger.info(f"... with response headers: {r.headers!r}")
                 _logger.info(f"Retrieved {req.url}{redirected}: {r.status_code}")
-                _logger.debug(f"... with response headers: {r.headers!r}")
                 if r.history:
                     for i, redirect in enumerate(r.history):
-                        _logger.debug(
+                        _logger.info(
                             f'... request {i}: {redirect.request.url}: {redirect.status_code} (Location: {redirect.headers.get("Location")})'
                         )
-                        _logger.debug(
+                        _logger.info(
                             f"... ... with response headers: {redirect.headers!r}"
                         )
                 if responseOkCallback is not None:

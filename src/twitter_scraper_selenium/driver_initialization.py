@@ -11,6 +11,10 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as CustomFireFoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from seleniumwire import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 
 # import webdriver for downloading respective driver for the browser
 from webdriver_manager.chrome import ChromeDriverManager
@@ -22,6 +26,55 @@ ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
 
+def get_headers():
+    email = input('Please enter Twitter email/username: ')
+    password = input('Please enter Twitter password: ')
+    options = CustomChromeOptions()
+    options.add_argument("--disable-blink-features=AutomationControlled") 
+    options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+    options.add_experimental_option("useAutomationExtension", False) 
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36")
+    driver = webdriver.Chrome(options=options)
+
+    driver.get("https:/  witter.com")
+    while 'Error' in driver.title:
+        sleep(1)
+        driver.get("https:/  witter.com")
+        if 'Error' not in driver.title:
+            break
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.XPATH,"//*[text()='Log in']")))
+    login_btn = driver.find_element(By.XPATH, "//*[text()='Log in']")
+    login_btn.click()
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR,'[autocomplete="username"]',)))
+    username_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="username"]')
+    username_field.send_keys(email)
+    sleep(2)
+    next_btn = driver.find_element(By.XPATH, "//*[text()='Next']")
+    next_btn.click()
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR,'[autocomplete="current-password"]',)))
+    password_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="current-password"]')
+    password_field.send_keys(password)
+    sleep(2)
+    login_btn = driver.find_element(By.CSS_SELECTOR, '[data-testid="LoginForm_Login_Button"]')
+    login_btn.click()
+    
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[placeholder="Search Twitter"]')))
+    search_field = driver.find_element(By.CSS_SELECTOR, '[placeholder="Search Twitter"]')
+    search_field.click()
+    search_field.send_keys('whatever')
+    search_field.send_keys(Keys.ENTER)
+    while True:
+        for request in driver.requests:
+            if 'https:/  witter.com/i/api/2/search/adaptive.json?' in request.url:
+                headers_dict = vars(request.headers)['_headers']
+                headers = {}
+                fields = ['authorization', 'User-Agent', 'cookie', 'Accept', 'Accept-Language', 'Referer', 'x-twitter-auth-type', 'x-guest-token', 'x-csrf-token', 'x-twitter-active-user']
+                for i in headers_dict:
+                    key = i[0]
+                    value = i[1]
+                    if key in fields:
+                        headers[key] = value
+                return headers
 
 class Initializer:
     def __init__(
@@ -47,6 +100,7 @@ class Initializer:
     def set_properties(self, browser_option):
         """adds capabilities to the driver"""
         header = Headers().generate()["User-Agent"]
+        #header = get_headers()
         if self.headless:
             # runs browser in headless mode
             browser_option.add_argument("--headless")

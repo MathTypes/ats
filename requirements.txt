@@ -1,7 +1,7 @@
 absl-py==1.1.0
 adal==1.2.7
 adlfs==2023.1.0
-aiobotocore==2.5.0
+#aiobotocore==2.5.0
 aiodns==3.0.0
 aiofile==3.8.5
 aiofiles==23.1.0
@@ -10,7 +10,7 @@ aiohttp-cors==0.7.0
 aiohttp-socks==0.8.0
 aioitertools==0.11.0
 aiosignal==1.3.1
-allennlp==2.10.1
+#allennlp==2.10.1
 altair==4.2.2
 antlr4-python3-runtime==4.8
 anyio==3.6.2
@@ -26,7 +26,7 @@ astunparse==1.6.3
 async-generator==1.10
 async-timeout==4.0.2
 attrs==22.2.0
-autogoal==0.6.0
+#autogoal==0.6.0
 avro==1.11.1
 azure-core==1.26.4
 azure-datalake-store==0.0.52
@@ -46,7 +46,7 @@ blis==0.4.1
 bokeh==2.4.3
 boltons==23.0.0
 boto3==1.26.94
-botocore==1.29.76
+#botocore==1.29.76
 breadability==0.1.20
 bs4==0.0.1
 cached-path==1.1.6
@@ -130,9 +130,9 @@ feedfinder2==0.0.4
 feedparser==6.0.10
 filelock==3.7.1
 flatbuffers==23.3.3
-flyteidl==1.3.18
-flytekit==1.6.0b0
-flytekitplugins-ray==1.5.0
+#flyteidl==1.3.18
+#flytekit==1.6.0b0
+#flytekitplugins-ray==1.5.0
 fonttools==4.33.3
 fqdn==1.5.1
 frontend==0.0.3
@@ -168,8 +168,8 @@ googletransx==2.4.2
 gpflow==2.7.1
 gpustat==1.1
 greenlet==1.1.2
-grpcio==1.54.0
-grpcio-status==1.54.0
+#grpcio==1.54.0
+#grpcio-status==1.54.0
 gym==0.21.0
 gym-notices==0.0.7
 Gymnasium==0.26.3
@@ -293,7 +293,7 @@ newsapi-python==0.2.7
 newspaper3k==0.2.8
 nibabel==5.0.1
 nipype==1.8.5
-nltk==3.5
+nltk>=3.5
 nmslib==2.1.1
 notebook==6.1.6
 numexpr==2.8.4
@@ -355,7 +355,7 @@ prettytable==3.6.0
 prometheus-client==0.16.0
 promise==2.3
 prompt-toolkit==3.0.38
-protobuf==4.22.3
+protobuf<=4
 protoc-gen-swagger==0.1.0
 prov==2.0.0
 psutil==5.9.1
@@ -435,7 +435,7 @@ schedule==1.1.0
 scikit-image==0.20.0
 scikit-learn==1.2.2
 scipy==1.8.1
-scrapy-tor-proxy-rotation==0.0.4
+#scrapy-tor-proxy-rotation==0.0.4
 seaborn==0.11.0
 SecretStorage==3.3.3
 selenium==4.8.3
@@ -449,8 +449,9 @@ sgmllib3k==1.0.0
 shortuuid==1.0.9
 simplejson==3.18.4
 six==1.16.0
-sklearn==0.0.post1
-sklearn-crfsuite==0.3.6
+#sklearn==0.0.post1
+scikit-learn
+#sklearn-crfsuite==0.3.6
 smart-open==6.3.0
 smmap==5.0.0
 sniffio==1.3.0
@@ -458,12 +459,12 @@ snorkel==0.9.9
 snowballstemmer==2.2.0
 sortedcontainers==2.4.0
 soupsieve==2.4
-spacy==2.3.2
+spacy
 spacy-legacy==3.0.12
 spacy-loggers==1.0.4
 spacy-streamlit==0.1.0
 SQLAlchemy==1.4.47
-srsly==1.0.6
+#srsly==1.0.6
 stable-baselines3==1.5.0
 stack-data==0.6.2
 starlette==0.26.1
@@ -473,7 +474,8 @@ stem==1.8.0
 stochastic==0.7.0
 stqdm==0.0.5
 stream-chat==4.6.0
-streamlit==1.21.0
+streamlit
+#==1.21.0
 streamlit-aggrid==0.3.4.post3
 streamlit-authenticator==0.2.1
 streamlit-autorefresh==0.0.1
@@ -496,8 +498,10 @@ tensorboard==2.11.2
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
 tensorboardX==2.6
-tensorflow==2.11.1
-tensorflow-estimator==2.11.0
+#tensorflow==2.11.1
+#tensorflow-estimator==2.11.0
+tensorflow
+tensorflow-estimator
 tensorflow-io-gcs-filesystem==0.31.0
 tensorflow-probability==0.19.0
 termcolor==1.1.0

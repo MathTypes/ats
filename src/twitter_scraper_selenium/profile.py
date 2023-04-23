@@ -63,7 +63,7 @@ class Profile:
             all_ready_fetched_posts.extend(present_tweets)
 
             while len(self.posts_data) < self.tweets_count:
-                logging.error("tweets:{len(self.posts_data))}")
+                logging.error(f'tweets:{len(self.posts_data)}, tweets_count:{self.tweets_count}')
                 for tweet in present_tweets:
                     logging.error(f"find tweet:{tweet}")
                     status, tweet_url = Finder.find_status(tweet)
@@ -72,48 +72,19 @@ class Profile:
                     retweets = Finder.find_shares(tweet)
                     status = status[-1]
                     username = tweet_url.split("/")[3]
-                    is_retweet = (
-                        True
-                        if self.twitter_username.lower() != username.lower()
-                        else False
-                    )
-                    name = Finder.find_name_from_tweet(tweet, is_retweet)
-                    retweet_link = tweet_url if is_retweet is True else ""
-                    posted_time = Finder.find_timestamp(tweet)
-                    content = Finder.find_content(tweet)
-                    likes = Finder.find_like(tweet)
-                    images = Finder.find_images(tweet)
-                    videos = Finder.find_videos(tweet)
-                    hashtags = re.findall(r"#(\w+)", content)
-                    mentions = re.findall(r"@(\w+)", content)
-                    profile_picture = Finder.find_profile_image_link(tweet)
-                    link = Finder.find_external_link(tweet)
-                    logging.error(f"find link:{link}")
                     self.posts_data[status] = {
                         "tweet_id": status,
                         "username": username,
-                        "name": name,
-                        "profile_picture": profile_picture,
-                        "replies": replies,
-                        "retweets": retweets,
-                        "likes": likes,
-                        "is_retweet": is_retweet,
-                        "retweet_link": retweet_link,
-                        "posted_time": posted_time,
-                        "content": content,
-                        "hashtags": hashtags,
-                        "mentions": mentions,
-                        "images": images,
-                        "videos": videos,
                         "tweet_url": tweet_url,
-                        "link": link,
                     }
 
                 Utilities.scroll_down(self._driver)
                 logging.error("before scroll down")
                 Utilities.wait_until_completion(self._driver)
                 logging.error("after scroll down")
-                Utilities.wait_until_tweets_appear(self._driver)
+                if not Utilities.wait_until_tweets_appear(self._driver):                    
+                    logging.error("No more tweet appearing")
+                    break
                 logging.error("after tweet appear")
                 present_tweets = Finder.find_all_tweets(self._driver)
                 present_tweets = [
@@ -134,17 +105,13 @@ class Profile:
         try:
             logging.error(f"scrap")
             self._start_driver()
-            logging.error(f"after start_driver")
             self._driver.get(self.URL)
-            logging.error(f"after get url")
             Utilities.wait_until_completion(self._driver)
             Utilities.wait_until_tweets_appear(self._driver)
             logging.error("tweet appear")
             self._fetch_and_store_data()
-            logging.error("after fetch and store")
             self._close_driver()
             data = dict(list(self.posts_data.items())[0 : int(self.tweets_count)])
-            logging.error("close driver")
             return data
         except Exception as ex:
             logger.exception("Error at method scrap : {} ".format(ex))
@@ -190,21 +157,7 @@ def json_to_csv(filename, json_data, directory):
             row = {
                 "tweet_id": key,
                 "username": json_data[key]["username"],
-                "name": json_data[key]["name"],
-                "profile_picture": json_data[key]["profile_picture"],
-                "replies": json_data[key]["replies"],
-                "retweets": json_data[key]["retweets"],
-                "likes": json_data[key]["likes"],
-                "is_retweet": json_data[key]["is_retweet"],
-                "retweet_link": json_data[key]["retweet_link"],
-                "posted_time": json_data[key]["posted_time"],
-                "content": json_data[key]["content"],
-                "hashtags": json_data[key]["hashtags"],
-                "mentions": json_data[key]["mentions"],
-                "images": json_data[key]["images"],
-                "videos": json_data[key]["videos"],
                 "tweet_url": json_data[key]["tweet_url"],
-                "link": json_data[key]["link"],
             }
             writer.writerow(row)  # write row to CSV file
         data_file.close()  # after writing close the file

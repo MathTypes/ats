@@ -146,7 +146,11 @@ class Neo4j:
         #    tx.create(user_node)
         # print("Node created:", company)
 
-        retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
+        #retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
+        # Skip deleted tweets
+        if not hasattr(tweet, "user"):
+            return
+        retweetedTweetId = None
         tweet_node = Node(
             "Tweet",
             id=tweet.id,

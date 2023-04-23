@@ -38,10 +38,11 @@ RUN apt-get update && \
     make && \
     make install && \
     cd .. && \
-    pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir -r "./examples/requirements.txt" && \
+    pip3 install --upgrade pip && \
+    pip3 install Cython && \
+    pip3 install -r "./requirements_slim.txt" && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* ta-lib-0.4.0-src.tar.gz
-
+RUN pip3 install -U "ray[default]"
 # Faster compilation for tests
 RUN pip3 install --no-cache-dir -e ".[docs,tests]"

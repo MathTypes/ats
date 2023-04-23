@@ -45,7 +45,12 @@ import typing
 import urllib.parse
 import urllib3.util.ssl_
 import warnings
-
+from seleniumwire import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 
 logging = logging.getLogger(__name__)
 _API_AUTHORIZATION_HEADER = "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
@@ -53,6 +58,84 @@ _globalGuestTokenManager = None
 _GUEST_TOKEN_VALIDITY = 10800
 _CIPHERS_CHROME = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA:AES256-SHA"
 
+def get_headers():
+    email = input('Please enter Twitter email/username: ')
+    password = input('Please enter Twitter password: ')
+
+    options = Options()
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--remote-debugging-port=9222")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+    options.add_experimental_option("useAutomationExtension",False)
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36")
+    driver = webdriver.Chrome(options=options)
+
+    driver.get("https://twitter.com")
+    while 'Error' in driver.title:
+        sleep(1)
+        driver.get("https://twitter.com")
+        if 'Error' not in driver.title:
+            break
+
+    WebDriverWait(driver, 300).until(
+        EC.presence_of_element_located(
+            (
+                By.XPATH,
+                "//*[text()='Log in']",
+                )
+            )
+        )
+
+    login_btn = driver.find_element(By.XPATH, "//*[text()='Log in']")
+    login_btn.click()
+    WebDriverWait(driver, 300).until(
+        EC.presence_of_element_located(
+            (
+                By.CSS_SELECTOR,
+                '[autocomplete="username"]',
+                )
+            )
+        )
+    username_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="username"]')
+    username_field.send_keys(email)
+    sleep(2)
+    next_btn = driver.find_element(By.XPATH, "//*[text()='Next']")
+    next_btn.click()
+    WebDriverWait(driver, 300).until(
+        EC.presence_of_element_located(
+            (
+                By.CSS_SELECTOR,
+                '[autocomplete="current-password"]',
+                )
+            )
+        )
+    password_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="current-password"]')
+    password_field.send_keys(password)
+    sleep(2)
+    login_btn = driver.find_element(By.CSS_SELECTOR, '[data-testid="LoginForm_Login_Button"]')
+    login_btn.click()
+
+    WebDriverWait(driver, 300).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, '[placeholder="Search Twitter"]')
+            )
+        )
+    search_field = driver.find_element(By.CSS_SELECTOR, '[placeholder="Search Twitter"]')
+    search_field.click()
+    search_field.send_keys('whatever')
+    search_field.send_keys(Keys.ENTER)
+    while True:
+        for request in driver.requests:
+            if 'https://twitter.com/i/api/2/search/adaptive.json?' in request.url:
+                headers_dict = vars(request.headers)['_headers']
+                headers = {}
+                fields = ['authorization', 'User-Agent', 'cookie', 'Accept', 'Accept-Language', 'Referer', 'x-twitter-auth-type', 'x-guest-token', 'x-csrf-token', 'x-twitter-active-user']
+                for i in headers_dict:
+                    key = i[0]
+                    value = i[1]
+                    if key in fields:
+                        headers[key] = value
+                return headers
 
 @dataclasses.dataclass
 class Tweet(snscrape.base.Item):
@@ -717,7 +800,7 @@ class _TwitterAPIScraper(snscrape.base.Scraper):
     ):
         super().__init__(**kwargs)
         self._baseUrl = baseUrl
-        self._existingTweetIds = existingTweetIds
+        self._existingTweetIds = copy.deepcopy(existingTweetIds)
 
         if guestTokenManager is None:
             global _globalGuestTokenManager
@@ -2053,11 +2136,16 @@ class _TwitterAPIScraper(snscrape.base.Scraper):
                 ):  # TODO show more cursor?
                     for item in entry["content"]["items"]:
                         if item["entryId"].startswith(f'{entry["entryId"]}-tweet-'):
-                            tweetId = int(item["entryId"][len(entry["entryId"]) + 7 :])
-                            yield self._graphql_timeline_tweet_item_result_to_tweet(
-                                item["item"]["itemContent"]["tweet_results"]["result"],
-                                tweetId=tweetId,
-                            )
+                            match_str = item["entryId"][len(entry["entryId"]) + 7 :]
+                            split_vec = match_str.split("-")
+                            match_str = split_vec[0]
+                            tweetId = int(match_str)
+                            if ("result"
+                                    in item["item"]["itemContent"]["tweet_results"]):
+                                yield self._graphql_timeline_tweet_item_result_to_tweet(
+                                    item["item"]["itemContent"]["tweet_results"]["result"],
+                                    tweetId=tweetId,
+                                )
                 elif not entry["entryId"].startswith("cursor-"):
                     logging.warning(
                         f'Skipping unrecognised entry ID: {entry["entryId"]!r}'
@@ -2377,11 +2465,11 @@ class TwitterSearchScraper(_TwitterAPIScraper):
 class TwitterUserScraper(TwitterSearchScraper):
     name = "twitter-user"
 
-    def __init__(self, user, **kwargs):
+    def __init__(self, user, existingTweetIds, **kwargs):
         self._isUserId = isinstance(user, int)
         if not self._isUserId and not self.is_valid_username(user):
             raise ValueError("Invalid username")
-        super().__init__(f"from:{user}", **kwargs)
+        super().__init__(f"from:{user}", existingTweetIds, **kwargs)
         self._user = user
         self._baseUrl = (
             f"https://twitter.com/{self._user}"
@@ -2749,6 +2837,7 @@ class TwitterTweetScraper(_TwitterAPIScraper):
             seenTweets = self._existingTweetIds
             queue = collections.deque()
             queue.append(self._tweetId)
+            added = 0
             while queue:
                 tweetId = queue.popleft()
                 thisPagParams = copy.deepcopy(paginationParams)
@@ -2773,7 +2862,9 @@ class TwitterTweetScraper(_TwitterAPIScraper):
                         ],
                         includeConversationThreads=True,
                     ):
-                        if tweet.id not in seenTweets:
+                        if tweet.id not in seenTweets and added<50:
+                            seenTweets.add(tweet.id)
+                            added = added + 1
                             logging.info(f"adding tweet:{tweet.id}")
                             yield tweet
                             seenTweets.add(tweet.id)

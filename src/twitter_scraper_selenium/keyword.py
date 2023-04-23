@@ -137,8 +137,8 @@ class Keyword:
         try:
             self.start_driver()
             self.driver.get(self.URL)
-            Utilities.wait_until_completion(self.driver)
-            Utilities.wait_until_tweets_appear(self.driver)
+            Utilities.wait_until_completion(self.driver, 30)
+            Utilities.wait_until_tweets_appear(self.driver, 30)
             self.fetch_and_store_data()
 
             self.close_driver()
@@ -254,6 +254,7 @@ def scrape_keyword(
         max_id=max_id,
         within_time=within_time,
     )
+    logging.info(f'URL:{URL}')
     keyword_bot = Keyword(
         keyword,
         browser=browser,

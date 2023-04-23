@@ -26,22 +26,24 @@ class Utilities:
     """
 
     @staticmethod
-    def wait_until_tweets_appear(driver) -> None:
+    def wait_until_tweets_appear(driver, timeout=10) -> None:
         """Wait for tweet to appear. Helpful to work with the system facing
         slow internet connection issues
         """
         try:
             logging.error("before waiting")
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, timeout).until(
                 EC.presence_of_element_located(
                     (By.CSS_SELECTOR, '[data-testid="tweet"]')
                 )
             )
             logging.error("after waiting")
+            return True
         except WebDriverException:
             logger.exception(
                 "Tweets did not appear!, Try setting headless=False to see what is happening"
             )
+            return False
 
     @staticmethod
     def scroll_down(driver) -> None:
@@ -56,12 +58,12 @@ class Utilities:
             logger.exception("Error at scroll_down method {}".format(ex))
 
     @staticmethod
-    def wait_until_completion(driver) -> None:
+    def wait_until_completion(driver, timeout=3) -> None:
         """waits until the page have completed loading"""
         try:
             state = ""
             while state != "complete":
-                time.sleep(randint(3, 5))
+                time.sleep(randint(timeout, 5))
                 logging.error("waiting for complete")
                 state = driver.execute_script("return document.readyState")
         except Exception as ex:
