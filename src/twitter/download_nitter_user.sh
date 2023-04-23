@@ -1,0 +1,1 @@
+PYTHONPATH=. python3 twitter/nitter_user.py --users=$1 --start_date=2010-01-01 --end_date=2023-04-22 --port=8009 --output_dir=../data/nitter_tweet_ids

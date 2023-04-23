@@ -1,0 +1,1 @@
+PYTHONPATH=. python3 twitter/selenium_scrape.py --username=$1 --output_dir=../data/tweet_ids
