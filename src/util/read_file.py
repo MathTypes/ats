@@ -24,5 +24,6 @@ if __name__ == "__main__":
     config_utils.set_args(args)
     logging_utils.init_logging()
     pd.set_option("display.max_columns", 100)
+    pd.options.display.float_format = "{:.2f}".format
     df = pd.read_parquet(args.file, engine='fastparquet')
     print(df)
