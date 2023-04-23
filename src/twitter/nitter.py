@@ -31,6 +31,14 @@ if __name__ == "__main__":
 
     last_tweet_id = None
     users = args.username.split(",")
+    with NitterScraper(host="0.0.0.0", port=8012) as nitter:
+        profile = nitter.get_profile("dgnsrekt")
+        print("serialize to json\n")
+        print(profile.json(indent=4))
+        print("serialize to a dictionary\n")
+        pprint(profile.dict())
+    exit(0)
+
     df_vec = []
     with NitterScraper(host="0.0.0.0", port=8008) as nitter:
         for user in users:
@@ -63,13 +71,6 @@ if __name__ == "__main__":
     exit(0)
 
     print("Scraping with local nitter docker instance.")
-    with NitterScraper(host="0.0.0.0", port=8008) as nitter:
-        profile = nitter.get_profile("dgnsrekt")
-        print("serialize to json\n")
-        print(profile.json(indent=4))
-        print("serialize to a dictionary\n")
-        pprint(profile.dict())
-    exit(0)
 
     with NitterScraper(host="0.0.0.0", port=8008) as nitter:
         while True:

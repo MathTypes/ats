@@ -1,3 +1,6 @@
+# Usage
+#
+# /Users/jianjunchen/ats/lib/python3.7/site-packages/nitter_scraper/search.py
 import os
 import time
 import datetime
@@ -59,25 +62,33 @@ if __name__ == "__main__":
     df_vec = []
     with NitterScraper(host="0.0.0.0", port=args.port) as nitter:
         for symbol in users:
-            for cur_date in pd.date_range(args.start_date, args.end_date, freq="D"):
+            profile = nitter.get_profile(symbol)
+            joined_date_str = profile.profile_joined_date.split(" ")
+            joined_date_str = joined_date_str[1] + " 1 " + joined_date_str[2]
+            joined_date = datetime.datetime.strptime(joined_date_str, "%B %d %Y").date()
+            logging.info(f"joined_date:{joined_date}")
+            start_date = args.start_date
+            if start_date < joined_date:
+                start_date = joined_date
+            symbol_output_dir = os.path.join(args.output_dir, symbol)
+            for cur_date in pd.date_range(start_date, args.end_date, freq="D"):
                 since = cur_date.strftime("%Y-%m-%d")
                 until = (cur_date + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-                df = pd.DataFrame()
-                query = f"search?f=tweets&q=from%3A{symbol}&until={until}&since={since}"
-                try:
-                    tweets = nitter.search_tweets(query, pages=100)
-                    for tweet in tweets:
-                        #df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
-                        df2 = tweet.dict()
-                        df2["tweet_id"] = str(df2["tweet_id"])
-                        df = df.append(df2, ignore_index = True)
-                except Exception as e:
-                    logging.info(f"e:{e}")
-                    pass
-                logging.info(f"df:{df}")
-                symbol_output_dir = os.path.join(args.output_dir, symbol)
-                if not os.path.exists(symbol_output_dir):
-                    os.mkdir(symbol_output_dir)
                 output_file = symbol_output_dir + "/" + symbol + "_" + since + "_" + until + ".csv"
                 if not os.path.exists(output_file):
+                    df = pd.DataFrame()
+                    query = f"search?f=tweets&q=from%3A{symbol}&until={until}&since={since}"
+                    try:
+                        tweets = nitter.search_tweets(query, pages=100)
+                        for tweet in tweets:
+                            #df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
+                            df2 = tweet.dict()
+                            df2["tweet_id"] = str(df2["tweet_id"])
+                            df = df.append(df2, ignore_index = True)
+                    except Exception as e:
+                        logging.info(f"e:{e}")
+                        pass
+                    logging.info(f"df:{df}")
+                    if not os.path.exists(symbol_output_dir):
+                        os.mkdir(symbol_output_dir)
                     df.to_csv(output_file)
