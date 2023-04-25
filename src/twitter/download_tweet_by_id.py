@@ -12,7 +12,6 @@ import os
 import pandas as pd
 
 import snscrape.modules.twitter as sntwitter
-from neo4j_util import sentiment_api
 from util import config_utils
 from util import logging_utils
 
@@ -33,17 +32,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config_utils.set_args(args)
     logging_utils.init_logging()
-    
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
     if args.id_file:
         done_file = args.id_file + ".done"
-        if not os.path.exists(done_file):
+        output_file = args.id_file + ".reply.csv"
+        if not os.path.exists(output_file):
             existing_tweets = set()
             ids = pd.read_csv(args.id_file)["tweet_id"]
             df = upload_tweet_to_neo4j_by_ids(ids, existing_tweets = existing_tweets)
-            output_file = args.id_file + ".reply.parquet"
-            logging.info(f"df:{df}")
-            df.to_parquet(output_file)
-            #df.to_csv(output_file, sep = '`')
+            df['timestamp'] = df['date'].apply(lambda x: x.timestamp() if x else None)
+            #df.to_parquet(output_file)
+            df.to_csv(output_file, sep = '`')
             with open(done_file, 'w') as fp:
                 pass
             exit(0)

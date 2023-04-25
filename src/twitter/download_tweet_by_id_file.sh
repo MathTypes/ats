@@ -1,1 +1,11 @@
-PYTHONPATH=. python3 twitter/download_tweet.py --id_file=../data/tweet_ids/$1.csv --username=$1 --neo4j_host=bolt://34.105.38.204:7687 --neo4j_pass=Tq7ks8zY
+#!/bin/bash
+maxsize=10
+
+# Get file size
+filesize=$(stat -c%s "$1")
+difference=$(expr $filesize - $maxsize)
+# The following doesn't work
+if [ $difference -gt 0 ]
+then
+    PYTHONPATH=. python3 twitter/download_tweet_by_id.py --id_file=$1
+fi
