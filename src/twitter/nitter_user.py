@@ -88,7 +88,7 @@ if __name__ == "__main__":
                     except Exception as e:
                         logging.info(f"e:{e}")
                         pass
-                    logging.info(f"df:{df}")
+                    #logging.info(f"df:{df}")
                     if not os.path.exists(symbol_output_dir):
-                        os.mkdir(symbol_output_dir)
+                        os.makedirs(symbol_output_dir)
                     df.to_csv(output_file)
