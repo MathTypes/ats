@@ -105,7 +105,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         )
 
     def save_data(self, contract: Contract, bars: BarDataList) -> None:
-        logging.error(f"save_data, contract:{contract}, bars:{bars}")
+        #logging.error(f"save_data, contract:{contract}, bars:{bars}")
         data = [
             # MAX: IBAPI 10.15 does not provide bar.average anymore
             # MAX: IBAPI 10.15 has an attribute bar.wap (weighted average)
