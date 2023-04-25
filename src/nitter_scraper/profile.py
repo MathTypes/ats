@@ -92,6 +92,8 @@ def profile_parser(elements: Dict) -> Dict:
 
     if elements.get("location"):
         elements["location"] = elements["location"].text
+    if elements.get("profile_joined_date"):
+        elements["profile_joined_date"] = elements["profile_joined_date"].text
 
     elements["is_verified"] = True if elements.get("is_verified") else False
 

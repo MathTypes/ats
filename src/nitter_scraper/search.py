@@ -12,7 +12,7 @@ from nitter_scraper.schema import Tweet  # noqa: I100, I202
 
 
 def link_parser(tweet_link):
-    logging.info(f"link:{tweet_link}")
+    #logging.info(f"link:{tweet_link}")
     links = list(tweet_link.links)
     tweet_url = links[0]
     parts = links[0].split("/")
@@ -20,17 +20,17 @@ def link_parser(tweet_link):
 
     tweet_id = parts[-1].replace("#m", "")
     username = parts[1]
-    logging.info(f"tweet_id:{tweet_id}, username:{username}, tweet_url:{tweet_url}")
+    #logging.info(f"tweet_id:{tweet_id}, username:{username}, tweet_url:{tweet_url}")
     return tweet_id, username, tweet_url
 
 
 def date_parser(tweet_date):
     split_datetime = tweet_date.split(",")
-    logging.info(f"split_datetime:{split_datetime}")
+    #logging.info(f"split_datetime:{split_datetime}")
     tweet_date = split_datetime[0] + split_datetime[1][:6] + "-" + split_datetime[1][7:]
-    logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
+    #logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
     dt = datetime.datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z').replace(tzinfo=datetime.timezone.utc)
-    logging.info(f"dt:{dt}")
+    #logging.info(f"dt:{dt}")
     return dt
     #tweet_date:Nov 1, 2014 · 11:45 PM UTC
     #day, month, year = split_datetime[0].strip().split("/")
@@ -56,12 +56,12 @@ def clean_stat(stat):
 
 def stats_parser(tweet_stats):
     stats = {}
-    logging.info(f"tweet_stats:{tweet_stats}")
+    #logging.info(f"tweet_stats:{tweet_stats}")
     for ic in tweet_stats.find(".icon-container"):
         key = ic.find("span", first=True).attrs["class"][0].replace("icon", "").replace("-", "")
         value = ic.text
         stats[key] = value
-    logging.info(f"stats:{stats}")
+    #logging.info(f"stats:{stats}")
     return stats
 
 
@@ -89,7 +89,7 @@ def url_parser(links):
 
 def parse_tweet(html) -> Dict:
     data = {}
-    logging.info(f"parse_tweet:{html}")
+    #logging.info(f"parse_tweet:{html}")
     id, username, url = link_parser(html.find(".tweet-link", first=True))
     data["tweet_id"] = id
     data["tweet_url"] = url
@@ -149,7 +149,7 @@ def pagination_parser(timeline, address, username) -> str:
     next_page = list(timeline.find(".show-more")[-1].links)[0]
     if not "cursor" in next_page:
         return ""
-    logging.info(f"next_page:{next_page}")
+    #logging.info(f"next_page:{next_page}")
     return f"{address}/{username}{next_page}"
 
 
@@ -176,7 +176,7 @@ def search_tweets(
     session = HTMLSession()
 
     def gen_tweets(pages):
-        logging.info(f"url:{url}")
+        #logging.info(f"url:{url}")
         response = session.get(url)
 
         while pages > 0:
@@ -196,7 +196,7 @@ def search_tweets(
                     
                     try:
                         tweet_data = parse_tweet(item)
-                        logging.info(f"tweet_data:{tweet_data}")
+                        #logging.info(f"tweet_data:{tweet_data}")
                         tweet = Tweet.from_dict(tweet_data)
 
                         if tweet.tweet_id == break_on_tweet_id:
