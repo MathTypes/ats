@@ -1,0 +1,2 @@
+#cat ../data/us.csv |awk -F"," '{print $2}'|sed -e "s/$.*//"|xargs -n1 sh -x twitter/download_nitter_symbol.sh
+PYTHONPATH=. python3 twitter/nitter_symbol.py --symbols=$1 --start_date=2010-01-01 --end_date=2023-04-22 --port=8030 --output_dir=/Volumes/Seagate\ Portable\ Drive/data/nitter_tweet_ids/symbol
