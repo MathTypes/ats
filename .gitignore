@@ -8,6 +8,7 @@ __pycache__/
 *.so
 
 data/
+rawdata/
 # Distribution / packaging
 .Python
 build/
