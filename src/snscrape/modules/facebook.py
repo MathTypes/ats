@@ -200,7 +200,7 @@ class _FacebookCommonScraper(snscrape.base.Scraper):
                 int(entry.find("abbr", class_="_5ptz")["data-utime"]),
                 datetime.timezone.utc,
             )
-            if (contentDiv := entry.find("div", class_="_5pbx")) :
+            if (contentDiv == entry.find("div", class_="_5pbx")):
                 content = contentDiv.text
             else:
                 content = None
