@@ -1,0 +1,11 @@
+dm-control==1.0.3.post1
+dm-env==1.5
+dm-tree==0.1.7
+empyrical==0.5.5
+Gymnasium==0.26.3
+kubernetes==26.1.0
+numpy==1.23.5
+pandas==1.5.3
+tensorflow
+tensorflow-estimator
+yfinance==0.2.12
