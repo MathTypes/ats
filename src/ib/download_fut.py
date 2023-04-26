@@ -197,6 +197,15 @@ class DownloadApp(EClient, wrapper.EWrapper):
 
         self.historicalDataRequest(contract)
 
+
+    @iswrapper
+    def contractDetails(self, reqId, contractDetails) -> None:
+        logging.info(f"contractDetails:{reqId}, {contractDetails}")
+        contract = self.requests.get(reqId)
+        last_trade_time = contractDetails.lastTradeTime
+        logging.info("contractDetails for %s is %s, start_date:%s", contract, contractDetails, self.start_date)
+        self.historicalDataRequest(contract)
+
     @iswrapper
     def historicalData(self, reqId: int, bar) -> None:
         self.bar_data[reqId].append(bar)
@@ -243,9 +252,14 @@ class DownloadApp(EClient, wrapper.EWrapper):
 
         self.started = True
         for contract in self.contracts:
-            self.reqHeadTimeStamp(
-                self.next_request_id(contract), contract, self.data_type, 0, 1
+            logging.info(f'request details:{contract}')
+            self.reqContractDetails(
+                self.next_request_id(contract), contract
             )
+            #self.reqHeadTimeStamp(
+            #    self.next_request_id(contract), contract, self.data_type, 0, 1
+            #)
+            
 
     @iswrapper
     # MAX: IBAPI 10.15 defines an additional parameter: advancedOrderRejectJson
@@ -356,57 +370,97 @@ def validate_data_type(data_type: str) -> None:
     )
 
 def get_exchange(symbol):
-    if symbol in ["ES", "NQ", "RTY"]:
+    if symbol in ["ES", "NQ", "RTY", "GLB"]:
         return "CME"
-    if symbol in ["CL"]:
+    if symbol in ["ZB", "ZT", "ZF", "ZN", "SR3"]:
+        return "CBOT"
+    if symbol in ["CL", "NG", "CB"]:
         return "NYMEX"
     if symbol in ["GC", "SI", "HG"]:
         return "COMEX"
     return ""
 
+def get_last_trade_date(symbol, cur_date):
+    if symbol in ["ES", "NQ", "RTY"]:
+        last_trade_date = cur_date
+    elif symbol in ["CL", "NG", "CB"]:
+        last_trade_date = cur_date + timedelta(days=60)
+    elif symbol in ["ZB", "ZT", "ZF", "ZN", "SR3"]:
+        last_trade_date = cur_date + timedelta(days=32)
+
+def get_index_local_symbol_for_last_trade_date(symbol, last_trade_date):
+    if last_trade_date.month < 3:
+        month_str = "H"
+        last_trade_date = last_trade_date.replace(month=3, day=1)
+    elif last_trade_date.month < 6:
+        month_str = "M"
+        last_trade_date = last_trade_date.replace(month=6, day=1)
+    elif last_trade_date.month < 9:
+        month_str = "U"
+        last_trade_date = last_trade_date.replace(month=9, day=1)
+    elif last_trade_date.month < 12:
+        month_str = "Z"
+        last_trade_date = last_trade_date.replace(month=12, day=1)
+    else:
+        month_str = "H"
+        last_trade_date = last_trade_date.replace(year=last_trade_date.year+1, month=3, day=1)
+    year_str = str(last_trade_date.year % 10)
+    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
+
+def get_energy_local_symbol_for_last_trade_date(symbol, cur_date):
+    code_dict = {1:"G", 2:"H", 3:"J", 4:"K", 5:"M", 6:"N",
+                 7:"Q", 8:"U", 9:"V", 10:"X", 11:"Z", 12:"F"}
+    last_trade_date = (cur_date + timedelta(days=75)).replace(day=1)
+    month_str = code_dict[last_trade_date.month]
+    year_str = str(last_trade_date.year % 10)
+    last_trade_date = last_trade_date + timedelta(days=32)
+    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
+
+def get_metal_local_symbol_for_last_trade_date(symbol, cur_date):
+    code_dict = {1:"G", 2:"H", 3:"J", 4:"K", 5:"M", 6:"N",
+                 7:"Q", 8:"U", 9:"V", 10:"X", 11:"Z", 12:"F"}
+    last_trade_date = (cur_date + timedelta(days=75)).replace(day=1)
+    month_str = code_dict[last_trade_date.month]
+    year_str = str(last_trade_date.year % 10)
+    last_trade_date = last_trade_date + timedelta(days=32)
+    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
+
+def get_financial_local_symbol_for_last_trade_date(symbol, last_trade_date):
+    if last_trade_date.month < 3:
+        month_str = "H"
+        last_trade_date = last_trade_date.replace(month=3, day=1)
+    elif last_trade_date.month < 6:
+        month_str = "M"
+        last_trade_date = last_trade_date.replace(month=6, day=1)
+    elif last_trade_date.month < 9:
+        month_str = "U"
+        last_trade_date = last_trade_date.replace(month=9, day=1)
+    elif last_trade_date.month < 12:
+        month_str = "Z"
+        last_trade_date = last_trade_date.replace(month=12, day=1)
+    else:
+        month_str = "H"
+        last_trade_date = last_trade_date.replace(year=last_trade_date.year+1, month=3, day=1)
+    year_str = str(last_trade_date.year % 100)
+    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    return "", last_trade_date.strftime("%Y%m")
+
+def get_local_symbol_for_last_trade_date(symbol, last_trade_date):
+    if symbol in ["ES", "NQ", "RTY"]:
+        return get_index_local_symbol_for_last_trade_date(symbol, last_trade_date)
+    if symbol in ["CL", "NG", "CB"]:
+        return get_energy_local_symbol_for_last_trade_date(symbol, last_trade_date)
+    if symbol in ["HG", "GC", "SI", "ALI"]:
+        return get_metal_local_symbol_for_last_trade_date(symbol, last_trade_date)
+    if symbol in ["ZB", "ZT", "ZF", "ZN", "SR3"]:
+        return get_financial_local_symbol_for_last_trade_date(symbol, last_trade_date)
 
 def get_local_symbol(symbol, cur_date):
-    month_str = ""
-    last_trade_date = cur_date
-    if symbol in ["ES", "NQ", "RTY"]:
-        if cur_date.month < 3:
-            month_str = "H"
-            last_trade_date = last_trade_date.replace(month=3, day=1)
-        elif cur_date.month < 6:
-            month_str = "M"
-            last_trade_date = last_trade_date.replace(month=6, day=1)
-        elif cur_date.month < 9:
-            month_str = "U"
-            last_trade_date = last_trade_date.replace(month=9, day=1)
-        else:
-            month_str = "Z"
-            last_trade_date = last_trade_date.replace(month=12, day=1)
-    year_str = str(cur_date.year % 10)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
-    return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
-
-def get_next_local_symbol(symbol, cur_date):
-    month_str = ""
-    last_trade_date = cur_date
-    if symbol in ["ES", "NQ", "RTY"]:
-        if cur_date.month < 3:
-            month_str = "M"
-            last_trade_date = last_trade_date.replace(month=3, day=1)
-            year_str = str((cur_date.year) % 10)
-        elif cur_date.month < 6:
-            month_str = "U"
-            last_trade_date = last_trade_date.replace(month=6, day=1)
-            year_str = str((cur_date.year) % 10)
-        elif cur_date.month < 9:
-            month_str = "Z"
-            last_trade_date = last_trade_date.replace(month=9, day=1)
-            year_str = str((cur_date.year) % 10)
-        else:
-            month_str = "H"
-            last_trade_date = last_trade_date.replace(month=12, day=1)
-            year_str = str((cur_date.year + 1) % 10)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
-    return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
+    last_trade_date = get_last_trade_date(symbol, cur_date)
+    return get_local_symbol_for_last_trade_date(symbol, cur_date)
 
 # borrowed from https://stackoverflow.com/a/13565185
 # as noted there, the calendar module has a function of its own
@@ -430,9 +484,10 @@ def monthlist(begin,end):
 
 def download(symbol, start_date, end_date, port, duration,  base_directory, security_type, size, data_type):
     contracts = []
+    logging.info(f'start_date:{start_date}, end_date:{end_date}')
     for begin, end in monthlist(start_date, end_date):
+        logging.info(f'begin:{begin}, end:{end}')
         (local_symbol, last_trade_date) = get_local_symbol(symbol, begin)
-        (next_local_symbol, next_last_trade_date) = get_next_local_symbol(symbol, begin)
         contract = make_contract(
             symbol,
             "FUT",
@@ -462,6 +517,7 @@ def download(symbol, start_date, end_date, port, duration,  base_directory, secu
         # MAX: Wait for the application to terminate
         code = app.wait_done()
         app.disconnect()
+        time.sleep(5)
         logging.error(f"code:{code}")
 
         if code == 0:
