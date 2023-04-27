@@ -262,7 +262,9 @@ class _FacebookUserAndCommunityScraper(_FacebookCommonScraper):
             return
         yield from self._soup_to_items(soup, self._baseUrl, "user")
 
-        while (nextPageLink := soup.find("a", ajaxify=nextPageLinkPattern)) :
+        #while (nextPageLink := soup.find("a", ajaxify=nextPageLinkPattern)) :
+        nextPageLink = soup.find("a", ajaxify=nextPageLinkPattern)
+        while (nextPageLink):
             _logger.info("Retrieving next page")
 
             # The web app sends a bunch of additional parameters. Most of them would be easy to add, but there's also __dyn, which is a compressed list of the "modules" loaded in the browser.
@@ -484,8 +486,10 @@ class FacebookGroupScraper(_FacebookCommonScraper):
             yield from self._soup_to_items(codeSoup, baseUrl, "group")
 
         # Pagination
+        data = pageletDataPattern.search(r.text).group(0)[pageletDataPrefixLength:]
         while (
-            data := pageletDataPattern.search(r.text).group(0)[pageletDataPrefixLength:]
+            #data := pageletDataPattern.search(r.text).group(0)[pageletDataPrefixLength:]
+            data
         ) :
             # As on the user profile pages, the web app sends a lot of additional parameters, but those all seem to be unnecessary (although some change the response format, e.g. from JSON to HTML)
             r = self._get(

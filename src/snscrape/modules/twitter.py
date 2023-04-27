@@ -2862,7 +2862,7 @@ class TwitterTweetScraper(_TwitterAPIScraper):
                         ],
                         includeConversationThreads=True,
                     ):
-                        if tweet.id not in seenTweets and added<2:
+                        if tweet.id not in seenTweets and added<5:
                             seenTweets.add(tweet.id)
                             added = added + 1
                             logging.info(f"adding tweet:{tweet.id}")
