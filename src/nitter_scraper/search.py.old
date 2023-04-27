@@ -165,11 +165,6 @@ def search_tweets(
                 logging.info(f"threadline:{threadline}")
 
                 next_url = pagination_parser(threadline, address, username)
-                if not next_url:
-                    logging.info("no next_url")
-                    pages = 0
-                    break
-
                 threadline_items = threadline.find(".timeline-item thread")
 
                 for item in threadline_items:
@@ -185,6 +180,10 @@ def search_tweets(
                         break
 
                     yield tweet
+                if not next_url:
+                    logging.info("no next_url")
+                    pages = 0
+                    break
 
             response = session.get(next_url)
             pages -= 1

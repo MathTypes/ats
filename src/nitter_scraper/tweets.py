@@ -2,7 +2,7 @@
 from bs4 import BeautifulSoup
 import re
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 from typing import Dict, Optional
 
@@ -12,34 +12,33 @@ from nitter_scraper.schema import Tweet  # noqa: I100, I202
 
 
 def link_parser(tweet_link):
-    logging.info(f"link:{tweet_link}")
-    #links = list(tweet_link.links)
-    #tweet_url = links[0]
-    #parts = links[0].split("/")
-    parts = tweet_link.split("/")
+    logging.info(f"tweet_link:{tweet_link}")
+    links = list(tweet_link.links)
+    tweet_url = links[0]
+    parts = links[0].split("/")
 
     tweet_id = parts[-1].replace("#m", "")
     username = parts[1]
-    return tweet_id, username, tweet_link
+    return tweet_id, username, tweet_url
+    #logging.info(f"link:{tweet_link}")
+    #links = list(tweet_link.links)
+    #tweet_url = links[0]
+    #parts = links[0].split("/")
+    #parts = tweet_link.split("/")
+
+    #tweet_id = parts[-1].replace("#m", "")
+    #username = parts[1]
+    #return tweet_id, username, tweet_link
 
 
 def date_parser(tweet_date):
     split_datetime = tweet_date.split(",")
-
-    day, month, year = split_datetime[0].strip().split("/")
-    hour, minute, second = split_datetime[1].strip().split(":")
-
-    data = {}
-
-    data["day"] = int(day)
-    data["month"] = int(month)
-    data["year"] = int(year)
-
-    data["hour"] = int(hour)
-    data["minute"] = int(minute)
-    data["second"] = int(second)
-
-    return datetime(**data)
+    #logging.info(f"split_datetime:{split_datetime}")
+    tweet_date = split_datetime[0] + split_datetime[1][:6] + "-" + split_datetime[1][7:]
+    #logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
+    dt = datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z').replace(tzinfo=timezone.utc)
+    #logging.info(f"dt:{dt}")
+    return dt
 
 
 def clean_stat(stat):
@@ -79,32 +78,62 @@ def url_parser(links):
 
 def parse_tweet(html) -> Dict:
     data = {}
-    id, username, url = link_parser(html)
+    id, username, url = link_parser(html.find(".tweet-link", first=True))
     data["tweet_id"] = id
     data["tweet_url"] = url
     data["username"] = username
-    data["is_retweet"] = False
-    data["is_pinned"] = False
-    data["time"] = datetime.today()
-    data["text"] = ""
+
+    retweet = html.find(".retweet-header .icon-container .icon-retweet", first=True)
+    data["is_retweet"] = True if retweet else False
+
+    body = html.find(".tweet-body", first=True)
+
+    pinned = body.find(".pinned", first=True)
+    data["is_pinned"] = True if pinned is not None else False
+
+    data["time"] = date_parser(body.find(".tweet-date a", first=True).attrs["title"])
+    data["ts"] = int(data["time"].timestamp() * 1000)
+
+    content = body.find(".tweet-content", first=True)
+    data["text"] = content.text
+
+    # tweet_header = html.find(".tweet-header") #NOTE: Maybe useful later on
+
+    stats = stats_parser(html.find(".tweet-stats", first=True))
+
+    data["replies"] = 0
     data["retweets"] = 0
     data["likes"] = 0
-    data["replies"] = 0
+    if stats.get("comment"):
+        data["replies"] = clean_stat(stats.get("comment"))
+
+    if stats.get("retweet"):
+        data["retweets"] = clean_stat(stats.get("retweet"))
+    if stats.get("heart"):
+        data["likes"] = clean_stat(stats.get("heart"))
+
     entries = {}
-    entries["photos"] = ""
-    entries["videos"] = ""
+    entries["hashtags"] = hashtag_parser(content.text)
+    entries["cashtags"] = cashtag_parser(content.text)
+    entries["urls"] = url_parser(content.links)
+
+    photos, videos = attachment_parser(body.find(".attachments", first=True))
+    entries["photos"] = photos
+    entries["videos"] = videos
+
     data["entries"] = entries
-    logging.info(f"data:{data}")
+    # quote = html.find(".quote", first=True) #NOTE: Maybe useful later on
     return data
 
 
 def timeline_parser(html):
-    return html.find(".photo-rail-grid", first=True)
+    return html.find(".timeline", first=True)
 
 
 def pagination_parser(timeline, address, username) -> str:
     if not timeline.find(".show-more"):
         return ""
+    logging.info(f"more:{timeline.find('.show-more')[-1]}")
     next_page = list(timeline.find(".show-more")[-1].links)[0]
     return f"{address}/{username}{next_page}"
 
@@ -132,43 +161,34 @@ def get_tweets(
     session = HTMLSession()
 
     def gen_tweets(pages):
-        logging.info(f"url:{url}")
+        logging.info(f"url:{url}, pages:{pages}")
         response = session.get(url)
-        logging.info(f"response:{response}")
-
         while pages > 0:
+            logging.info(f"response:{response}")
+            logging.info(f"response_html:{response.html.html}")
+            if "Page not found" in response.html.html:
+                break
             if response.status_code == 200:
-                logging.info(f"response:{response.html.html}")
-                #timeline = timeline_parser(response.html)
-                #logging.info(f"timeline:{timeline}")
+                timeline = timeline_parser(response.html)
 
-                #next_url = pagination_parser(timeline, address, username)
-                #if not next_url:
-                #    logging.info("no next_url")
-                #    pages = 0
-                #    break
-                soup = BeautifulSoup(response.html.html,'html.parser') 
-                pattern = re.compile(r"\/.*?#m")
-                timeline_items = soup.findAll("a", href=pattern)
+                next_url = pagination_parser(timeline, address, username)
+                logging.info(f"next_url:{next_url}")
+                timeline_items = timeline.find(".timeline-item")
 
                 for item in timeline_items:
-                    logging.info(f"item:{item}")
-                    #if "show-more" in item.attrs["class"]:
-                    #    continue
+                    if "show-more" in item.attrs["class"]:
+                        continue
 
-                    tweet_data = parse_tweet(item["href"])
-                    logging.info(f"tweet_data:{tweet_data}")
+                    tweet_data = parse_tweet(item)
                     tweet = Tweet.from_dict(tweet_data)
 
                     if tweet.tweet_id == break_on_tweet_id:
+                        logging.info(f"breaking:{break_on_tweet_id}, tweet_id:{tweet.tweet_id}")
                         pages = 0
                         break
 
                     yield tweet
-                break
-            #if next_url:
-            #    response = session.get(next_url)
-            #    pages -= 1
-
+            response = session.get(next_url)
+            pages -= 1
 
     yield from gen_tweets(pages)

@@ -2,7 +2,7 @@
 from bs4 import BeautifulSoup
 import re
 import logging
-import datetime
+from datetime import datetime
 import re
 from typing import Dict, Optional
 
@@ -12,13 +12,15 @@ from nitter_scraper.schema import Tweet  # noqa: I100, I202
 
 
 def link_parser(tweet_link):
-    links = list(tweet_link.links)
-    tweet_url = links[0]
-    parts = links[0].split("/")
+    logging.info(f"link:{tweet_link}")
+    #links = list(tweet_link.links)
+    #tweet_url = links[0]
+    #parts = links[0].split("/")
+    parts = tweet_link.split("/")
 
     tweet_id = parts[-1].replace("#m", "")
     username = parts[1]
-    return tweet_id, username, tweet_url
+    return tweet_id, username, tweet_link
 
 
 def date_parser(tweet_date):
@@ -29,22 +31,6 @@ def date_parser(tweet_date):
     dt = datetime.datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z').replace(tzinfo=datetime.timezone.utc)
     #logging.info(f"dt:{dt}")
     return dt
-    #tweet_date:Nov 1, 2014 · 11:45 PM UTC
-    #day, month, year = split_datetime[0].strip().split("/")
-    #hour, minute, second = split_datetime[1].strip().split(":")
-
-    #data = {}
-
-    #data["day"] = int(day)
-    #data["month"] = int(month)
-    #data["year"] = int(year)
-
-    #data["hour"] = int(hour)
-    #data["minute"] = int(minute)
-    #data["second"] = int(second)
-    #logging.info(f"date:{data}")
-
-    #return datetime.today()
 
 
 def clean_stat(stat):
@@ -53,12 +39,10 @@ def clean_stat(stat):
 
 def stats_parser(tweet_stats):
     stats = {}
-    #logging.info(f"tweet_stats:{tweet_stats}")
     for ic in tweet_stats.find(".icon-container"):
         key = ic.find("span", first=True).attrs["class"][0].replace("icon", "").replace("-", "")
         value = ic.text
         stats[key] = value
-    #logging.info(f"stats:{stats}")
     return stats
 
 
@@ -85,9 +69,8 @@ def url_parser(links):
 
 
 def parse_tweet(html) -> Dict:
-    data = {}
-    #logging.info(f"parse_tweet:{html}")
-    id, username, url = link_parser(html.find(".tweet-link", first=True))
+    logging.info(f'parse_tweet:{html}')
+    id, username, url = link_parser(html.find(".a", first=True))
     data["tweet_id"] = id
     data["tweet_url"] = url
     data["username"] = username
@@ -137,28 +120,17 @@ def parse_tweet(html) -> Dict:
 
 
 def timeline_parser(html):
-    return html.find(".timeline", first=True)
+    return html.find(".photo-rail-grid", first=True)
 
 
 def pagination_parser(timeline, address, username) -> str:
     if not timeline.find(".show-more"):
         return ""
     next_page = list(timeline.find(".show-more")[-1].links)[0]
-    if not "cursor" in next_page:
-        return ""
-    #logging.info(f"next_page:{next_page}")
     return f"{address}/{username}{next_page}"
 
-class HTMLSession2(HTMLSession):
 
-    @property
-    def browser(self):
-        if not hasattr(self, "_browser"):
-            self.loop = asyncio.get_event_loop()
-            self._browser = self.loop.run_until_complete(pyppeteer.launch(headless=True, args=['--no-sandbox', '--proxy-server=host.docker.internal:8118']))
-        return self._browser
-
-def search_tweets(
+def get_tweets(
     username: str,
     pages: int = 25,
     break_on_tweet_id: Optional[int] = None,
@@ -178,45 +150,46 @@ def search_tweets(
 
     """
     url = f"{address}/{username}"
-    #session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
-    #session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
-    session = HTMLSession2()
+    session = HTMLSession()
 
     def gen_tweets(pages):
         logging.info(f"url:{url}")
         response = session.get(url)
-        logging.info(f"html:{html}")
-        next_url = ""
+        logging.info(f"response:{response}")
+
         while pages > 0:
             if response.status_code == 200:
-                timeline = timeline_parser(response.html)
+                logging.info(f"response:{response.html.html}")
+                #timeline = timeline_parser(response.html)
+                #logging.info(f"timeline:{timeline}")
 
-                next_url = pagination_parser(timeline, address, username)
-                timeline_items = timeline.find(".timeline-item")
-                logging.info(f"next_url:{next_url}")
+                #next_url = pagination_parser(timeline, address, username)
+                #if not next_url:
+                #    logging.info("no next_url")
+                #    pages = 0
+                #    break
+                soup = BeautifulSoup(response.html.html,'html.parser') 
+                pattern = re.compile(r"\/.*?#m")
+                timeline_items = soup.findAll("a", href=pattern)
 
                 for item in timeline_items:
-                    if "show-more" in item.attrs["class"]:
-                        continue
-                    
-                    try:
-                        tweet_data = parse_tweet(item)
-                        #logging.info(f"tweet_data:{tweet_data}")
-                        tweet = Tweet.from_dict(tweet_data)
+                    logging.info(f"item:{item}")
+                    #if "show-more" in item.attrs["class"]:
+                    #    continue
 
-                        if tweet.tweet_id == break_on_tweet_id:
-                            pages = 0
-                            break
-                        yield tweet
-                    except Exception as e:
-                        logging.error(f"exception with {item}", e)
-                        pass
-            if next_url:
-                response = session.get(next_url)
-                pages -= 1
-            else:
-                logging.info("no next_url")
+                    tweet_data = parse_tweet(item)
+                    logging.info(f"tweet_data:{tweet_data}")
+                    tweet = Tweet.from_dict(tweet_data)
+
+                    if tweet.tweet_id == break_on_tweet_id:
+                        pages = 0
+                        break
+
+                    yield tweet
                 break
+            #if next_url:
+            #    response = session.get(next_url)
+            #    pages -= 1
 
 
     yield from gen_tweets(pages)
