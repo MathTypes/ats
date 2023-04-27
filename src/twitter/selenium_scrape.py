@@ -23,7 +23,7 @@ def scrape_tweets(username, since, until, output_dir):
     since = since.date().isoformat()
     until = until.date().isoformat()
     query = f"from:{username} since:{since} until:{until}"
-    output_file = os.path.join(output_dir, args.username + f"-to-{since}" + ".csv")
+    output_file = os.path.join(output_dir, args.username + f"-to-{since}-{until}" + ".csv")
     if not os.path.exists(output_file):
         scrape_keyword(
             keyword = f"to:{username}",
@@ -36,7 +36,7 @@ def scrape_tweets(username, since, until, output_dir):
             directory=output_dir,
             headless=False,
         )
-    output_file = os.path.join(output_dir, username + f"-to-{since}" + ".csv")
+    output_file = os.path.join(output_dir, username + f"-from-{since}-{until}" + ".csv")
     if not os.path.exists(output_file):
         scrape_keyword(
             keyword = f"from:{username}",
@@ -91,6 +91,3 @@ if __name__ == "__main__":
             filename=args.username,
             directory=args.output_dir,
         )
-
-
-    logging.info(f'checking: {output_file}')

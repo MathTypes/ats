@@ -40,18 +40,6 @@ if __name__ == "__main__":
     parser.add_argument("--users", type=str)
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--port", type=int, default=8008)
-    parser.add_argument(
-        "--start_date",
-        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
-        required=False,
-        help="Set a start date",
-    )
-    parser.add_argument(
-        "--end_date",
-        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
-        required=False,
-        help="Set a end date",
-    )
 
     args = parser.parse_args()
     config_utils.set_args(args)
@@ -60,35 +48,20 @@ if __name__ == "__main__":
     last_tweet_id = None
     users = args.users.split(",")
     df_vec = []
+    cur_date = datetime.datetime.today()
     with NitterScraper(host="0.0.0.0", port=args.port) as nitter:
-        for symbol in users:
-            profile = nitter.get_profile(symbol)
-            joined_date_str = profile.profile_joined_date.split(" ")
-            joined_date_str = joined_date_str[1] + " 1 " + joined_date_str[2]
-            joined_date = datetime.datetime.strptime(joined_date_str, "%B %d %Y").date()
-            logging.info(f"joined_date:{joined_date}")
-            start_date = args.start_date
-            if start_date < joined_date:
-                start_date = joined_date
-            symbol_output_dir = os.path.join(args.output_dir, symbol)
-            for cur_date in pd.date_range(start_date, args.end_date, freq="D"):
-                since = cur_date.strftime("%Y-%m-%d")
-                until = (cur_date + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-                output_file = symbol_output_dir + "/" + symbol + "_" + since + "_" + until + ".csv"
-                if not os.path.exists(output_file):
-                    df = pd.DataFrame()
-                    query = f"search?f=tweets&q=from%3A{symbol}&until={until}&since={since}"
-                    try:
-                        tweets = nitter.search_tweets(query, pages=100)
-                        for tweet in tweets:
-                            #df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
-                            df2 = tweet.dict()
-                            df2["tweet_id"] = str(df2["tweet_id"])
-                            df = df.append(df2, ignore_index = True)
-                    except Exception as e:
-                        logging.info(f"e:{e}")
-                        pass
-                    #logging.info(f"df:{df}")
-                    if not os.path.exists(symbol_output_dir):
-                        os.makedirs(symbol_output_dir)
-                    df.to_csv(output_file)
+        for user in users:
+            if not user:
+                continue
+            symbol_output_dir = os.path.join(args.output_dir, user)
+            if not os.path.exists(symbol_output_dir):
+                os.makedirs(symbol_output_dir)
+            output_file = symbol_output_dir + "/" + user + "_" + cur_date.strftime("%Y-%m-%d") + ".csv"
+            if not os.path.exists(output_file):
+                df = pd.DataFrame()
+                tweets = nitter.get_tweets(user, pages=10000, address="https://nitter.net")
+                for tweet in tweets:
+                    df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
+                    df = df.append(df2, ignore_index = True)
+                logging.info(f"df:{df}")
+                df.to_csv(output_file)

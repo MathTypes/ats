@@ -41,14 +41,15 @@ if __name__ == "__main__":
         for symbol in users:
             symbol_output_dir = os.path.join(args.output_dir, symbol)
             for cur_date in pd.date_range(args.start_date, args.end_date, freq="D"):
-                since = cur_date.isoformat()
-                until = (cur_date + datetime.timedelta(days=1)).isoformat()
+                since = cur_date.strftime("%Y-%m-%d")
+                until = (cur_date + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
                 output_file = symbol_output_dir + "/" + symbol + "_" + since + "_" + until + ".csv"
+                logging.info(f"processing since:{since} until:{until}, output_file:{output_file}")
                 if not os.path.exists(output_file):                    
                     df = pd.DataFrame()
-                    query = f"search?f=tweets&q=${symbol}&until={until}&since={since}"
+                    query = f"search?f=tweets&q={symbol}&until={until}&since={since}"
                     try:
-                        tweets = nitter.search_tweets(query, pages=100)
+                        tweets = nitter.search_tweets(query, pages=100, address=f"http://nitter.cz")
                         for tweet in tweets:
                             #df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
                             df2 = tweet.dict()
@@ -58,7 +59,7 @@ if __name__ == "__main__":
                     except Exception as e:
                         logging.info(f"e:{e}")
                         pass
-                    #logging.info(f"df:{df}")
+                    logging.info(f"df:{df}")
                     if not os.path.exists(symbol_output_dir):
                         os.makedirs(symbol_output_dir)
                     df.to_csv(output_file)

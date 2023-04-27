@@ -31,8 +31,55 @@ if __name__ == "__main__":
 
     last_tweet_id = None
     users = args.username.split(",")
+    with NitterScraper(host="0.0.0.0", port=8008) as nitter:
+        for user in users:
+            df = pd.DataFrame()
+            tweets = nitter.get_tweets(user, pages=100, address="https://nitter.net")
+            for tweet in tweets:
+                df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
+                df = df.append(df2, ignore_index = True)
+            logging.info(f"df:{df}")
+            df.to_csv(args.output_dir + "/" + args.username + ".csv")
+    exit(0)
+
+    with NitterScraper(host="0.0.0.0", port=8008) as nitter:
+        while True:
+            #https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
+            for tweet in nitter.search_tweets(
+                "search?f=tweets&q=$btc&until=2012-01-03&since=2012-01-02",
+                pages=1, break_on_tweet_id=last_tweet_id, address="https://nitter.net"):
+                if tweet.is_pinned is True:
+                    continue
+                if tweet.is_retweet is True:
+                    continue
+                if tweet.tweet_id != last_tweet_id:
+                    print(tweet.json(indent=4))
+                last_tweet_id = tweet.tweet_id
+                break
+
+            time.sleep(0.1)
+    exit(0)
+
+    with NitterScraper(host="0.0.0.0", port=8008) as nitter:
+        while True:
+            #https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
+            for tweet in nitter.get_tweets(
+                "DougKass",
+                pages=1, break_on_tweet_id=last_tweet_id):
+                if tweet.is_pinned is True:
+                    continue
+                if tweet.is_retweet is True:
+                    continue
+                if tweet.tweet_id != last_tweet_id:
+                    print(tweet.json(indent=4))
+                last_tweet_id = tweet.tweet_id
+                break
+
+            time.sleep(0.1)
+    exit(0)
+
     with NitterScraper(host="0.0.0.0", port=8012) as nitter:
-        profile = nitter.get_profile("dgnsrekt")
+        profile = nitter.get_profile(users[0])
         print("serialize to json\n")
         print(profile.json(indent=4))
         print("serialize to a dictionary\n")
@@ -59,52 +106,6 @@ if __name__ == "__main__":
             df.to_csv(args.output_dir + "/" + args.username + ".csv")
     exit(0)
 
-    with NitterScraper(host="0.0.0.0", port=8008) as nitter:
-        for user in users:
-            df = pd.DataFrame()
-            tweets = nitter.get_tweets(user, pages=100)
-            for tweet in tweets:
-                df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
-                df = df.append(df2, ignore_index = True)
-            logging.info(f"df:{df}")
-            df.to_csv(args.output_dir + "/" + args.username + ".csv")
-    exit(0)
-
     print("Scraping with local nitter docker instance.")
 
-    with NitterScraper(host="0.0.0.0", port=8008) as nitter:
-        while True:
-            #https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
-            for tweet in nitter.get_tweets(
-                "DougKass",
-                pages=1, break_on_tweet_id=last_tweet_id):
-                if tweet.is_pinned is True:
-                    continue
-                if tweet.is_retweet is True:
-                    continue
-                if tweet.tweet_id != last_tweet_id:
-                    print(tweet.json(indent=4))
-                last_tweet_id = tweet.tweet_id
-                break
-
-            time.sleep(0.1)
-    exit(0)
-
-    with NitterScraper(host="0.0.0.0", port=8008) as nitter:
-        while True:
-            #https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
-            for tweet in nitter.search_tweets(
-                "search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02",
-                pages=1, break_on_tweet_id=last_tweet_id, address="https://nitter.net"):
-                if tweet.is_pinned is True:
-                    continue
-                if tweet.is_retweet is True:
-                    continue
-                if tweet.tweet_id != last_tweet_id:
-                    print(tweet.json(indent=4))
-                last_tweet_id = tweet.tweet_id
-                break
-
-            time.sleep(0.1)
-    exit(0)
 

@@ -4,7 +4,7 @@ import tweepy
 bearer_token = 'AAAAAAAAAAAAAAAAAAAAAAypmwEAAAAASU9euOx4vMId%2FbuLcQBNWSEnjqg%3Dj4pPU1gV2zcTL9i8nduFGnbgpT9WGJx8Kl2fc6oPJtuQ4Et8Bv'
 client = tweepy.Client(bearer_token = bearer_token)
 # Replace with your own search query
-query = 'from:DougKass'
+query = 'spy'
 
 # Replace with your own search query
 #query = 'from:DougKass -is:retweet'
@@ -16,9 +16,23 @@ start_time = '2010-01-01T00:00:00Z'
 end_time = '2022-12-01T00:00:00Z'
 # Replace with your own search query
 #query = 'covid -is:retweet'
-tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'], max_results=20)
+# Replace with your own search query
+#query = 'from:suhemparack -is:retweet'
+
+# Replace with time period of your choice
+#start_time = '2020-01-01T00:00:00Z'
+
+# Replace with time period of your choice
+#end_time = '2020-08-01T00:00:00Z'
+
+tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'], max_results=10)
 print(f"tweets:{tweets}")
 print(f"tweets.length:{tweets.length}")
+exit(0)
+
+
+tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'], max_results=10)
+print(f"tweets:{tweets}")
 exit(0)
 
 
@@ -30,10 +44,6 @@ for tweet in tweepy.Paginator(client.search_all_tweets, query=query,
 exit(0)
 
 
-tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'], max_results=10000)
-print(f"tweets:{tweets}")
-print(f"tweets.length:{tweets.length}")
-exit(0)
 for tweet in tweets.data:
     print(tweet.text)
     if len(tweet.context_annotations) > 0:

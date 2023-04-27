@@ -22,42 +22,29 @@ def upload_tweet_to_neo4j(args, since, until, existing_tweets):
     empty_tweets = set()
     # Creating list to append tweet data
     tweets_list1 = []
-    neo4j = Neo4j()
+    #neo4j = Neo4j()
     since = since.date().isoformat()
     until = until.date().isoformat()
     if args.username:
         usernames = args.username.split(",")
-        query = f"from:{args.username} since:{since} until:{until}"
-        tweet_urls = sntwitter.TwitterUserScraper(args.username, existing_tweets).get_items()
-        tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
-        neo4j.bulk_load(tweet_urls)
-        query = f"to:{args.username} since:{since} until:{until}"
-        tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
-        tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
-        neo4j.bulk_load(tweet_urls)
-
-    if args.hash_tag:
-        hash_tags = args.hash_tag.split(",")
-        for hash_tag in hash_tags:
-            query = f"(#{hash_tag}) since:{since} until:{until}"
-            tweet_urls = sntwitter.TwitterSearchScraper(
-                query, existing_tweets
-            ).get_items()
-            tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
-            neo4j.bulk_load(tweet_urls)
-
-    if args.stock:
-        stocks = args.stock.split(",")
-        for stock in stocks:
-            query = f"(${stock}) since:{since} until:{until}"
-            logging.info(f'query:{query}')
-            tweet_urls = sntwitter.TwitterSearchScraper(
-                query, existing_tweets
-            ).get_items()
-            tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
-            new_tweet_ids = [t.id for t in tweet_urls]
-            existing_tweets.update(new_tweet_ids)
-            neo4j.bulk_load(tweet_urls)
+        user = usernames[0]
+        #query = f"from:{args.username} since:{since} until:{until}"
+        symbol_output_dir = os.path.join(args.output_dir, user)
+        output_file = symbol_output_dir + "/" + user + "_" + since + "_" + until + ".csv"
+        logging.info(f"processing since:{since} until:{until}, output_file:{output_file}")
+        if not os.path.exists(output_file):                    
+            tweet_urls = sntwitter.TwitterUserScraper(args.username, existing_tweets).get_items()
+            df = pd.DataFrame()
+            df = [asdict(tweet) for tweet in tweet_urls]    
+            logging.info(f"df:{df}")
+            if not os.path.exists(symbol_output_dir):
+                os.makedirs(symbol_output_dir)
+            df.to_csv(output_file)
+        #neo4j.bulk_load(tweet_urls)
+        #query = f"to:{args.username} since:{since} until:{until}"
+        #tweet_urls = sntwitter.TwitterSearchScraper(query, existing_tweets).get_items()
+        #tweet_urls = [t for t in tweet_urls if not t.id in existing_tweets]
+        #neo4j.bulk_load(tweet_urls)
 
 
 def upload_tweet_to_neo4j_by_ids(ids, existing_tweets):
@@ -83,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("--username", type=str)
     parser.add_argument("--id_file", type=str)
     parser.add_argument("--hash_tag", type=str)
+    parser.add_argument("--output_dir", type=str)
     parser.add_argument("--stock", type=str)
     parser.add_argument(
         "--start_date",
@@ -119,8 +107,10 @@ if __name__ == "__main__":
     end_date = args.end_date
     if end_date < args.start_date + datetime.timedelta(31):
         end_date = args.start_date + datetime.timedelta(31)
-    for cur_date in pd.date_range(args.start_date, end_date, freq="M"):
-        cur_start_date = cur_date-datetime.timedelta(2)
-        cur_end_date = cur_date + datetime.timedelta(days=32)
-        existing_tweets = set(sentiment_api.get_tweet_id_by_range(cur_start_date, cur_end_date))
-        upload_tweet_to_neo4j(args, cur_start_date, cur_end_date, existing_tweets)
+    #for cur_date in pd.date_range(args.start_date, end_date, freq="M"):
+        #cur_start_date = cur_date-datetime.timedelta(2)
+        #cur_end_date = cur_date + datetime.timedelta(days=32)
+    cur_end_date = datetime.datetime.today()
+    cur_start_date = cur_end_date - datetime.timedelta(days=180)
+    #existing_tweets = set(sentiment_api.get_tweet_id_by_range(cur_start_date, cur_end_date))
+    upload_tweet_to_neo4j(args, cur_start_date, cur_end_date, existing_tweets=())

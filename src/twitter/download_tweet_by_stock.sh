@@ -1,1 +1,1 @@
-PYTHONPATH=. python3 twitter/download_tweet.py --stock=$3 --start_date=$1 --end_date=$2 --neo4j_host=bolt://34.105.8.79:7687 --neo4j_pass=Tq7ks8zY
+PYTHONPATH=. python3 twitter/download_tweet.py --stock=$3 --start_date=$1 --end_date=$2 --neo4j_host=bolt://34.105.38.204:7687 --neo4j_pass=Tq7ks8zY

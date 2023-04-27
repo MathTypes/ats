@@ -41,6 +41,7 @@ if __name__ == "__main__":
             existing_tweets = set()
             ids = pd.read_csv(args.id_file)["tweet_id"]
             df = upload_tweet_to_neo4j_by_ids(ids, existing_tweets = existing_tweets)
+            df = df.dropna()
             df['timestamp'] = df['date'].apply(lambda x: x.timestamp() if x else None)
             #df.to_parquet(output_file)
             df.to_csv(output_file, sep = '`')

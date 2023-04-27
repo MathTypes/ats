@@ -1,1 +1,1 @@
-ls --color=auto /data/nitter_tweet_ids/user/$1/* | grep --color=auto --color=auto -v done | grep --color=auto -v "reply" | grep --color=auto -v Doug |sort -r| xargs -n1 sh -x twitter/download_tweet_by_id_file.sh
+ls --color=auto /data/nitter_tweet_ids/symbol/$1/* | grep --color=auto --color=auto -v done | grep --color=auto -v "reply" | grep --color=auto -v Doug |sort -r| xargs -n1 sh -x twitter/download_tweet_by_id_file.sh
