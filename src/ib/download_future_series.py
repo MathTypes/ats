@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-# Usage: python3 download_hist.py AAPL -p=4001 --start_date="20230304"
-#             --end_date="20230309" --duration="5 D" --size="1 day"
-#             --exchange=SMART -t MIDPOINT
+# Usage:
+# PYTHONPATH=. python3 ib/download_future_series.py ZN  -p=4001 --start_date="20210101"  --end_date="20230425" --size="1 min" -t TRADES --base-directory="/Volumes/Seagate Portable Drive/data/trades" --security-type=FUT
 # Note that there seems to be a bug with loading TRADES.
 #
 import os
@@ -355,12 +354,16 @@ def validate_data_type(data_type: str) -> None:
         ],
     )
 
+INDEX_SYMBOLS = ["ES", "NQ", "RTY", "YM"]
+ENERGY_SYMBOLS = ["CL", "NG"]
+METAL_SYMBOLS = ["GC", "SI", "HG"]
+
 def get_exchange(symbol):
-    if symbol in ["ES", "NQ", "RTY"]:
+    if symbol in INDEX_SYMBOLS:
         return "CME"
-    if symbol in ["CL"]:
+    if symbol in ENERGY_SYMBOLS:
         return "NYMEX"
-    if symbol in ["GC", "SI", "HG"]:
+    if symbol in METAL_SYMBOLS:
         return "COMEX"
     return ""
 
@@ -368,7 +371,7 @@ def get_exchange(symbol):
 def get_local_symbol(symbol, cur_date):
     month_str = ""
     last_trade_date = cur_date
-    if symbol in ["ES", "NQ", "RTY"]:
+    if symbol in INDEX_SYMBOLS:
         if cur_date.month < 3:
             month_str = "H"
             last_trade_date = last_trade_date.replace(month=3, day=1)
@@ -382,29 +385,6 @@ def get_local_symbol(symbol, cur_date):
             month_str = "Z"
             last_trade_date = last_trade_date.replace(month=12, day=1)
     year_str = str(cur_date.year % 10)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
-    return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
-
-def get_next_local_symbol(symbol, cur_date):
-    month_str = ""
-    last_trade_date = cur_date
-    if symbol in ["ES", "NQ", "RTY"]:
-        if cur_date.month < 3:
-            month_str = "M"
-            last_trade_date = last_trade_date.replace(month=3, day=1)
-            year_str = str((cur_date.year) % 10)
-        elif cur_date.month < 6:
-            month_str = "U"
-            last_trade_date = last_trade_date.replace(month=6, day=1)
-            year_str = str((cur_date.year) % 10)
-        elif cur_date.month < 9:
-            month_str = "Z"
-            last_trade_date = last_trade_date.replace(month=9, day=1)
-            year_str = str((cur_date.year) % 10)
-        else:
-            month_str = "H"
-            last_trade_date = last_trade_date.replace(month=12, day=1)
-            year_str = str((cur_date.year + 1) % 10)
     logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
 
@@ -425,7 +405,8 @@ def monthlist(begin,end):
             break
         result.append ([begin, last_day_of_month(begin)])
         begin = next_month
-    result.append ([begin, end])
+    # IB excludes start_date. So we go back one day.
+    result.append ([begin-timedelta(days=1), end])
     return result
 
 

@@ -10,6 +10,7 @@ import sys
 import argparse
 import logging
 import math
+import pytz
 import time
 
 from datetime import datetime, timedelta
@@ -59,7 +60,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         wrapper.EWrapper.__init__(self)
         self.request_id = math.floor(time.time())
         self.started = False
-        self.start_date = start_date
+        self.start_date = start_date-timedelta(days=1)
         self.end_date = end_date
         self.next_valid_order_id = None
         self.contracts = contracts
@@ -369,24 +370,31 @@ def validate_data_type(data_type: str) -> None:
         ],
     )
 
+INDEX_SYMBOLS = ["ES", "NQ", "RTY", "GLB", "YM"]
+RATE_SYMBOLS = ["ZB", "ZT", "ZF", "ZN", "SR3"]
+ENERGY_SYMBOLS = ["CL", "NG", "CB"]
+METAL_SYMBOLS = ["GC", "SI", "HG", "ALI"]
 def get_exchange(symbol):
-    if symbol in ["ES", "NQ", "RTY", "GLB"]:
+    if symbol in INDEX_SYMBOLS:
         return "CME"
-    if symbol in ["ZB", "ZT", "ZF", "ZN", "SR3"]:
+    if symbol in RATE_SYMBOLS:
         return "CBOT"
-    if symbol in ["CL", "NG", "CB"]:
+    if symbol in ENERGY_SYMBOLS:
         return "NYMEX"
-    if symbol in ["GC", "SI", "HG"]:
+    if symbol in METAL_SYMBOLS:
         return "COMEX"
     return ""
 
 def get_last_trade_date(symbol, cur_date):
-    if symbol in ["ES", "NQ", "RTY"]:
+    if symbol in INDEX_SYMBOLS:
         last_trade_date = cur_date
-    elif symbol in ["CL", "NG", "CB"]:
+    elif symbol in ENERGY_SYMBOLS:
         last_trade_date = cur_date + timedelta(days=60)
-    elif symbol in ["ZB", "ZT", "ZF", "ZN", "SR3"]:
+    elif symbol in RATE_SYMBOLS:
         last_trade_date = cur_date + timedelta(days=32)
+    elif symbol in METAL_SYMBOLS:
+        last_trade_date = cur_date + timedelta(days=32)
+    return last_trade_date
 
 def get_index_local_symbol_for_last_trade_date(symbol, last_trade_date):
     if last_trade_date.month < 3:
@@ -408,23 +416,21 @@ def get_index_local_symbol_for_last_trade_date(symbol, last_trade_date):
     logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
 
-def get_energy_local_symbol_for_last_trade_date(symbol, cur_date):
+def get_energy_local_symbol_for_last_trade_date(symbol, last_trade_date):
     code_dict = {1:"G", 2:"H", 3:"J", 4:"K", 5:"M", 6:"N",
                  7:"Q", 8:"U", 9:"V", 10:"X", 11:"Z", 12:"F"}
-    last_trade_date = (cur_date + timedelta(days=75)).replace(day=1)
+    last_trade_date = last_trade_date.replace(day=1)
     month_str = code_dict[last_trade_date.month]
     year_str = str(last_trade_date.year % 10)
-    last_trade_date = last_trade_date + timedelta(days=32)
     logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
 
-def get_metal_local_symbol_for_last_trade_date(symbol, cur_date):
-    code_dict = {1:"G", 2:"H", 3:"J", 4:"K", 5:"M", 6:"N",
-                 7:"Q", 8:"U", 9:"V", 10:"X", 11:"Z", 12:"F"}
-    last_trade_date = (cur_date + timedelta(days=75)).replace(day=1)
+def get_metal_local_symbol_for_last_trade_date(symbol, last_trade_date):
+    code_dict = {2:"G", 3:"H", 4:"J", 5:"K", 6:"M", 7:"N",
+                 8:"Q", 9:"U", 10:"V", 11:"X", 12:"Z", 1:"F"}
+    last_trade_date = last_trade_date.replace(day=1)
     month_str = code_dict[last_trade_date.month]
     year_str = str(last_trade_date.year % 10)
-    last_trade_date = last_trade_date + timedelta(days=32)
     logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
 
@@ -449,18 +455,18 @@ def get_financial_local_symbol_for_last_trade_date(symbol, last_trade_date):
     return "", last_trade_date.strftime("%Y%m")
 
 def get_local_symbol_for_last_trade_date(symbol, last_trade_date):
-    if symbol in ["ES", "NQ", "RTY"]:
+    if symbol in INDEX_SYMBOLS:
         return get_index_local_symbol_for_last_trade_date(symbol, last_trade_date)
-    if symbol in ["CL", "NG", "CB"]:
+    if symbol in ENERGY_SYMBOLS:
         return get_energy_local_symbol_for_last_trade_date(symbol, last_trade_date)
-    if symbol in ["HG", "GC", "SI", "ALI"]:
+    if symbol in METAL_SYMBOLS:
         return get_metal_local_symbol_for_last_trade_date(symbol, last_trade_date)
-    if symbol in ["ZB", "ZT", "ZF", "ZN", "SR3"]:
+    if symbol in RATE_SYMBOLS:
         return get_financial_local_symbol_for_last_trade_date(symbol, last_trade_date)
 
 def get_local_symbol(symbol, cur_date):
     last_trade_date = get_last_trade_date(symbol, cur_date)
-    return get_local_symbol_for_last_trade_date(symbol, cur_date)
+    return get_local_symbol_for_last_trade_date(symbol, last_trade_date)
 
 # borrowed from https://stackoverflow.com/a/13565185
 # as noted there, the calendar module has a function of its own
@@ -602,4 +608,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     logging.debug(f"args={args}")
-    download(args.symbol, args.start_date, args.end_date, args.port, args.duration, args.base_directory, args.security_type, args.size, args.data_type)
+    download(args.symbol, args.start_date.replace(tzinfo=pytz.UTC), args.end_date.replace(tzinfo=pytz.UTC),
+             args.port, args.duration, args.base_directory, args.security_type, args.size, args.data_type)
