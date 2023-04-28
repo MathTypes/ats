@@ -78,7 +78,10 @@ def url_parser(links):
 
 def parse_tweet(html) -> Dict:
     data = {}
-    id, username, url = link_parser(html.find(".tweet-link", first=True))
+    tweet_link = html.find(".tweet-link", first=True)
+    if not tweet_link:
+        return data
+    id, username, url = link_parser(tweet_link)
     data["tweet_id"] = id
     data["tweet_url"] = url
     data["username"] = username
@@ -163,6 +166,7 @@ def get_tweets(
     def gen_tweets(pages):
         logging.info(f"url:{url}, pages:{pages}")
         response = session.get(url)
+        next_url = ""
         while pages > 0:
             logging.info(f"response:{response}")
             logging.info(f"response_html:{response.html.html}")
@@ -180,6 +184,8 @@ def get_tweets(
                         continue
 
                     tweet_data = parse_tweet(item)
+                    if not tweet_data:
+                        continue
                     tweet = Tweet.from_dict(tweet_data)
 
                     if tweet.tweet_id == break_on_tweet_id:
