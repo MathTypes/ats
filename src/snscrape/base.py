@@ -197,6 +197,11 @@ class Scraper:
         self._retries = retries
         self._proxies = proxies
         self._session = requests.Session()
+        proxies = {
+            "http": "http://host.docker.internal:8118",
+            "https": "http://host.docker.internal:8118",
+        }
+        #self._session.proxies.update(proxies)
         self._session.mount("https://", _HTTPSAdapter())
 
     @abc.abstractmethod
@@ -229,12 +234,13 @@ class Scraper:
         allowRedirects=True,
         proxies=None,
     ):
-        proxies = proxies or self._proxies or {}
+        #proxies = proxies or self._proxies or {}
         proxies = {}
         #proxies = {
         #    "http": "http://host.docker.internal:8118",
         #    "https": "http://host.docker.internal:8118",
         #}
+        logging.info(f'setting proxies:{proxies}')
         errors = []
         #self._session.cookies.clear()
         # v1%3A168203758754724534
