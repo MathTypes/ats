@@ -34,7 +34,22 @@ def monthlist(begin,end):
         begin = next_month
     result.append ([begin.strftime("%Y-%m-%d"),end.strftime("%Y-%m-%d")])
     return result
-    
+
+def get_last_tweet_id(symbol_output_dir):
+    for filename in os.listdir(symbol_output_dir):
+        id_file = os.path.join(symbol_output_dir, filename)
+        logging.info(f'get_last_tweet_id:{id_file}')
+        if not id_file.endswith(".csv"):
+            continue
+        if not os.path.isfile(id_file):
+            continue
+        df = pd.read_csv(id_file)
+        if "tweet_id" in df.columns:
+            return df["tweet_id"].max()
+        else:
+            return df["Id"].max()
+    return None
+
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
     parser.add_argument("--users", type=str)
@@ -45,7 +60,6 @@ if __name__ == "__main__":
     config_utils.set_args(args)
     logging_utils.init_logging()
 
-    last_tweet_id = None
     users = args.users.split(",")
     df_vec = []
     cur_date = datetime.datetime.today()
@@ -56,10 +70,12 @@ if __name__ == "__main__":
             symbol_output_dir = os.path.join(args.output_dir, user)
             if not os.path.exists(symbol_output_dir):
                 os.makedirs(symbol_output_dir)
+            last_tweet_id = get_last_tweet_id(symbol_output_dir)
+            logging.info(f'last_tweet_id:{last_tweet_id}')
             output_file = symbol_output_dir + "/" + user + "_" + cur_date.strftime("%Y-%m-%d") + ".csv"
             if not os.path.exists(output_file):
                 df = pd.DataFrame()
-                tweets = nitter.get_tweets(user, pages=10000, address="https://nitter.net")
+                tweets = nitter.get_tweets(user, pages=10000, break_on_tweet_id=last_tweet_id, address="https://nitter.net")
                 for tweet in tweets:
                     df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
                     df = df.append(df2, ignore_index = True)
