@@ -39,10 +39,17 @@ if __name__ == "__main__":
         output_file = args.id_file + ".reply.csv"
         if not os.path.exists(output_file):
             existing_tweets = set()
-            ids = pd.read_csv(args.id_file)["tweet_id"]
+            id_df = pd.read_csv(args.id_file)
+            if "tweet_id" in id_df.columns:
+                ids = id_df["tweet_id"]
+            else:
+                ids = id_df["Id"]
             df = upload_tweet_to_neo4j_by_ids(ids, existing_tweets = existing_tweets)
-            df = df.dropna()
-            df['timestamp'] = df['date'].apply(lambda x: x.timestamp() if x else None)
+            #df = df.dropna()
+            logging.info(f'Writing: {output_file}')
+            logging.info(f'Writing: df:{df}')
+            #df["date"] = pd.to_datetime(df["date"], errors="coerce")
+            #df['timestamp'] = df['date'].dt.timestamp()
             #df.to_parquet(output_file)
             df.to_csv(output_file, sep = '`')
             with open(done_file, 'w') as fp:
