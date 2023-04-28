@@ -36,19 +36,19 @@ def scrape_tweets(username, since, until, output_dir):
             directory=output_dir,
             headless=False,
         )
-    output_file = os.path.join(output_dir, username + f"-from-{since}-{until}" + ".csv")
-    if not os.path.exists(output_file):
-        scrape_keyword(
-            keyword = f"from:{username}",
-            since=since,
-            until=until,
-            output_format="csv",
-            browser="chrome",
-            tweets_count=1000000,
-            filename=username + f"-from-{since}",
-            directory=output_dir,
-            headless=False,
-        )
+    #output_file = os.path.join(output_dir, username + f"-from-{since}-{until}" + ".csv")
+    #if not os.path.exists(output_file):
+    #    scrape_keyword(
+    #        keyword = f"from:{username}",
+    #        since=since,
+    #        until=until,
+    #        output_format="csv",
+    #        browser="chrome",
+    #        tweets_count=1000000,
+    #        filename=username + f"-from-{since}",
+    #        directory=output_dir,
+    #        headless=False,
+    #    )
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
