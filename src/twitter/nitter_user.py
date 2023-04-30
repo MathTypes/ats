@@ -6,11 +6,13 @@ import time
 import datetime
 import logging
 from pprint import pprint
+from filelock import Timeout, FileLock
 
 import pandas as pd
 from nitter_scraper import NitterScraper
 from util import config_utils
 from util import logging_utils
+from twitter.tweet_util import get_last_tweet_id
 
 # borrowed from https://stackoverflow.com/a/13565185
 # as noted there, the calendar module has a function of its own
@@ -35,21 +37,6 @@ def monthlist(begin,end):
     result.append ([begin.strftime("%Y-%m-%d"),end.strftime("%Y-%m-%d")])
     return result
 
-def get_last_tweet_id(symbol_output_dir):
-    for filename in os.listdir(symbol_output_dir):
-        id_file = os.path.join(symbol_output_dir, filename)
-        logging.info(f'get_last_tweet_id:{id_file}')
-        if not id_file.endswith(".csv"):
-            continue
-        if not os.path.isfile(id_file):
-            continue
-        df = pd.read_csv(id_file)
-        if "tweet_id" in df.columns:
-            return df["tweet_id"].max()
-        else:
-            return df["Id"].max()
-    return None
-
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
     parser.add_argument("--users", type=str)
@@ -61,23 +48,28 @@ if __name__ == "__main__":
     logging_utils.init_logging()
 
     users = args.users.split(",")
-    df_vec = []
     cur_date = datetime.datetime.today()
     with NitterScraper(host="0.0.0.0", port=args.port) as nitter:
         for user in users:
             if not user:
                 continue
-            symbol_output_dir = os.path.join(args.output_dir, user)
-            if not os.path.exists(symbol_output_dir):
-                os.makedirs(symbol_output_dir)
-            last_tweet_id = get_last_tweet_id(symbol_output_dir)
-            logging.info(f'last_tweet_id:{last_tweet_id}')
-            output_file = symbol_output_dir + "/" + user + "_" + cur_date.strftime("%Y-%m-%d") + ".csv"
-            if not os.path.exists(output_file):
-                df = pd.DataFrame()
-                tweets = nitter.get_tweets(user, pages=10000, break_on_tweet_id=last_tweet_id, address="https://nitter.net")
-                for tweet in tweets:
-                    df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
-                    df = df.append(df2, ignore_index = True)
-                logging.info(f"df:{df}")
-                df.to_csv(output_file)
+            try:
+                symbol_output_dir = os.path.join(args.output_dir, user)
+                if not os.path.exists(symbol_output_dir):
+                    os.makedirs(symbol_output_dir)
+                last_tweet_id = get_last_tweet_id(symbol_output_dir)
+                logging.info(f'last_tweet_id:{last_tweet_id}')
+                output_file = symbol_output_dir + "/" + user + "_" + cur_date.strftime("%Y-%m-%d") + ".csv"
+                if not os.path.exists(output_file):
+                    lock = FileLock(f"{output_file}.lock")
+                    with lock:
+                        df = pd.DataFrame()
+                        tweets = nitter.get_tweets(user, pages=10000, break_on_tweet_id=last_tweet_id, address="https://nitter.it")
+                        for tweet in tweets:
+                            df2 = {'tweet_id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
+                            df = df.append(df2, ignore_index = True)
+                        logging.info(f"df:{df}")
+                        df.to_csv(output_file)
+                time.sleep(0.5)
+            except Exception as e:
+                logging.info(f"Exception:{e}")
