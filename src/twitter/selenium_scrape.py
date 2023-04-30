@@ -36,6 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--username", type=str)
     parser.add_argument("--symbol", type=str)
     parser.add_argument("--output_dir", type=str)
+    parser.add_argument("--browser_profile", type=str)
     parser.add_argument(
         "--start_date",
         type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
@@ -62,9 +63,9 @@ if __name__ == "__main__":
     end_date = args.end_date
     if end_date < args.start_date + datetime.timedelta(31):
         end_date = args.start_date + datetime.timedelta(31)
-    for cur_date in pd.date_range(args.start_date, end_date, freq="M"):
-        since = cur_date-datetime.timedelta(2)
-        until = cur_date + datetime.timedelta(days=32)
+    for cur_date in pd.date_range(args.start_date, end_date, freq="D"):
+        since = cur_date
+        until = cur_date + datetime.timedelta(days=1)
         if args.username:
             output_file_name = args.username + f"-to-{since}-{until}"
             keyword = f"from: {args.username}"
@@ -77,7 +78,10 @@ if __name__ == "__main__":
         since = since.date().isoformat()
         until = until.date().isoformat()
         #query = f"{keyword} since:{since} until:{until}"
-        output_file = args.output_dir + "/" + output_file_name
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+        output_file = args.output_dir + "/" + output_file_name + ".csv"
+        logging.info(f"Checking output_file:{output_file}")
         if not os.path.exists(output_file):
             scrape_keyword(
                 keyword = f"{keyword}",
@@ -87,7 +91,8 @@ if __name__ == "__main__":
                 browser="chrome",
                 tweets_count=1000000,
                 filename=output_file_name,
-                directory=args.output_dir, browser_profile="./selenium_profile",
+                directory=args.output_dir,
+                browser_profile=args.browser_profile,
                 headless=False,
+                login = False
             )
-        exit(0)
