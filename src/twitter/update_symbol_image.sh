@@ -1,0 +1,1 @@
+ls /data/nitter_tweet_ids/symbol/$1/* | sort -r |grep ".reply.csv"|xargs -n1 sh -x twitter/download_image_by_id_file.sh

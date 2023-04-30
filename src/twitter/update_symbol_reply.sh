@@ -1,0 +1,1 @@
+ls  /data/nitter_tweet_ids/symbol/$1/*.csv|grep -v lock|grep -v done|grep -v reply|xargs -n1 sh -x twitter/nitter_update_reply.sh

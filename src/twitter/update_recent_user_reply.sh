@@ -1,1 +1,1 @@
-ls /data/nitter_tweet_ids/recent_user/$1/*.csv|grep -v reply|grep -v img|grep -v Done|xargs -n1 sh -x twitter/nitter_update_reply.sh
+ls /data/nitter_tweet_ids/recent_user/$1/*.csv|grep -v reply|grep -v img|grep -v done|grep -v ".lock"|grep ".csv"|xargs -n1 sh -x twitter/nitter_update_reply.sh

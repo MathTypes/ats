@@ -1,0 +1,1 @@
+cat twitter/tweet_all_users.csv|sort -r|xargs -n100 echo|sed "s/ /,/g"|xargs -n1 sh -x twitter/update_recent_user.sh
