@@ -7,6 +7,7 @@ import argparse
 import logging
 import datetime
 from dataclasses import asdict 
+from filelock import Timeout, FileLock
 import os
 
 import pandas as pd
@@ -38,20 +39,22 @@ if __name__ == "__main__":
         done_file = args.id_file + ".done"
         output_file = args.id_file + ".reply.csv"
         if not os.path.exists(output_file):
-            existing_tweets = set()
-            id_df = pd.read_csv(args.id_file)
-            if "tweet_id" in id_df.columns:
-                ids = id_df["tweet_id"]
-            else:
-                ids = id_df["Id"]
-            df = upload_tweet_to_neo4j_by_ids(ids, existing_tweets = existing_tweets)
-            #df = df.dropna()
-            logging.info(f'Writing: {output_file}')
-            logging.info(f'Writing: df:{df}')
-            #df["date"] = pd.to_datetime(df["date"], errors="coerce")
-            #df['timestamp'] = df['date'].dt.timestamp()
-            #df.to_parquet(output_file)
-            df.to_csv(output_file, sep = '`')
-            with open(done_file, 'w') as fp:
-                pass
-            exit(0)
+            lock = FileLock(f"{output_file}.lock")
+            with lock:
+                existing_tweets = set()
+                id_df = pd.read_csv(args.id_file)
+                if "tweet_id" in id_df.columns:
+                    ids = id_df["tweet_id"]
+                else:
+                    ids = id_df["Id"]
+                df = upload_tweet_to_neo4j_by_ids(ids, existing_tweets = existing_tweets)
+                #df = df.dropna()
+                logging.info(f'Writing: {output_file}')
+                logging.info(f'Writing: df:{df}')
+                #df["date"] = pd.to_datetime(df["date"], errors="coerce")
+                #df['timestamp'] = df['date'].dt.timestamp()
+                #df.to_parquet(output_file)
+                df.to_csv(output_file, sep = '`')
+                with open(done_file, 'w') as fp:
+                    pass
+                exit(0)
