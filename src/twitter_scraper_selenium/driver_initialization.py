@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import traceback
 import time
 import logging
 from typing import Union
@@ -26,59 +27,6 @@ ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
 
-def get_headers():
-    #email = input('Please enter Twitter email/username: ')
-    email = "JeremyQiu6"
-    #password = input('Please enter Twitter password: ')
-    password = "tjqh754lir"
-    options = CustomChromeOptions()
-    options.add_argument("--disable-blink-features=AutomationControlled") 
-    options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
-    options.add_experimental_option("useAutomationExtension", False) 
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36")
-    driver = webdriver.Chrome(options=options)
-
-    driver.get("https://twitter.com")
-    while 'Error' in driver.title:
-        time.sleep(1)
-        driver.get("https://twitter.com")
-        if 'Error' not in driver.title:
-            break
-    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.XPATH,"//*[text()='Log in']")))
-    login_btn = driver.find_element(By.XPATH, "//*[text()='Log in']")
-    login_btn.click()
-    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR,'[autocomplete="username"]',)))
-    username_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="username"]')
-    username_field.send_keys(email)
-    time.sleep(2)
-    next_btn = driver.find_element(By.XPATH, "//*[text()='Next']")
-    next_btn.click()
-    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR,'[autocomplete="current-password"]',)))
-    password_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="current-password"]')
-    password_field.send_keys(password)
-    time.sleep(2)
-    login_btn = driver.find_element(By.CSS_SELECTOR, '[data-testid="LoginForm_Login_Button"]')
-    login_btn.click()
-    
-    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[placeholder="Search Twitter"]')))
-    #search_field = driver.find_element(By.CSS_SELECTOR, '[placeholder="Search Twitter"]')
-    #search_field.click()
-    #search_field.send_keys('whatever')
-    #search_field.send_keys(Keys.ENTER)
-    #while True:
-    #    for request in driver.requests:
-    #        logging.info(f'url:{request.url}')
-    #        if 'https://twitter.com/i/api/2/search/adaptive.json?' in request.url:
-    #            headers_dict = vars(request.headers)['_headers']
-    #            headers = {}
-    #            fields = ['authorization', 'User-Agent', 'cookie', 'Accept', 'Accept-Language', 'Referer', 'x-twitter-auth-type', 'x-guest-token', 'x-csrf-token', 'x-twitter-active-user']
-    #            for i in headers_dict:
-    #                key = i[0]
-    #                value = i[1]
-    #                if key in fields:
-    #                    headers[key] = value
-    #            return headers
-
 class Initializer:
     def __init__(
         self,
@@ -99,11 +47,18 @@ class Initializer:
         self.proxy = proxy
         self.headless = headless
         self.profile = profile
+        self.is_logged_in = False
 
     def set_properties(self, browser_option):
         """adds capabilities to the driver"""
-        #header = Headers().generate()["User-Agent"]
-        header = get_headers()
+        #if not self.is_logged_in:
+        #    header = get_headers()
+        #    self.is_logged_in = True
+        #else:
+        header = Headers().generate()["User-Agent"]
+        #header = get_headers()
+        #
+        logging.info(f"Setting user profile:{self.profile}")
         if self.headless:
             # runs browser in headless mode
             browser_option.add_argument("--headless")
@@ -178,5 +133,7 @@ class Initializer:
 
     def init(self):
         """returns driver instance"""
+        logging.info(f'init driver')
+        traceback.print_stack()
         driver = self.set_driver_for_browser(self.browser_name)
         return driver

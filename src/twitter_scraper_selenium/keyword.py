@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from typing import Union
+import time
 from .driver_initialization import Initializer
 from .driver_utils import Utilities
 from .element_finder import Finder
@@ -10,6 +11,11 @@ import os
 import csv
 from twitter_scraper_selenium.scraping_utilities import Scraping_utilities
 import logging
+from seleniumwire import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 
 logger = logging.getLogger(__name__)
 format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
@@ -17,6 +23,59 @@ ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
 
+def get_headers(driver):
+    #email = input('Please enter Twitter email/username: ')
+    email = "JeremyQiu6"
+    #password = input('Please enter Twitter password: ')
+    password = "tjqh754lir"
+    #options = CustomChromeOptions()
+    #options.add_argument("user-data-dir=/Users/jianjunchen/repo/ats-1/src/selenium_profile/Default")
+    #options.add_argument("--disable-blink-features=AutomationControlled") 
+    #options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+    #options.add_experimental_option("useAutomationExtension", False) 
+    #options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36")
+    #driver = webdriver.Chrome(options=options)
+
+    driver.get("https://twitter.com")
+    while 'Error' in driver.title:
+        time.sleep(1)
+        driver.get("https://twitter.com")
+        if 'Error' not in driver.title:
+            break
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.XPATH,"//*[text()='Log in']")))
+    login_btn = driver.find_element(By.XPATH, "//*[text()='Log in']")
+    login_btn.click()
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR,'[autocomplete="username"]',)))
+    username_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="username"]')
+    username_field.send_keys(email)
+    time.sleep(2)
+    next_btn = driver.find_element(By.XPATH, "//*[text()='Next']")
+    next_btn.click()
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR,'[autocomplete="current-password"]',)))
+    password_field = driver.find_element(By.CSS_SELECTOR, '[autocomplete="current-password"]')
+    password_field.send_keys(password)
+    time.sleep(2)
+    login_btn = driver.find_element(By.CSS_SELECTOR, '[data-testid="LoginForm_Login_Button"]')
+    login_btn.click()
+    
+    WebDriverWait(driver, 300).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[placeholder="Search Twitter"]')))
+    search_field = driver.find_element(By.CSS_SELECTOR, '[placeholder="Search Twitter"]')
+    search_field.click()
+    search_field.send_keys('whatever')
+    search_field.send_keys(Keys.ENTER)
+    while True:
+        for request in driver.requests:
+            logging.info(f'url:{request.url}')
+            if 'https://twitter.com/i/api/2/search/adaptive.json?' in request.url:
+                headers_dict = vars(request.headers)['_headers']
+                headers = {}
+                fields = ['authorization', 'User-Agent', 'cookie', 'Accept', 'Accept-Language', 'Referer', 'x-twitter-auth-type', 'x-guest-token', 'x-csrf-token', 'x-twitter-active-user']
+                for i in headers_dict:
+                    key = i[0]
+                    value = i[1]
+                    if key in fields:
+                        headers[key] = value
+                return headers
 
 class Keyword:
     """This class needs to be instantiated in order to find something
@@ -136,10 +195,19 @@ class Keyword:
     def scrap(self):
         try:
             self.start_driver()
+            headers = get_headers(self.driver)
+            logging.info(f"headers:{headers}")
+            logging.info(f"after driver is started")
+            #self.driver.get('https://www.olx.com.pk/lahore/apple/q-iphone-6s/?search%5Bfilter_float_price%3Afrom%5D=40000&search%5Bfilter_float_price%3Ato%5D=55000')
+            time.sleep(1)
             self.driver.get(self.URL)
+            logging.info(f"after url is received")
             Utilities.wait_until_completion(self.driver, 30)
+            logging.info(f"after url completion")
             Utilities.wait_until_tweets_appear(self.driver, 30)
+            logging.info(f"after url tweet appearance")
             self.fetch_and_store_data()
+            logging.info(f"after fetch and store")
 
             self.close_driver()
             data = dict(list(self.posts_data.items())[0 : int(self.tweets_count)])
@@ -254,7 +322,7 @@ def scrape_keyword(
         max_id=max_id,
         within_time=within_time,
     )
-    logging.info(f'URL:{URL}')
+    logging.info(f'sending URL:{URL}')
     keyword_bot = Keyword(
         keyword,
         browser=browser,
@@ -265,6 +333,7 @@ def scrape_keyword(
         browser_profile=browser_profile,
     )
     data = keyword_bot.scrap()
+    logging.info(f'done scraping url:{URL}, data:{data}')
     if output_format.lower() == "json":
         if filename == "":
             # if filename was not provided then print the JSON to console
