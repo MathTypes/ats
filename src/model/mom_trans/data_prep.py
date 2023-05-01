@@ -132,6 +132,74 @@ def deep_momentum_strategy_features(df_asset: pd.DataFrame) -> pd.DataFrame:
     return df_asset.dropna()
 
 
+def deep_momentum_strategy_features_futures(df_asset: pd.DataFrame) -> pd.DataFrame:
+    """prepare input features for deep learning model
+
+    Args:
+        df_asset (pd.DataFrame): time-series for asset with column close
+
+    Returns:
+        pd.DataFrame: input features
+    """
+
+    df_asset = df_asset[
+        ~df_asset["close"].isna()
+        | ~df_asset["close"].isnull()
+        | (df_asset["close"] > 1e-8)  # price is zero
+    ].copy()
+
+    # winsorize using rolling 5X standard deviations to remove outliers
+    df_asset["srs"] = df_asset["close"]
+    ewm = df_asset["srs"].ewm(halflife=HALFLIFE_WINSORISE)
+    means = ewm.mean()
+    stds = ewm.std()
+    df_asset["srs"] = np.minimum(df_asset["srs"], means + VOL_THRESHOLD * stds)
+    df_asset["srs"] = np.maximum(df_asset["srs"], means - VOL_THRESHOLD * stds)
+
+    df_asset["daily_returns"] = calc_returns(df_asset["srs"])
+    df_asset["daily_vol"] = calc_daily_vol(df_asset["daily_returns"])
+    # vol scaling and shift to be next day returns
+    df_asset["target_returns"] = calc_vol_scaled_returns(
+        df_asset["daily_returns"], df_asset["daily_vol"]
+    ).shift(-1)
+
+    def calc_normalised_returns(day_offset):
+        return (
+            calc_returns(df_asset["srs"], day_offset)
+            / df_asset["daily_vol"]
+            / np.sqrt(day_offset)
+        )
+
+    df_asset["norm_daily_return"] = calc_normalised_returns(1)
+    df_asset["norm_monthly_return"] = calc_normalised_returns(21)
+    df_asset["norm_quarterly_return"] = calc_normalised_returns(63)
+    df_asset["norm_biannual_return"] = calc_normalised_returns(126)
+    df_asset["norm_annual_return"] = calc_normalised_returns(252)
+
+    trend_combinations = [(8, 24), (16, 48), (32, 96)]
+    for short_window, long_window in trend_combinations:
+        df_asset[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
+            df_asset["srs"], short_window, long_window
+        )
+
+    # date features
+    if len(df_asset):
+        df_asset["day_of_week"] = df_asset.index.dayofweek
+        df_asset["day_of_month"] = df_asset.index.day
+        df_asset["week_of_year"] = df_asset.index.isocalendar().week
+        df_asset["month_of_year"] = df_asset.index.month
+        df_asset["year"] = df_asset.index.year
+        df_asset["date"] = df_asset.index  # duplication but sometimes makes life easier
+    else:
+        df_asset["day_of_week"] = []
+        df_asset["day_of_month"] = []
+        df_asset["week_of_year"] = []
+        df_asset["month_of_year"] = []
+        df_asset["year"] = []
+        df_asset["date"] = []
+        
+    return df_asset.dropna()
+
 def include_changepoint_features(
     features: pd.DataFrame, cpd_folder_name: pd.DataFrame, lookback_window_length: int
 ) -> pd.DataFrame:

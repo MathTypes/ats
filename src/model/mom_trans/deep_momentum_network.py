@@ -91,6 +91,7 @@ class SharpeValidationLoss(keras.callbacks.Callback):
             workers=self.n_multiprocessing_workers,
             use_multiprocessing=True,  # , batch_size=1
         )
+        #logging.info(f"positions:{positions}")
 
         captured_returns = tf.math.unsorted_segment_mean(
             positions * self.returns, self.time_indices, self.num_time
@@ -363,6 +364,7 @@ class DeepMomentumNetworkModel(ABC):
 
         if self.evaluate_diversified_val_sharpe:
             val_time_indices, num_val_time = self._index_times(val_time)
+            logging.info(f"y:{labels}")
             callbacks = [
                 SharpeValidationLoss(
                     val_data,
@@ -399,6 +401,7 @@ class DeepMomentumNetworkModel(ABC):
                 tf.keras.callbacks.TerminateOnNaN(),
             ]
             # self.model.run_eagerly = True
+            #logging.info(f"y:{labels}")
             model.fit(
                 x=data,
                 y=labels,

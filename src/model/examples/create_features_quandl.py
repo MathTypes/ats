@@ -1,10 +1,10 @@
 import argparse
 import datetime as dt
 from typing import List
-
+import logging
 import pandas as pd
-
-from data.pull_data import pull_quandl_sample_data
+from util import logging_utils
+from data.pull_data import pull_quandl_sample_data, pull_sample_data
 from settings.default import (
     QUANDL_TICKERS,
     CPD_QUANDL_OUTPUT_FOLDER,
@@ -22,10 +22,11 @@ def main(
     lookback_window_length: int,
     output_file_path: str,
     extra_lbw: List[int],
+    intraday: bool
 ):
     features = pd.concat(
         [
-            deep_momentum_strategy_features(pull_quandl_sample_data(ticker)).assign(
+            deep_momentum_strategy_features(pull_sample_data(ticker, intraday)).assign(
                 ticker=ticker
             )
             for ticker in tickers
@@ -71,6 +72,7 @@ def main(
 
 if __name__ == "__main__":
 
+    logging_utils.init_logging()
     def get_args():
         """Returns settings from command line."""
 
@@ -111,15 +113,23 @@ if __name__ == "__main__":
             # choices=[],
             help="Fill missing prices.",
         )
+        parser.add_argument(
+            "intraday",
+            metavar="-i",
+            type=bool,
+            default=False,
+            help="Use intraday price.",
+        )
 
         args = parser.parse_known_args()[0]
 
         return (
             QUANDL_TICKERS,
-            CPD_QUANDL_OUTPUT_FOLDER(args.lookback_window_length),
+            CPD_QUANDL_OUTPUT_FOLDER(args.lookback_window_length, args.intraday),
             args.lookback_window_length,
-            FEATURES_QUANDL_FILE_PATH(args.lookback_window_length),
+            FEATURES_QUANDL_FILE_PATH(args.lookback_window_length, args.intraday),
             args.extra_lbw,
+            args.intraday
         )
-
+    logging.info(f"get_args:{get_args()}")
     main(*get_args())
