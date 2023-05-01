@@ -36,6 +36,8 @@ if __name__ == "__main__":
     parser.add_argument("--username", type=str)
     parser.add_argument("--symbol", type=str)
     parser.add_argument("--output_dir", type=str)
+    parser.add_argument("--login", type=bool)
+    parser.add_argument("--email", type=str)
     parser.add_argument("--browser_profile", type=str)
     parser.add_argument(
         "--start_date",
@@ -83,6 +85,11 @@ if __name__ == "__main__":
         output_file = args.output_dir + "/" + output_file_name + ".csv"
         logging.info(f"Checking output_file:{output_file}")
         if not os.path.exists(output_file):
+            browser_profile = None
+            email = None
+            if args.email:
+                email = args.email
+                browser_profile = args.browser_profile + "/selenium_profile_" + email
             scrape_keyword(
                 keyword = f"{keyword}",
                 since=since,
@@ -92,7 +99,8 @@ if __name__ == "__main__":
                 tweets_count=1000000,
                 filename=output_file_name,
                 directory=args.output_dir,
-                browser_profile=args.browser_profile,
+                browser_profile=browser_profile,
                 headless=False,
-                login = False
+                email = email,
+                login = args.login
             )
