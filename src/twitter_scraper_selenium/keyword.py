@@ -23,11 +23,16 @@ ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
 
-def get_headers(driver):
+def get_headers(driver, email):
     #email = input('Please enter Twitter email/username: ')
-    email = "JeremyQiu6"
+    # email = "JeremyQiu6"
+    account_dict = {"DragonFlye68042":"sunshine762",
+                    "AlexSimon190658":"qiu7788lz",
+                    "alexsimon788213":"sunshine762",
+                    "alexsimon757084":"sunshine762"}
+    password = account_dict[email]
     #password = input('Please enter Twitter password: ')
-    password = "tjqh754lir"
+    #password = "tjqh754lir"
     #options = CustomChromeOptions()
     #options.add_argument("user-data-dir=/Users/jianjunchen/repo/ats-1/src/selenium_profile/Default")
     #options.add_argument("--disable-blink-features=AutomationControlled") 
@@ -134,47 +139,51 @@ class Keyword:
         try:
             all_ready_fetched_posts = []
             present_tweets = Finder.find_all_tweets(self.driver)
+            logging.info(f"present_tweets:{present_tweets}")
             self.check_tweets_presence(present_tweets)
             all_ready_fetched_posts.extend(present_tweets)
 
             while len(self.posts_data) < self.tweets_count:
                 for tweet in present_tweets:
-                    name = Finder.find_name_from_tweet(tweet)
-                    status, tweet_url = Finder.find_status(tweet)
-                    replies = Finder.find_replies(tweet)
-                    retweets = Finder.find_shares(tweet)
-                    username = tweet_url.split("/")[3]
-                    status = status[-1]
-                    is_retweet = Finder.is_retweet(tweet)
-                    posted_time = Finder.find_timestamp(tweet)
-                    content = Finder.find_content(tweet)
-                    likes = Finder.find_like(tweet)
-                    images = Finder.find_images(tweet)
-                    videos = Finder.find_videos(tweet)
-                    hashtags = re.findall(r"#(\w+)", content)
-                    mentions = re.findall(r"@(\w+)", content)
-                    profile_picture = Finder.find_profile_image_link(tweet)
-                    link = Finder.find_external_link(tweet)
+                    logging.info(f"tweet:{tweet}")
+                    try:
+                        name = Finder.find_name_from_tweet(tweet)
+                        status, tweet_url = Finder.find_status(tweet)
+                        replies = Finder.find_replies(tweet)
+                        retweets = Finder.find_shares(tweet)
+                        username = tweet_url.split("/")[3]
+                        status = status[-1]
+                        is_retweet = Finder.is_retweet(tweet)
+                        posted_time = Finder.find_timestamp(tweet)
+                        content = Finder.find_content(tweet)
+                        likes = Finder.find_like(tweet)
+                        images = Finder.find_images(tweet)
+                        videos = Finder.find_videos(tweet)
+                        hashtags = re.findall(r"#(\w+)", content)
+                        mentions = re.findall(r"@(\w+)", content)
+                        profile_picture = Finder.find_profile_image_link(tweet)
+                        link = Finder.find_external_link(tweet)
 
-                    self.posts_data[status] = {
-                        "tweet_id": status,
-                        "username": username,
-                        "name": name,
-                        "profile_picture": profile_picture,
-                        "replies": replies,
-                        "retweets": retweets,
-                        "likes": likes,
-                        "is_retweet": is_retweet,
-                        "posted_time": posted_time,
-                        "content": content,
-                        "hashtags": hashtags,
-                        "mentions": mentions,
-                        "images": images,
-                        "videos": videos,
-                        "tweet_url": tweet_url,
-                        "link": link,
-                    }
-
+                        self.posts_data[status] = {
+                            "tweet_id": status,
+                            "username": username,
+                            "name": name,
+                            "profile_picture": profile_picture,
+                            "replies": replies,
+                            "retweets": retweets,
+                            "likes": likes,
+                            "is_retweet": is_retweet,
+                            "posted_time": posted_time,
+                            "content": content,
+                            "hashtags": hashtags,
+                            "mentions": mentions,
+                            "images": images,
+                            "videos": videos,
+                            "tweet_url": tweet_url,
+                            "link": link,
+                        }
+                    except Exception as e:
+                        logging.info(f"Exception: {e}")
                 Utilities.scroll_down(self.driver)
                 Utilities.wait_until_completion(self.driver)
                 Utilities.wait_until_tweets_appear(self.driver)
@@ -192,11 +201,12 @@ class Keyword:
         except Exception as ex:
             logger.exception("Error at method fetch_and_store_data : {}".format(ex))
 
-    def scrap(self):
+    def scrap(self, login, email):
         try:
             self.start_driver()
-            headers = get_headers(self.driver)
-            logging.info(f"headers:{headers}")
+            if login:
+                headers = get_headers(self.driver, email)
+                logging.info(f"headers:{headers}")
             logging.info(f"after driver is started")
             #self.driver.get('https://www.olx.com.pk/lahore/apple/q-iphone-6s/?search%5Bfilter_float_price%3Afrom%5D=40000&search%5Bfilter_float_price%3Ato%5D=55000')
             time.sleep(1)
@@ -292,6 +302,8 @@ def scrape_keyword(
     directory: str = os.getcwd(),
     headless: bool = True,
     browser_profile: Union[str, None] = None,
+    email: str = None,
+    login: bool = False
 ):
     """Scrap tweets using keywords.
 
@@ -332,7 +344,7 @@ def scrape_keyword(
         headless=headless,
         browser_profile=browser_profile,
     )
-    data = keyword_bot.scrap()
+    data = keyword_bot.scrap(login, email)
     logging.info(f'done scraping url:{URL}, data:{data}')
     if output_format.lower() == "json":
         if filename == "":
