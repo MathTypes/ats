@@ -1,3 +1,6 @@
+# Usage:
+#   PYTHONPATH=.. python3 write_parquet.py ES FUT
+#
 import os
 from datetime import datetime, timezone, timedelta
 from typing import List
