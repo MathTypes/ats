@@ -3,13 +3,22 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
-from torchfitter.trainer import Trainer
-from torchfitter.utils.data import DataWrapper
-from torchfitter.callbacks import (
-    EarlyStopping,
-    RichProgressBar,
-    LearningRateScheduler
-)
+import pytorch_lightning as pl
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning import Trainer
+
+
+from data_module import AtsDataModule
+#from torch.utils.data import DataLoader, random_split
+#from torchfitter.trainer import Trainer
+#from torchfitter.utils.data import DataWrapper
+#from torchfitter.callbacks import (
+#    EarlyStopping,
+#    RichProgressBar,
+#    LearningRateScheduler
+#)
+import wandb
+from wandb.keras import WandbCallback
 from datasets import (
     generate_sine_waves,
     generate_stock_returns,
@@ -77,12 +86,13 @@ class Pipeline:
     """
     def __init__(self):
         self.model = None
-        self.X_train = None
-        self.y_train = None
-        self.X_val = None
-        self.y_val = None
-        self.X_test = None
-        self.y_test = None
+        #self.X_train = None
+        #self.y_train = None
+        #self.X_val = None
+        #self.y_val = None
+        #self.X_test = None
+        #self.y_test = None
+        self.data_module = None
         self.history = None
         self.y_pred = None
 
@@ -92,93 +102,61 @@ class Pipeline:
     def create_model(self):
         pass
 
-    def generate_data(self):
-        if self.dataset == "sine_wave":
-            _tup = generate_sine_waves()
-        
-        elif self.dataset == "stock_returns":
-            _tup = generate_stock_returns()
-
-        elif self.dataset == "venezia":
-            _tup = generate_venezia_high_waters()
-
-        elif self.dataset == "white_noise":
-            _tup = generate_white_noise()
-        
-        else:
-            raise KeyError(f"Not supported dataset: {self.dataset}.")
-
-        X_train, y_train, X_val, y_val, X_test, y_test = _tup
-
-        self.X_train = X_train
-        self.y_train = y_train
-        self.X_val = X_val
-        self.y_val = y_val
-        self.X_test = X_test
-        self.y_test = y_test
 
     def train_model(self):
         # ---------------------------------------------------------------------
-        criterion = nn.HuberLoss()
-        optimizer = optim.NAdam(self.model.parameters(), lr=0.005)
-        sch = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, factor=0.7, patience=20, min_lr=0.0001
-        )
-
+        #criterion = nn.HuberLoss()
+        #optimizer = optim.NAdam(self.model.parameters(), lr=0.005)
+        #sch = optim.lr_scheduler.ReduceLROnPlateau(
+        #    optimizer, factor=0.7, patience=20, min_lr=0.0001
+        #)
+        #run = wandb.init(project="WandBAndKerasTuner")
         # ---------------------------------------------------------------------
         callbacks = [
-            EarlyStopping(patience=90, load_best=True),
-            RichProgressBar(display_step=5, log_lr=True),
-            LearningRateScheduler(scheduler=sch, on_train=False)
+            #EarlyStopping(patience=90, load_best=True),
+            #RichProgressBar(display_step=5, log_lr=True),
+            #LearningRateScheduler(scheduler=sch, on_train=False),
+            #TorchFitterWandbCallback(WandbCallback())
         ]
+        wandb_logger = WandbLogger()
+        trainer = pl.Trainer(max_epochs=10, logger=wandb_logger)
+        self.history = trainer.fit(self.model, self.data_module)
+        #trainer = Trainer(
+        #    model=self.model,
+        #    criterion=criterion,
+        #    optimizer=optimizer,
+        #    callbacks=callbacks,
+        #    mixed_precision="no"
+        #    #'no', 'fp8', 'fp16', 'bf16'
+        #)
 
         # ---------------------------------------------------------------------
-        train_wrapper = DataWrapper(
-            self.X_train, self.y_train, dtype_X="float", dtype_y="float"
-        )
-        val_wrapper = DataWrapper(
-            self.X_val, self.y_val, dtype_X="float", dtype_y="float"
-        )
-        train_loader = DataLoader(
-            train_wrapper, batch_size=64, pin_memory=True
-        )
-        val_loader = DataLoader(val_wrapper, batch_size=64, pin_memory=True)
-        # ---------------------------------------------------------------------
-        trainer = Trainer(
-            model=self.model,
-            criterion=criterion,
-            optimizer=optimizer,
-            callbacks=callbacks,
-            mixed_precision="no"
-            #'no', 'fp8', 'fp16', 'bf16'
-        )
-
-        # ---------------------------------------------------------------------
-        history = trainer.fit(train_loader, val_loader, epochs=20)
-        self.history = history
-
+        #history = trainer.fit(train_load, val_loader, epochs=20)
+        #self.history = history
+        #run.finish()
         # to avoid memory problems
-        test_wrapper = DataWrapper(
-            self.X_test, self.y_test, dtype_X="float", dtype_y="float"
-        )
+        test_wrapper = torch.utils.data.TensorDataset(self.X_test, self.y_test)
+        #test_wrapper = DataWrapper(
+        #    self.X_test, self.y_test, dtype_X="float", dtype_y="float"
+        #)
         sampler = SequentialSampler(test_wrapper)
-        test_loader = DataLoader(
-            test_wrapper,
-            batch_size=64,
-            pin_memory=True,
-            sampler=sampler,
-            shuffle=False
-        )
+        #test_loader = DataLoader(
+        #    test_wrapper,
+        #    batch_size=64,
+        #    pin_memory=True,
+        #    sampler=sampler,
+        #    shuffle=False
+        #)
 
-        y_pred = trainer.predict(test_loader, as_array=True)
-        y_test = self.y_test
+        #y_pred = trainer.predict(test_loader, as_array=True)
+        #y_test = self.y_test
 
         # only works if predict horizon is 1
-        preds = np.stack([row.flatten() for row in y_pred])
-        tests = np.stack([row.flatten() for row in y_test])
+        #preds = np.stack([row.flatten() for row in y_pred])
+        #tests = np.stack([row.flatten() for row in y_test])
 
-        self.preds = preds
-        self.tests = tests
+        #self.preds = preds
+        #self.tests = tests
 
 
 def count_parameters(model):

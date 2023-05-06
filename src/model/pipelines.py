@@ -8,6 +8,7 @@ from models import (
     EmbeddingLSTM,
     AttentionEmbeddingLSTM
 )
+from data_module import AtsDataModule
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -20,8 +21,6 @@ class AttentionLSTMPipeline(Pipeline):
         self.dataset = dataset
 
     def create_model(self):
-        self.generate_data()
-
         X_train = self.X_train
         y_train = self.y_train
 
@@ -38,8 +37,6 @@ class VanillaLSTMPipeline(Pipeline):
         self.dataset = dataset
 
     def create_model(self):
-        self.generate_data()
-
         X_train = self.X_train
         y_train = self.y_train
 
@@ -52,12 +49,9 @@ class VanillaLSTMPipeline(Pipeline):
 class EmbeddingLSTMPipeline(Pipeline):
     def __init__(self, dataset="sine_wave"):
         super().__init__()
-
         self.dataset = dataset
 
     def create_model(self):
-        self.generate_data()
-
         X_train = self.X_train
         y_train = self.y_train
         features = X_train.shape[1]
@@ -76,20 +70,19 @@ class EmbeddingLSTMPipeline(Pipeline):
 class AttentionEmbeddingLSTMPipeline(Pipeline):
     def __init__(self, dataset="sine_wave"):
         super().__init__()
-
         self.dataset = dataset
 
     def create_model(self):
-        self.generate_data()
-
-        X_train = self.X_train
-        y_train = self.y_train
+        self.data_module = AtsDataModule("stock_returns")
+        X_train = self.data_module.X_train
+        y_train = self.data_module.y_train
         features = X_train.shape[1]
         mini_batch = X_train.shape[2]
 
-        device = 'mps' if torch.cuda.is_available() else 'cpu'
+        #device = 'mps' if torch.backends.mps.is_available() else 'cpu'
+        #device = "cpu"
         #DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-        logging.info(f"device:{device}")
+        #logging.info(f"device:{device}")
         model = AttentionEmbeddingLSTM(
             linear_channel=features,
             period_channel=(mini_batch - features),
@@ -97,4 +90,4 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
             input_size=X_train.shape[2],
             out_size=y_train.shape[-1]
         )
-        self.model = model.to(device)
+        self.model = model

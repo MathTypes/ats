@@ -66,12 +66,12 @@ import pyarrow.parquet as pq
 import logging
 
 def generate_stock_returns():
-    data = pd.read_parquet("data/ES_30min_tab.pkl", engine='fastparquet')
+    data = pd.read_parquet("data/FUT/30min/ES", engine='fastparquet')
     #data = pd.read_pickle("data/XAUUSD.pkl")
     #data = pq.read_table("data/ES_30min.pkl")
     #data = data.to_pandas()
     logging.info(f"data:{data.head()}")
-    logging.info(f"data:{type(data)}")
+    logging.info(f"data:{data.info()}")
     #exit(0)
     data = data.drop(columns=["Volume"])
     data = data.pct_change().dropna()

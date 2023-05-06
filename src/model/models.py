@@ -1,11 +1,13 @@
+import statistics
 import torch
 import torch.nn as nn
 from utils import Time2Vec
-
+import wandb
+import pytorch_lightning as pl
 torch.manual_seed(0)
+from torch.nn import functional as F
 
-
-class AttentionLSTM(nn.Module):
+class AttentionLSTM(pl.LightningModule):
     """
     Multihead-attention model + LSTM layer.
     """
@@ -29,7 +31,7 @@ class AttentionLSTM(nn.Module):
         return out
 
 
-class VanillaLSTM(nn.Module):
+class VanillaLSTM(pl.LightningModule):
     """
     Multihead-attention model + LSTM layer.
     """
@@ -48,7 +50,7 @@ class VanillaLSTM(nn.Module):
         return out
 
 
-class EmbeddingLSTM(nn.Module):
+class EmbeddingLSTM(pl.LightningModule):
     """
     Time2vec embedding + LSTM.
     """
@@ -78,7 +80,7 @@ class EmbeddingLSTM(nn.Module):
         return out
 
 
-class AttentionEmbeddingLSTM(nn.Module):
+class AttentionEmbeddingLSTM(pl.LightningModule):
     """
     Time2vec embedding + Attention + LSTM.
     """
@@ -93,7 +95,7 @@ class AttentionEmbeddingLSTM(nn.Module):
         n_layers=2
     ):
         super(AttentionEmbeddingLSTM, self).__init__()
-
+        self.criterion = nn.HuberLoss()
         self.emb = Time2Vec(linear_channel, period_channel, input_channel)
         self.att = nn.MultiheadAttention(
             embed_dim=input_size, num_heads=input_size
@@ -111,3 +113,23 @@ class AttentionEmbeddingLSTM(nn.Module):
         out, (h, c) = self.lstm(out)
         out = self.lin(out)
         return out
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.criterion(y_hat, y)
+        self.log('train_loss', loss)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.criterion(y_hat, y)
+        self.log('val_loss', loss)
+
+    def configure_optimizers(self):
+        #optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.005)
+        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
+        return [optimizer], [lr_scheduler]
+        #return optimizer
