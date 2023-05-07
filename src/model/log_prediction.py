@@ -16,8 +16,8 @@ class LogPredictionsCallback(Callback):
         super().__init__()
         self.wandb_logger = wandb_logger
         self.val_inputs, self.val_labels = val_samples
-        self.val_inputs = self.val_inputs[:num_samples]
-        self.val_labels = self.val_labels[:num_samples]
+        self.val_inputs = self.val_inputs[-num_samples:]
+        self.val_labels = self.val_labels[-num_samples:]
         self.val_times = self.val_inputs[:,0,...]
         self.val_inputs = self.val_inputs[:,1:,...]
         self.val_labels = self.val_labels[:,1:,...]
@@ -37,6 +37,7 @@ class LogPredictionsCallback(Callback):
         fig_cnt = val_inputs.shape[0] // 4
         for i in range(0, fig_cnt):
             fig = plt.figure()
+            fig.set_figwidth(40)
             for j in range(0, 4):
                 x = val_inputs[i*4+j].cpu()
                 pred = preds[i*4+j].cpu()
