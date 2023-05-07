@@ -17,8 +17,13 @@ class LogPredictionsCallback(Callback):
         self.val_inputs, self.val_labels = val_samples
         self.val_inputs = self.val_inputs[:num_samples]
         self.val_labels = self.val_labels[:num_samples]
-        logging.info(f"val_inputs:{self.val_inputs.shape}")
-        logging.info(f"val_labels:{self.val_labels.shape}")
+        self.val_times = self.val_inputs[:,0,...]
+        self.val_inputs = self.val_inputs[:,1:,...]
+        self.val_labels = self.val_labels[:,1:,...]
+        logging.info(f"val_times:{self.val_times}")
+        logging.info(f"val_times_shape:{self.val_times.shape}")
+        logging.info(f"val_inputs_shape:{self.val_inputs.shape}")
+        logging.info(f"val_labels_shape:{self.val_labels.shape}")
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
