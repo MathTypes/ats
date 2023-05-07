@@ -86,5 +86,10 @@ def generate_stock_returns():
         n_past=20,
         n_future=1
     )
-
+    logging.info(f"X_train:{X_train}")
+    logging.info(f"y_train:{y_train}")
+    logging.info(f"X_val:{X_val}")
+    logging.info(f"y_val:{y_val}")
+    logging.info(f"X_test:{X_test}")
+    logging.info(f"y_test:{y_test}")
     return X_train, y_train, X_val, y_val, X_test, y_test

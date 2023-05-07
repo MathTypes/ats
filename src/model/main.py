@@ -10,15 +10,15 @@ from pipelines import (
 from utils import count_parameters
 from torchfitter.io import save_pickle
 from torchfitter.utils.convenience import get_logger
-
+from util import logging_utils
 
 RESULTS_PATH = Path("results")
 
 
-logger = get_logger(name="Experiments")
-level = logger.level
-logging.basicConfig(level=level)
-
+#logger = get_logger(name="Experiments")
+#level = logger.level
+#logging.basicConfig(level=level)
+logging_utils.init_logging()
 
 if __name__ == "__main__":
     datasets = ["stock_returns"]
@@ -30,8 +30,6 @@ if __name__ == "__main__":
     ]
 
     for key in datasets:
-
-        logger.info(f"PROCESSING DATASET: {key}")
         folder = RESULTS_PATH / f"{key}"
         folder.mkdir(exist_ok=True)
 
@@ -39,22 +37,22 @@ if __name__ == "__main__":
             pipe = _pipe(dataset=key)
             pip_name = _pipe.__name__
 
-            logger.info(f"TRAINING: {pip_name}")
+            logging.info(f"TRAINING: {pip_name}")
 
             pipe.create_model()
 
-            logger.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
+            logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
 
             pipe.train_model()
 
-            y_pred = pipe.preds
-            y_test = pipe.tests
-            history = pipe.history
+            #y_pred = pipe.preds
+            #y_test = pipe.tests
+            #history = pipe.history
 
-            pipe_folder = folder / f"{pip_name}"
-            pipe_folder.mkdir(exist_ok=True)
+            #pipe_folder = folder / f"{pip_name}"
+            #pipe_folder.mkdir(exist_ok=True)
 
-            np.save(file=pipe_folder / "y_pred", arr=y_pred)
-            np.save(file=pipe_folder / "y_test", arr=y_test)
+            #np.save(file=pipe_folder / "y_pred", arr=y_pred)
+            #np.save(file=pipe_folder / "y_test", arr=y_test)
 
-            save_pickle(obj=history, path=pipe_folder / "history.pkl")
+            #save_pickle(obj=history, path=pipe_folder / "history.pkl")

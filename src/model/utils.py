@@ -7,8 +7,8 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
 
-
 from data_module import AtsDataModule
+from log_prediction import LogPredictionsCallback
 #from torch.utils.data import DataLoader, random_split
 #from torchfitter.trainer import Trainer
 #from torchfitter.utils.data import DataWrapper
@@ -118,9 +118,17 @@ class Pipeline:
             #LearningRateScheduler(scheduler=sch, on_train=False),
             #TorchFitterWandbCallback(WandbCallback())
         ]
-        wandb_logger = WandbLogger()
-        trainer = pl.Trainer(max_epochs=10, logger=wandb_logger)
+        wandb_logger = WandbLogger(project='ATS', log_model='all')
+        log_predictions_callback = LogPredictionsCallback(wandb_logger, [self.data_module.X_test, self.data_module.y_test])
+        trainer = pl.Trainer(max_epochs=5, logger=wandb_logger,
+                             callbacks=[log_predictions_callback],
+                             devices=-1, accelerator='mps',
+                             precision=16, # train in half precision
+                             deterministic=True, strategy='auto')
         self.history = trainer.fit(self.model, self.data_module)
+        # evaluate the model on a test set
+        trainer.test(datamodule=self.data_module, ckpt_path=None)  # uses last-saved model
+
         #trainer = Trainer(
         #    model=self.model,
         #    criterion=criterion,
@@ -135,11 +143,11 @@ class Pipeline:
         #self.history = history
         #run.finish()
         # to avoid memory problems
-        test_wrapper = torch.utils.data.TensorDataset(self.X_test, self.y_test)
+        #test_wrapper = torch.utils.data.TensorDataset(self.X_test, self.y_test)
         #test_wrapper = DataWrapper(
         #    self.X_test, self.y_test, dtype_X="float", dtype_y="float"
         #)
-        sampler = SequentialSampler(test_wrapper)
+        #sampler = SequentialSampler(test_wrapper)
         #test_loader = DataLoader(
         #    test_wrapper,
         #    batch_size=64,
