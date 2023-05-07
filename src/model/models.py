@@ -106,6 +106,8 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
             num_layers=n_layers
         )
         self.lin = nn.Linear(hidden_size, out_size)
+        self.val_outptus = []
+        self.test_outputs = []
 
     def forward(self, X):
         out = self.emb(X)
@@ -127,6 +129,20 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         loss = self.criterion(y_hat, y)
         self.log('val_loss', loss)
 
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.criterion(y_hat, y)
+        self.log('test_loss', loss)
+
+    def test_epoch_end(self, test_step_outputs):  # args are defined as part of pl API
+        dummy_input = torch.zeros(self.hparams["in_dims"], device=self.device)
+        model_filename = "model_final.onnx"
+        self.to_onnx(model_filename, dummy_input, export_params=True)
+        artifact = wandb.Artifact(name="model.ckpt", type="model")
+        artifact.add_file(model_filename)
+        wandb.log_artifact(artifact)
+    
     def configure_optimizers(self):
         #optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         optimizer = torch.optim.Adam(self.parameters(), lr=0.005)
