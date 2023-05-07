@@ -132,6 +132,8 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         x, y = batch
+        x = x[:,1:,...]
+        y = y[:,1:,...]
         y_hat = self.forward(x)
         loss = self.compute_loss(y_hat, y)
         self.log('train_loss', loss)
@@ -139,12 +141,16 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
+        x = x[:,1:,...]
+        y = y[:,1:,...]
         y_hat = self.forward(x)
         loss = self.compute_loss(y_hat, y)
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
         x, y = batch
+        x = x[:,1:,...]
+        y = y[:,1:,...]
         y_hat = self.forward(x)
         loss = self.compute_loss(y_hat, y)
         self.log('test_loss', loss)

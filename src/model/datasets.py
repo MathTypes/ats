@@ -32,12 +32,12 @@ def generate_stock_returns():
         n_past=20,
         n_future=5
     )
-    X_train = X_train[:, 1:, :]
-    y_train = y_train[:, 1:, :]
-    X_val = X_val[:, 1:, :]
-    y_val = y_val[:, 1:, :]
-    X_test = X_test[:, 1:, :]
-    y_test = y_test[:, 1:, :]
+    #X_train = X_train[:, 1:, :]
+    #y_train = y_train[:, 1:, :]
+    #X_val = X_val[:, 1:, :]
+    #y_val = y_val[:, 1:, :]
+    #X_test = X_test[:, 1:, :]
+    #y_test = y_test[:, 1:, :]
     #y_train = y_train[:,3,:]
     #y_val = y_val[:,3,:]
     #y_test = y_test[:,3,:]
