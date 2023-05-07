@@ -11,7 +11,7 @@ plt.style.use('seaborn')
 import PIL
 PIL.Image.MAX_IMAGE_PIXELS = None
 class LogPredictionsCallback(Callback):
-    def __init__(self, wandb_logger, val_samples, num_samples=128):
+    def __init__(self, wandb_logger, val_samples, num_samples=2048):
         '''method used to define our model parameters'''
         super().__init__()
         self.wandb_logger = wandb_logger
@@ -21,18 +21,43 @@ class LogPredictionsCallback(Callback):
         self.val_times = self.val_inputs[:,0,...]
         self.val_inputs = self.val_inputs[:,1:,...]
         self.val_labels = self.val_labels[:,1:,...]
+        self.criterion = torch.nn.L1Loss(reduction="none")
         logging.info(f"val_times:{self.val_times}")
         logging.info(f"val_times_shape:{self.val_times.shape}")
         logging.info(f"val_inputs_shape:{self.val_inputs.shape}")
         logging.info(f"val_labels_shape:{self.val_labels.shape}")
 
+    def topk_by_sort(input, k, axis=None, ascending=True):
+        if not ascending:
+            input *= -1
+        ind = np.argsort(input, axis=axis)
+        ind = np.take(ind, np.arange(k), axis=axis)
+        if not ascending:
+            input *= -1
+        val = np.take_along_axis(input, ind, axis=axis) 
+        return ind, val
+
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
         val_inputs = self.val_inputs.to(device=pl_module.device)
         preds = pl_module(val_inputs)
+        metrics = self.criterion(preds, self.val_labels.to(device=pl_module.device)).cpu()
+        metrics = torch.sum(metrics, dim=2)
+        metrics = torch.sum(metrics, dim=1)
+        logging.info(f"metrics:{metrics.shape}")
+        logging.info(f"metrics:{metrics}")
+        ind = np.argsort(metrics, axis=0)
+        logging.info(f"ind:{ind}")
+        ind = np.take(ind, np.arange(128), axis=0)
+        val_inputs = self.val_inputs[ind]
+        preds = preds[ind]
+        val_labels = self.val_labels[ind]
+        val_times = self.val_times[ind]
+        logging.info(f"after ind:{ind}")
+
         logging.info(f"preds:{preds.shape}")
         logging.info(f"val_inputs:{val_inputs.shape}")
-        logging.info(f"val_labels:{self.val_labels.shape}")
+        logging.info(f"val_labels:{val_labels.shape}")
         #fig = plt.figure(figsize=(400,200))
         fig_cnt = val_inputs.shape[0] // 4
         for i in range(0, fig_cnt):
@@ -41,8 +66,8 @@ class LogPredictionsCallback(Callback):
             for j in range(0, 4):
                 x = val_inputs[i*4+j].cpu()
                 pred = preds[i*4+j].cpu()
-                y = self.val_labels[i*4+j].cpu()
-                times = self.val_times[i*4+j].cpu()
+                y = val_labels[i*4+j].cpu()
+                times = val_times[i*4+j].cpu()
                 open = x[0]
                 high = x[1]
                 low = x[2]
