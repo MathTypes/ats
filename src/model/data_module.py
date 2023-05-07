@@ -1,11 +1,8 @@
 import pytorch_lightning as pl
 import torch
-from torch.utils.data import random_split, DataLoader
+from torch.utils.data import DataLoader
 from datasets import (
-    generate_sine_waves,
     generate_stock_returns,
-    generate_white_noise,
-    generate_venezia_high_waters,
 )
 
 class AtsDataModule(pl.LightningDataModule):

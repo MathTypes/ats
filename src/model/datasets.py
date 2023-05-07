@@ -5,63 +5,6 @@ from torchfitter.utils.preprocessing import tabular_to_sliding_dataset
 
 np.random.seed(0)
 
-
-def generate_venezia_high_waters():
-    data = pd.read_pickle("data/venezia_high_waters.pkl")
-    data = data.groupby(data.index.date).mean()
-
-    val_idx = int(len(data) * 0.7)
-    tst_idx = int(len(data) * 0.8)
-
-    X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-        data.values,
-        validation_idx=val_idx,
-        test_idx=tst_idx,
-        n_past=20,
-        n_future=1,
-        scaler=StandardScaler()
-    )
-
-    return X_train, y_train, X_val, y_val, X_test, y_test
-
-
-def generate_sine_waves():
-    _range = np.arange(-20, 20, 0.01)
-    _iter = [_range / (np.pi / x) for x in range(1, 7)]
-    _range = np.stack(_iter, axis=1)
-    sine = np.sin(_range)
-
-    val_idx = int(len(sine) * 0.7)
-    tst_idx = int(len(sine) * 0.8)
-
-    X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-        sine,
-        validation_idx=val_idx,
-        test_idx=tst_idx,
-        n_past=20,
-        n_future=1
-    )
-
-    return X_train, y_train, X_val, y_val, X_test, y_test
-
-
-def generate_white_noise():
-    random_walk = np.random.normal(0, 0.01, (4_000, 4))
-
-    val_idx = int(len(random_walk) * 0.7)
-    tst_idx = int(len(random_walk) * 0.8)
-
-    X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-        random_walk,
-        validation_idx=val_idx,
-        test_idx=tst_idx,
-        n_past=20,
-        n_future=1
-    )
-
-    return X_train, y_train, X_val, y_val, X_test, y_test
-
-
 import pyarrow.parquet as pq
 import logging
 
@@ -73,23 +16,41 @@ def generate_stock_returns():
     logging.info(f"data:{data.head()}")
     logging.info(f"data:{data.info()}")
     #exit(0)
-    data = data.drop(columns=["Volume"])
+    #data = data.drop(columns=["Volume"])
     data = data.pct_change().dropna()
-
+    data["Time"] = data.index
+    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
     val_idx = int(len(data) * 0.7)
     tst_idx = int(len(data) * 0.8)
 
+    logging.info(f"data:{data.values.shape}")
+    logging.info(f"data:{data.values[:30]}")
     X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-        data.values,
+        data[["Time", "Open", "High", "Low", "Close", "Volume"]].values,
         validation_idx=val_idx,
         test_idx=tst_idx,
         n_past=20,
-        n_future=1
+        n_future=5
     )
-    logging.info(f"X_train:{X_train}")
-    logging.info(f"y_train:{y_train}")
-    logging.info(f"X_val:{X_val}")
-    logging.info(f"y_val:{y_val}")
-    logging.info(f"X_test:{X_test}")
-    logging.info(f"y_test:{y_test}")
+    X_train = X_train[:, 1:, :]
+    y_train = y_train[:, 1:, :]
+    X_val = X_val[:, 1:, :]
+    y_val = y_val[:, 1:, :]
+    X_test = X_test[:, 1:, :]
+    y_test = y_test[:, 1:, :]
+    #y_train = y_train[:,3,:]
+    #y_val = y_val[:,3,:]
+    #y_test = y_test[:,3,:]
+    logging.info(f"data:{X_train[:30]}")
+    logging.info(f"data:{y_train[:30]}")
+    logging.info(f"data:{X_val[:30]}")
+    logging.info(f"data:{y_val[:30]}")
+    logging.info(f"data:{X_test[:30]}")
+    logging.info(f"data:{y_test[:30]}")
+    logging.info(f"X_train:{X_train.shape}")
+    logging.info(f"y_train:{y_train.shape}")
+    logging.info(f"X_val:{X_val.shape}")
+    logging.info(f"y_val:{y_val.shape}")
+    logging.info(f"X_test:{X_test.shape}")
+    logging.info(f"y_test:{y_test.shape}")
     return X_train, y_train, X_val, y_val, X_test, y_test

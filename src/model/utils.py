@@ -9,22 +9,8 @@ from pytorch_lightning import Trainer
 
 from data_module import AtsDataModule
 from log_prediction import LogPredictionsCallback
-#from torch.utils.data import DataLoader, random_split
-#from torchfitter.trainer import Trainer
-#from torchfitter.utils.data import DataWrapper
-#from torchfitter.callbacks import (
-#    EarlyStopping,
-#    RichProgressBar,
-#    LearningRateScheduler
-#)
 import wandb
 from wandb.keras import WandbCallback
-from datasets import (
-    generate_sine_waves,
-    generate_stock_returns,
-    generate_white_noise,
-    generate_venezia_high_waters,
-)
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -120,7 +106,7 @@ class Pipeline:
         ]
         wandb_logger = WandbLogger(project='ATS', log_model='all')
         log_predictions_callback = LogPredictionsCallback(wandb_logger, [self.data_module.X_test, self.data_module.y_test])
-        trainer = pl.Trainer(max_epochs=5, logger=wandb_logger,
+        trainer = pl.Trainer(max_epochs=10, logger=wandb_logger,
                              callbacks=[log_predictions_callback],
                              devices=-1, accelerator='mps',
                              precision=16, # train in half precision
