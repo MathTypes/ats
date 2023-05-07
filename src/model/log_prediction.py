@@ -1,5 +1,6 @@
 import io
 from PIL import Image
+from datetime import datetime
 import logging
 from pytorch_lightning.callbacks import Callback
 import numpy as np
@@ -10,7 +11,7 @@ plt.style.use('seaborn')
 import PIL
 PIL.Image.MAX_IMAGE_PIXELS = None
 class LogPredictionsCallback(Callback):
-    def __init__(self, wandb_logger, val_samples, num_samples=16):
+    def __init__(self, wandb_logger, val_samples, num_samples=128):
         '''method used to define our model parameters'''
         super().__init__()
         self.wandb_logger = wandb_logger
@@ -33,27 +34,31 @@ class LogPredictionsCallback(Callback):
         logging.info(f"val_inputs:{val_inputs.shape}")
         logging.info(f"val_labels:{self.val_labels.shape}")
         #fig = plt.figure(figsize=(400,200))
-        fig = plt.figure()
-        
-        for idx, (x, pred, y) in enumerate(zip(val_inputs, preds, self.val_labels)):
-            x = x.cpu()
-            pred = pred.cpu()
-            y = y.cpu()
-            open = x[0]
-            high = x[1]
-            low = x[2]
-            close = x[3]
-            pred_close = pred[3]
-            #pred_close = pred
-            y_close = y[3]
-            #y_close = y
-            ax1 = fig.add_subplot(4, 4, idx+1)
-            ax1.plot(np.arange(close.shape[0]), close, label='Training data')
-            ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+5), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
-            ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+5), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
-            ax1.set_xlabel('time period')
-            ax1.set_ylabel('y')
-        self.wandb_logger.log_image(f"chart-{idx}", images=[fig])
+        fig_cnt = val_inputs.shape[0] // 4
+        for i in range(0, fig_cnt):
+            fig = plt.figure()
+            for j in range(0, 4):
+                x = val_inputs[i*4+j].cpu()
+                pred = preds[i*4+j].cpu()
+                y = self.val_labels[i*4+j].cpu()
+                times = self.val_times[i*4+j].cpu()
+                open = x[0]
+                high = x[1]
+                low = x[2]
+                close = x[3]
+                pred_close = pred[3]
+                #pred_close = pred
+                y_close = y[3]
+                #y_close = y
+                #logging.info(f"time:{times}")
+                ax1 = fig.add_subplot(1, 4, j+1)
+                ax1.plot(np.arange(close.shape[0]), close, label='Training data')
+                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+5), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
+                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+5), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
+                now = datetime.fromtimestamp(times.numpy()[-1])
+                ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
+                ax1.set_ylabel('y')
+            self.wandb_logger.log_image(f"chart-{i}", images=[fig])
     
         #trainer.logger.experiment.log({
         #    "examples": [wandb.Image(self.generate_image(x, pred, y), caption=f"Pred:{pred}, Label:{y}") 

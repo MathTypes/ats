@@ -78,7 +78,8 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
         y_train = self.data_module.y_train
         features = X_train.shape[1]
         mini_batch = X_train.shape[2]
-
+        logging.info(f"features:{features}")
+        logging.info(f"mini_batch:{mini_batch}")
         #device = 'mps' if torch.backends.mps.is_available() else 'cpu'
         #device = "cpu"
         #DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")

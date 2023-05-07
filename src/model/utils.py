@@ -109,7 +109,7 @@ class Pipeline:
         trainer = pl.Trainer(max_epochs=10, logger=wandb_logger,
                              callbacks=[log_predictions_callback],
                              devices=-1, accelerator='mps',
-                             precision=16, # train in half precision
+                             precision='16-mixed', # train in half precision
                              deterministic=True, strategy='auto')
         self.history = trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
