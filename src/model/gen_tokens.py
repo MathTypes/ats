@@ -88,18 +88,28 @@ logging.info(f"df_merge:{df.head()}")
 #df.index = df.Time
 logging.info(f"df:{df.head()}")
 df = df.compute()
-df = df.resample('30Min').agg(dict(
-    OpenPct=lambda x: list(x),
-    HighPct=lambda x: list(x),
-    LowPct=lambda x: list(x),
-    ClosePct=lambda x: list(x),
-    VolumePct=lambda x: list(x),
-    Open='first',
-    High='max',
-    Low='min',
-    Close='last',
-    Volume='sum'))
+df = df.resample('30Min').agg(
+    OpenPct=('OpenPct', lambda x: list(x)),
+    HighPct=('HighPct', lambda x: list(x)),
+    LowPct=('LowPct', lambda x: list(x)),
+    ClosePct=('ClosePct', lambda x: list(x)),
+    VolumePct=('VolumePct', lambda x: list(x)),
+    Open=('Open', 'first'),
+    OpenCnt=('Open', 'count'),
+    High=('High','max'),
+    Low=('Low','min'),
+    Close=('Close','last'),
+    Volume=('Volume','sum'))
+df = df[df.OpenCnt==6]
+df = df[df.Volume>0]
 logging.info(f"df:{df.head()}")
 #df = df[len(df.Volume)>0]
+if not os.path.exists(os.path.dirname(file_path)):
+    os.makedirs(os.path.dirname(file_path))
+
+float64_cols = ["OpenPct", "HighPct", "LowPct", "ClosePct", "VolumePct"]
+mapper = {col_name: np.array(np.float32) for col_name in float64_cols}
+df = df.astype(mapper)
+logging.info(f'df:{df.info()}')
 df.to_parquet(file_path, engine='fastparquet')
 ray.shutdown()
