@@ -119,10 +119,10 @@ class Pipeline:
                              callbacks=[checkpoint_callback, es, lr_monitor,
                                         log_predictions_callback],
                              devices=-1, accelerator='gpu',
-                             precision="bf16",
+                             #precision="bf16",
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,
-                             #precision='16-mixed',
+                             precision='16-mixed',
                              # train in half precision
                              deterministic=True, strategy='auto')
         self.history = trainer.fit(self.model, self.data_module)
