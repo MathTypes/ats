@@ -20,7 +20,7 @@ batch_first = False
 
 # Define input variables 
 exogenous_vars = [] # should contain strings. Each string must correspond to a column name
-input_variables = [target_col_name] + exogenous_vars
+input_variables = target_col_name + exogenous_vars
 input_size = len(input_variables)
 
 torch.set_float32_matmul_precision('medium')
@@ -35,7 +35,7 @@ class TFTPipeline(Pipeline):
         X_train = self.data_module.X_train
         logging.info(f"X_train:{X_train.shape}")
         self.model = TimeSeriesTFT(
-            input_size=len(input_variables),
+            input_size=5,
             dec_seq_len=enc_seq_len,
             batch_first=batch_first,
             num_predicted_features=1
