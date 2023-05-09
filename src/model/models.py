@@ -170,3 +170,4 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         return [optimizer], [lr_scheduler]
         #return optimizer
 
+

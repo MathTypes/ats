@@ -77,17 +77,21 @@ df = df.dropna()
 logging.info(f"df after dropna:{df.head()}")
 logging.info(f"df:{df.head()}")
 for name in ["OpenPct", "HighPct", "LowPct", "ClosePct"]:
-    df[name] = df[name].apply(lambda x : int(x))
+    df[name] = df[name].apply(lambda x : int(x)).astype(np.float32)
 logging.info(f"df after apply:{df.head()}")
-df["VolumePct"] = df["VolumePct"].apply(lambda x : int(log(1+max(x,-0.9))*10))
+df["VolumePct"] = df["VolumePct"].apply(lambda x : int(log(1+max(x,-0.9))*10)).astype(np.float32)
+logging.info(f'df:{df.info()}')
 logging.info(f"df before merge:{df.head()}")
 df["Time"]=df.index
 logging.info(f"orig_df:{orig_df.head()}")
 #df = df.merge(orig_df, how="left", left_index=True, right_index=True)
 logging.info(f"df_merge:{df.head()}")
 #df.index = df.Time
-logging.info(f"df:{df.head()}")
 df = df.compute()
+float64_cols = ["Open", "High", "Low", "Close", "Volume"]
+mapper = {col_name: np.float32 for col_name in float64_cols}
+df = df.astype(mapper)
+logging.info(f"df:{df.info()}")
 df = df.resample('30Min').agg(
     OpenPct=('OpenPct', lambda x: list(x)),
     HighPct=('HighPct', lambda x: list(x)),
@@ -107,9 +111,9 @@ logging.info(f"df:{df.head()}")
 if not os.path.exists(os.path.dirname(file_path)):
     os.makedirs(os.path.dirname(file_path))
 
-float64_cols = ["OpenPct", "HighPct", "LowPct", "ClosePct", "VolumePct"]
-mapper = {col_name: np.array(np.float32) for col_name in float64_cols}
-df = df.astype(mapper)
+#float64_cols = ["OpenPct", "HighPct", "LowPct", "ClosePct", "VolumePct", "Open", "High", "Low", "Close", "Volume"]
+#mapper = {col_name: np.float32 for col_name in float64_cols}
+#df = df.astype(mapper)
 logging.info(f'df:{df.info()}')
 df.to_parquet(file_path, engine='fastparquet')
 ray.shutdown()

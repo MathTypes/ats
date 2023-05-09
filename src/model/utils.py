@@ -1,3 +1,4 @@
+import logging
 import torch
 import numpy as np
 import torch.nn as nn
@@ -11,11 +12,16 @@ from data_module import AtsDataModule
 from log_prediction import LogPredictionsCallback
 import wandb
 from wandb.keras import WandbCallback
+from pathlib import Path
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 
 torch.manual_seed(0)
 np.random.seed(0)
 
-
+LOG_EVERY_N_STEPS = 50
+BASE_DIR = Path(__file__).parent
+LIGHTNING_DIR = BASE_DIR.joinpath("data/lightning")
+MODELS_DIR = LIGHTNING_DIR.joinpath("models")
 class Time2Vec(nn.Module):
     """General Time2Vec Embedding/Encoding Layer.
 
@@ -98,18 +104,26 @@ class Pipeline:
         #)
         #run = wandb.init(project="WandBAndKerasTuner")
         # ---------------------------------------------------------------------
-        callbacks = [
-            #EarlyStopping(patience=90, load_best=True),
-            #RichProgressBar(display_step=5, log_lr=True),
-            #LearningRateScheduler(scheduler=sch, on_train=False),
-            #TorchFitterWandbCallback(WandbCallback())
-        ]
+        logging.info(f"MODELS_DIR:{MODELS_DIR}")
+        checkpoint_callback = ModelCheckpoint(
+            dirpath=MODELS_DIR,
+            monitor="val_loss",
+            save_last=True,
+            verbose=True
+        )
+        es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
+        lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
-        log_predictions_callback = LogPredictionsCallback(wandb_logger, [self.data_module.X_test, self.data_module.y_test])
+        log_predictions_callback = LogPredictionsCallback(wandb_logger, [self.data_module.val_dataloader()])
         trainer = pl.Trainer(max_epochs=10, logger=wandb_logger,
-                             callbacks=[log_predictions_callback],
+                             callbacks=[checkpoint_callback, es, lr_monitor,
+                                        log_predictions_callback],
                              devices=-1, accelerator='mps',
-                             precision='16-mixed', # train in half precision
+                             #precision="bf16",
+                             default_root_dir=LIGHTNING_DIR,
+                             log_every_n_steps=LOG_EVERY_N_STEPS,
+                             precision='16-mixed',
+                             # train in half precision
                              deterministic=True, strategy='auto')
         self.history = trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set

@@ -168,17 +168,11 @@ def generate_stock_tokens():
     logging.info(f"data:{values[0:5,...]}")
     #logging.info(f"data:{values.shape}")
     #logging.info(f"data:{data.values[:30]}")
-    X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-        values,
-        validation_idx=val_idx,
-        test_idx=tst_idx,
-        n_past=20,
-        n_future=5
-    )
+    X_train = values[:val_idx]
+    X_val = values[val_idx:tst_idx]
+    X_test = values[tst_idx:]
     logging.info(f"X_train:{X_train.shape}")
-    logging.info(f"y_train:{y_train.shape}")
     logging.info(f"X_val:{X_val.shape}")
-    logging.info(f"y_val:{y_val.shape}")
     #X_train = X_train[:, 1:, :]
     #y_train = y_train[:, 1:, :]
     #X_val = X_val[:, 1:, :]
@@ -192,20 +186,10 @@ def generate_stock_tokens():
     logging.info(f"X_train:{X_train.dtype}, type:{type(X_train)}, {X_train.shape}")
     logging.info(f"X_train:{X_train.dtype}, type:{type(X_train)}")
     logging.info(f"X_train:{X_train[:30]}")
-    logging.info(f"y_train:{y_train[:30]}")
     logging.info(f"X_val:{X_val[:30]}")
-    logging.info(f"y_val:{y_val[:30]}")
     logging.info(f"X_test:{X_test[:30]}")
-    logging.info(f"y_test:{y_test[:30]}")
-    logging.info(f"X_train:{X_train.shape}")
-    logging.info(f"y_train:{y_train.shape}")
-    logging.info(f"X_val:{X_val.shape}")
-    logging.info(f"y_val:{y_val.shape}")
-    logging.info(f"X_test:{X_test.shape}")
-    logging.info(f"y_test:{y_test.shape}")
-    exit(0)
     
-    return X_train, y_train, X_val, y_val, X_test, y_test
+    return X_train, X_val, X_test
 
 def generate_stock_returns():
     data = pd.read_parquet("data/FUT/30min/ES", engine='fastparquet')
@@ -226,6 +210,8 @@ def generate_stock_returns():
 
     logging.info(f"data:{data.values.shape}")
     logging.info(f"data:{data.values[:30]}")
+    logging.info(f"data:{data.info}")
+    exit(0)
     X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
         data[["Time", "Open", "High", "Low", "Close", "Volume"]].values,
         validation_idx=val_idx,
