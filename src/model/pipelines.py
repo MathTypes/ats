@@ -8,7 +8,7 @@ from data_module import AtsDataModule
 torch.manual_seed(0)
 np.random.seed(0)
 
-target_col_name = "ClosePct"
+target_col_name = ["OpenPct", "HighPct", "LowPct", "ClosePct", "VolumePct"]
 
 ## Params
 dim_val = 512
