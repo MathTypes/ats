@@ -1,3 +1,0 @@
-# XArray
-
-::: janitor.xarray.functions

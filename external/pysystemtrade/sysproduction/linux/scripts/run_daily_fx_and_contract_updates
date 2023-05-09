@@ -1,3 +1,0 @@
-#!/bin/bash
-. ~/.profile
-. p sysproduction.run_daily_fx_and_contract_updates.run_daily_fx_and_contract_updates

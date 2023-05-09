@@ -1,3 +1,0 @@
-# Engineering
-
-::: janitor.engineering
