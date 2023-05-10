@@ -72,7 +72,8 @@ class AtsDataModule(pl.LightningDataModule):
             dec_seq_len=self.dec_seq_len,
             target_seq_len=self.output_sequence_length
             )
-        return DataLoader(train_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=8, shuffle=True)
+        return DataLoader(train_wrapper, batch_size=self.batch_size,
+                          pin_memory=True, num_workers=12, shuffle=True)
     
     def val_dataloader(self):
         self.val_indices = timeseries_utils.get_indices_entire_sequence(
@@ -86,7 +87,8 @@ class AtsDataModule(pl.LightningDataModule):
             dec_seq_len=self.dec_seq_len,
             target_seq_len=self.output_sequence_length
             )
-        return DataLoader(val_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=64)
+        return DataLoader(val_wrapper, batch_size=self.batch_size, pin_memory=True,
+                          num_workers=8)
     
     def test_dataloader(self):
         self.test_indices = timeseries_utils.get_indices_entire_sequence(
@@ -100,4 +102,5 @@ class AtsDataModule(pl.LightningDataModule):
             dec_seq_len=self.dec_seq_len,
             target_seq_len=self.output_sequence_length
             )
-        return DataLoader(test_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=32)
+        return DataLoader(test_wrapper, batch_size=self.batch_size, pin_memory=True,
+                          num_workers=8)
