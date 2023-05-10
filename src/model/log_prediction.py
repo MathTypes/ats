@@ -15,7 +15,7 @@ import timeseries_utils
 
 class LogPredictionsCallback(Callback):
     def __init__(self, wandb_logger, X_val, window_size, step_size, enc_seq_len,
-                 dec_seq_len, num_samples=2048):
+                 dec_seq_len, output_sequence_length, num_samples=2048):
         '''method used to define our model parameters'''
         super().__init__()
         self.wandb_logger = wandb_logger
@@ -23,14 +23,14 @@ class LogPredictionsCallback(Callback):
         self.criterion = torch.nn.L1Loss(reduction="none")
         self.val_indices = timeseries_utils.get_indices_entire_sequence(
             data=self.X_val.numpy(), 
-            window_size=self.window_size, 
-            step_size=self.step_size)
+            window_size=window_size, 
+            step_size=step_size)
         val_wrapper = timeseries_dataset.TransformerDataset(
             data=self.X_val,
             indices=self.val_indices,
             enc_seq_len=enc_seq_len,
             dec_seq_len=dec_seq_len,
-            target_seq_len=self.output_sequence_length
+            target_seq_len=output_sequence_length
             )
         self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
