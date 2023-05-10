@@ -51,6 +51,8 @@ class LogPredictionsCallback(Callback):
         #wandb.init()
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
+            logging.info(f"src:{src.shape}")
+            logging.info(f"tgt_y:{tgt_y.shape}")
             logging.info(f"tgt_y:{tgt_y}")
             if pl_module.batch_first == False:
                 shape_before = src.shape
