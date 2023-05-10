@@ -189,11 +189,11 @@ class TimeSeriesTFT(pl.LightningModule):
         #print("From model.forward(): tgt size = {}".format(tgt.size()))
 
         # Pass throguh the input layer right before the encoder
-        src = self.encoder_input_layer(src) # src shape: [batch_size, src length, dim_val] regardless of number of input features
+        src = self.encoder_input_layer.to('cuda')(src) # src shape: [batch_size, src length, dim_val] regardless of number of input features
         #print("From model.forward(): Size of src after input layer: {}".format(src.size()))
 
         # Pass through the positional encoding layer
-        src = self.positional_encoding_layer(src) # src shape: [batch_size, src length, dim_val] regardless of number of input features
+        src = self.positional_encoding_layer.to('cuda')(src) # src shape: [batch_size, src length, dim_val] regardless of number of input features
         #print("From model.forward(): Size of src after pos_enc layer: {}".format(src.size()))
 
         # Pass through all the stacked encoder layers in the encoder
