@@ -52,7 +52,7 @@ class LogPredictionsCallback(Callback):
         for i, batch in enumerate(self.val_loader):
             src, _, tgt_y = batch
             prediction = inference.run_encoder_decoder_inference(
-                model=pl_module, 
+                model=pl_module.to('cuda'), 
                 src=src, 
                 forecast_window=pl_module.forecast_window,
                 batch_size=src.shape[1]
