@@ -234,6 +234,7 @@ class TimeSeriesTFT(pl.LightningModule):
     
     def compute_loss(self, y_hat, y):
         y = y[:,:,4]
+        y_hat = torch.squeeze(y_hat[:,:,4])        
         logging.info(f"y_hat:{y_hat.shape}, y:{y.shape}")
         loss = self.criterion(y_hat, y)
         return loss
