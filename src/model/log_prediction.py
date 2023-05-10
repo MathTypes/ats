@@ -49,29 +49,37 @@ class LogPredictionsCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
+        src_vec = []
+        tgt_y = []
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
-            src = src.unsqueeze(0)
-            #tgt_y = src.unsqueeze(0)
-            logging.info(f"src:{src.shape}")
-            logging.info(f"tgt_y:{tgt_y.shape}")
-            #logging.info(f"tgt_y:{tgt_y}")
-            if pl_module.batch_first == False:
-                shape_before = src.shape
-                src = src.permute(1, 0, 2)
-                if tgt_y.dim() == 3:
-                    tgt_y = tgt_y.permute(1, 0, 2)
-                else:
-                    tgt_y = tgt_y.permute(1, 0)
-            src = src.to('cuda')
-            tgt_y = tgt_y.to('cuda')
+            src_vec.append(src)
+            tgt_y_vec.apend(tgt_y)
+            if len(src_vec) == 16:
+                src = np.stack(src_vec)
+                tgt_y = np.stack(tgy_y_vec)
+                logging.info(f"src:{src.shape}")
+                logging.info(f"tgt_y:{tgt_y.shape}")
+                if pl_module.batch_first == False:
+                    shape_before = src.shape
+                    src = src.permute(1, 0, 2)
+                    if tgt_y.dim() == 3:
+                        tgt_y = tgt_y.permute(1, 0, 2)
+                    else:
+                        tgt_y = tgt_y.permute(1, 0)
+                logging.info(f"after src:{src.shape}")
+                logging.info(f"after tgt_y:{tgt_y.shape}")
+                src = src.to('cuda')
+                tgt_y = tgt_y.to('cuda')
                 
-            prediction = inference.run_encoder_decoder_inference(
-                model=pl_module.to('cuda'), 
-                src=src, 
-                forecast_window=pl_module.forecast_window,
-                batch_size=src.shape[1]
-                ).to('cuda')
-            logging.info(f"prediction:{prediction.shape}")
-            metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
-            metrics = torch.sum(metrics)
+                prediction = inference.run_encoder_decoder_inference(
+                    model=pl_module.to('cuda'), 
+                    src=src, 
+                    forecast_window=pl_module.forecast_window,
+                    batch_size=src.shape[1]
+                    ).to('cuda')
+                logging.info(f"prediction:{prediction.shape}")
+                metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
+                metrics = torch.sum(metrics)
+                src_vec.clear()
+                tgt_y.clear()
