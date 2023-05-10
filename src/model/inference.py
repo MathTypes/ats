@@ -88,7 +88,7 @@ def run_encoder_decoder_inference(
             dim2=dim_b,
             ).to('cuda')
         # Make prediction
-        prediction = model.to('cuda')((src, tgt, src_mask, tgt_mask))
+        prediction = model.to('cuda')((src, tgt, src_mask, tgt_mask)).to('cuda')
 
         # If statement simply makes sure that the predicted value is 
         # extracted and reshaped correctly
