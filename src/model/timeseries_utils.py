@@ -191,7 +191,7 @@ def to_numeric_and_downcast_data(df: pd.DataFrame):
     """
     fcols = df.select_dtypes('float').columns
     icols = df.select_dtypes('integer').columns
-    df[fcols] = df[fcols].apply(pd.to_numeric, downcast='float32')
-    df[icols] = df[icols].apply(pd.to_numeric, downcast='int32')
+    df[fcols] = df[fcols].apply(pd.to_numeric, downcast='float')
+    df[icols] = df[icols].apply(pd.to_numeric, downcast='int')
 
     return df

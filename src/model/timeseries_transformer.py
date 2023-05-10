@@ -183,7 +183,7 @@ class TimeSeriesTFT(pl.LightningModule):
             tgt_mask: the mask for the tgt sequence to prevent the model from
                       using data points from the target sequence
         """
-        (src, tgt) = X
+        (src, tgt, src_mask, tgt_mask) = X
         #print("From model.forward(): Size of src as given to forward(): {}".format(src.size()))
         #print("From model.forward(): tgt size = {}".format(tgt.size()))
 
@@ -243,7 +243,7 @@ class TimeSeriesTFT(pl.LightningModule):
         #logging.info(f"train_batch[1]:{batch[1].shape}")
         #logging.info(f"train_batch[2]:{batch[2].shape}")
         src, trg, trg_y = batch
-        y_hat = self.forward((src, trg))
+        y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
         loss = self.compute_loss(y_hat, trg_y)
         self.log('train_loss', loss)
         return loss
@@ -252,27 +252,25 @@ class TimeSeriesTFT(pl.LightningModule):
         logging.info(f"eval_batch[0]:{batch[0].shape}")
         logging.info(f"eval_batch[1]:{batch[1].shape}")
         logging.info(f"eval_batch[2]:{batch[2].shape}")
-        src, trg, trg_y = batch
+        src, _, trg_y = batch
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 
                 forecast_window=self.forecast_window,
                 batch_size=src.shape[1]
                 )
-
-        loss = self.compute_loss(prediction, tgt_y)    
+        loss = self.compute_loss(prediction, trg_y)
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
-        src, trg, trg_y = batch
+        src, _, trg_y = batch
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 
                 forecast_window=self.forecast_window,
                 batch_size=src.shape[1]
                 )
-
-        loss = self.compute_loss(prediction, tgt_y)    
+        loss = self.compute_loss(prediction, trg_y)
         self.log('test_loss', loss)
 
     def configure_optimizers(self):
