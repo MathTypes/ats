@@ -264,6 +264,8 @@ class TimeSeriesTFT(pl.LightningModule):
 
             if trg_y.dim() == 3:
                 trg_y = trg_y[:,:,3]
+        trg = trg.unsqueeze(-1)
+        trg_y = trg_y.unsqueeze(-1)
         logging.info(f"trg_shape:{trg.shape}")
         logging.info(f"trg_y_shape:{trg_y.shape}")
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
