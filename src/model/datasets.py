@@ -138,7 +138,7 @@ def generate_stock_tokens():
     low = data.LowPct.to_numpy()
     close = data.ClosePct.to_numpy()
     volume = data.VolumePct.to_numpy()
-    time = data.Time.to_numpy()
+    time = data.Time.to_numpy().astype(np.float32)
     #rows = open.shape[0]
     #open = [np.array(sublist) for sublist in open]
     #open = np.array(open.tolist())
