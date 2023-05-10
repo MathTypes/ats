@@ -49,15 +49,15 @@ class TimeSeriesTFT(pl.LightningModule):
         dec_seq_len: int,
         batch_first: bool,
         out_seq_len: int=58,
-        dim_val: int=64,  
+        dim_val: int=16,  
         n_encoder_layers: int=4,
         n_decoder_layers: int=4,
         n_heads: int=8,
         dropout_encoder: float=0.2, 
         dropout_decoder: float=0.2,
         dropout_pos_enc: float=0.1,
-        dim_feedforward_encoder: int=16,
-        dim_feedforward_decoder: int=16,
+        dim_feedforward_encoder: int=64,
+        dim_feedforward_decoder: int=64,
         num_predicted_features: int=1,
         forecast_window = 48
         ): 
