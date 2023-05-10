@@ -55,14 +55,15 @@ class LogPredictionsCallback(Callback):
             src, _, tgt_y = batch
             src_vec.append(src)
             tgt_y_vec.append(tgt_y)
-            logging.info(f"logging prediction:{i}, {i%256}, len:{len(src_vec)}")
+            if i > 1024:
+                break
             if i % 256 == 0:
-                logging.info(f"logging prediction:{i}")
+                logging.info(f"logging prediction:{i}, {i%256}, len:{len(src_vec)}")
             if len(src_vec) == 16:
                 src = torch.from_numpy(np.stack(src_vec))
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
-                logging.info(f"src:{src.shape}")
-                logging.info(f"tgt_y:{tgt_y.shape}")
+                #logging.info(f"src:{src.shape}")
+                #logging.info(f"tgt_y:{tgt_y.shape}")
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
