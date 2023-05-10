@@ -2,8 +2,6 @@ import pytorch_lightning as pl
 import torch
 import logging
 from torch.utils.data import DataLoader
-from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10
 from torchvision.transforms import transforms, AutoAugment, AutoAugmentPolicy
 import logging
 from datasets import (
