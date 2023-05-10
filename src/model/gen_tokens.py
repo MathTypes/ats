@@ -104,7 +104,6 @@ df = df.resample('5Min').agg(
     Low=('Low','min'),
     Close=('Close','last'),
     Volume=('Volume','sum'))
-df = df[df.OpenCnt==6]
 df = df[df.Volume>0]
 logging.info(f"df:{df.head()}")
 #df = df[len(df.Volume)>0]
