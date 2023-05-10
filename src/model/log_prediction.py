@@ -80,9 +80,9 @@ class LogPredictionsCallback(Callback):
                     forecast_window=pl_module.forecast_window,
                     batch_size=src.shape[1]
                     ).to('cuda')
-                logging.info(f"src:{src.shape}")
-                logging.info(f"tgt_y:{tgt_y.shape}")
-                logging.info(f"prediction:{prediction.shape}")
+                #logging.info(f"src:{src.shape}")
+                #logging.info(f"tgt_y:{tgt_y.shape}")
+                #logging.info(f"prediction:{prediction.shape}")
                 fig_cnt = src.shape[1] // 4
                 for i in range(0, fig_cnt):
                     fig = plt.figure()
@@ -91,9 +91,9 @@ class LogPredictionsCallback(Callback):
                         x = src[:,i*4+j,:].cpu()
                         pred = prediction[:,i*4+j,:].cpu()
                         y = tgt_y[:,i*4+j,:].cpu()
-                        logging.info(f"x:{x.shape}")
-                        logging.info(f"pred:{pred.shape}")
-                        logging.info(f"y:{y.shape}")
+                        #logging.info(f"x:{x.shape}")
+                        #logging.info(f"pred:{pred.shape}")
+                        #logging.info(f"y:{y.shape}")
                         #times = self.val_times[i*4+j].cpu()
                         #open = x[0]
                         #high = x[1]
@@ -103,7 +103,7 @@ class LogPredictionsCallback(Callback):
                         #pred_close = pred
                         y_close = y[:,3].squeeze(-1)
                         #y_close = y
-                        logging.info(f"close:{close}")
+                        #logging.info(f"close:{close}")
                         ax1 = fig.add_subplot(1, 4, j+1)
                         ax1.plot(np.arange(close.shape[0]), close, label='Training data')
                         ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
