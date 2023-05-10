@@ -259,6 +259,12 @@ class TimeSeriesTFT(pl.LightningModule):
                 trg_y = trg_y[:,:,3]
             else:
                 trg_y = trg_y.permute(1, 0)
+        else:
+            trg = trg[:,:,3]
+
+            if trg_y.dim() == 3:
+                trg_y = trg_y[:,:,3]
+
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
         loss = self.compute_loss(y_hat, trg_y)
         self.log('train_loss', loss)
