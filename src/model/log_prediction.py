@@ -57,9 +57,11 @@ class LogPredictionsCallback(Callback):
             )
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
-            time = src[:,:,5]
-            src = src[:,:,:5]
-            tgt_y = tgt_y[:,:,:5]
+            logging.info(f"src:{src.shape}")
+            logging.info(f"tgt_y:{tgt_y.shape}")
+            time = src[:,5]
+            src = src[:,:5]
+            tgt_y = tgt_y[:,:5]
             src_vec.append(src)
             time_vec.append(time)
             tgt_y_vec.append(tgt_y)
