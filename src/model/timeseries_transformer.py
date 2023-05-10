@@ -87,8 +87,8 @@ class TimeSeriesTFT(pl.LightningModule):
 
         super().__init__() 
 
-        #self.criterion = torch.nn.L1Loss()
-        self.criterion = torch.nn.MSELoss()
+        self.criterion = torch.nn.L1Loss()
+        #self.criterion = torch.nn.MSELoss()
         self.dec_seq_len = dec_seq_len
         self.forecast_window = forecast_window
         self.batch_first = batch_first
@@ -109,7 +109,7 @@ class TimeSeriesTFT(pl.LightningModule):
         self.linear_mapping = nn.Linear(
             in_features=dim_val, 
             out_features=num_predicted_features
-            )
+            ).to('cuda')
 
         # Create positional encoder
         self.positional_encoding_layer = pe.PositionalEncoder(
