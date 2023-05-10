@@ -56,8 +56,8 @@ class TimeSeriesTFT(pl.LightningModule):
         dropout_encoder: float=0.2, 
         dropout_decoder: float=0.2,
         dropout_pos_enc: float=0.1,
-        dim_feedforward_encoder: int=64,
-        dim_feedforward_decoder: int=64,
+        dim_feedforward_encoder: int=16,
+        dim_feedforward_decoder: int=16,
         num_predicted_features: int=1,
         forecast_window = 48
         ): 
