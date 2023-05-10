@@ -88,7 +88,7 @@ def run_encoder_decoder_inference(
             dim2=dim_b,
             )
         # Make prediction
-        prediction = model((src, tgt, src_mask, tgt_mask)) 
+        prediction = model((src, tgt, src_mask, tgt_mask))
 
         # If statement simply makes sure that the predicted value is 
         # extracted and reshaped correctly
@@ -127,4 +127,4 @@ def run_encoder_decoder_inference(
     # Make final prediction
     final_prediction = model(src, tgt, src_mask, tgt_mask)
 
-    return final_prediction
+    return final_prediction.to('cuda')
