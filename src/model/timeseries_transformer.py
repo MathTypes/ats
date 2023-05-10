@@ -235,7 +235,6 @@ class TimeSeriesTFT(pl.LightningModule):
         return decoder_output.to('cuda')
     
     def compute_loss(self, y_hat, y):
-        logging.info(f"before y_hat:{y_hat.shape}, y:{y.shape}")
         if y.dim()==3 and y.shape[2]==5:
             y = y[:,:,4]
         if y_hat.dim()==3 and y_hat.shape[2]==5:
@@ -244,44 +243,32 @@ class TimeSeriesTFT(pl.LightningModule):
             y = torch.squeeze(y)
         if y_hat.dim()==3:
             y_hat = torch.squeeze(y_hat)
-        logging.info(f"y_hat:{y_hat.shape}, y:{y.shape}")
         loss = self.criterion.to('cuda')(y_hat.to('cuda'), y.to('cuda'))
         return loss
 
     def training_step(self, batch, batch_idx):
-        logging.info(f"train_batch[0]:{batch[0].shape}")
-        logging.info(f"train_batch[1]:{batch[1].shape}")
-        logging.info(f"train_batch[2]:{batch[2].shape}")
         src, trg, trg_y = batch
         if self.batch_first == False:
             shape_before = src.shape
             src = src.permute(1, 0, 2)
-            print("src shape changed from {} to {}".format(shape_before, src.shape))
 
             shape_before = trg.shape
             trg = trg.permute(1, 0, 2)
-            print("trg shape changed from {} to {}".format(shape_before, trg.shape))
             shape_before = trg_y.shape
             trg_y = trg_y.permute(1, 0, 2)
-            print("trg_y shape changed from {} to {}".format(shape_before, trg_y.shape))
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
         loss = self.compute_loss(y_hat, trg_y)
         self.log('train_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        logging.info(f"eval_batch[0]:{batch[0].shape}")
-        logging.info(f"eval_batch[1]:{batch[1].shape}")
-        logging.info(f"eval_batch[2]:{batch[2].shape}")
         src, _, trg_y = batch
         if self.batch_first == False:
             shape_before = src.shape
             src = src.permute(1, 0, 2)
-            print("src shape changed from {} to {}".format(shape_before, src.shape))
 
             shape_before = trg_y.shape
             trg_y = trg_y.permute(1, 0, 2)
-            print("trg_y shape changed from {} to {}".format(shape_before, trg_y.shape))
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 
@@ -296,11 +283,9 @@ class TimeSeriesTFT(pl.LightningModule):
         if self.batch_first == False:
             shape_before = src.shape
             src = src.permute(1, 0, 2)
-            print("src shape changed from {} to {}".format(shape_before, src.shape))
 
             shape_before = trg_y.shape
             trg_y = trg_y.permute(1, 0, 2)
-            print("trg_y shape changed from {} to {}".format(shape_before, trg_y.shape))
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 
