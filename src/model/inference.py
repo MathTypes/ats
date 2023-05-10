@@ -106,7 +106,7 @@ def run_encoder_decoder_inference(
 
         # Detach the predicted element from the graph and concatenate with 
         # tgt in dimension 1 or 0
-        tgt = torch.cat((tgt, last_predicted_value.detach()), target_seq_dim).to('cuda')
+        tgt = torch.cat.to('cuda')((tgt, last_predicted_value.detach()), target_seq_dim).to('cuda')
     
     # Create masks
     dim_a = tgt.shape[1] if batch_first == True else tgt.shape[0]
