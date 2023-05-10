@@ -87,7 +87,7 @@ class TimeSeriesTFT(pl.LightningModule):
 
         super().__init__() 
 
-        self.criterion = torch.nn.L1Loss()
+        self.criterion = torch.nn.L1Loss().to("cuda")
         #self.criterion = torch.nn.MSELoss()
         self.dec_seq_len = dec_seq_len
         self.forecast_window = forecast_window
