@@ -11,14 +11,28 @@ plt.style.use('seaborn')
 import PIL
 import inference
 PIL.Image.MAX_IMAGE_PIXELS = None
+import timeseries_utils
 
 class LogPredictionsCallback(Callback):
-    def __init__(self, wandb_logger, val_dataloader, num_samples=2048):
+    def __init__(self, wandb_logger, X_val, window_size, step_size, enc_seq_len,
+                 dec_seq_len, num_samples=2048):
         '''method used to define our model parameters'''
         super().__init__()
         self.wandb_logger = wandb_logger
-        self.val_dataloader = val_dataloader
+        self.X_val = X_val
         self.criterion = torch.nn.L1Loss(reduction="none")
+        self.val_indices = timeseries_utils.get_indices_entire_sequence(
+            data=self.X_val.numpy(), 
+            window_size=self.window_size, 
+            step_size=self.step_size)
+        val_wrapper = timeseries_dataset.TransformerDataset(
+            data=self.X_val,
+            indices=self.val_indices,
+            enc_seq_len=enc_seq_len,
+            dec_seq_len=dec_seq_len,
+            target_seq_len=self.output_sequence_length
+            )
+        self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
     def topk_by_sort(input, k, axis=None, ascending=True):
         if not ascending:

@@ -114,7 +114,12 @@ class Pipeline:
         es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
-        log_predictions_callback = LogPredictionsCallback(wandb_logger, [self.data_module.val_dataloader()])
+        log_predictions_callback = LogPredictionsCallback(wandb_logger,
+                                                          self.data_module.X_val,
+                                                          self.data_module.window_size,
+                                                          self.data_module.step_size,
+                                                          self.data_module.enc_seq_len,
+                                                          self.data_module.dec_seq_len)
         trainer = pl.Trainer(max_epochs=10, logger=wandb_logger,
                              callbacks=[checkpoint_callback, es, lr_monitor,
                                         log_predictions_callback],
