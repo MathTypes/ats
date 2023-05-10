@@ -249,12 +249,12 @@ class TimeSeriesTFT(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         src, trg, trg_y = batch
         if self.batch_first == False:
-            shape_before = src.shape
             src = src.permute(1, 0, 2)
 
-            shape_before = trg.shape
             trg = trg.permute(1, 0, 2)
-            shape_before = trg_y.shape
+            trg = trg[:,:,3]
+
+            trg_y = trg_y[:,:,3]
             trg_y = trg_y.permute(1, 0, 2)
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
         loss = self.compute_loss(y_hat, trg_y)
