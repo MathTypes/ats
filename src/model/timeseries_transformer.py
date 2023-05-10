@@ -288,7 +288,7 @@ class TimeSeriesTFT(pl.LightningModule):
             shape_before = trg_y.shape
             trg_y = trg_y.permute(1, 0, 2)
         logging.info(f"src:{src.shape}")
-        logging.info(f"tgt:{tgt.shape}")
+        logging.info(f"trg_y:{trg_y.shape}")
         src = src[:,:,:5]
         trg_y = trg_y[:,:,:5]
         logging.info(f"new_src:{src.shape}")

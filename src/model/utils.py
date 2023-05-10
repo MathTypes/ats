@@ -18,7 +18,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Learning
 torch.manual_seed(0)
 np.random.seed(0)
 
-LOG_EVERY_N_STEPS = 50
+LOG_EVERY_N_STEPS = 100
 BASE_DIR = Path(__file__).parent
 LIGHTNING_DIR = BASE_DIR.joinpath("data/lightning")
 MODELS_DIR = LIGHTNING_DIR.joinpath("models")
