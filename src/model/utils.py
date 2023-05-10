@@ -122,7 +122,7 @@ class Pipeline:
                                                           self.data_module.dec_seq_len,
                                                           self.data_module.output_sequence_length)
         trainer = pl.Trainer(max_epochs=5, logger=wandb_logger,
-                             callbacks=[checkpoint_callback, es, lr_monitor],
+                             callbacks=[checkpoint_callback, es, lr_monitor, log_predictions_callback],
                              devices=-1, accelerator='gpu',
                              #precision="bf16",
                              default_root_dir=LIGHTNING_DIR,

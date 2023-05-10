@@ -28,14 +28,14 @@ class LogPredictionsCallback(Callback):
             data=self.X_val.numpy(), 
             window_size=window_size, 
             step_size=step_size)
-        val_wrapper = timeseries_dataset.TransformerDataset(
+        self.val_wrapper = timeseries_dataset.TransformerDataset(
             data=self.X_val,
             indices=self.val_indices,
             enc_seq_len=enc_seq_len,
             dec_seq_len=dec_seq_len,
             target_seq_len=output_sequence_length
             )
-        self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
+        #self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
     def topk_by_sort(input, k, axis=None, ascending=True):
         if not ascending:
@@ -49,8 +49,9 @@ class LogPredictionsCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
-        for i, batch in enumerate(self.val_loader):
+        for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
+            logging.info(f"tgt_y:{tgt_y}")
             if pl_module.batch_first == False:
                 shape_before = src.shape
                 src = src.permute(1, 0, 2)
