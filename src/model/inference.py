@@ -115,13 +115,11 @@ def run_encoder_decoder_inference(
     tgt_mask = timeseries_utils.generate_square_subsequent_mask(
         dim1=dim_a,
         dim2=dim_a,
-        device=device
         ).to('cuda')
 
     src_mask = timeseries_utils.generate_square_subsequent_mask(
         dim1=dim_a,
         dim2=dim_b,
-        device=device
         ).to('cuda')
 
     # Make final prediction
