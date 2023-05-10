@@ -155,7 +155,7 @@ def generate_stock_tokens():
     data["Time"] = data.index
     data["Time"] = data["Time"].apply(lambda x:float(x.timestamp()))
     val_idx = int(len(data) * 0.7)
-    tst_idx = int(len(data) * 0.8)
+    tst_idx = max(int(len(data) * 0.8), 1024)
 
     #.astype(np.float32)
     #logging.info(f"before data:{values[0:5,...]}")
