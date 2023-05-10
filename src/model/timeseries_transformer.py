@@ -6,6 +6,7 @@ import positional_encoder as pe
 import torch.nn.functional as F
 import timeseries_utils
 import logging
+import inference
 
 class TimeSeriesTFT(pl.LightningModule):
 
@@ -238,9 +239,9 @@ class TimeSeriesTFT(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
-        logging.info(f"train_batch[0]:{batch[0].shape}")
-        logging.info(f"train_batch[1]:{batch[1].shape}")
-        logging.info(f"train_batch[2]:{batch[2].shape}")
+        #logging.info(f"train_batch[0]:{batch[0].shape}")
+        #logging.info(f"train_batch[1]:{batch[1].shape}")
+        #logging.info(f"train_batch[2]:{batch[2].shape}")
         src, trg, trg_y = batch
         y_hat = self.forward((src, trg))
         loss = self.compute_loss(y_hat, trg_y)
@@ -252,14 +253,26 @@ class TimeSeriesTFT(pl.LightningModule):
         logging.info(f"eval_batch[1]:{batch[1].shape}")
         logging.info(f"eval_batch[2]:{batch[2].shape}")
         src, trg, trg_y = batch
-        y_hat = self.forward((src, trg))
-        loss = self.compute_loss(y_hat, trg_y)
+        prediction = inference.run_encoder_decoder_inference(
+                model=self, 
+                src=src, 
+                forecast_window=self.forecast_window,
+                batch_size=src.shape[1]
+                )
+
+        loss = self.compute_loss(prediction, tgt_y)    
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
         src, trg, trg_y = batch
-        y_hat = self.forward((src, trg))
-        loss = self.compute_loss(y_hat, trg_y)
+        prediction = inference.run_encoder_decoder_inference(
+                model=self, 
+                src=src, 
+                forecast_window=self.forecast_window,
+                batch_size=src.shape[1]
+                )
+
+        loss = self.compute_loss(prediction, tgt_y)    
         self.log('test_loss', loss)
 
     def configure_optimizers(self):
