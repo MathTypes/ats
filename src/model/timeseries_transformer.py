@@ -245,7 +245,7 @@ class TimeSeriesTFT(pl.LightningModule):
         if y_hat.dim()==3:
             y_hat = torch.squeeze(y_hat)
         logging.info(f"y_hat:{y_hat.shape}, y:{y.shape}")
-        loss = self.criterion(y_hat, y)
+        loss = self.criterion.to('cuda')(y_hat.to('cuda'), y.to('cuda'))
         return loss
 
     def training_step(self, batch, batch_idx):
