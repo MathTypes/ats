@@ -123,6 +123,6 @@ def run_encoder_decoder_inference(
         ).to('cuda')
 
     # Make final prediction
-    final_prediction = model.to('cuda')(src, tgt, src_mask, tgt_mask)
+    final_prediction = model.to('cuda')((src, tgt, src_mask, tgt_mask))
 
     return final_prediction.to('cuda')
