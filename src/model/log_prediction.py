@@ -12,6 +12,7 @@ import PIL
 import inference
 PIL.Image.MAX_IMAGE_PIXELS = None
 import timeseries_utils
+import timeseries_dataset
 
 class LogPredictionsCallback(Callback):
     def __init__(self, wandb_logger, X_val, window_size, step_size, enc_seq_len,
