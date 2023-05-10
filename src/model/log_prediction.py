@@ -74,7 +74,6 @@ class LogPredictionsCallback(Callback):
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
                 times = torch.from_numpy(np.stack(time_vec)).squeeze(-1)
                 logging.info(f"time:{times.shape}")
-                logging.info(f"time:{times.head}")
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
