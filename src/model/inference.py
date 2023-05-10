@@ -11,7 +11,6 @@ def run_encoder_decoder_inference(
     src: torch.Tensor, 
     forecast_window: int,
     batch_size: int,
-    device,
     batch_first: bool=False
     ) -> torch.Tensor:
 
@@ -86,13 +85,11 @@ def run_encoder_decoder_inference(
         tgt_mask = utils.generate_square_subsequent_mask(
             dim1=dim_a,
             dim2=dim_a,
-            device=device
             )
 
         src_mask = utils.generate_square_subsequent_mask(
             dim1=dim_a,
             dim2=dim_b,
-            device=device
             )
 
         # Make prediction
