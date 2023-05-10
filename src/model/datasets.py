@@ -150,14 +150,14 @@ def generate_stock_tokens():
     #logging.info(f"volume:{volume[0:10]},")
     logging.info(f"before open:{open.shape}, type:{type(open)}, dtype:{open.dtype}")
     logging.info(f"before volume:{volume.shape}, type:{type(volume)}, dtype:{volume.dtype}")
+    values = np.stack((open, high, low, close, volume), axis=-1)
+    logging.info(f"before values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
     data["Time"] = data.index
-    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
+    data["Time"] = data["Time"].apply(lambda x:x.timestamp())
     val_idx = int(len(data) * 0.7)
     tst_idx = int(len(data) * 0.8)
 
     #.astype(np.float32)
-    values = np.stack((open, high, low, close, volume), axis=-1)
-    logging.info(f"before values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
     #logging.info(f"before data:{values[0:5,...]}")
     #values = np.array(list(values[:,:]), dtype=np.float32)
     #values = rfn.structured_to_unstructured(values).astype(np.float32)
