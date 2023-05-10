@@ -1,7 +1,7 @@
 """
 Code for running inference with transformer
 """
-
+import logging
 import torch.nn as nn 
 import torch
 import timeseries_utils
