@@ -50,7 +50,7 @@ class LogPredictionsCallback(Callback):
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
         src_vec = []
-        tgt_y = []
+        tgt_y_vec = []
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
             src_vec.append(src)
