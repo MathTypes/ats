@@ -31,7 +31,9 @@ class TFTPipeline(Pipeline):
         self.dataset = dataset
 
     def create_model(self):
-        self.data_module = AtsDataModule("stock_returns", output_sequence_length=forecast_window)
+        self.data_module = AtsDataModule("stock_returns",
+                                         output_sequence_length=forecast_window,
+                                         batch_size=100)
         X_train = self.data_module.X_train
         logging.info(f"X_train:{X_train.shape}")
         self.model = TimeSeriesTFT(
