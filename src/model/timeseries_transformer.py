@@ -227,10 +227,10 @@ class TimeSeriesTFT(pl.LightningModule):
         #print("From model.forward(): decoder_output shape after decoder: {}".format(decoder_output.shape))
 
         # Pass through linear mapping
-        decoder_output = self.linear_mapping.to('cuda')(decoder_output) # shape [batch_size, target seq len]
+        decoder_output = self.linear_mapping(decoder_output) # shape [batch_size, target seq len]
         #print("From model.forward(): decoder_output size after linear_mapping = {}".format(decoder_output.size()))
 
-        return decoder_output
+        return decoder_output.to('cuda')
     
     def compute_loss(self, y_hat, y):
         logging.info(f"before y_hat:{y_hat.shape}, y:{y.shape}")
