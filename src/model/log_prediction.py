@@ -77,7 +77,7 @@ class LogPredictionsCallback(Callback):
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
-                    time = time.permute(1, 0)
+                    times = times.permute(1, 0)
                     if tgt_y.dim() == 3:
                         tgt_y = tgt_y.permute(1, 0, 2)
                     else:
@@ -95,7 +95,8 @@ class LogPredictionsCallback(Callback):
                     ).to('cuda')
                 #logging.info(f"src:{src.shape}")
                 #logging.info(f"tgt_y:{tgt_y.shape}")
-                #logging.info(f"prediction:{prediction.shape}")
+                logging.info(f"times:{times.shape}")
+                logging.info(f"times:{times}")
                 fig_cnt = src.shape[1] // 4
                 for i in range(0, fig_cnt):
                     fig = plt.figure()
