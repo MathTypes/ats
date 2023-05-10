@@ -112,13 +112,13 @@ def run_encoder_decoder_inference(
     dim_a = tgt.shape[1] if batch_first == True else tgt.shape[0]
     dim_b = src.shape[1] if batch_first == True else src.shape[0]
 
-    tgt_mask = utils.generate_square_subsequent_mask(
+    tgt_mask = timeseries_utils.generate_square_subsequent_mask(
         dim1=dim_a,
         dim2=dim_a,
         device=device
         ).to('cuda')
 
-    src_mask = utils.generate_square_subsequent_mask(
+    src_mask = timeseries_utils.generate_square_subsequent_mask(
         dim1=dim_a,
         dim2=dim_b,
         device=device
