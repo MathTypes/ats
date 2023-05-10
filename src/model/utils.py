@@ -116,11 +116,11 @@ class Pipeline:
         wandb_logger = WandbLogger(project='ATS', log_model='all')
         log_predictions_callback = LogPredictionsCallback(wandb_logger,
                                                           self.data_module.X_val,
-                                                          self.data_module.window_size,
-                                                          self.data_module.step_size,
-                                                          self.data_module.enc_seq_len,
-                                                          self.data_module.dec_seq_len,
-                                                          self.data_module.output_sequence_length)
+                                                          window_size=self.data_module.window_size,
+                                                          step_size=self.data_module.step_size,
+                                                          enc_seq_len=self.data_module.enc_seq_len,
+                                                          dec_seq_len=self.data_module.dec_seq_len,
+                                                          output_sequence_length=self.data_module.output_sequence_length)
         trainer = pl.Trainer(max_epochs=5, logger=wandb_logger,
                              callbacks=[checkpoint_callback, es, lr_monitor, log_predictions_callback],
                              devices=-1, accelerator='gpu',

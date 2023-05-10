@@ -19,7 +19,7 @@ class AtsDataModule(pl.LightningDataModule):
                  enc_seq_len = 153,
                  output_sequence_length = 24,
                  step_size: int = 1,
-                 batch_size = 20):
+                 batch_size = 128):
         super().__init__()
         self.batch_size = batch_size
         self.dataset = dataset

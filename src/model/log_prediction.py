@@ -55,7 +55,7 @@ class LogPredictionsCallback(Callback):
             #tgt_y = src.unsqueeze(0)
             logging.info(f"src:{src.shape}")
             logging.info(f"tgt_y:{tgt_y.shape}")
-            logging.info(f"tgt_y:{tgt_y}")
+            #logging.info(f"tgt_y:{tgt_y}")
             if pl_module.batch_first == False:
                 shape_before = src.shape
                 src = src.permute(1, 0, 2)
