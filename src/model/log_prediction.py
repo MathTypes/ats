@@ -56,10 +56,12 @@ class LogPredictionsCallback(Callback):
             src_vec.append(src)
             tgt_y_vec.append(tgt_y)
             if len(src_vec) == 16:
+                if i % 256 == 0:
+                    logging.info(f"logging prediction:{i}")
                 src = torch.from_numpy(np.stack(src_vec))
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
-                logging.info(f"src:{src.shape}")
-                logging.info(f"tgt_y:{tgt_y.shape}")
+                #logging.info(f"src:{src.shape}")
+                #logging.info(f"tgt_y:{tgt_y.shape}")
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
@@ -67,8 +69,8 @@ class LogPredictionsCallback(Callback):
                         tgt_y = tgt_y.permute(1, 0, 2)
                     else:
                         tgt_y = tgt_y.permute(1, 0)
-                logging.info(f"after src:{src.shape}")
-                logging.info(f"after tgt_y:{tgt_y.shape}")
+                #logging.info(f"after src:{src.shape}")
+                #logging.info(f"after tgt_y:{tgt_y.shape}")
                 src = src.to('cuda')
                 tgt_y = tgt_y.to('cuda')
                 
@@ -78,7 +80,7 @@ class LogPredictionsCallback(Callback):
                     forecast_window=pl_module.forecast_window,
                     batch_size=src.shape[1]
                     ).to('cuda')
-                logging.info(f"prediction:{prediction.shape}")
+                #logging.info(f"prediction:{prediction.shape}")
                 metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
                 metrics = torch.sum(metrics)
                 src_vec.clear()
