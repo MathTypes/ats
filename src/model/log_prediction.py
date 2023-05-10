@@ -49,8 +49,18 @@ class LogPredictionsCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
+        logging.info(f"forecast_window:{pl_module.forecast_window}")
         for i, batch in enumerate(self.val_loader):
             src, _, tgt_y = batch
+            if pl_module.batch_first == False:
+                shape_before = src.shape
+                src = src.permute(1, 0, 2)
+                print("src shape changed from {} to {}".format(shape_before, src.shape))
+
+                shape_before = tgt_y.shape
+                tgt_y = tgt_y.permute(1, 0, 2)
+                print("tgt_y shape changed from {} to {}".format(shape_before, tgt_y.shape))
+                
             prediction = inference.run_encoder_decoder_inference(
                 model=pl_module.to('cuda'), 
                 src=src, 
@@ -61,6 +71,6 @@ class LogPredictionsCallback(Callback):
             logging.info(f"prediction_shape:{prediction.shape}")
             logging.info(f"tgt_y:{tgt_y}")
             logging.info(f"tgt_y:{tgt_y.shape}")
-            metrics = pl_module.to('cuda').criterion(tgt_y, prediction)
+            metrics = pl_module.compute_loss(tgt_y, prediction)
             metrics = torch.sum(metrics)
             logging.info(f"metrics:{metrics}")
