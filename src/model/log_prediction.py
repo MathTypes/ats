@@ -49,7 +49,7 @@ class LogPredictionsCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
-        random_ids = np.random.randint(len(data_loader), size=1000)        
+        random_ids = np.random.randint(len(self.val_loader), size=1000)        
         for batch in self.val_loader[random_ids]:
             src, _, tgt_y = batch
             if pl_module.batch_first == False:
