@@ -233,7 +233,7 @@ class TimeSeriesTFT(pl.LightningModule):
         return decoder_output
     
     def compute_loss(self, y_hat, y):
-        y = torch.squeeze(y[:,:,4])
+        y = y[:,:,4]
         logging.info(f"y_hat:{y_hat.shape}, y:{y.shape}")
         loss = self.criterion(y_hat, y)
         return loss
