@@ -52,6 +52,8 @@ class LogPredictionsCallback(Callback):
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
             src = src.unsqueeze(0)
+            src = src.to('cuda')
+            tgt_y = tgt_y.to('cuda')
             #tgt_y = src.unsqueeze(0)
             logging.info(f"src:{src.shape}")
             logging.info(f"tgt_y:{tgt_y.shape}")
