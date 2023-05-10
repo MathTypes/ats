@@ -184,7 +184,8 @@ class TimeSeriesTFT(pl.LightningModule):
             tgt_mask: the mask for the tgt sequence to prevent the model from
                       using data points from the target sequence
         """
-        (src, tgt, src_mask, tgt_mask) = X.to('cuda') 
+        (src, tgt, src_mask, tgt_mask) = X
+        src = src.to('cuda')
         #print("From model.forward(): Size of src as given to forward(): {}".format(src.size()))
         #print("From model.forward(): tgt size = {}".format(tgt.size()))
 
