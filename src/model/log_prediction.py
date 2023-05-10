@@ -56,9 +56,9 @@ class LogPredictionsCallback(Callback):
             src_vec.append(src)
             tgt_y_vec.append(tgt_y)
             logging.info(f"logging prediction:{i}")
+            if i % 256 == 0:
+                logging.info(f"logging prediction:{i}, len:{len(src_vec)}")
             if len(src_vec) == 16:
-                if i % 256 == 0:
-                    logging.info(f"logging prediction:{i}")
                 src = torch.from_numpy(np.stack(src_vec))
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
                 logging.info(f"src:{src.shape}")
