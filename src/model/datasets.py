@@ -153,7 +153,7 @@ def generate_stock_tokens():
     values = np.stack((open, high, low, close, volume), axis=-1)
     logging.info(f"before values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
     data["Time"] = data.index
-    data["Time"] = data["Time"].apply(lambda x:x.timestamp().astype(np.float32))
+    data["Time"] = data["Time"].apply(lambda x:float32(x.timestamp()))
     val_idx = int(len(data) * 0.7)
     tst_idx = int(len(data) * 0.8)
 
