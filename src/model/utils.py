@@ -119,7 +119,7 @@ class Pipeline:
                                                           self.data_module.window_size,
                                                           self.data_module.step_size,
                                                           self.data_module.enc_seq_len,
-                                                          self.data_module.dec_seq_len.
+                                                          self.data_module.dec_seq_len,
                                                           self.data_module.output_sequence_length)
         trainer = pl.Trainer(max_epochs=10, logger=wandb_logger,
                              callbacks=[checkpoint_callback, es, lr_monitor,
