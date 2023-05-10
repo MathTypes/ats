@@ -49,7 +49,7 @@ class LogPredictionsCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
-        for i, batch in enumerate(self.val_loader):
+        for i, batch in enumerate(self.val_loader.to('cuda')):
             src, _, tgt_y = batch
             prediction = inference.run_encoder_decoder_inference(
                 model=pl_module.to('cuda'), 
