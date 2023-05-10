@@ -90,7 +90,7 @@ class TimeSeriesTFT(pl.LightningModule):
         #self.criterion = torch.nn.L1Loss()
         self.criterion = torch.nn.MSELoss()
         self.dec_seq_len = dec_seq_len
-
+        self.forecast_window = forecast_window
         #print("input_size is: {}".format(input_size))
         #print("dim_val is: {}".format(dim_val))
 
