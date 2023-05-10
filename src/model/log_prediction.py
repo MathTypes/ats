@@ -66,4 +66,3 @@ class LogPredictionsCallback(Callback):
                 ).to('cuda')
             metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
             metrics = torch.sum(metrics)
-            logging.info(f"metrics:{metrics}")
