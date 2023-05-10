@@ -54,7 +54,7 @@ class LogPredictionsCallback(Callback):
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
             src_vec.append(src)
-            tgt_y_vec.apend(tgt_y)
+            tgt_y_vec.append(tgt_y)
             if len(src_vec) == 16:
                 src = np.stack(src_vec)
                 tgt_y = np.stack(tgy_y_vec)
