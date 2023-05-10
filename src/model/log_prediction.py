@@ -32,7 +32,8 @@ class LogPredictionsCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
-        for i, (src, _, tgt_y) in enumerate(self.val_dataloader):
+        for i, batch in enumerate(self.val_dataloader):
+            src, _, tgt_y = batch
             prediction = inference.run_encoder_decoder_inference(
                 model=pl_module, 
                 src=src, 
