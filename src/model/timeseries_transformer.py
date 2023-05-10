@@ -255,8 +255,8 @@ class TimeSeriesTFT(pl.LightningModule):
             trg = trg[:,:,3]
 
             if trg_y.dim() == 3:
-                trg_y = trg_y[:,:,3]
                 trg_y = trg_y.permute(1, 0, 2)
+                trg_y = trg_y[:,:,3]
             else:
                 trg_y = trg_y.permute(1, 0)
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
