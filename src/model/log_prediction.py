@@ -28,13 +28,6 @@ class LogPredictionsCallback(Callback):
             data=self.X_val.numpy(), 
             window_size=window_size, 
             step_size=step_size)
-        self.val_wrapper = timeseries_dataset.TransformerDataset(
-            data=self.X_val,
-            indices=self.val_indices,
-            enc_seq_len=enc_seq_len,
-            dec_seq_len=dec_seq_len,
-            target_seq_len=output_sequence_length
-            )
         #self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
     def topk_by_sort(input, k, axis=None, ascending=True):
@@ -51,20 +44,36 @@ class LogPredictionsCallback(Callback):
         #wandb.init()
         src_vec = []
         tgt_y_vec = []
+        time_vec = []
+        self.val_wrapper = timeseries_dataset.TransformerDataset(
+            data=self.X_val,
+            indices=self.val_indices,
+            enc_seq_len=enc_seq_len,
+            dec_seq_len=dec_seq_len,
+            target_seq_len=output_sequence_length
+            )
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
+            time = src[:,:,5]
+            src = src[:,:,:5]
+            tgt_y = tgt_y[:,:,:5]
             src_vec.append(src)
+            time_vec.append(time)
             tgt_y_vec.append(tgt_y)
-            if i > 1024:
+            if i > 256:
                 break
-            if i % 256 == 0:
-                logging.info(f"logging prediction:{i}, {i%256}, len:{len(src_vec)}")
+            if i % 16 == 0:
+                logging.info(f"logging prediction:{i}, {i%16}, len:{len(src_vec)}")
             if len(src_vec) == 16:
                 src = torch.from_numpy(np.stack(src_vec))
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
+                times = torch.from_numpy(np.stack(time_vec)).squeeze(-1)
+                logging.info(f"time:{times.shape}")
+                logging.info(f"time:{times.head}")
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
+                    time = time.permute(1, 0)
                     if tgt_y.dim() == 3:
                         tgt_y = tgt_y.permute(1, 0, 2)
                     else:
@@ -94,7 +103,7 @@ class LogPredictionsCallback(Callback):
                         #logging.info(f"x:{x.shape}")
                         #logging.info(f"pred:{pred.shape}")
                         #logging.info(f"y:{y.shape}")
-                        #times = self.val_times[i*4+j].cpu()
+                        time = times[-1,i*4+j].cpu()
                         #open = x[0]
                         #high = x[1]
                         #low = x[2]
@@ -108,8 +117,8 @@ class LogPredictionsCallback(Callback):
                         ax1.plot(np.arange(close.shape[0]), close, label='Training data')
                         ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
                         ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
-                        #now = datetime.fromtimestamp(times.numpy()[-1])
-                        #ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
+                        now = datetime.fromtimestamp(times.numpy()[-1])
+                        ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
                         ax1.set_ylabel('y')
                     self.wandb_logger.log_image(f"chart-{i}", images=[fig])
                         #logging.info(f"prediction:{prediction.shape}")

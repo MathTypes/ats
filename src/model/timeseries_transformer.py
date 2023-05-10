@@ -185,6 +185,12 @@ class TimeSeriesTFT(pl.LightningModule):
                       using data points from the target sequence
         """
         (src, tgt, src_mask, tgt_mask) = X
+        logging.info(f"src:{src.shape}")
+        logging.info(f"tgt:{tgt.shape}")
+        src = src[:,:,:5]
+        tgt = tgt[:,:,:5]
+        logging.info(f"new_src:{src.shape}")
+        logging.info(f"new_tgt:{tgt.shape}")
         #src = src.to('cuda')
         #tgt = tgt.to('cuda')
         #print("From model.forward(): Size of src as given to forward(): {}".format(src.size()))
@@ -236,9 +242,9 @@ class TimeSeriesTFT(pl.LightningModule):
     
     def compute_loss(self, y_hat, y):
         if y.dim()==3 and y.shape[2]==5:
-            y = y[:,:,4]
+            y = y[:,:,3]
         if y_hat.dim()==3 and y_hat.shape[2]==5:
-            y_hat = torch.squeeze(y_hat[:,:,4])
+            y_hat = torch.squeeze(y_hat[:,:,3])
         if y.dim()==3:
             y = torch.squeeze(y)
         if y_hat.dim()==3:
@@ -281,9 +287,15 @@ class TimeSeriesTFT(pl.LightningModule):
 
             shape_before = trg_y.shape
             trg_y = trg_y.permute(1, 0, 2)
+        logging.info(f"src:{src.shape}")
+        logging.info(f"tgt:{tgt.shape}")
+        src = src[:,:,:5]
+        trg_y = trg_y[:,:,:5]
+        logging.info(f"new_src:{src.shape}")
+        logging.info(f"new_trg_y:{trg_y.shape}")
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
-                src=src, 
+                src=src,
                 forecast_window=self.forecast_window,
                 batch_size=src.shape[1]
                 )
@@ -293,11 +305,14 @@ class TimeSeriesTFT(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         src, _, trg_y = batch
         if self.batch_first == False:
-            shape_before = src.shape
             src = src.permute(1, 0, 2)
-
-            shape_before = trg_y.shape
             trg_y = trg_y.permute(1, 0, 2)
+        logging.info(f"src:{src.shape}")
+        logging.info(f"tgt:{tgt.shape}")
+        src = src[:,:,:5]
+        trg_y = trg_y[:,:,:5]
+        logging.info(f"new_src:{src.shape}")
+        logging.info(f"new_trg_y:{trg_y.shape}")
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 

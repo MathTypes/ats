@@ -131,11 +131,14 @@ def generate_stock_tokens():
     logging.info(f"data.OpenPct:{data.OpenPct.shape}, type:{type(data.OpenPct)}, dtype:{data.OpenPct.dtype}")
     logging.info(f"data.OpenPct.:{data.OpenPct[0:10]}")
     #data = data.apply(pd.to_numeric,errors='ignore')
+    data["Time"] = data.index
+    data["Time"] = data["Time"].apply(lambda x:float(x.timestamp()))
     open = data.OpenPct.to_numpy()
     high = data.HighPct.to_numpy()
     low = data.LowPct.to_numpy()
     close = data.ClosePct.to_numpy()
     volume = data.VolumePct.to_numpy()
+    time = data.Time.to_numpy()
     #rows = open.shape[0]
     #open = [np.array(sublist) for sublist in open]
     #open = np.array(open.tolist())
@@ -150,10 +153,8 @@ def generate_stock_tokens():
     #logging.info(f"volume:{volume[0:10]},")
     logging.info(f"before open:{open.shape}, type:{type(open)}, dtype:{open.dtype}")
     logging.info(f"before volume:{volume.shape}, type:{type(volume)}, dtype:{volume.dtype}")
-    values = np.stack((open, high, low, close, volume), axis=-1)
+    values = np.stack((open, high, low, close, volume, time), axis=-1)
     logging.info(f"before values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
-    data["Time"] = data.index
-    data["Time"] = data["Time"].apply(lambda x:float(x.timestamp()))
     val_idx = int(len(data) * 0.7)
     tst_idx = max(int(len(data) * 0.8), 1024)
 
