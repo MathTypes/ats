@@ -17,7 +17,7 @@ n_decoder_layers = 4
 n_encoder_layers = 4
 enc_seq_len = 153 # length of input given to encoder
 batch_first = False
-
+forecast_window = 24
 # Define input variables 
 exogenous_vars = [] # should contain strings. Each string must correspond to a column name
 input_variables = target_col_name + exogenous_vars
@@ -31,12 +31,13 @@ class TFTPipeline(Pipeline):
         self.dataset = dataset
 
     def create_model(self):
-        self.data_module = AtsDataModule("stock_returns")
+        self.data_module = AtsDataModule("stock_returns", output_sequence_length=forecast_window)
         X_train = self.data_module.X_train
         logging.info(f"X_train:{X_train.shape}")
         self.model = TimeSeriesTFT(
             input_size=5,
             dec_seq_len=enc_seq_len,
             batch_first=batch_first,
+            forecast_window=forecast_window,
             num_predicted_features=1
         ).float().to("cuda:0")
