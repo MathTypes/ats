@@ -108,9 +108,9 @@ class TransformerDataset(Dataset):
         # The target sequence against which the model output will be compared to compute loss
         trg_y = sequence[-target_seq_len:]
         assert len(trg_y) == target_seq_len, "Length of trg_y does not match target sequence length"
-        logging.info(f"src:{src.shape}")
-        logging.info(f"trg:{trg.shape}")
-        logging.info(f"before trg:{trg_y.shape}")
+        #logging.info(f"src:{src.shape}")
+        #logging.info(f"trg:{trg.shape}")
+        #logging.info(f"before trg:{trg_y.shape}")
         trg_y = trg_y.squeeze(-1)
-        logging.info(f"after trg:{trg_y.shape}")
+        #logging.info(f"after trg:{trg_y.shape}")
         return src, trg,  trg_y# change size from [batch_size, target_seq_len, num_features] to [batch_size, target_seq_len] 
