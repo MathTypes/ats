@@ -237,7 +237,11 @@ class TimeSeriesTFT(pl.LightningModule):
         if y.dim()==3 and y.shape[2]==5:
             y = y[:,:,4]
         if y_hat.dim()==3 and y_hat.shape[2]==5:
-            y_hat = torch.squeeze(y_hat[:,:,4])        
+            y_hat = torch.squeeze(y_hat[:,:,4])
+        if y.dim()==3:
+            y = torch.squeeze(y)
+        if y_hat.dim()==3:
+            y_hat = torch.squeeze(y_hat)
         logging.info(f"y_hat:{y_hat.shape}, y:{y.shape}")
         loss = self.criterion(y_hat, y)
         return loss
