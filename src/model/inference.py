@@ -82,13 +82,13 @@ def run_encoder_decoder_inference(
         tgt_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=dim_a,
             dim2=dim_a,
-            )
+            ).to('cuda')
         src_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=dim_a,
             dim2=dim_b,
-            )
+            ).to('cuda')
         # Make prediction
-        prediction = model((src, tgt, src_mask, tgt_mask))
+        prediction = model.to('cuda')((src, tgt, src_mask, tgt_mask))
 
         # If statement simply makes sure that the predicted value is 
         # extracted and reshaped correctly
@@ -106,7 +106,7 @@ def run_encoder_decoder_inference(
 
         # Detach the predicted element from the graph and concatenate with 
         # tgt in dimension 1 or 0
-        tgt = torch.cat((tgt, last_predicted_value.detach()), target_seq_dim)
+        tgt = torch.cat((tgt, last_predicted_value.detach()), target_seq_dim).to('cuda')
     
     # Create masks
     dim_a = tgt.shape[1] if batch_first == True else tgt.shape[0]
@@ -116,13 +116,13 @@ def run_encoder_decoder_inference(
         dim1=dim_a,
         dim2=dim_a,
         device=device
-        )
+        ).to('cuda')
 
     src_mask = utils.generate_square_subsequent_mask(
         dim1=dim_a,
         dim2=dim_b,
         device=device
-        )
+        ).to('cuda')
 
     # Make final prediction
     final_prediction = model.to('cuda')(src, tgt, src_mask, tgt_mask)
