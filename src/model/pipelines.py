@@ -38,5 +38,5 @@ class TFTPipeline(Pipeline):
             input_size=5,
             dec_seq_len=enc_seq_len,
             batch_first=batch_first,
-            num_predicted_features=5
+            num_predicted_features=1
         ).float().to("cuda:0")

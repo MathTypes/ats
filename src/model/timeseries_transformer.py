@@ -207,7 +207,8 @@ class TimeSeriesTFT(pl.LightningModule):
         #print("From model.forward(): Size of src after encoder: {}".format(src.size()))
 
         # Pass decoder input through decoder input layer
-        decoder_output = self.decoder_input_layer(tgt) # src shape: [target sequence length, batch_size, dim_val] regardless of number of input features
+        # src shape: [target sequence length, batch_size, dim_val] regardless of number of input features
+        decoder_output = self.decoder_input_layer(tgt)
         #print("From model.forward(): Size of decoder_output after linear decoder layer: {}".format(decoder_output.size()))
 
         #if src_mask is not None:

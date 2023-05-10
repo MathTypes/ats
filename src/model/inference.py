@@ -64,7 +64,7 @@ def run_encoder_decoder_inference(
 
     # Take the last value of thetarget variable in all batches in src and make it tgt
     # as per the Influenza paper
-    tgt = src[-1, :, :] if batch_first == False else src[:, -1, :] # shape [1, batch_size, 1]
+    tgt = src[-1, :, 3] if batch_first == False else src[:, -1, 3] # shape [1, batch_size, 1]
 
     # Change shape from [batch_size] to [1, batch_size, 1]
     if batch_size == 1 and batch_first == False:
