@@ -39,7 +39,10 @@ class LogPredictionsCallback(Callback):
                 forecast_window=pl_module.forecast_window,
                 batch_size=src.shape[1]
                 )
-
+            logging.info(f"prediction:{prediction}")
+            logging.info(f"prediction_shape:{prediction.shape}")
+            logging.info(f"tgt_y:{tgt_y}")
+            logging.info(f"tgt_y:{tgt_y.shape}")
             metrics = pl_module.criterion(tgt_y, prediction)
             metrics = torch.sum(metrics)
             logging.info(f"metrics:{metrics}")
