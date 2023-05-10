@@ -151,7 +151,7 @@ def generate_stock_tokens():
     logging.info(f"before open:{open.shape}, type:{type(open)}, dtype:{open.dtype}")
     logging.info(f"before volume:{volume.shape}, type:{type(volume)}, dtype:{volume.dtype}")
     data["Time"] = data.index
-    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.int32)
+    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
     val_idx = int(len(data) * 0.7)
     tst_idx = int(len(data) * 0.8)
 
