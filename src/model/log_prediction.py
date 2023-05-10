@@ -60,8 +60,8 @@ class LogPredictionsCallback(Callback):
                     logging.info(f"logging prediction:{i}")
                 src = torch.from_numpy(np.stack(src_vec))
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
-                #logging.info(f"src:{src.shape}")
-                #logging.info(f"tgt_y:{tgt_y.shape}")
+                logging.info(f"src:{src.shape}")
+                logging.info(f"tgt_y:{tgt_y.shape}")
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
