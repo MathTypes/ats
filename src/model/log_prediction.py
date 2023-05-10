@@ -23,7 +23,7 @@ class LogPredictionsCallback(Callback):
         super().__init__()
         self.wandb_logger = wandb_logger
         self.X_val = X_val
-        self.criterion = torch.nn.L1Loss(reduction="none")
+        self.criterion = torch.nn.L1Loss(reduction="none").to('cuda')
         self.val_indices = timeseries_utils.get_indices_entire_sequence(
             data=self.X_val.numpy(), 
             window_size=window_size, 
@@ -49,7 +49,7 @@ class LogPredictionsCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
-        for i, batch in enumerate(self.val_loader.to('cuda')):
+        for i, batch in enumerate(self.val_loader):
             src, _, tgt_y = batch
             prediction = inference.run_encoder_decoder_inference(
                 model=pl_module.to('cuda'), 
