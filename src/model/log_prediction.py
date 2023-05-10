@@ -99,9 +99,9 @@ class LogPredictionsCallback(Callback):
                         #high = x[1]
                         #low = x[2]
                         close = x[:,3]
-                        pred_close = pred[:,3]
+                        pred_close = pred[:].squeeze(-1)
                         #pred_close = pred
-                        y_close = y[:,3]
+                        y_close = y[:,3].squeeze(-1)
                         #y_close = y
                         logging.info(f"close:{close}")
                         ax1 = fig.add_subplot(1, 4, j+1)
