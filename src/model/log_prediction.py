@@ -28,6 +28,9 @@ class LogPredictionsCallback(Callback):
             data=self.X_val.numpy(), 
             window_size=window_size, 
             step_size=step_size)
+        self.enc_seq_len = enc_seq_len
+        self.dec_seq_len = dec_seq_len
+        self.output_sequence_length = output_sequence_length
         #self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
     def topk_by_sort(input, k, axis=None, ascending=True):
@@ -48,9 +51,9 @@ class LogPredictionsCallback(Callback):
         self.val_wrapper = timeseries_dataset.TransformerDataset(
             data=self.X_val,
             indices=self.val_indices,
-            enc_seq_len=enc_seq_len,
-            dec_seq_len=dec_seq_len,
-            target_seq_len=output_sequence_length
+            enc_seq_len=self.enc_seq_len,
+            dec_seq_len=self.dec_seq_len,
+            target_seq_len=self.output_sequence_length
             )
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
