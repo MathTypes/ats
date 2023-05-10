@@ -64,7 +64,7 @@ def run_encoder_decoder_inference(
 
     # Take the last value of thetarget variable in all batches in src and make it tgt
     # as per the Influenza paper
-    tgt = src[-1, :, 0] if batch_first == False else src[:, -1, 0] # shape [1, batch_size, 1]
+    tgt = src[-1, :, :] if batch_first == False else src[:, -1, :] # shape [1, batch_size, 1]
 
     # Change shape from [batch_size] to [1, batch_size, 1]
     if batch_size == 1 and batch_first == False:
@@ -121,7 +121,8 @@ def run_encoder_decoder_inference(
         dim1=dim_a,
         dim2=dim_b,
         ).to('cuda')
-
+    logging.info(f"src:{src.shape}")
+    logging.info(f"tgt:{tgt.shape}")
     # Make final prediction
     final_prediction = model.to('cuda')((src, tgt, src_mask, tgt_mask))
 
