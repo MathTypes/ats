@@ -4,7 +4,7 @@ Code for running inference with transformer
 
 import torch.nn as nn 
 import torch
-import utils
+import timeseries_utils
 
 def run_encoder_decoder_inference(
     model: nn.Module, 
@@ -82,12 +82,12 @@ def run_encoder_decoder_inference(
 
         dim_b = src.shape[1] if batch_first == True else src.shape[0]
 
-        tgt_mask = utils.generate_square_subsequent_mask(
+        tgt_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=dim_a,
             dim2=dim_a,
             )
 
-        src_mask = utils.generate_square_subsequent_mask(
+        src_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=dim_a,
             dim2=dim_b,
             )
