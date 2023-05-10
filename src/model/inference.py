@@ -87,6 +87,8 @@ def run_encoder_decoder_inference(
             dim1=dim_a,
             dim2=dim_b,
             ).to('cuda')
+        src = src.to('cuda')
+        tgt = tgt.to('cuda')
         # Make prediction
         prediction = model.to('cuda')((src, tgt, src_mask, tgt_mask)).to('cuda')
 
