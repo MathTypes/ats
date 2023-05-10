@@ -71,6 +71,6 @@ class LogPredictionsCallback(Callback):
             logging.info(f"prediction_shape:{prediction.shape}")
             logging.info(f"tgt_y:{tgt_y}")
             logging.info(f"tgt_y:{tgt_y.shape}")
-            metrics = pl_module.compute_loss(tgt_y, prediction)
+            metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
             metrics = torch.sum(metrics)
             logging.info(f"metrics:{metrics}")
