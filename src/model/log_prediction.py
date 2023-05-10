@@ -59,9 +59,10 @@ class LogPredictionsCallback(Callback):
             if pl_module.batch_first == False:
                 shape_before = src.shape
                 src = src.permute(1, 0, 2)
-
-                shape_before = tgt_y.shape
-                tgt_y = tgt_y.permute(1, 0, 2)
+                if tgt_y.dim() == 3:
+                    tgt_y = tgt_y.permute(1, 0, 2)
+                else:
+                    tgt_y = tgt_y.permute(1, 0)
                 
             prediction = inference.run_encoder_decoder_inference(
                 model=pl_module.to('cuda'), 
@@ -69,5 +70,6 @@ class LogPredictionsCallback(Callback):
                 forecast_window=pl_module.forecast_window,
                 batch_size=src.shape[1]
                 ).to('cuda')
+            logging.info(f"prediction:{prediction.shape}")
             metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
             metrics = torch.sum(metrics)
