@@ -62,8 +62,6 @@ class LogPredictionsCallback(Callback):
             if len(src_vec) == 16:
                 src = torch.from_numpy(np.stack(src_vec))
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
-                #logging.info(f"src:{src.shape}")
-                #logging.info(f"tgt_y:{tgt_y.shape}")
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
@@ -82,8 +80,40 @@ class LogPredictionsCallback(Callback):
                     forecast_window=pl_module.forecast_window,
                     batch_size=src.shape[1]
                     ).to('cuda')
-                #logging.info(f"prediction:{prediction.shape}")
-                metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
-                metrics = torch.sum(metrics)
+                logging.info(f"src:{src.shape}")
+                logging.info(f"tgt_y:{tgt_y.shape}")
+                logging.info(f"prediction:{prediction.shape}")
+                fig_cnt = src.shape[1] // 4
+                for i in range(0, fig_cnt):
+                    fig = plt.figure()
+                    fig.set_figwidth(40)
+                    for j in range(0, 4):
+                        x = src[:,i*4+j,:].cpu()
+                        pred = prediction[:,i*4+j,:].cpu()
+                        y = tgt_y[:,i*4+j,:].cpu()
+                        logging.info(f"x:{x.shape}")
+                        logging.info(f"pred:{pred.shape}")
+                        logging.info(f"y:{y.shape}")
+                        #times = self.val_times[i*4+j].cpu()
+                        #open = x[0]
+                        #high = x[1]
+                        #low = x[2]
+                        close = x[:,3]
+                        pred_close = pred[:,3]
+                        #pred_close = pred
+                        y_close = y[:,3]
+                        #y_close = y
+                        logging.info(f"close:{close}")
+                        ax1 = fig.add_subplot(1, 4, j+1)
+                        ax1.plot(np.arange(close.shape[0]), close, label='Training data')
+                        ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
+                        ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
+                        #now = datetime.fromtimestamp(times.numpy()[-1])
+                        #ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
+                        ax1.set_ylabel('y')
+                    self.wandb_logger.log_image(f"chart-{i}", images=[fig])
+                        #logging.info(f"prediction:{prediction.shape}")
+                        #metrics = pl_module.to('cuda').compute_loss(tgt_y, prediction)
+                        #metrics = torch.sum(metrics)
                 src_vec.clear()
                 tgt_y_vec.clear()
