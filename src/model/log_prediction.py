@@ -55,6 +55,7 @@ class LogPredictionsCallback(Callback):
             src, _, tgt_y = batch
             src_vec.append(src)
             tgt_y_vec.append(tgt_y)
+            logging.info(f"logging prediction:{i}")
             if len(src_vec) == 16:
                 if i % 256 == 0:
                     logging.info(f"logging prediction:{i}")
