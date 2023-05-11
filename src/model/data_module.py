@@ -112,10 +112,11 @@ class TransformerDataModule(pl.LightningDataModule):
                           num_workers=8)
 
 class LSTMDataModule(pl.LightningDataModule):
-    def __init__(self, dataset):
+    def __init__(self, dataset, batch_size=256):
         super().__init__()
         self.dataset = dataset
         self.generate_data()
+        self.batch_size = batch_size
 
     def generate_data(self):
         if self.dataset == "stock_returns":
