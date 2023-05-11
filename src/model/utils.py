@@ -125,7 +125,7 @@ class Pipeline:
                              deterministic=False, strategy='auto')
         self.history = trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
-        trainer.test(datamodule=self.data_module, ckpt_path=None)  # uses last-saved model
+        trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
 
 
 def count_parameters(model):
