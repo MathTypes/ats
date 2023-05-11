@@ -185,24 +185,14 @@ class TimeSeriesTFT(pl.LightningModule):
                       using data points from the target sequence
         """
         (src, tgt, src_mask, tgt_mask) = X
-        #logging.info(f"src:{src.shape}")
-        #logging.info(f"tgt:{tgt.shape}")
         src = src[:,:,:5]
         tgt = tgt[:,:,:5]
-        #logging.info(f"new_src:{src.shape}")
-        #logging.info(f"new_tgt:{tgt.shape}")
-        #src = src.to('cuda')
-        #tgt = tgt.to('cuda')
-        #print("From model.forward(): Size of src as given to forward(): {}".format(src.size()))
-        #print("From model.forward(): tgt size = {}".format(tgt.size()))
 
         # Pass throguh the input layer right before the encoder
         src = self.encoder_input_layer(src)# src shape: [batch_size, src length, dim_val] regardless of number of input features
-        #print("From model.forward(): Size of src after input layer: {}".format(src.size()))
 
         # Pass through the positional encoding layer
         src = self.positional_encoding_layer(src) # src shape: [batch_size, src length, dim_val] regardless of number of input features
-        #print("From model.forward(): Size of src after pos_enc layer: {}".format(src.size()))
 
         # Pass through all the stacked encoder layers in the encoder
         # Masking is only needed in the encoder if input sequences are padded
@@ -212,17 +202,10 @@ class TimeSeriesTFT(pl.LightningModule):
         src = self.encoder( # src shape: [batch_size, enc_seq_len, dim_val]
             src=src
             )
-        #print("From model.forward(): Size of src after encoder: {}".format(src.size()))
 
         # Pass decoder input through decoder input layer
         # src shape: [target sequence length, batch_size, dim_val] regardless of number of input features
         decoder_output = self.decoder_input_layer(tgt)
-        #print("From model.forward(): Size of decoder_output after linear decoder layer: {}".format(decoder_output.size()))
-
-        #if src_mask is not None:
-            #print("From model.forward(): Size of src_mask: {}".format(src_mask.size()))
-        #if tgt_mask is not None:
-            #print("From model.forward(): Size of tgt_mask: {}".format(tgt_mask.size()))
 
         # Pass throguh decoder - output shape: [batch_size, target seq len, dim_val]
         decoder_output = self.decoder(
@@ -232,12 +215,8 @@ class TimeSeriesTFT(pl.LightningModule):
             memory_mask=src_mask
             )
 
-        #print("From model.forward(): decoder_output shape after decoder: {}".format(decoder_output.shape))
-
         # Pass through linear mapping
         decoder_output = self.linear_mapping(decoder_output) # shape [batch_size, target seq len]
-        #print("From model.forward(): decoder_output size after linear_mapping = {}".format(decoder_output.size()))
-
         return decoder_output.to('cuda')
     
     def compute_loss(self, y_hat, y):
@@ -256,7 +235,6 @@ class TimeSeriesTFT(pl.LightningModule):
         src, trg, trg_y = batch
         if self.batch_first == False:
             src = src.permute(1, 0, 2)
-
             trg = trg.permute(1, 0, 2)
             trg = trg[:,:,3]
 
@@ -267,13 +245,11 @@ class TimeSeriesTFT(pl.LightningModule):
                 trg_y = trg_y.permute(1, 0)
         else:
             trg = trg[:,:,3]
-
             if trg_y.dim() == 3:
                 trg_y = trg_y[:,:,3]
+        src = src[:,:,:5]
         trg = trg.unsqueeze(-1)
         trg_y = trg_y.unsqueeze(-1)
-        #logging.info(f"trg_shape:{trg.shape}")
-        #logging.info(f"trg_y_shape:{trg_y.shape}")
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
         loss = self.compute_loss(y_hat, trg_y)
         self.log('train_loss', loss)
@@ -282,17 +258,20 @@ class TimeSeriesTFT(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         src, _, trg_y = batch
         if self.batch_first == False:
-            shape_before = src.shape
             src = src.permute(1, 0, 2)
+            trg = trg.permute(1, 0, 2)
+            trg = trg[:,:,3]
 
-            shape_before = trg_y.shape
-            trg_y = trg_y.permute(1, 0, 2)
-        #logging.info(f"src:{src.shape}")
-        #logging.info(f"trg_y:{trg_y.shape}")
+            if trg_y.dim() == 3:
+                trg_y = trg_y.permute(1, 0, 2)
+                trg_y = trg_y[:,:,3]
+            else:
+                trg_y = trg_y.permute(1, 0)
+        else:
+            trg = trg[:,:,3]
+            if trg_y.dim() == 3:
+                trg_y = trg_y[:,:,3]
         src = src[:,:,:5]
-        trg_y = trg_y[:,:,:5]
-        #logging.info(f"new_src:{src.shape}")
-        #logging.info(f"new_trg_y:{trg_y.shape}")
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src,
@@ -306,13 +285,19 @@ class TimeSeriesTFT(pl.LightningModule):
         src, _, trg_y = batch
         if self.batch_first == False:
             src = src.permute(1, 0, 2)
-            trg_y = trg_y.permute(1, 0, 2)
-        #logging.info(f"src:{src.shape}")
-        #logging.info(f"tgt:{tgt.shape}")
+            trg = trg.permute(1, 0, 2)
+            trg = trg[:,:,3]
+
+            if trg_y.dim() == 3:
+                trg_y = trg_y.permute(1, 0, 2)
+                trg_y = trg_y[:,:,3]
+            else:
+                trg_y = trg_y.permute(1, 0)
+        else:
+            trg = trg[:,:,3]
+            if trg_y.dim() == 3:
+                trg_y = trg_y[:,:,3]
         src = src[:,:,:5]
-        trg_y = trg_y[:,:,:5]
-        #logging.info(f"new_src:{src.shape}")
-        #logging.info(f"new_trg_y:{trg_y.shape}")
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 
