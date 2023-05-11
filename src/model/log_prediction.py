@@ -24,7 +24,7 @@ class LogPredictionsCallback(Callback):
         self.wandb_logger = wandb_logger
         self.X_test = X_test
         self.criterion = torch.nn.L1Loss(reduction="none").to('cuda')
-        self.val_indices = timeseries_utils.get_indices_entire_sequence(
+        self.test_indices = timeseries_utils.get_indices_entire_sequence(
             data=self.X_test[-1024:].numpy(), 
             window_size=window_size, 
             step_size=step_size)
