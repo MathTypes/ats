@@ -276,7 +276,12 @@ class TimeSeriesTFT(pl.LightningModule):
                 forecast_window=self.forecast_window,
                 batch_size=src.shape[1]
                 )
+        logging.info(f"src:{src.shape}")
+        logging.info(f"trg_y:{trg_y.shape}")
+        logging.info(f"src:{src}")
+        logging.info(f"trg_y:{trg_y}")
         loss = self.compute_loss(prediction, trg_y)
+        logging.info(f"loss:{loss}")
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
