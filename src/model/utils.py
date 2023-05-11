@@ -109,7 +109,7 @@ class Pipeline:
         #                                                  dec_seq_len=self.data_module.dec_seq_len,
         #                                                  device="cuda",
         #                                                  output_sequence_length=self.data_module.output_sequence_length)
-        log_predictions_callback = LogPredictionsCallback(wandb_logger, [self.data_module.X_test, self.data_module.y_test])
+        log_predictions_callback = LSTMLogPredictionsCallback(wandb_logger, [self.data_module.X_test, self.data_module.y_test])
         # till 5th epoch, it will accumulate every 8 batches. From 5th epoch
         # till 9th epoch it will accumulate every 4 batches and after that no accumulation
         # will happen. Note that you need to use zero-indexed epoch keys here
