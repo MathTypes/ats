@@ -103,7 +103,7 @@ class Pipeline:
             save_last=True,
             verbose=True
         )
-        es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
+        #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
         log_predictions_callback = LogPredictionsCallback(wandb_logger,
@@ -115,7 +115,7 @@ class Pipeline:
                                                           device="cuda",
                                                           output_sequence_length=self.data_module.output_sequence_length)
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
-                             callbacks=[checkpoint_callback, es, lr_monitor, log_predictions_callback],
+                             callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback],
                              devices=-1, accelerator='gpu',
                              precision="16",
                              default_root_dir=LIGHTNING_DIR,
