@@ -60,8 +60,8 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
         self.data_module = LSTMDataModule("stock_returns")
         X_train = self.data_module.X_train
         y_train = self.data_module.y_train
-        features = X_train.shape[1]
-        mini_batch = X_train.shape[2]
+        features = X_train.shape[2]
+        mini_batch = X_train.shape[1]
         logging.info(f"features:{features}")
         logging.info(f"mini_batch:{mini_batch}")
         model = AttentionEmbeddingLSTM(
