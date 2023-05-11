@@ -115,10 +115,10 @@ class LSTMDataModule(pl.LightningDataModule):
     def __init__(self, dataset, batch_size=64, n_past=48, n_future=48):
         super().__init__()
         self.dataset = dataset
-        self.generate_data()
         self.batch_size = batch_size
         self.n_past = n_past
         self.n_future = n_future
+        self.generate_data()
 
     def generate_data(self):
         if self.dataset == "stock_returns":
