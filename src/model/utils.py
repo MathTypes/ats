@@ -10,7 +10,7 @@ from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
 
 from data_module import LSTMDataModule, TransformerDataModule
-from log_prediction import LogPredictionsCallback
+from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
 import wandb
 from wandb.keras import WandbCallback
 from pathlib import Path
