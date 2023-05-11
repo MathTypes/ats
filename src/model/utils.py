@@ -4,6 +4,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
+from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
@@ -108,10 +109,17 @@ class Pipeline:
                                                           dec_seq_len=self.data_module.dec_seq_len,
                                                           device="cuda",
                                                           output_sequence_length=self.data_module.output_sequence_length)
+        # till 5th epoch, it will accumulate every 8 batches. From 5th epoch
+        # till 9th epoch it will accumulate every 4 batches and after that no accumulation
+        # will happen. Note that you need to use zero-indexed epoch keys here
+        accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
-                             callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback],
+                             callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback,
+                                        accumulator, StochasticWeightAveraging(swa_lrs=1e-2)],
                              devices=-1, accelerator='gpu',
-                             #precision="16",
+                             precision="bf16",
+                             accumulate_grad_batches=7,
+                             gradient_clip_val=0.5,
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,
                              detect_anomaly=True,

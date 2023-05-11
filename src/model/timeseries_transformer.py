@@ -261,6 +261,47 @@ class TimeSeriesTFT(pl.LightningModule):
         self.log('train_loss', loss)
         return loss
 
+    def optimizer_step(
+        self,
+        epoch,
+        batch_idx,
+        optimizer,
+        optimizer_idx,
+        optimizer_closure,
+        on_tpu=False,
+        using_lbfgs=False,
+    ):
+        """
+        Skipping updates in case of unstable gradients
+        https://github.com/Lightning-AI/lightning/issues/4956
+        """
+        valid_gradients = True
+        for name, param in self.named_parameters():
+            if param.grad is not None:
+                # valid_gradients = not (torch.isnan(param.grad).any() or torch.isinf(param.grad).any())
+                valid_gradients = not (torch.isnan(param.grad).any())
+                if not valid_gradients:
+                    break
+        if not valid_gradients:
+            print("detected inf or nan values in gradients. not updating model parameters")
+            self.zero_grad()
+        optimizer.step(closure=optimizer_closure)
+
+    def on_after_backward(self) -> None:
+        """
+        Skipping updates in case of unstable gradients
+        https://github.com/Lightning-AI/lightning/issues/4956
+        """
+        valid_gradients = True
+        for name, param in self.named_parameters():
+            if param.grad is not None:
+                valid_gradients = not (torch.isnan(param.grad).any() or torch.isinf(param.grad).any())
+                if not valid_gradients:
+                    break
+        if not valid_gradients:
+            print(f'detected inf or nan values in gradients. not updating model parameters')
+            # self.zero_grad()
+
     def validation_step(self, batch, batch_idx):
         src, _, trg_y = batch
         if self.batch_first == False:
