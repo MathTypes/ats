@@ -94,7 +94,7 @@ class LogPredictionsCallback(Callback):
                     src=src, 
                     forecast_window=pl_module.forecast_window,
                     batch_size=src.shape[1]
-                    ).to('cuda')
+                    ).squeeze().to('cuda')
                 
                 logging.info(f"prediction:{prediction.shape}")
                 logging.info(f"tgt_y:{tgt_y.shape}")
