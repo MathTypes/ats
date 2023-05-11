@@ -87,7 +87,10 @@ class LogPredictionsCallback(Callback):
                     forecast_window=pl_module.forecast_window,
                     batch_size=src.shape[1]
                     ).to('cuda')
+                
                 loss = pl_module.compute_loss(prediction, tgt_y)
+                logging.info(f"prediction:{prediction.shape}")
+                logging.info(f"tgt_y:{tgt_y.shape}")
                 logging.info(f"loss:{loss.shape}")
                 top_ind, top_loss = self.topk_by_sort(loss.to("cpu"), 10)
                 for ind in top_ind:
