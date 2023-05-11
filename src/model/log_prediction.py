@@ -100,7 +100,7 @@ class LogPredictionsCallback(Callback):
                 logging.info(f"prediction:{prediction.shape}")
                 logging.info(f"tgt_y:{tgt_y.shape}")
                 logging.info(f"loss:{loss.shape}")
-                top_ind, top_loss = self.topk_by_sort(loss.to("cpu").to_numpy(), 10)
+                top_ind, top_loss = self.topk_by_sort(loss.to("cpu").numpy(), 10)
                 for ind in top_ind:
                     fig = plt.figure()
                     fig.set_figwidth(40)
