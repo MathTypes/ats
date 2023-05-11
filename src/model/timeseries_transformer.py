@@ -258,7 +258,11 @@ class TimeSeriesTFT(pl.LightningModule):
         trg_y = trg_y.unsqueeze(-1)
         assert not torch.isnan(src).any()
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
+        opt = self.optimizers()
+        opt.zero_grad()
         loss = self.compute_loss(y_hat, trg_y)
+        self.manual_backward(loss)
+        opt.step()
         self.log('train_loss', loss)
         return loss
 
