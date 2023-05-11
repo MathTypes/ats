@@ -121,7 +121,7 @@ class Pipeline:
                              callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback,
                                         StochasticWeightAveraging(swa_lrs=1e-2)],
                              devices=-1, accelerator='gpu',
-                             precision="bf16",
+                             #precision="bf16",
                              accumulate_grad_batches=7,
                              gradient_clip_val=0.5,
                              default_root_dir=LIGHTNING_DIR,
