@@ -180,7 +180,8 @@ def search_tweets(
     url = f"{address}/{username}"
     #session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
     #session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
-    session = HTMLSession2()
+    #session = HTMLSession2()
+    session = HTMLSession()
 
     def gen_tweets(pages):
         logging.info(f"url:{url}")

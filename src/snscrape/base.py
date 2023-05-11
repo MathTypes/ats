@@ -242,7 +242,7 @@ class Scraper:
         #}
         logging.info(f'setting proxies:{proxies}')
         errors = []
-        #self._session.cookies.clear()
+        self._session.cookies.clear()
         # v1%3A168203758754724534
         # 'guest_id=v1%3A168203771402596723
         # personalization_id="v1_yNDxJ5CSHLYOvRqB7v5KEw=="'

@@ -37,6 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("--symbol", type=str)
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--login", type=bool)
+    parser.add_argument("--headless", type=bool)
     parser.add_argument("--email", type=str)
     parser.add_argument("--browser_profile", type=str)
     parser.add_argument(
@@ -70,7 +71,7 @@ if __name__ == "__main__":
         until = cur_date + datetime.timedelta(days=1)
         if args.username:
             output_file_name = args.username + f"-to-{since}-{until}"
-            keyword = f"from: {args.username}"
+            keyword = f"from:{args.username}"
         else:
             output_file_name = args.symbol + f"-to-{since}-{until}"
             keyword = f"${args.symbol}"
@@ -100,7 +101,7 @@ if __name__ == "__main__":
                 filename=output_file_name,
                 directory=args.output_dir,
                 browser_profile=browser_profile,
-                headless=False,
+                headless=args.headless,
                 email = email,
                 login = args.login
             )

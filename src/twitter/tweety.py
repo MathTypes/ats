@@ -4,7 +4,7 @@ import tweepy
 bearer_token = 'AAAAAAAAAAAAAAAAAAAAAAypmwEAAAAASU9euOx4vMId%2FbuLcQBNWSEnjqg%3Dj4pPU1gV2zcTL9i8nduFGnbgpT9WGJx8Kl2fc6oPJtuQ4Et8Bv'
 client = tweepy.Client(bearer_token = bearer_token)
 # Replace with your own search query
-query = 'spy'
+query = '$qqq'
 
 # Replace with your own search query
 #query = 'from:DougKass -is:retweet'
@@ -13,7 +13,7 @@ query = 'spy'
 start_time = '2010-01-01T00:00:00Z'
 
 # Replace with time period of your choice
-end_time = '2022-12-01T00:00:00Z'
+end_time = '2023-04-29T00:00:00Z'
 # Replace with your own search query
 #query = 'covid -is:retweet'
 # Replace with your own search query
@@ -25,7 +25,7 @@ end_time = '2022-12-01T00:00:00Z'
 # Replace with time period of your choice
 #end_time = '2020-08-01T00:00:00Z'
 
-tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'], max_results=10)
+tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'], max_results=100, wait_on_rate_limit=True)
 print(f"tweets:{tweets}")
 print(f"tweets.length:{tweets.length}")
 exit(0)

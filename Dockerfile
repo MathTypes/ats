@@ -1,5 +1,5 @@
 #FROM tensorflow/tensorflow:2.7.0-gpu
-FROM tensorflow/tensorflow:2.7.0
+FROM tensorflow/tensorflow:2.9.0
 
 ENV NVIDIA_VISIBLE_DEVICES \
     ${NVIDIA_VISIBLE_DEVICES:-all}
