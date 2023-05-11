@@ -90,7 +90,7 @@ class TimeSeriesTFT(pl.LightningModule):
 
         self.criterion = torch.nn.L1Loss().to(device)
         #self.criterion = torch.nn.MSELoss()
-        self.device = device
+        self.dev = device
         self.dec_seq_len = dec_seq_len
         self.forecast_window = forecast_window
         self.batch_first = batch_first
@@ -101,23 +101,23 @@ class TimeSeriesTFT(pl.LightningModule):
         self.encoder_input_layer = nn.Linear(
             in_features=input_size, 
             out_features=dim_val 
-            ).to(device)
+            ).to(dev)
 
         self.decoder_input_layer = nn.Linear(
             in_features=num_predicted_features,
             out_features=dim_val
-            ).to(device)  
+            ).to(dev)  
         
         self.linear_mapping = nn.Linear(
             in_features=dim_val, 
             out_features=num_predicted_features
-            ).to(device)
+            ).to(dev)
 
         # Create positional encoder
         self.positional_encoding_layer = pe.PositionalEncoder(
             d_model=dim_val,
             dropout=dropout_pos_enc
-            ).to(device)
+            ).to(dev)
 
         # The encoder layer used in the paper is identical to the one used by
         # Vaswani et al (2017) on which the PyTorch module is based.
@@ -127,7 +127,7 @@ class TimeSeriesTFT(pl.LightningModule):
             dim_feedforward=dim_feedforward_encoder,
             dropout=dropout_encoder,
             batch_first=batch_first
-            ).to(device)
+            ).to(dev)
 
         # Stack the encoder layers in nn.TransformerDecoder
         # It seems the option of passing a normalization instance is redundant
@@ -138,7 +138,7 @@ class TimeSeriesTFT(pl.LightningModule):
             encoder_layer=encoder_layer,
             num_layers=n_encoder_layers, 
             norm=None
-            ).to(device)
+            ).to(dev)
 
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=dim_val,
@@ -146,7 +146,7 @@ class TimeSeriesTFT(pl.LightningModule):
             dim_feedforward=dim_feedforward_decoder,
             dropout=dropout_decoder,
             batch_first=batch_first
-            ).to(device)
+            ).to(dev)
 
         # Stack the decoder layers in nn.TransformerDecoder
         # It seems the option of passing a normalization instance is redundant
@@ -157,15 +157,15 @@ class TimeSeriesTFT(pl.LightningModule):
             decoder_layer=decoder_layer,
             num_layers=n_decoder_layers, 
             norm=None
-            ).to(device)
+            ).to(dev)
         self.tgt_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=forecast_window,
             dim2=forecast_window
-            ).to(device)
+            ).to(dev)
         self.src_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=forecast_window,
             dim2=self.dec_seq_len
-            ).to(device)
+            ).to(dev)
 
     def forward(self, X):
         """
@@ -219,7 +219,7 @@ class TimeSeriesTFT(pl.LightningModule):
 
         # Pass through linear mapping
         decoder_output = self.linear_mapping(decoder_output) # shape [batch_size, target seq len]
-        return decoder_output.to(device)
+        return decoder_output.to(self.dev)
     
     def compute_loss(self, y_hat, y):
         if y.dim()==3 and y.shape[2]==5:
@@ -230,7 +230,7 @@ class TimeSeriesTFT(pl.LightningModule):
             y = torch.squeeze(y)
         if y_hat.dim()==3:
             y_hat = torch.squeeze(y_hat)
-        loss = self.criterion.to(self.device)(y_hat.to(self.device), y.to(self.device))
+        loss = self.criterion.to(self.dev)(y_hat.to(self.dev), y.to(self.dev))
         return loss
 
     def training_step(self, batch, batch_idx):
