@@ -108,7 +108,7 @@ class LogPredictionsCallback(Callback):
                         #logging.info(f"x:{x.shape}")
                         #logging.info(f"pred:{pred.shape}")
                         #logging.info(f"y:{y.shape}")
-                        time = times[-1,i*4+j].cpu()
+                        time = times[:,-1,i*4+j].cpu()
                         #open = x[0]
                         #high = x[1]
                         #low = x[2]
