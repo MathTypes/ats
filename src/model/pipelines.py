@@ -33,7 +33,7 @@ class TFTPipeline(Pipeline):
     def create_model(self):
         self.data_module = AtsDataModule("stock_returns",
                                          output_sequence_length=forecast_window,
-                                         batch_size=512)
+                                         batch_size=2048)
         X_train = self.data_module.X_train
         dev = "cuda"
 
