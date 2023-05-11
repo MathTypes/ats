@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
-from pytorch_lightning.callbacks import GradientAccumulationScheduler
+from pytorch_lightning.callbacks import GradientAccumulationScheduler, StochasticWeightAveraging
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
