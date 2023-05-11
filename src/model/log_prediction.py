@@ -94,6 +94,8 @@ class LogPredictionsCallback(Callback):
                 
                 logging.info(f"prediction:{prediction.shape}")
                 logging.info(f"tgt_y:{tgt_y.shape}")
+                logging.info(f"src:{src.shape}")
+                logging.info(f"times:{times.shape}")
                 loss = self.compute_loss(prediction, tgt_y)
                 logging.info(f"loss:{loss.shape}")
                 top_ind, top_loss = self.topk_by_sort(loss.to("cpu").numpy(), 10)
@@ -103,7 +105,6 @@ class LogPredictionsCallback(Callback):
                     x = src[:,ind,:].cpu()
                     pred = prediction[:,ind,:].cpu()
                     y = tgt_y[:,ind,:].cpu()
-                    logging.info(f"times:{times.shape}")
                     time = times[:,ind].cpu()
                     close = x[:,3]
                     pred_close = pred[:].squeeze(-1)
