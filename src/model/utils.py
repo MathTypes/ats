@@ -106,18 +106,17 @@ class Pipeline:
         es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
-        dev = xm.xla_device()
         log_predictions_callback = LogPredictionsCallback(wandb_logger,
                                                           self.data_module.X_test,
                                                           window_size=self.data_module.window_size,
                                                           step_size=self.data_module.step_size,
                                                           enc_seq_len=self.data_module.enc_seq_len,
                                                           dec_seq_len=self.data_module.dec_seq_len,
-                                                          device=dev,
+                                                          device="cuda",
                                                           output_sequence_length=self.data_module.output_sequence_length)
         trainer = pl.Trainer(max_epochs=5, logger=wandb_logger,
                              callbacks=[checkpoint_callback, es, lr_monitor, log_predictions_callback],
-                             devices=-1, accelerator='tpu',
+                             devices=-1, accelerator='gpu',
                              precision="16",
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,

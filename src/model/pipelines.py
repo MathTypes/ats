@@ -24,7 +24,6 @@ input_variables = target_col_name + exogenous_vars
 input_size = len(input_variables)
 
 torch.set_float32_matmul_precision('medium')
-import torch_xla.core.xla_model as xm
 
 class TFTPipeline(Pipeline):
     def __init__(self, dataset="sine_wave"):
@@ -36,7 +35,7 @@ class TFTPipeline(Pipeline):
                                          output_sequence_length=forecast_window,
                                          batch_size=512)
         X_train = self.data_module.X_train
-        dev = xm.xla_device()
+        dev = "cuda"
 
         logging.info(f"X_train:{X_train.shape}, dev:{dev}")
         self.model = TimeSeriesTFT(
