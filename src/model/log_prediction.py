@@ -25,7 +25,7 @@ class LogPredictionsCallback(Callback):
         self.X_val = X_val
         self.criterion = torch.nn.L1Loss(reduction="none").to('cuda')
         self.val_indices = timeseries_utils.get_indices_entire_sequence(
-            data=self.X_val.numpy(), 
+            data=self.X_val[-1024:].numpy(), 
             window_size=window_size, 
             step_size=step_size)
         self.enc_seq_len = enc_seq_len
@@ -49,7 +49,7 @@ class LogPredictionsCallback(Callback):
         tgt_y_vec = []
         time_vec = []
         self.val_wrapper = timeseries_dataset.TransformerDataset(
-            data=self.X_val,
+            data=self.X_val[-1024:],
             indices=self.val_indices,
             enc_seq_len=self.enc_seq_len,
             dec_seq_len=self.dec_seq_len,
