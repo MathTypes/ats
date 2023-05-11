@@ -111,7 +111,7 @@ class Pipeline:
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback],
                              devices=-1, accelerator='gpu',
-                             precision="16",
+                             #precision="16",
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,
                              detect_anomaly=True,
