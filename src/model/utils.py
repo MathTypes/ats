@@ -100,7 +100,7 @@ class Pipeline:
         checkpoint_callback = ModelCheckpoint(
             dirpath=MODELS_DIR,
             monitor="val_loss",
-            save_top_k==1,
+            save_top_k=1,
             verbose=True
         )
         #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
