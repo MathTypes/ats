@@ -267,6 +267,7 @@ class TimeSeriesTFT(pl.LightningModule):
         batch_idx,
         optimizer,
         optimizer_idx,
+        optimizer_closure,
         on_tpu=False,
         using_lbfgs=False,
     ):
@@ -284,7 +285,7 @@ class TimeSeriesTFT(pl.LightningModule):
         if not valid_gradients:
             print("detected inf or nan values in gradients. not updating model parameters")
             self.zero_grad()
-        optimizer.step()
+        optimizer.step(closure=optimizer_closure)
 
     def on_after_backward(self) -> None:
         """
