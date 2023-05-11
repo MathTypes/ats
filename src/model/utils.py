@@ -78,12 +78,6 @@ class Pipeline:
     """
     def __init__(self):
         self.model = None
-        #self.X_train = None
-        #self.y_train = None
-        #self.X_val = None
-        #self.y_val = None
-        #self.X_test = None
-        #self.y_test = None
         self.data_module = None
         self.history = None
         self.y_pred = None

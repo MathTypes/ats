@@ -4,7 +4,6 @@ import pandas as pd
 from typing import Iterable, List, Union
 from sklearn.preprocessing import StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
-#from torchfitter.utils.preprocessing import tabular_to_sliding_dataset
 
 np.random.seed(0)
 
@@ -123,34 +122,17 @@ def tabular_to_sliding_dataset(
 
 def generate_stock_tokens():
     data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
-    #data = pd.read_pickle("data/XAUUSD.pkl")
-    #data = pq.read_table("data/ES_30min.pkl")
-    #data = data.to_pandas()
-    #exit(0)
-    #data = data.drop(columns=["Volume"])
     logging.info(f"data.OpenPct:{data.OpenPct.shape}, type:{type(data.OpenPct)}, dtype:{data.OpenPct.dtype}")
     logging.info(f"data.OpenPct.:{data.OpenPct[0:10]}")
-    #data = data.apply(pd.to_numeric,errors='ignore')
     data["Time"] = data.index
     data["Time"] = data["Time"].apply(lambda x:float(x.timestamp()))
+    data = data.dropna()
     open = data.OpenPct.to_numpy()
     high = data.HighPct.to_numpy()
     low = data.LowPct.to_numpy()
     close = data.ClosePct.to_numpy()
     volume = data.VolumePct.to_numpy()
     time = data.Time.to_numpy().astype(np.float32)
-    #rows = open.shape[0]
-    #open = [np.array(sublist) for sublist in open]
-    #open = np.array(open.tolist())
-    #open = np.array([x for x in open])
-    #open =  np.concatenate(open).reshape(rows, -1)
-    #high =  np.concatenate(data.HighPct.to_numpy()).reshape(rows, -1)
-    #low =  np.concatenate(data.LowPct.to_numpy()).reshape(rows, -1)
-    #close =  np.concatenate(data.ClosePct.to_numpy()).reshape(rows, -1)
-    #volume =  np.concatenate(data.VolumePct.to_numpy()).reshape(rows, -1)
-    #logging.info(f"open:{open[0:10]}")
-    #logging.info(f"high:{high[0:10]},")
-    #logging.info(f"volume:{volume[0:10]},")
     logging.info(f"before open:{open.shape}, type:{type(open)}, dtype:{open.dtype}")
     logging.info(f"before volume:{volume.shape}, type:{type(volume)}, dtype:{volume.dtype}")
     values = np.stack((open, high, low, close, volume, time), axis=-1)
@@ -158,36 +140,15 @@ def generate_stock_tokens():
     val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
 
-    #.astype(np.float32)
-    #logging.info(f"before data:{values[0:5,...]}")
-    #values = np.array(list(values[:,:]), dtype=np.float32)
-    #values = rfn.structured_to_unstructured(values).astype(np.float32)
-    #values=values.astype(np.float32)
     logging.info(f"values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
-    #logging.info(f"data:{values[0:5,...]}")
-    #values = np.stack(values, axis=-1)
-    #logging.info(f"values2:{values.shape}")
     logging.info(f"time_shape:{data.Time.shape}")
     logging.info(f"values:{values.shape}")
-    #values = np.stack((data.Time, values), axis=-1)
     logging.info(f"data:{values[0:5,...]}")
-    #logging.info(f"data:{values.shape}")
-    #logging.info(f"data:{data.values[:30]}")
     X_train = values[:val_idx]
     X_val = values[val_idx:tst_idx]
     X_test = values[tst_idx:]
     logging.info(f"X_train:{X_train.shape}")
     logging.info(f"X_val:{X_val.shape}")
-    #X_train = X_train[:, 1:, :]
-    #y_train = y_train[:, 1:, :]
-    #X_val = X_val[:, 1:, :]
-    #y_val = y_val[:, 1:, :]
-    #X_test = X_test[:, 1:, :]
-    #y_test = y_test[:, 1:, :]
-    #y_train = y_train[:,3,:]
-    #y_val = y_val[:,3,:]
-    #y_test = y_test[:,3,:]
-    #X_train = np.array(list(X_train[:,:]), dtype=np.int32)
     logging.info(f"X_train:{X_train.dtype}, type:{type(X_train)}, {X_train.shape}")
     logging.info(f"X_train:{X_train.dtype}, type:{type(X_train)}")
     logging.info(f"X_train:{X_train[:30]}")
@@ -195,54 +156,3 @@ def generate_stock_tokens():
     logging.info(f"X_test:{X_test[:30]}")
     
     return X_train, X_val, X_test
-
-def generate_stock_returns():
-    data = pd.read_parquet("data/FUT/30min/ES", engine='fastparquet')
-    #data = pd.read_pickle("data/XAUUSD.pkl")
-    #data = pq.read_table("data/ES_30min.pkl")
-    #data = data.to_pandas()
-    #exit(0)
-    #data = data.drop(columns=["Volume"])
-    df_close = data[["ClosePx"]]
-    data = data.pct_change().dropna()
-    data = data.merge(df_close, how="left")
-    data["Time"] = data.index
-    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
-    val_idx = int(len(data) * 0.7)
-    tst_idx = int(len(data) * 0.8)
-    logging.info(f"data:{data.head()}")
-    logging.info(f"data:{data.info()}")
-
-    logging.info(f"data:{data.values.shape}")
-    logging.info(f"data:{data.values[:30]}")
-    logging.info(f"data:{data.info}")
-    exit(0)
-    X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-        data[["Time", "Open", "High", "Low", "Close", "Volume"]].values,
-        validation_idx=val_idx,
-        test_idx=tst_idx,
-        n_past=20,
-        n_future=5
-    )
-    #X_train = X_train[:, 1:, :]
-    #y_train = y_train[:, 1:, :]
-    #X_val = X_val[:, 1:, :]
-    #y_val = y_val[:, 1:, :]
-    #X_test = X_test[:, 1:, :]
-    #y_test = y_test[:, 1:, :]
-    #y_train = y_train[:,3,:]
-    #y_val = y_val[:,3,:]
-    #y_test = y_test[:,3,:]
-    logging.info(f"data:{X_train[:30]}")
-    logging.info(f"data:{y_train[:30]}")
-    logging.info(f"data:{X_val[:30]}")
-    logging.info(f"data:{y_val[:30]}")
-    logging.info(f"data:{X_test[:30]}")
-    logging.info(f"data:{y_test[:30]}")
-    logging.info(f"X_train:{X_train.shape}")
-    logging.info(f"y_train:{y_train.shape}")
-    logging.info(f"X_val:{X_val.shape}")
-    logging.info(f"y_val:{y_val.shape}")
-    logging.info(f"X_test:{X_test.shape}")
-    logging.info(f"y_test:{y_test.shape}")
-    return X_train, y_train, X_val, y_val, X_test, y_test
