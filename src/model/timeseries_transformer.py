@@ -231,6 +231,9 @@ class TimeSeriesTFT(pl.LightningModule):
         if y_hat.dim()==3:
             y_hat = torch.squeeze(y_hat)
         loss = self.criterion.to(self.dev)(y_hat.to(self.dev), y.to(self.dev))
+        if loss.isnan():
+             loss=1e-12
+        else: loss = loss.item()
         return loss
 
     def training_step(self, batch, batch_idx):
