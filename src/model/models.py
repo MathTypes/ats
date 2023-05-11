@@ -60,7 +60,7 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         x = x.permute(0, 2, 1)
-        y = x.permute(0, 2, 1)
+        y = y.permute(0, 2, 1)
         logging.info(f"x:{x.shape}")
         logging.info(f"y:{y.shape}")
         y_hat = self.forward(x)
@@ -72,7 +72,7 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, y = batch
         x = x.permute(0, 2, 1)
-        y = x.permute(0, 2, 1)
+        y = y.permute(0, 2, 1)
         logging.info(f"x:{x.shape}")
         logging.info(f"y:{y.shape}")
         y_hat = self.forward(x)
@@ -83,7 +83,7 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, y = batch
         x = x.permute(0, 2, 1)
-        y = x.permute(0, 2, 1)
+        y = y.permute(0, 2, 1)
         y_hat = self.forward(x)
         loss = self.compute_loss(y_hat, y)
         self.log('test_loss', loss)
