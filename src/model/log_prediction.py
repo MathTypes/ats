@@ -18,12 +18,12 @@ from torch.utils.data import DataLoader
 
 class LogPredictionsCallback(Callback):
     def __init__(self, wandb_logger, X_test, window_size, step_size, enc_seq_len,
-                 dec_seq_len, output_sequence_length, num_samples=2048):
+                 dec_seq_len, output_sequence_length, device, num_samples=2048):
         '''method used to define our model parameters'''
         super().__init__()
         self.wandb_logger = wandb_logger
         self.X_test = X_test
-        self.criterion = torch.nn.L1Loss(reduction="none").to('cuda')
+        self.criterion = torch.nn.L1Loss(reduction="none").to(device)
         self.test_indices = timeseries_utils.get_indices_entire_sequence(
             data=self.X_test[-1024:].numpy(), 
             window_size=window_size, 
@@ -31,7 +31,6 @@ class LogPredictionsCallback(Callback):
         self.enc_seq_len = enc_seq_len
         self.dec_seq_len = dec_seq_len
         self.output_sequence_length = output_sequence_length
-        #self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
     def topk_by_sort(self, input, k, axis=None, ascending=True):
         if not ascending:
@@ -51,6 +50,7 @@ class LogPredictionsCallback(Callback):
         src_vec = []
         tgt_y_vec = []
         time_vec = []
+        dev = pl_module.device
         self.val_wrapper = timeseries_dataset.TransformerDataset(
             data=self.X_test[-1024:],
             indices=self.test_indices,
@@ -82,23 +82,18 @@ class LogPredictionsCallback(Callback):
                         tgt_y = tgt_y.permute(1, 0, 2)
                     else:
                         tgt_y = tgt_y.permute(1, 0)
-                src = src.to('cuda')
-                tgt_y = tgt_y[:,:,3].to('cuda')
+                src = src.to(dev)
+                tgt_y = tgt_y[:,:,3].to(dev)
                 
                 prediction = inference.run_encoder_decoder_inference(
-                    model=pl_module.to('cuda'), 
+                    model=pl_module.to(dev), 
                     src=src, 
                     forecast_window=pl_module.forecast_window,
                     batch_size=src.shape[1]
-                    ).squeeze().to('cuda')
+                    ).squeeze().to(dev)
                 
-                #logging.info(f"prediction:{prediction.shape}")
-                #logging.info(f"tgt_y:{tgt_y.shape}")
-                #logging.info(f"src:{src.shape}")
-                #logging.info(f"times:{times.shape}")
                 loss = self.compute_loss(prediction, tgt_y)
                 loss = torch.mean(loss, dim=0).squeeze(0)
-                #logging.info(f"loss:{loss.shape}")
                 loss = loss.to("cpu").numpy()
                 top_ind, top_loss = self.topk_by_sort(loss, 10)
                 for ind in top_ind:

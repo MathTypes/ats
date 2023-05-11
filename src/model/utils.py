@@ -96,14 +96,6 @@ class Pipeline:
 
 
     def train_model(self):
-        # ---------------------------------------------------------------------
-        #criterion = nn.HuberLoss()
-        #optimizer = optim.NAdam(self.model.parameters(), lr=0.005)
-        #sch = optim.lr_scheduler.ReduceLROnPlateau(
-        #    optimizer, factor=0.7, patience=20, min_lr=0.0001
-        #)
-        #run = wandb.init(project="WandBAndKerasTuner")
-        # ---------------------------------------------------------------------
         logging.info(f"MODELS_DIR:{MODELS_DIR}")
         checkpoint_callback = ModelCheckpoint(
             dirpath=MODELS_DIR,
@@ -114,16 +106,18 @@ class Pipeline:
         es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
+        dev = xm.xla_device()
         log_predictions_callback = LogPredictionsCallback(wandb_logger,
                                                           self.data_module.X_test,
                                                           window_size=self.data_module.window_size,
                                                           step_size=self.data_module.step_size,
                                                           enc_seq_len=self.data_module.enc_seq_len,
                                                           dec_seq_len=self.data_module.dec_seq_len,
+                                                          device=dev,
                                                           output_sequence_length=self.data_module.output_sequence_length)
         trainer = pl.Trainer(max_epochs=5, logger=wandb_logger,
                              callbacks=[checkpoint_callback, es, lr_monitor, log_predictions_callback],
-                             devices=-1, accelerator='gpu',
+                             devices=-1, accelerator='tpu',
                              precision="16",
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,
@@ -133,43 +127,6 @@ class Pipeline:
         self.history = trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
         trainer.test(datamodule=self.data_module, ckpt_path=None)  # uses last-saved model
-
-        #trainer = Trainer(
-        #    model=self.model,
-        #    criterion=criterion,
-        #    optimizer=optimizer,
-        #    callbacks=callbacks,
-        #    mixed_precision="no"
-        #    #'no', 'fp8', 'fp16', 'bf16'
-        #)
-
-        # ---------------------------------------------------------------------
-        #history = trainer.fit(train_load, val_loader, epochs=20)
-        #self.history = history
-        #run.finish()
-        # to avoid memory problems
-        #test_wrapper = torch.utils.data.TensorDataset(self.X_test, self.y_test)
-        #test_wrapper = DataWrapper(
-        #    self.X_test, self.y_test, dtype_X="float", dtype_y="float"
-        #)
-        #sampler = SequentialSampler(test_wrapper)
-        #test_loader = DataLoader(
-        #    test_wrapper,
-        #    batch_size=64,
-        #    pin_memory=True,
-        #    sampler=sampler,
-        #    shuffle=False
-        #)
-
-        #y_pred = trainer.predict(test_loader, as_array=True)
-        #y_test = self.y_test
-
-        # only works if predict horizon is 1
-        #preds = np.stack([row.flatten() for row in y_pred])
-        #tests = np.stack([row.flatten() for row in y_test])
-
-        #self.preds = preds
-        #self.tests = tests
 
 
 def count_parameters(model):
