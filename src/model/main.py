@@ -12,19 +12,12 @@ from util import logging_utils
 
 RESULTS_PATH = Path("results")
 
-
-#logger = get_logger(name="Experiments")
-#level = logger.level
-#logging.basicConfig(level=level)
 logging_utils.init_logging()
 
 if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     datasets = ["stock_returns"]
     pipelines = [
-        #VanillaLSTMPipeline,
-        #AttentionLSTMPipeline,
-        #EmbeddingLSTMPipeline,
         TFTPipeline
     ]
 
