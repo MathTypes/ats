@@ -43,6 +43,14 @@ class LogPredictionsCallback(Callback):
         val = np.take_along_axis(input, ind, axis=axis) 
         return ind, val
 
+    def compute_loss(self, y_hat, y):
+        y_hat[:,0:3,:] = 0
+        y[:,0:3,:] = 0
+        y_hat[:,4,:] = 0
+        y[:,4,:] = 0
+        loss = self.criterion(y_hat, y)
+        return loss
+
     def on_validation_epoch_end(self, trainer, pl_module):
         src_vec = []
         tgt_y_vec = []
@@ -88,7 +96,7 @@ class LogPredictionsCallback(Callback):
                     batch_size=src.shape[1]
                     ).to('cuda')
                 
-                loss = pl_module.compute_loss(prediction, tgt_y)
+                loss = self.compute_loss(prediction, tgt_y)
                 logging.info(f"prediction:{prediction.shape}")
                 logging.info(f"tgt_y:{tgt_y.shape}")
                 logging.info(f"loss:{loss.shape}")
