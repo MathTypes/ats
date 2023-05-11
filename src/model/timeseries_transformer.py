@@ -102,6 +102,12 @@ class TimeSeriesTFT(pl.LightningModule):
             in_features=input_size, 
             out_features=dim_val 
             ).to(self.dev)
+        #self.encoder_input_layer = nn.Dense(
+        #    64, activation="relu", input_dim=input_size
+        #    in_features=dim_val, 
+        #    out_features=num_predicted_features
+        #).to(self.dev)
+
 
         self.decoder_input_layer = nn.Linear(
             in_features=num_predicted_features,

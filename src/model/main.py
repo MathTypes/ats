@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from pipelines import (
-    TFTPipeline
+    TFTPipeline,
+    AttentionEmbeddingLSTMPipeline
 )
 from utils import count_parameters
 from torchfitter.io import save_pickle
@@ -18,7 +19,8 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     datasets = ["stock_returns"]
     pipelines = [
-        TFTPipeline
+        #TFTPipeline
+        AttentionEmbeddingLSTMPipeline
     ]
 
     for key in datasets:
