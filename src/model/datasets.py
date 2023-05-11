@@ -155,8 +155,8 @@ def generate_stock_tokens():
     logging.info(f"before volume:{volume.shape}, type:{type(volume)}, dtype:{volume.dtype}")
     values = np.stack((open, high, low, close, volume, time), axis=-1)
     logging.info(f"before values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
-    val_idx = int(len(data) * 0.7)
-    tst_idx = max(int(len(data) * 0.8), 1024)
+    val_idx = min(int(len(data) * 0.7), 1024*16)
+    tst_idx = min(int(len(data) * 0.8), 1024)
 
     #.astype(np.float32)
     #logging.info(f"before data:{values[0:5,...]}")
