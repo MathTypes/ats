@@ -68,9 +68,12 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
+        logging.info(f"x:{x.shape}")
+        logging.info(f"y:{y.shape}")
         x = x[:,1:,...]
         y = y[:,1:,...]
         y_hat = self.forward(x)
+        logging.info(f"y_hat:{y_hat.shape}")
         loss = self.compute_loss(y_hat, y)
         self.log('val_loss', loss)
 
