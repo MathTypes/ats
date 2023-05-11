@@ -120,7 +120,7 @@ def tabular_to_sliding_dataset(
     output = [item for sublist in output for item in sublist]
     return output
 
-def generate_stock_returns():
+def generate_stock_returns(n_past, n_futures):
     data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
     logging.info(f"data:{data.head()}")
     logging.info(f"data:{data.info()}")
@@ -135,8 +135,8 @@ def generate_stock_returns():
         data[["Time", "Open", "High", "Low", "Close", "Volume"]].values,
         validation_idx=val_idx,
         test_idx=tst_idx,
-        n_past=480,
-        n_future=48
+        n_past=n_past,
+        n_future=n_futures
     )
     X_train = X_train[:, 1:, :]
     y_train = y_train[:, 1:, :]

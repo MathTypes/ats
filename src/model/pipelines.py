@@ -51,13 +51,14 @@ class TFTPipeline(Pipeline):
             device=dev
         ).float().to(dev)
 
+
 class AttentionEmbeddingLSTMPipeline(Pipeline):
     def __init__(self, dataset="sine_wave"):
         super().__init__()
         self.dataset = dataset
 
     def create_model(self, device):
-        self.data_module = LSTMDataModule("stock_returns")
+        self.data_module = LSTMDataModule("stock_returns", batch_size=32, n_past=48, n_future=48)
         X_train = self.data_module.X_train
         y_train = self.data_module.y_train
         features = X_train.shape[1]
