@@ -120,6 +120,7 @@ class Pipeline:
                              precision="16",
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,
+                             detect_anomaly=True,
                              #precision='16-mixed',
                              # train in half precision
                              deterministic=False, strategy='auto')
