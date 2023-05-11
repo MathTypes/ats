@@ -144,12 +144,6 @@ def generate_stock_returns():
     y_val = y_val[:, 1:, :]
     X_test = X_test[:, 1:, :]
     y_test = y_test[:, 1:, :]
-    logging.info(f"data:{X_train[:30]}")
-    logging.info(f"data:{y_train[:30]}")
-    logging.info(f"data:{X_val[:30]}")
-    logging.info(f"data:{y_val[:30]}")
-    logging.info(f"data:{X_test[:30]}")
-    logging.info(f"data:{y_test[:30]}")
     logging.info(f"X_train:{X_train.shape}")
     logging.info(f"y_train:{y_train.shape}")
     logging.info(f"X_val:{X_val.shape}")

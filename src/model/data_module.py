@@ -131,7 +131,6 @@ class LSTMDataModule(pl.LightningDataModule):
         self.y_val = torch.from_numpy(y_val)
         self.X_test = torch.from_numpy(X_test)
         self.y_test = torch.from_numpy(y_test)
-        self.batch_size = 256
 
     def prepare_data(self):
         pass
