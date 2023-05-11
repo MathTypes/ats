@@ -68,7 +68,7 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
             linear_channel=features,
             period_channel=(mini_batch - features),
             input_channel=mini_batch,
-            input_size=features,
+            input_size=mini_batch,
             out_size=y_train.shape[-1]
         )
         self.model = model.to(device)
