@@ -33,7 +33,7 @@ class LogPredictionsCallback(Callback):
         self.output_sequence_length = output_sequence_length
         #self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
-    def topk_by_sort(self.input, k, axis=None, ascending=True):
+    def topk_by_sort(self, input, k, axis=None, ascending=True):
         if not ascending:
             input *= -1
         ind = np.argsort(input, axis=axis)
