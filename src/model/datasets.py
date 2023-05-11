@@ -80,8 +80,8 @@ def tabular_to_sliding_dataset(
         roll_view = np.lib.stride_tricks.sliding_window_view(
             array, window_length, axis=0
         )
-        X = roll_view[:, :, :, :n_past]
-        y = roll_view[:, :, :, n_past:]
+        X = roll_view[:, :, :n_past]
+        y = roll_view[:, :, n_past:]
         return X, y
 
     # type-agnostic
@@ -119,6 +119,44 @@ def tabular_to_sliding_dataset(
     # unpack and return
     output = [item for sublist in output for item in sublist]
     return output
+
+def generate_stock_returns():
+    data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    logging.info(f"data:{data.head()}")
+    logging.info(f"data:{data.info()}")
+    data["Time"] = data.index
+    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
+    val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
+    tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
+
+    logging.info(f"data:{data.values.shape}")
+    logging.info(f"data:{data.values[:30]}")
+    X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
+        data[["Time", "Open", "High", "Low", "Close", "Volume"]].values,
+        validation_idx=val_idx,
+        test_idx=tst_idx,
+        n_past=1200,
+        n_future=240
+    )
+    X_train = X_train[:, 1:, :]
+    y_train = y_train[:, 1:, :]
+    X_val = X_val[:, 1:, :]
+    y_val = y_val[:, 1:, :]
+    X_test = X_test[:, 1:, :]
+    y_test = y_test[:, 1:, :]
+    logging.info(f"data:{X_train[:30]}")
+    logging.info(f"data:{y_train[:30]}")
+    logging.info(f"data:{X_val[:30]}")
+    logging.info(f"data:{y_val[:30]}")
+    logging.info(f"data:{X_test[:30]}")
+    logging.info(f"data:{y_test[:30]}")
+    logging.info(f"X_train:{X_train.shape}")
+    logging.info(f"y_train:{y_train.shape}")
+    logging.info(f"X_val:{X_val.shape}")
+    logging.info(f"y_val:{y_val.shape}")
+    logging.info(f"X_test:{X_test.shape}")
+    logging.info(f"y_test:{y_test.shape}")
+    return X_train, y_train, X_val, y_val, X_test, y_test
 
 def generate_stock_tokens():
     data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')

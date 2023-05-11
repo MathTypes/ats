@@ -6,10 +6,10 @@ from torchvision.transforms import transforms, AutoAugment, AutoAugmentPolicy
 import logging
 from datasets import (
     generate_stock_tokens,
+    generate_stock_returns
 )
 import timeseries_dataset
 import timeseries_utils
-
 
 eval_batch_size = 10
 
@@ -41,15 +41,21 @@ class AtsDataModule(pl.LightningDataModule):
         self.generate_data()
 
     def generate_data(self):
-        if self.dataset == "stock_returns":
+        if self.dataset == "stock_tokens":
             _tup = generate_stock_tokens()
+        elif self.dataset == "stock_returns":
+            _tup = generate_stock_returns()
         else:
             raise KeyError(f"Not supported dataset: {self.dataset}.")
 
-        X_train, X_val, X_test = _tup
+        X_train, y_train, X_val, y_val, X_test, y_test = _tup
         self.X_train = torch.from_numpy(X_train)
+        self.y_train = torch.from_numpy(y_train)
         self.X_val = torch.from_numpy(X_val)
+        self.y_val = torch.from_numpy(y_val)
         self.X_test = torch.from_numpy(X_test)
+        self.y_test = torch.from_numpy(y_test)
+
         logging.info(f"X_Train:{self.X_train.shape}")
         logging.info(f"X_eval:{self.X_val[0:2]}")
 

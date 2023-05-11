@@ -23,7 +23,7 @@ if __name__ == "__main__":
         AttentionEmbeddingLSTMPipeline
     ]
     parser = config_utils.get_arg_parser("Preprocess tweet")
-    parser.add_argument("device", type=str)
+    parser.add_argument("--device", type=str)
     args = parser.parse_args()
     config_utils.set_args(args)
     logging_utils.init_logging()
