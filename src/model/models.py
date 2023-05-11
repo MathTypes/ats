@@ -19,7 +19,7 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         input_channel,
         input_size,
         out_size,
-        hidden_size=16,
+        hidden_size=4,
         n_layers=2,
         dropout_rate=0.2
     ):

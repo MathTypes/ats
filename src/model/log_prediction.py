@@ -150,7 +150,7 @@ class LSTMLogPredictionsCallback(Callback):
         #self.val_labels = self.val_labels[:,1:,...]
         self.criterion = torch.nn.L1Loss(reduction="none")
         #logging.info(f"val_times:{self.val_times}")
-        logging.info(f"val_times_shape:{self.val_times.shape}")
+        #logging.info(f"val_times_shape:{self.val_times.shape}")
         logging.info(f"val_inputs_shape:{self.val_inputs.shape}")
         logging.info(f"val_labels_shape:{self.val_labels.shape}")
 
