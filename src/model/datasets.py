@@ -135,8 +135,8 @@ def generate_stock_returns():
         data[["Time", "Open", "High", "Low", "Close", "Volume"]].values,
         validation_idx=val_idx,
         test_idx=tst_idx,
-        n_past=1200,
-        n_future=240
+        n_past=480,
+        n_future=48
     )
     X_train = X_train[:, 1:, :]
     y_train = y_train[:, 1:, :]
