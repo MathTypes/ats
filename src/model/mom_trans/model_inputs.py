@@ -1,6 +1,7 @@
 """Model Inputs"""
 # import mom_trans.utils as utils
 import numpy as np
+import logging
 import sklearn.preprocessing
 import pandas as pd
 import datetime as dt
@@ -358,8 +359,8 @@ class ModelFeatures:
             column_definitions,
             {InputTypes.ID, InputTypes.TIME, InputTypes.TARGET},
         )
-
-        data = df[real_inputs].values
+        logging.info(f"df:{df.columns}")
+        data = df.loc[:, real_inputs].values
         self._real_scalers = sklearn.preprocessing.StandardScaler().fit(data)
         self._target_scaler = sklearn.preprocessing.StandardScaler().fit(
             df[[target_column]].values
@@ -616,7 +617,7 @@ class ModelFeatures:
                 active_entries = np.ones((arr.shape[0], arr.shape[1], arr.shape[2]))
                 for i in range(batch_size):
                     active_entries[i, sequence_lengths[i] :, :] = 0
-                sequence_lengths = np.array(sequence_lengths, dtype=np.int)
+                sequence_lengths = np.array(sequence_lengths, dtype=int)
 
                 if "active_entries" not in data_map:
                     data_map["active_entries"] = [

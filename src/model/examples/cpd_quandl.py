@@ -37,6 +37,10 @@ if __name__ == "__main__":
             help="Ticker type",
         )
         parser.add_argument(
+            "intraday", metavar="i", type=bool, action="store_true",
+            help="Intraday modeling"
+        )
+        parser.add_argument(
             "output_file_path",
             metavar="f",
             type=str,
@@ -80,7 +84,8 @@ if __name__ == "__main__":
             args.output_file_path,
             start_date,
             end_date,
-            args.lookback_window_length
+            args.lookback_window_length,
+            args.intraday
         )
 
     main(*get_args())

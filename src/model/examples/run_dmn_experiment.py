@@ -7,6 +7,7 @@ from settings.fixed_params import MODLE_PARAMS
 from mom_trans.backtest import run_all_windows
 import numpy as np
 from functools import reduce
+from util import logging_utils
 
 # define the asset class of each ticker here - for this example we have not done this
 TEST_MODE = True
@@ -15,6 +16,7 @@ TRAIN_VALID_RATIO = 0.90
 TIME_FEATURES = True
 FORCE_OUTPUT_SHARPE_LENGTH = None
 EVALUATE_DIVERSIFIED_VAL_SHARPE = True
+#EVALUATE_DIVERSIFIED_VAL_SHARPE = False
 
 # TODO NAME
 # NAME = "exp_mom_trans_TFT_daily" # mod: for momentum transfomer tests
@@ -175,6 +177,7 @@ def main(
     else:
         raise BaseException("Invalid experiment.")
 
+    logging_utils.init_logging()
     versions = range(1, 1 + num_repeats) if not TEST_MODE else [1]
 
     experiment_prefix = (

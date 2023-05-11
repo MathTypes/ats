@@ -8,7 +8,8 @@ from settings.default import (
     CPD_DEFAULT_LBW,
 )
 
-N_WORKERS = len(QUANDL_TICKERS)
+#N_WORKERS = len(QUANDL_TICKERS)
+N_WORKERS = 5
 
 
 def main(lookback_window_length: int):

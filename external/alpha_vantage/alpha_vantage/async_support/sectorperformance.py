@@ -1,1 +1,0 @@
-../sectorperformance.py

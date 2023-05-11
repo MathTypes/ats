@@ -1,3 +1,0 @@
-# Chemistry
-
-::: janitor.chemistry
