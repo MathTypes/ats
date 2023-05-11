@@ -145,11 +145,11 @@ class LSTMLogPredictionsCallback(Callback):
         self.val_inputs, self.val_labels = val_samples
         self.val_inputs = self.val_inputs[-num_samples:]
         self.val_labels = self.val_labels[-num_samples:]
-        self.val_times = self.val_inputs[:,0,...]
-        self.val_inputs = self.val_inputs[:,1:,...]
-        self.val_labels = self.val_labels[:,1:,...]
+        #self.val_times = self.val_inputs[:,0,...]
+        #self.val_inputs = self.val_inputs[:,1:,...]
+        #self.val_labels = self.val_labels[:,1:,...]
         self.criterion = torch.nn.L1Loss(reduction="none")
-        logging.info(f"val_times:{self.val_times}")
+        #logging.info(f"val_times:{self.val_times}")
         logging.info(f"val_times_shape:{self.val_times.shape}")
         logging.info(f"val_inputs_shape:{self.val_inputs.shape}")
         logging.info(f"val_labels_shape:{self.val_labels.shape}")
@@ -194,21 +194,22 @@ class LSTMLogPredictionsCallback(Callback):
                 x = val_inputs[i*4+j].cpu()
                 pred = preds[i*4+j].cpu()
                 y = val_labels[i*4+j].cpu()
-                times = val_times[i*4+j].cpu()
+                #times = val_times[i*4+j].cpu()
                 open = x[0]
                 high = x[1]
                 low = x[2]
                 close = x[3]
                 pred_close = pred[3]
+                logging.info(f"pred_close:{pred_close.shape}")
                 #pred_close = pred
                 y_close = y[3]
                 #y_close = y
                 #logging.info(f"time:{times}")
                 ax1 = fig.add_subplot(1, 4, j+1)
                 ax1.plot(np.arange(close.shape[0]), close, label='Training data')
-                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+5), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
-                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+5), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
-                now = datetime.fromtimestamp(times.numpy()[-1])
-                ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
+                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred_close.shape[0]), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
+                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred_close.shape[0]), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
+                #now = datetime.fromtimestamp(times.numpy()[-1])
+                #ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
                 ax1.set_ylabel('y')
             self.wandb_logger.log_image(f"chart-{i}", images=[fig])
