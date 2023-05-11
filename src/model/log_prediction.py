@@ -87,7 +87,7 @@ class LogPredictionsCallback(Callback):
                     forecast_window=pl_module.forecast_window,
                     batch_size=src.shape[1]
                     ).to('cuda')
-                loss = self.compute_loss(prediction, tgt_y)
+                loss = pl_module.compute_loss(prediction, tgt_y)
                 top_ind, top_loss = topk_by_sort(loss, 10)
                 for ind in top_ind:
                     fig = plt.figure()
