@@ -103,8 +103,8 @@ class LogPredictionsCallback(Callback):
                     x = src[:,ind,:].cpu()
                     pred = prediction[:,ind,:].cpu()
                     y = tgt_y[:,ind,:].cpu()
-                    time = times[:ind].cpu()
-                    logging.info(f"time:{time.shape}")
+                    logging.info(f"times:{times.shape}")
+                    time = times[:,ind].cpu()
                     close = x[:,3]
                     pred_close = pred[:].squeeze(-1)
                     y_close = y[:,3].squeeze(-1)
