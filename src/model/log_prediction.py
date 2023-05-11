@@ -109,7 +109,7 @@ class LogPredictionsCallback(Callback):
                     time = times[:,ind].cpu()
                     close = x[:,3]
                     pred_close = pred[:].squeeze(-1)
-                    y_close = y[:,3].squeeze(-1)
+                    y_close = y[:].squeeze(-1)
                     ax1 = fig.add_subplot(1, 1, 1)
                     ax1.plot(np.arange(close.shape[0]), close, label='Training data')
                     ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
