@@ -101,23 +101,23 @@ class TimeSeriesTFT(pl.LightningModule):
         self.encoder_input_layer = nn.Linear(
             in_features=input_size, 
             out_features=dim_val 
-            ).to(dev)
+            ).to(self.dev)
 
         self.decoder_input_layer = nn.Linear(
             in_features=num_predicted_features,
             out_features=dim_val
-            ).to(dev)  
+            ).to(self.dev)  
         
         self.linear_mapping = nn.Linear(
             in_features=dim_val, 
             out_features=num_predicted_features
-            ).to(dev)
+            ).to(self.dev)
 
         # Create positional encoder
         self.positional_encoding_layer = pe.PositionalEncoder(
             d_model=dim_val,
             dropout=dropout_pos_enc
-            ).to(dev)
+            ).to(self.dev)
 
         # The encoder layer used in the paper is identical to the one used by
         # Vaswani et al (2017) on which the PyTorch module is based.
@@ -127,7 +127,7 @@ class TimeSeriesTFT(pl.LightningModule):
             dim_feedforward=dim_feedforward_encoder,
             dropout=dropout_encoder,
             batch_first=batch_first
-            ).to(dev)
+            ).to(self.dev)
 
         # Stack the encoder layers in nn.TransformerDecoder
         # It seems the option of passing a normalization instance is redundant
@@ -138,7 +138,7 @@ class TimeSeriesTFT(pl.LightningModule):
             encoder_layer=encoder_layer,
             num_layers=n_encoder_layers, 
             norm=None
-            ).to(dev)
+            ).to(self.dev)
 
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=dim_val,
@@ -146,7 +146,7 @@ class TimeSeriesTFT(pl.LightningModule):
             dim_feedforward=dim_feedforward_decoder,
             dropout=dropout_decoder,
             batch_first=batch_first
-            ).to(dev)
+            ).to(self.dev)
 
         # Stack the decoder layers in nn.TransformerDecoder
         # It seems the option of passing a normalization instance is redundant
@@ -157,15 +157,15 @@ class TimeSeriesTFT(pl.LightningModule):
             decoder_layer=decoder_layer,
             num_layers=n_decoder_layers, 
             norm=None
-            ).to(dev)
+            ).to(self.dev)
         self.tgt_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=forecast_window,
             dim2=forecast_window
-            ).to(dev)
+            ).to(self.dev)
         self.src_mask = timeseries_utils.generate_square_subsequent_mask(
             dim1=forecast_window,
             dim2=self.dec_seq_len
-            ).to(dev)
+            ).to(self.dev)
 
     def forward(self, X):
         """
