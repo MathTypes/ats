@@ -47,9 +47,9 @@ class AtsDataModule(pl.LightningDataModule):
             raise KeyError(f"Not supported dataset: {self.dataset}.")
 
         X_train, X_val, X_test = _tup
-        self.X_train = torch.from_numpy(X_train).double()
-        self.X_val = torch.from_numpy(X_val).double()
-        self.X_test = torch.from_numpy(X_test).double()
+        self.X_train = torch.from_numpy(X_train)
+        self.X_val = torch.from_numpy(X_val)
+        self.X_test = torch.from_numpy(X_test)
         logging.info(f"X_Train:{self.X_train.shape}")
         logging.info(f"X_eval:{self.X_val[0:2]}")
 
