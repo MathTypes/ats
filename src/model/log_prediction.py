@@ -57,8 +57,8 @@ class LogPredictionsCallback(Callback):
             )
         for i, batch in enumerate(self.val_wrapper):
             src, _, tgt_y = batch
-            logging.info(f"src:{src.shape}")
-            logging.info(f"tgt_y:{tgt_y.shape}")
+            #logging.info(f"src:{src.shape}")
+            #logging.info(f"tgt_y:{tgt_y.shape}")
             time = src[:,5]
             src = src[:,:5]
             tgt_y = tgt_y[:,:5]
@@ -73,7 +73,7 @@ class LogPredictionsCallback(Callback):
                 src = torch.from_numpy(np.stack(src_vec))
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
                 times = torch.from_numpy(np.stack(time_vec)).squeeze(-1)
-                logging.info(f"time:{times.shape}")
+                #logging.info(f"time:{times.shape}")
                 if pl_module.batch_first == False:
                     shape_before = src.shape
                     src = src.permute(1, 0, 2)
@@ -95,8 +95,8 @@ class LogPredictionsCallback(Callback):
                     ).to('cuda')
                 #logging.info(f"src:{src.shape}")
                 #logging.info(f"tgt_y:{tgt_y.shape}")
-                logging.info(f"times:{times.shape}")
-                logging.info(f"times:{times}")
+                #logging.info(f"times:{times.shape}")
+                #logging.info(f"times:{times}")
                 fig_cnt = src.shape[1] // 4
                 for i in range(0, fig_cnt):
                     fig = plt.figure()

@@ -185,12 +185,12 @@ class TimeSeriesTFT(pl.LightningModule):
                       using data points from the target sequence
         """
         (src, tgt, src_mask, tgt_mask) = X
-        logging.info(f"src:{src.shape}")
-        logging.info(f"tgt:{tgt.shape}")
+        #logging.info(f"src:{src.shape}")
+        #logging.info(f"tgt:{tgt.shape}")
         src = src[:,:,:5]
         tgt = tgt[:,:,:5]
-        logging.info(f"new_src:{src.shape}")
-        logging.info(f"new_tgt:{tgt.shape}")
+        #logging.info(f"new_src:{src.shape}")
+        #logging.info(f"new_tgt:{tgt.shape}")
         #src = src.to('cuda')
         #tgt = tgt.to('cuda')
         #print("From model.forward(): Size of src as given to forward(): {}".format(src.size()))
@@ -287,12 +287,12 @@ class TimeSeriesTFT(pl.LightningModule):
 
             shape_before = trg_y.shape
             trg_y = trg_y.permute(1, 0, 2)
-        logging.info(f"src:{src.shape}")
-        logging.info(f"trg_y:{trg_y.shape}")
+        #logging.info(f"src:{src.shape}")
+        #logging.info(f"trg_y:{trg_y.shape}")
         src = src[:,:,:5]
         trg_y = trg_y[:,:,:5]
-        logging.info(f"new_src:{src.shape}")
-        logging.info(f"new_trg_y:{trg_y.shape}")
+        #logging.info(f"new_src:{src.shape}")
+        #logging.info(f"new_trg_y:{trg_y.shape}")
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src,
@@ -307,12 +307,12 @@ class TimeSeriesTFT(pl.LightningModule):
         if self.batch_first == False:
             src = src.permute(1, 0, 2)
             trg_y = trg_y.permute(1, 0, 2)
-        logging.info(f"src:{src.shape}")
-        logging.info(f"tgt:{tgt.shape}")
+        #logging.info(f"src:{src.shape}")
+        #logging.info(f"tgt:{tgt.shape}")
         src = src[:,:,:5]
         trg_y = trg_y[:,:,:5]
-        logging.info(f"new_src:{src.shape}")
-        logging.info(f"new_trg_y:{trg_y.shape}")
+        #logging.info(f"new_src:{src.shape}")
+        #logging.info(f"new_trg_y:{trg_y.shape}")
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 
