@@ -104,7 +104,7 @@ class LogPredictionsCallback(Callback):
                     fig = plt.figure()
                     fig.set_figwidth(40)
                     x = src[:,ind,:].cumsum(dim=1).cpu()
-                    pred = prediction[:,ind].cumsum(dim=1).cpu()
+                    pred = prediction[:,ind].cumsum(dim=0).cpu()
                     y = tgt_y[:,ind].cumsum(dim=0).cpu()
                     time = times[:,ind].cpu()
                     close = x[:,3]
