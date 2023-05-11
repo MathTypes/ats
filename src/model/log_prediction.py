@@ -97,6 +97,7 @@ class LogPredictionsCallback(Callback):
                 logging.info(f"src:{src.shape}")
                 logging.info(f"times:{times.shape}")
                 loss = self.compute_loss(prediction, tgt_y)
+                loss = torch.mean(loss, dim=0).squeeze(0)
                 logging.info(f"loss:{loss.shape}")
                 top_ind, top_loss = self.topk_by_sort(loss.to("cpu").numpy(), 10)
                 for ind in top_ind:
