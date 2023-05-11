@@ -87,7 +87,7 @@ class LogPredictionsCallback(Callback):
                     else:
                         tgt_y = tgt_y.permute(1, 0)
                 src = src.to('cuda')
-                tgt_y = tgt_y.to('cuda')
+                tgt_y = tgt_y[:,:,3].to('cuda')
                 
                 prediction = inference.run_encoder_decoder_inference(
                     model=pl_module.to('cuda'), 
@@ -108,6 +108,7 @@ class LogPredictionsCallback(Callback):
                     pred = prediction[:,ind,:].cpu()
                     y = tgt_y[:,ind,:].cpu()
                     time = times[:ind].cpu()
+                    logging.info(f"time:{time.shape}")
                     close = x[:,3]
                     pred_close = pred[:].squeeze(-1)
                     y_close = y[:,3].squeeze(-1)
