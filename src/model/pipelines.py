@@ -45,4 +45,4 @@ class TFTPipeline(Pipeline):
             forecast_window=forecast_window,
             num_predicted_features=1,
             device=dev
-        ).to(dev)
+        ).float().to(dev)
