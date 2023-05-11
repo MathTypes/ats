@@ -44,10 +44,6 @@ class LogPredictionsCallback(Callback):
         return ind, val
 
     def compute_loss(self, y_hat, y):
-        y_hat[:,0:3,:] = 0
-        y[:,0:3,:] = 0
-        y_hat[:,4,:] = 0
-        y[:,4,:] = 0
         loss = self.criterion(y_hat, y)
         return loss
 
