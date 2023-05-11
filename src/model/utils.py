@@ -101,14 +101,15 @@ class Pipeline:
         #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
-        log_predictions_callback = LogPredictionsCallback(wandb_logger,
-                                                          self.data_module.X_test,
-                                                          window_size=self.data_module.window_size,
-                                                          step_size=self.data_module.step_size,
-                                                          enc_seq_len=self.data_module.enc_seq_len,
-                                                          dec_seq_len=self.data_module.dec_seq_len,
-                                                          device="cuda",
-                                                          output_sequence_length=self.data_module.output_sequence_length)
+        #log_predictions_callback = LogPredictionsCallback(wandb_logger,
+        #                                                  self.data_module.X_test,
+        #                                                  window_size=self.data_module.window_size,
+        #                                                  step_size=self.data_module.step_size,
+        #                                                  enc_seq_len=self.data_module.enc_seq_len,
+        #                                                  dec_seq_len=self.data_module.dec_seq_len,
+        #                                                  device="cuda",
+        #                                                  output_sequence_length=self.data_module.output_sequence_length)
+        log_predictions_callback = LogPredictionsCallback(wandb_logger, [self.data_module.X_test, self.data_module.y_test])
         # till 5th epoch, it will accumulate every 8 batches. From 5th epoch
         # till 9th epoch it will accumulate every 4 batches and after that no accumulation
         # will happen. Note that you need to use zero-indexed epoch keys here
