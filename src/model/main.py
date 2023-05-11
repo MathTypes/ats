@@ -1,3 +1,4 @@
+import argparse
 import logging
 import numpy as np
 import pandas as pd
@@ -9,11 +10,10 @@ from pipelines import (
 from utils import count_parameters
 from torchfitter.io import save_pickle
 from torchfitter.utils.convenience import get_logger
+from util import config_utils
 from util import logging_utils
 
 RESULTS_PATH = Path("results")
-
-logging_utils.init_logging()
 
 if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
@@ -22,6 +22,11 @@ if __name__ == "__main__":
         #TFTPipeline
         AttentionEmbeddingLSTMPipeline
     ]
+    parser = config_utils.get_arg_parser("Preprocess tweet")
+    parser.add_argument("device", type=str)
+    args = parser.parse_args()
+    config_utils.set_args(args)
+    logging_utils.init_logging()
 
     for key in datasets:
         folder = RESULTS_PATH / f"{key}"
@@ -31,6 +36,6 @@ if __name__ == "__main__":
             pipe = _pipe(dataset=key)
             pip_name = _pipe.__name__
             logging.info(f"TRAINING: {pip_name}")
-            pipe.create_model()
+            pipe.create_model(args.device)
             logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
             pipe.train_model()

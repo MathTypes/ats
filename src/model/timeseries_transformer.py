@@ -94,19 +94,12 @@ class TimeSeriesTFT(pl.LightningModule):
         self.dec_seq_len = dec_seq_len
         self.forecast_window = forecast_window
         self.batch_first = batch_first
-        #print("input_size is: {}".format(input_size))
-        #print("dim_val is: {}".format(dim_val))
 
         # Creating the three linear layers needed for the model
         self.encoder_input_layer = nn.Linear(
             in_features=input_size, 
             out_features=dim_val 
             ).to(self.dev)
-        #self.encoder_input_layer = nn.Dense(
-        #    64, activation="relu", input_dim=input_size
-        #    in_features=dim_val, 
-        #    out_features=num_predicted_features
-        #).to(self.dev)
 
 
         self.decoder_input_layer = nn.Linear(

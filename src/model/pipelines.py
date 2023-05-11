@@ -56,7 +56,7 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
         super().__init__()
         self.dataset = dataset
 
-    def create_model(self):
+    def create_model(self, device):
         self.data_module = AtsDataModule("stock_returns")
         X_train = self.data_module.X_train
         y_train = self.data_module.y_train
@@ -71,4 +71,4 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
             input_size=X_train.shape[2],
             out_size=y_train.shape[-1]
         )
-        self.model = model
+        self.model = model.to(device)
