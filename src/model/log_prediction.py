@@ -17,15 +17,15 @@ from torch.utils.data import DataLoader
 
 
 class LogPredictionsCallback(Callback):
-    def __init__(self, wandb_logger, X_val, window_size, step_size, enc_seq_len,
+    def __init__(self, wandb_logger, X_test, window_size, step_size, enc_seq_len,
                  dec_seq_len, output_sequence_length, num_samples=2048):
         '''method used to define our model parameters'''
         super().__init__()
         self.wandb_logger = wandb_logger
-        self.X_val = X_val
+        self.X_test = X_test
         self.criterion = torch.nn.L1Loss(reduction="none").to('cuda')
         self.val_indices = timeseries_utils.get_indices_entire_sequence(
-            data=self.X_val[-1024:].numpy(), 
+            data=self.X_test[-1024:].numpy(), 
             window_size=window_size, 
             step_size=step_size)
         self.enc_seq_len = enc_seq_len
@@ -52,8 +52,8 @@ class LogPredictionsCallback(Callback):
         tgt_y_vec = []
         time_vec = []
         self.val_wrapper = timeseries_dataset.TransformerDataset(
-            data=self.X_val[-1024:],
-            indices=self.val_indices,
+            data=self.X_test[-1024:],
+            indices=self.test_indices,
             enc_seq_len=self.enc_seq_len,
             dec_seq_len=self.dec_seq_len,
             target_seq_len=self.output_sequence_length
@@ -92,13 +92,13 @@ class LogPredictionsCallback(Callback):
                     batch_size=src.shape[1]
                     ).squeeze().to('cuda')
                 
-                logging.info(f"prediction:{prediction.shape}")
-                logging.info(f"tgt_y:{tgt_y.shape}")
-                logging.info(f"src:{src.shape}")
-                logging.info(f"times:{times.shape}")
+                #logging.info(f"prediction:{prediction.shape}")
+                #logging.info(f"tgt_y:{tgt_y.shape}")
+                #logging.info(f"src:{src.shape}")
+                #logging.info(f"times:{times.shape}")
                 loss = self.compute_loss(prediction, tgt_y)
                 loss = torch.mean(loss, dim=0).squeeze(0)
-                logging.info(f"loss:{loss.shape}")
+                #logging.info(f"loss:{loss.shape}")
                 top_ind, top_loss = self.topk_by_sort(loss.to("cpu").numpy(), 10)
                 for ind in top_ind:
                     fig = plt.figure()

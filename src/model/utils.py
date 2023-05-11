@@ -115,7 +115,7 @@ class Pipeline:
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
         log_predictions_callback = LogPredictionsCallback(wandb_logger,
-                                                          self.data_module.X_val,
+                                                          self.data_module.X_test,
                                                           window_size=self.data_module.window_size,
                                                           step_size=self.data_module.step_size,
                                                           enc_seq_len=self.data_module.enc_seq_len,
