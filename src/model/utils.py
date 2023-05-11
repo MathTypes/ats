@@ -112,10 +112,10 @@ class Pipeline:
         # till 5th epoch, it will accumulate every 8 batches. From 5th epoch
         # till 9th epoch it will accumulate every 4 batches and after that no accumulation
         # will happen. Note that you need to use zero-indexed epoch keys here
-        accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
+        #accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback,
-                                        accumulator, StochasticWeightAveraging(swa_lrs=1e-2)],
+                                        StochasticWeightAveraging(swa_lrs=1e-2)],
                              devices=-1, accelerator='gpu',
                              precision="bf16",
                              accumulate_grad_batches=7,
