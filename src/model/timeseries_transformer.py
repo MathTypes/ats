@@ -88,6 +88,7 @@ class TimeSeriesTFT(pl.LightningModule):
 
         super().__init__() 
 
+        self.automatic_optimization = False
         self.criterion = torch.nn.L1Loss().to(device)
         #self.criterion = torch.nn.MSELoss()
         self.dev = device
