@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from utils import Pipeline
 from timeseries_transformer import TimeSeriesTFT
-from data_module import AtsDataModule
+from data_module import TransformerDataModule, LSTMDataModule
 from models import (
     AttentionEmbeddingLSTM
 )
@@ -34,9 +34,9 @@ class TFTPipeline(Pipeline):
         self.dataset = dataset
 
     def create_model(self):
-        self.data_module = AtsDataModule("stock_returns",
-                                         output_sequence_length=forecast_window,
-                                         batch_size=2048)
+        self.data_module = TransformerDataModule("stock_returns",
+                                                 output_sequence_length=forecast_window,
+                                                 batch_size=2048)
         X_train = self.data_module.X_train
         dev = "cuda"
 
@@ -57,7 +57,7 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
         self.dataset = dataset
 
     def create_model(self, device):
-        self.data_module = AtsDataModule("stock_returns")
+        self.data_module = LSTMDataModule("stock_returns")
         X_train = self.data_module.X_train
         y_train = self.data_module.y_train
         features = X_train.shape[1]
