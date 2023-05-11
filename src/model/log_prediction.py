@@ -33,7 +33,7 @@ class LogPredictionsCallback(Callback):
         self.output_sequence_length = output_sequence_length
         #self.val_loader = DataLoader(val_wrapper, batch_size=20, pin_memory=True, num_workers=8)
 
-    def topk_by_sort(input, k, axis=None, ascending=True):
+    def topk_by_sort(self.input, k, axis=None, ascending=True):
         if not ascending:
             input *= -1
         ind = np.argsort(input, axis=axis)
@@ -88,7 +88,7 @@ class LogPredictionsCallback(Callback):
                     batch_size=src.shape[1]
                     ).to('cuda')
                 loss = pl_module.compute_loss(prediction, tgt_y)
-                top_ind, top_loss = topk_by_sort(loss, 10)
+                top_ind, top_loss = self.topk_by_sort(loss, 10)
                 for ind in top_ind:
                     fig = plt.figure()
                     fig.set_figwidth(40)
