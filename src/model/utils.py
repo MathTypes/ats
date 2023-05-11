@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
 
-from data_module import AtsDataModule
+from data_module import LSTMDataModule, TransformerDataModule
 from log_prediction import LogPredictionsCallback
 import wandb
 from wandb.keras import WandbCallback
