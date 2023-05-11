@@ -62,14 +62,17 @@ class Time2Vec(nn.Module):
         
         self.linear_channel = linear_channel
         self.period_channel = period_channel
-        
+        logging.info(f"input_channel:{input_channel}, linear_channel:{linear_channel}")
         self.linear_fc = nn.Linear(input_channel, linear_channel)
         self.period_fc = nn.Linear(input_channel, period_channel)
         self.period_activation = period_activation
 
     def forward(self, x):
+        logging.info(f"x:{x.shape}")
         linear_vec = self.linear_fc(x)
+        logging.info(f"linear_vec:{linear_vec.shape}")
         period_vec = self.period_activation(self.period_fc(x))
+        logging.info(f"period_vec:{period_vec.shape}")
         return torch.cat([linear_vec, period_vec], dim=-1)
 
 
