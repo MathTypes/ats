@@ -122,7 +122,7 @@ class LogPredictionsCallback(Callback):
                         ax1.plot(np.arange(close.shape[0]), close, label='Training data')
                         ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
                         ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred.shape[0]), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
-                        now = datetime.fromtimestamp(int64(time.numpy()[-1]))
+                        now = datetime.fromtimestamp(int(time.numpy()[-1]))
                         ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
                         ax1.set_ylabel('y')
                     self.wandb_logger.log_image(f"chart-{i}", images=[fig])
