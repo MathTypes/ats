@@ -231,6 +231,9 @@ class TimeSeriesTFT(pl.LightningModule):
         if y_hat.dim()==3:
             y_hat = torch.squeeze(y_hat)
         loss = self.criterion.to(self.dev)(y_hat.to(self.dev), y.to(self.dev))
+        assert not torch.isnan(y_hat).any()
+        assert not torch.isnan(y).any()
+        assert not torch.isnan(loss).any()
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -252,6 +255,7 @@ class TimeSeriesTFT(pl.LightningModule):
         src = src[:,:,:5]
         trg = trg.unsqueeze(-1)
         trg_y = trg_y.unsqueeze(-1)
+        assert not torch.isnan(src).any()
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
         loss = self.compute_loss(y_hat, trg_y)
         self.log('train_loss', loss)
@@ -270,6 +274,7 @@ class TimeSeriesTFT(pl.LightningModule):
             if trg_y.dim() == 3:
                 trg_y = trg_y[:,:,3]
         src = src[:,:,:5]
+        assert not torch.isnan(src).any()
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src,
@@ -292,6 +297,7 @@ class TimeSeriesTFT(pl.LightningModule):
             if trg_y.dim() == 3:
                 trg_y = trg_y[:,:,3]
         src = src[:,:,:5]
+        assert not torch.isnan(src).any()
         prediction = inference.run_encoder_decoder_inference(
                 model=self, 
                 src=src, 
