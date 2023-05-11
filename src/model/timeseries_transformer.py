@@ -88,7 +88,6 @@ class TimeSeriesTFT(pl.LightningModule):
 
         super().__init__() 
 
-        self.automatic_optimization = False
         self.criterion = torch.nn.L1Loss().to(device)
         #self.criterion = torch.nn.MSELoss()
         self.dev = device
@@ -258,39 +257,9 @@ class TimeSeriesTFT(pl.LightningModule):
         trg_y = trg_y.unsqueeze(-1)
         assert not torch.isnan(src).any()
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
-        opt = self.optimizers()
-        opt.zero_grad()
         loss = self.compute_loss(y_hat, trg_y)
-        self.manual_backward(loss)
-        opt.step()
         self.log('train_loss', loss)
         return loss
-
-    def optimizer_step(
-        self,
-        epoch,
-        batch_idx,
-        optimizer,
-        optimizer_idx,
-        optimizer_closure,
-        on_tpu=False,
-        using_lbfgs=False,
-    ):
-        """
-        Skipping updates in case of unstable gradients
-        https://github.com/Lightning-AI/lightning/issues/4956
-        """
-        valid_gradients = True
-        for name, param in self.named_parameters():
-            if param.grad is not None:
-                # valid_gradients = not (torch.isnan(param.grad).any() or torch.isinf(param.grad).any())
-                valid_gradients = not (torch.isnan(param.grad).any())
-                if not valid_gradients:
-                    break
-        if not valid_gradients:
-            print("detected inf or nan values in gradients. not updating model parameters")
-            self.zero_grad()
-        optimizer.step(closure=optimizer_closure)
 
     def on_after_backward(self) -> None:
         """
