@@ -179,7 +179,7 @@ class LSTMLogPredictionsCallback(Callback):
         val_inputs = self.val_inputs[ind]
         preds = preds[ind]
         val_labels = self.val_labels[ind]
-        val_times = self.val_times[ind]
+        #val_times = self.val_times[ind]
         logging.info(f"after ind:{ind}")
 
         logging.info(f"preds:{preds.shape}")
