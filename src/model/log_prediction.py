@@ -168,7 +168,7 @@ class LSTMLogPredictionsCallback(Callback):
         #wandb.init()
         val_inputs = self.val_inputs.to(device=pl_module.device)
         preds = pl_module(val_inputs)
-        logging.info(f"pred:{self.preds[0]}")
+        logging.info(f"pred:{preds[0]}")
         logging.info(f"val_labels:{self.val_labels[0]}")
         metrics = self.criterion(preds, self.val_labels.to(device=pl_module.device)).cpu()
         metrics = torch.sum(metrics, dim=2)
