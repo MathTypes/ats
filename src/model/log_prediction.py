@@ -202,7 +202,7 @@ class LSTMLogPredictionsCallback(Callback):
                 low = x[2]
                 close = x[3]
                 pred_close = pred[3]
-                logging.info(f"pred_close:{pred_close.shape}")
+                #logging.info(f"pred_close:{pred_close.shape}")
                 #pred_close = pred
                 y_close = y[3]
                 #y_close = y
