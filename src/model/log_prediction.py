@@ -168,25 +168,25 @@ class LSTMLogPredictionsCallback(Callback):
         #wandb.init()
         val_inputs = self.val_inputs.to(device=pl_module.device)
         preds = pl_module(val_inputs)
-        logging.info(f"pred:{preds[0]}")
-        logging.info(f"val_labels:{self.val_labels[0]}")
+        #logging.info(f"pred:{preds[0]}")
+        #logging.info(f"val_labels:{self.val_labels[0]}")
         metrics = self.criterion(preds, self.val_labels.to(device=pl_module.device)).cpu()
         metrics = torch.sum(metrics, dim=2)
         metrics = torch.sum(metrics, dim=1)
-        logging.info(f"metrics:{metrics.shape}")
-        logging.info(f"metrics:{metrics}")
+        #logging.info(f"metrics:{metrics.shape}")
+        #logging.info(f"metrics:{metrics}")
         ind = np.argsort(metrics, axis=0)
-        logging.info(f"ind:{ind}")
+        #logging.info(f"ind:{ind}")
         ind = np.take(ind, np.arange(128), axis=0)
         val_inputs = self.val_inputs[ind]
         preds = preds[ind]
         val_labels = self.val_labels[ind]
         #val_times = self.val_times[ind]
-        logging.info(f"after ind:{ind}")
+        #logging.info(f"after ind:{ind}")
 
-        logging.info(f"preds:{preds.shape}")
-        logging.info(f"val_inputs:{val_inputs.shape}")
-        logging.info(f"val_labels:{val_labels.shape}")
+        #logging.info(f"preds:{preds.shape}")
+        #logging.info(f"val_inputs:{val_inputs.shape}")
+        #logging.info(f"val_labels:{val_labels.shape}")
         #fig = plt.figure(figsize=(400,200))
         fig_cnt = val_inputs.shape[0] // 4
         for i in range(0, fig_cnt):
