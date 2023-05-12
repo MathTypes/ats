@@ -1,3 +1,4 @@
+from typing import List, Optional, Tuple, Union
 import statistics
 import torch
 import logging
@@ -7,6 +8,15 @@ import wandb
 import pytorch_lightning as pl
 torch.manual_seed(0)
 from torch.nn import functional as F
+import timeseries_utils
+from transformers.modeling_outputs import (
+    BaseModelOutput,
+    BaseModelOutputWithPastAndCrossAttentions,
+    SampleTSPredictionOutput,
+    Seq2SeqTSModelOutput,
+    Seq2SeqTSPredictionOutput,
+)
+from transformers.models.time_series_transformer.configuration_time_series_transformer import TimeSeriesTransformerConfig
 
 class AttentionEmbeddingLSTM(pl.LightningModule):
     """
@@ -21,9 +31,11 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         out_size,
         hidden_size=4,
         n_layers=2,
-        dropout_rate=0.2
+        dropout_rate=0.2,
+        config: TimeSeriesTransformerConfig = None
     ):
         super(AttentionEmbeddingLSTM, self).__init__()
+        self.scaler = timeseries_utils.TimeSeriesStdScaler(dim=2, keepdim=True)
         #self.criterion = nn.HuberLoss()
         #self.criterion = torch.nn.MAELoss(reduction='sum')
         self.criterion = torch.nn.L1Loss()
@@ -41,12 +53,36 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         self.val_outptus = []
         self.test_outputs = []
 
-    def forward(self, X):
-        out = self.emb(X)
+    def forward(self, X,
+        output_hidden_states: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        use_cache: Optional[bool] = None,
+        return_dict: Optional[bool] = None) -> Union[Seq2SeqTSModelOutput, Tuple]:
+
+        past_values = X
+        future_values = None
+        past_observed_mask = torch.ones_like(past_values)
+        _, loc, scale = self.scaler(past_values, past_observed_mask)
+        #logging.info(f"loc:{loc}")
+        inputs = (
+            (torch.cat((past_values, future_values), dim=1) - loc) / scale
+            if future_values is not None
+            else (past_values - loc) / scale
+        )
+
+        out = self.emb(inputs)
         out, w = self.att(out, out, out)
         out, (h, c) = self.lstm(out)
         out = self.dropout(out)
         out = self.lin(out)
+        if not return_dict:
+            return out + (loc, scale)
+        
+        return Seq2SeqTSModelOutput(
+            last_hidden_state=out,
+            loc=loc,
+            scale=scale,
+        )
         return out
 
     def compute_loss(self, y_hat, y):
@@ -63,7 +99,8 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         #y = y.permute(0, 2, 1)
         #logging.info(f"x:{x.shape}")
         #logging.info(f"y:{y.shape}")
-        y_hat = self.forward(x)
+        output = self.forward(x, return_dict= True)
+        y_hat = output[0]
         #logging.info(f"y_hat:{y_hat.shape}")
         loss = self.compute_loss(y_hat, y)
         self.log('train_loss', loss)
@@ -75,7 +112,8 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         #y = y.permute(0, 2, 1)
         #logging.info(f"x:{x.shape}")
         #logging.info(f"y:{y.shape}")
-        y_hat = self.forward(x)
+        output = self.forward(x, return_dict= True)
+        y_hat = output[0]
         #logging.info(f"y_hat:{y_hat.shape}")
         loss = self.compute_loss(y_hat, y)
         self.log('val_loss', loss)
@@ -84,7 +122,8 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         x, y = batch
         x = x.permute(0, 2, 1)
         y = y.permute(0, 2, 1)
-        y_hat = self.forward(x)
+        output = self.forward(x, return_dict= True)
+        y_hat = output[0]
         loss = self.compute_loss(y_hat, y)
         self.log('test_loss', loss)
 

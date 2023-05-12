@@ -1,6 +1,7 @@
 import logging
 import torch
 import numpy as np
+from accelerate import Accelerator
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
@@ -80,7 +81,7 @@ class Pipeline:
     """
     Class to ease the running of multiple experiments.
     """
-    def __init__(self):
+    def __init__(self, device):
         self.model = None
         self.data_module = None
         self.history = None
@@ -88,6 +89,7 @@ class Pipeline:
 
         self.preds = None
         self.tests = None
+        self.device = device
 
     def create_model(self):
         pass
@@ -104,6 +106,7 @@ class Pipeline:
         #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
+        accelerator = Accelerator()
         #log_predictions_callback = LogPredictionsCallback(wandb_logger,
         #                                                  self.data_module.X_test,
         #                                                  window_size=self.data_module.window_size,
@@ -117,10 +120,12 @@ class Pipeline:
         # till 9th epoch it will accumulate every 4 batches and after that no accumulation
         # will happen. Note that you need to use zero-indexed epoch keys here
         #accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
+        devices = 1 if self.device == "cpu" else -1
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback,
                                         StochasticWeightAveraging(swa_lrs=1e-2)],
-                             devices=-1, accelerator='gpu',
+                             devices=devices,
+                             accelerator=self.device,
                              #precision="bf16",
                              accumulate_grad_batches=7,
                              gradient_clip_val=0.5,

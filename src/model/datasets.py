@@ -129,8 +129,6 @@ def generate_stock_returns(n_past, n_futures):
     val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
 
-    logging.info(f"data:{data.values.shape}")
-    logging.info(f"data:{data.values[:30]}")
     X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
         data[["Time", "Open", "High", "Low", "Close", "Volume"]].values,
         validation_idx=val_idx,
@@ -138,6 +136,10 @@ def generate_stock_returns(n_past, n_futures):
         n_past=n_past,
         n_future=n_futures
     )
+    logging.info(f"X_train:{X_train.shape}")
+    logging.info(f"X_train:{X_train[:1]}")
+    logging.info(f"y_train:{y_train.shape}")
+    logging.info(f"y_train:{y_train[:1]}")
     X_train = X_train[:, 1:, :]
     y_train = y_train[:, 1:, :]
     X_val = X_val[:, 1:, :]

@@ -8,8 +8,6 @@ from pipelines import (
     AttentionEmbeddingLSTMPipeline
 )
 from utils import count_parameters
-from torchfitter.io import save_pickle
-from torchfitter.utils.convenience import get_logger
 from util import config_utils
 from util import logging_utils
 
@@ -33,9 +31,9 @@ if __name__ == "__main__":
         folder.mkdir(exist_ok=True)
 
         for _pipe in pipelines:
-            pipe = _pipe(dataset=key)
+            pipe = _pipe(dataset=key, device=args.device)
             pip_name = _pipe.__name__
             logging.info(f"TRAINING: {pip_name}")
-            pipe.create_model(args.device)
+            pipe.create_model()
             logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
             pipe.train_model()

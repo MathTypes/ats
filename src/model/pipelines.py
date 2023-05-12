@@ -29,8 +29,8 @@ input_size = len(input_variables)
 torch.set_float32_matmul_precision('medium')
 
 class TFTPipeline(Pipeline):
-    def __init__(self, dataset="sine_wave"):
-        super().__init__()
+    def __init__(self, dataset="sine_wave", device=None):
+        super().__init__(device)
         self.dataset = dataset
 
     def create_model(self):
@@ -53,11 +53,11 @@ class TFTPipeline(Pipeline):
 
 
 class AttentionEmbeddingLSTMPipeline(Pipeline):
-    def __init__(self, dataset="sine_wave"):
-        super().__init__()
+    def __init__(self, dataset="sine_wave", device=None):
+        super().__init__(device)
         self.dataset = dataset
 
-    def create_model(self, device):
+    def create_model(self):
         self.data_module = LSTMDataModule("stock_returns", batch_size=32, n_past=48, n_future=48)
         X_train = self.data_module.X_train
         y_train = self.data_module.y_train
@@ -72,4 +72,4 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
             input_size=mini_batch,
             out_size=y_train.shape[-1]
         )
-        self.model = model.to(device)
+        self.model = model.to(self.device)

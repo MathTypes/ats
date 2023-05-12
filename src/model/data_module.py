@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 import torch
 import logging
 from torch.utils.data import DataLoader
-from torchvision.transforms import transforms, AutoAugment, AutoAugmentPolicy
 import logging
 from datasets import (
     generate_stock_tokens,
@@ -28,16 +27,6 @@ class TransformerDataModule(pl.LightningDataModule):
         self.output_sequence_length = output_sequence_length
         self.window_size = enc_seq_len + output_sequence_length # used to slice data into sub-sequences
         self.step_size = step_size
-        self.train_transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
-        self.val_transform = transforms.Compose(  
-            [  
-                transforms.ToTensor(),  
-            ]  
-        )  
         self.generate_data()
 
     def generate_data(self):
