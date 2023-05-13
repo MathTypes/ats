@@ -55,7 +55,7 @@ spec:
             secretKeyRef:
               name: credentials-ib-gw-paper
               key: ib-user
-        image: eu.gcr.io/keen-rhino-386415/akolotech/ibc:latest
+        image: gcr.io/keen-rhino-386415/akolotech/ibc/gateway:v1
         livenessProbe:
           httpGet:
             path: /
@@ -68,7 +68,7 @@ spec:
         - containerPort: 4003
           name: ib-gw
           protocol: TCP
-      - image: eu.gcr.io/keen-rhino-386415/akolotech/ibc/healthcheck:v1
+      - image: gcr.io/keen-rhino-386415/akolotech/ibc/healthcheck:v1
         name: ib-gw-paper-healthcheck
         ports:
         - containerPort: 8000
