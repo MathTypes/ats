@@ -12,7 +12,7 @@ resources:
   properties:
     name: ib-trading-subnet
     network: $(ref.ib-trading-net.selfLink)
-    region: europe-west6
+    region: us-west1
     ipCidrRange: 10.172.0.0/20
     privateIpGoogleAccess: true
 - name: ib-trading-net-allow-internal
@@ -41,7 +41,7 @@ resources:
   type: compute.v1.router
   properties:
     network: $(ref.ib-trading-net.selfLink)
-    region: europe-west6
+    region: us-west1
     nats:
     - name: nat-config
       sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
@@ -52,7 +52,7 @@ resources:
 - name: ib-trading
   type: container.v1.cluster
   properties:
-    zone: europe-west6-a
+    zone: us-west1-a
     cluster:
       name: ib-trading
       nodePools:
@@ -84,15 +84,15 @@ resources:
 - name: bastion-host
   type: compute.v1.instance
   properties:
-    machineType: zones/europe-west6-a/machineTypes/f1-micro
-    zone: europe-west6-a
+    machineType: zones/us-west1-a/machineTypes/f1-micro
+    zone: us-west1-a
     networkInterfaces:
     - network: $(ref.ib-trading-net.selfLink)
       subnetwork: $(ref.ib-trading-subnet.selfLink)
     tags:
       items: ["bastion-host"]
     serviceAccounts:
-    - email: xxx-compute@developer.gserviceaccount.com
+    - email: 689144972383-compute@developer.gserviceaccount.com
       scopes:
       - https://www.googleapis.com/auth/cloud-platform
       - https://www.googleapis.com/auth/devstorage.read_only
@@ -110,4 +110,4 @@ resources:
         value: |
           #!/bin/bash
           sudo apt-get -y install kubectl git
-          gcloud container clusters get-credentials ib-trading --zone europe-west6-a --internal-ip
+          gcloud container clusters get-credentials ib-trading --zone us-west1-a --internal-ip

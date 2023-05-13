@@ -44,7 +44,15 @@ class TransformerDataModule(pl.LightningDataModule):
         self.y_val = torch.from_numpy(y_val)
         self.X_test = torch.from_numpy(X_test)
         self.y_test = torch.from_numpy(y_test)
-
+        if self.dataset == "stock_returns":
+            logging.info(f"before:X_train:{self.X_train.shape}")
+            self.X_train = self.X_train.permute(0, 2, 1)
+            logging.info(f"after:X_train:{self.X_train.shape}")
+            self.y_train = self.y_train.permute(0, 2, 1)
+            self.X_val = self.X_val.permute(0, 2, 1)
+            self.y_val = self.y_val.permute(0, 2, 1)
+            self.X_test = self.X_test.permute(0, 2, 1)
+            self.y_test = self.y_test.permute(0, 2, 1)
         logging.info(f"X_Train:{self.X_train.shape}")
         logging.info(f"X_eval:{self.X_val[0:2]}")
 

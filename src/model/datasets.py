@@ -141,11 +141,11 @@ def generate_stock_returns(n_past, n_futures):
     logging.info(f"y_train:{y_train.shape}")
     logging.info(f"y_train:{y_train[:1]}")
     X_train = X_train[:, 1:, :]
-    y_train = y_train[:, 1:, :]
+    y_train = y_train[:, 4, :]
     X_val = X_val[:, 1:, :]
-    y_val = y_val[:, 1:, :]
+    y_val = y_val[:, 4, :]
     X_test = X_test[:, 1:, :]
-    y_test = y_test[:, 1:, :]
+    y_test = y_test[:, 4, :]
     logging.info(f"X_train:{X_train.shape}")
     logging.info(f"y_train:{y_train.shape}")
     logging.info(f"X_val:{X_val.shape}")

@@ -29,7 +29,7 @@ spec:
   selector:
     matchLabels:
       app: ib-trading
-      ib-mode: paper
+      ib-mode: live
       purpose: gateway
   strategy:
     type: Recreate
@@ -44,7 +44,7 @@ spec:
       containers:
       - env:
         - name: TRADING_MODE
-          value: paper
+          value: live
         - name: TWSPASSWORD
           valueFrom:
             secretKeyRef:
@@ -55,7 +55,7 @@ spec:
             secretKeyRef:
               name: credentials-ib-gw-paper
               key: ib-user
-        image: eu.gcr.io/PROJECT_ID/gke/ib-gateway/ibc:latest
+        image: eu.gcr.io/keen-rhino-386415/akolotech/ibc:latest
         livenessProbe:
           httpGet:
             path: /
@@ -68,7 +68,7 @@ spec:
         - containerPort: 4003
           name: ib-gw
           protocol: TCP
-      - image: eu.gcr.io/PROJECT_ID/gke/ib-gateway/healthcheck:latest
+      - image: eu.gcr.io/keen-rhino-386415/akolotech/ibc/healthcheck:v1
         name: ib-gw-paper-healthcheck
         ports:
         - containerPort: 8000

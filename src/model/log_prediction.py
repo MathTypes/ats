@@ -167,17 +167,19 @@ class LSTMLogPredictionsCallback(Callback):
     def on_validation_epoch_end(self, trainer, pl_module):
         #wandb.init()
         val_inputs = self.val_inputs.to(device=pl_module.device)
-        preds = pl_module(val_inputs, return_dict=True)[0]
-
+        future_values = self.val_labels.to(device=pl_module.device)
+        output = pl_module(val_inputs, return_dict= True, future_values=future_values)
+        loss = output.loss
+        logging.info(f"example level loss:{loss}")
+        return
         #logging.info(f"pred:{preds[0]}")
         #logging.info(f"val_labels:{self.val_labels[0]}")
-        metrics = self.criterion(preds, self.val_labels.to(device=pl_module.device)).cpu()
-        metrics = torch.sum(metrics, dim=2)
-        metrics = torch.sum(metrics, dim=1)
+        #metrics = self.criterion(preds, self.val_labels.to(device=pl_module.device)).cpu()
+        #metrics = torch.sum(metrics, dim=2)
+        #metrics = torch.sum(metrics, dim=1)
         #logging.info(f"metrics:{metrics.shape}")
         #logging.info(f"metrics:{metrics}")
         ind = np.argsort(metrics, axis=0)
-        #logging.info(f"ind:{ind}")
         ind = np.take(ind, np.arange(128), axis=0)
         val_inputs = self.val_inputs[ind]
         preds = preds[ind]
