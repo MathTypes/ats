@@ -4,8 +4,10 @@ FROM python:3.9-slim
 ENV TWS_INSTALL_LOG=/root/Jts/tws_install.log \
     ibcIni=/root/ibc/config.ini \
     ibcPath=/opt/ibc \
-    javaPath=/opt/i4j_jres \
+    javaPath=/opt/i4j_jres/Oda-jK0QgTEmVssfllLP \
     twsPath=/root/Jts \
+    TWS_PASSWORD= \
+    TWS_USERID= \
     twsSettingsPath=/root/Jts
 
 # install dependencies

@@ -346,35 +346,37 @@ def scrape_keyword(
     )
     data = keyword_bot.scrap(login, email)
     logging.info(f'done scraping url:{URL}, data:{data}')
-    if output_format.lower() == "json":
-        if filename == "":
-            # if filename was not provided then print the JSON to console
-            return json.dumps(data)
-        elif filename != "":
-            # if filename was provided, save it to that file
-            mode = "w"
-            json_file_location = os.path.join(directory, filename + ".json")
-            if os.path.exists(json_file_location):
-                mode = "r"
-            with open(json_file_location, mode, encoding="utf-8") as file:
-                if mode == "r":
-                    try:
-                        file_content = file.read()
-                        content = json.loads(file_content)
-                    except json.decoder.JSONDecodeError:
-                        logger.warning("Invalid JSON Detected!")
-                        content = {}
-                    file.close()
-                    data.update(content)
-                with open(
-                    json_file_location, "w", encoding="utf-8"
-                ) as file_in_write_mode:
-                    json.dump(data, file_in_write_mode)
-                    logger.setLevel(logging.INFO)
-                    logger.info(
-                        "Data Successfully Saved to {}".format(json_file_location)
-                    )
-    elif output_format.lower() == "csv":
-        if filename == "":
-            filename = keyword
-        json_to_csv(filename=filename, json_data=data, directory=directory)
+    if output_format:
+        if output_format.lower() == "json":
+            if filename == "":
+                # if filename was not provided then print the JSON to console
+                return json.dumps(data)
+            elif filename != "":
+                # if filename was provided, save it to that file
+                mode = "w"
+                json_file_location = os.path.join(directory, filename + ".json")
+                if os.path.exists(json_file_location):
+                    mode = "r"
+                with open(json_file_location, mode, encoding="utf-8") as file:
+                    if mode == "r":
+                        try:
+                            file_content = file.read()
+                            content = json.loads(file_content)
+                        except json.decoder.JSONDecodeError:
+                            logger.warning("Invalid JSON Detected!")
+                            content = {}
+                        file.close()
+                        data.update(content)
+                    with open(
+                        json_file_location, "w", encoding="utf-8"
+                    ) as file_in_write_mode:
+                        json.dump(data, file_in_write_mode)
+                        logger.setLevel(logging.INFO)
+                        logger.info(
+                            "Data Successfully Saved to {}".format(json_file_location)
+                        )
+        elif output_format.lower() == "csv":
+            if filename == "":
+                filename = keyword
+            json_to_csv(filename=filename, json_data=data, directory=directory)
+    return data

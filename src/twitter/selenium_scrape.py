@@ -91,6 +91,8 @@ if __name__ == "__main__":
             if args.email:
                 email = args.email
                 browser_profile = args.browser_profile + "/selenium_profile_" + email
+            logging.info(f"keyword:{keyword}")
+            logging.info(f"browser_profile:{browser_profile}")
             scrape_keyword(
                 keyword = f"{keyword}",
                 since=since,

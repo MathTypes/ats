@@ -12,7 +12,7 @@ class Environment:
     class __Implementation(GcpModule):
 
         ACCOUNT_VALUE_TIMEOUT = 60
-        ENV_VARS = ['K_REVISION', 'PROJECT_ID']
+        ENV_VARS = ['K_REVISION', 'PROJECT_ID', 'TWS_USERID', 'TWS_PASSWORD']
         SECRET_RESOURCE = 'projects/{}/secrets/{}/versions/latest'
 
         def __init__(self, trading_mode, ibc_config):
@@ -22,15 +22,18 @@ class Environment:
             config = {
                 **ibc_config,
                 'tradingMode': self._trading_mode,
-                **self.get_secret(self.SECRET_RESOURCE.format(self._env['PROJECT_ID'], self._trading_mode))
+                #**self.get_secret(self.SECRET_RESOURCE.format(self._env['PROJECT_ID'], self._trading_mode))
             }
+            config["password"] = self._env['TWS_PASSWORD']
+            config["userid"] = self._env['TWS_USERID']
             self._logging.debug({**config, 'password': 'xxx'})
-
+            self._config = config
+            logging.info(f"config:{config}")
             # query config
-            self._config = {
-                **self._db.document('config/common').get().to_dict(),
-                **self._db.document(f'config/{self._trading_mode}').get().to_dict()
-            }
+            #self._config = {
+            #    **self._db.document('config/common').get().to_dict(),
+            #    **self._db.document(f'config/{self._trading_mode}').get().to_dict()
+            #}
 
             # instantiate IB Gateway
             self._ibgw = IBGW(config)

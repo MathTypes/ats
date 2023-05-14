@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 from hashlib import md5
 
@@ -19,7 +20,7 @@ class Intent:
             + json.dumps(kwargs, sort_keys=True)
         )
         self._signature = md5(hashstr.encode()).hexdigest()
-
+        logging.info(f"env:{self._env}")
         # activity log for Firestore
         self._activity_log = {
             "agent": self._env.env["K_REVISION"],
@@ -46,7 +47,9 @@ class Intent:
         retval = {}
         exc = None
         try:
+            logging.info("Before start_and_connect")
             self._env.ibgw.start_and_connect()
+            logging.info(f"Before config:{self._env.config}")
             # https://interactivebrokers.github.io/tws-api/market_data_type.html
             self._env.ibgw.reqMarketDataType(self._env.config["marketDataType"])
             retval = self._core()

@@ -1,5 +1,5 @@
 from intents.intent import Intent
-
+import logging
 
 class Summary(Intent):
     def __init__(self):
@@ -7,6 +7,7 @@ class Summary(Intent):
         self._activity_log = {}  # don't log summary requests
 
     def _core(self):
+        logging.info(f"env:{self._env}")
         return {
             "accountSummary": self._env.get_account_values(self._env.config["account"]),
             "portfolio": self._get_positions(),
@@ -68,7 +69,9 @@ if __name__ == "__main__":
     from lib.environment import Environment
 
     env = Environment()
+    logging.info("Before connect")
     env.ibgw.connect(port=4001)
+    logging.info("After connect")
     try:
         summary = Summary()
         print(summary._core())

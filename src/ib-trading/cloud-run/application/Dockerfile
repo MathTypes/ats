@@ -1,4 +1,4 @@
-FROM gcr.io/keen-rhino-386415/akolotech/ibc/cloudrun_base:v1.1
+FROM gcr.io/keen-rhino-386415/akolotech/ibc/cloudrun_base:v1.3
 
 # copy Python application and pip install packages
 WORKDIR /home
