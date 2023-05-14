@@ -8,7 +8,7 @@ import re
 from intents.allocation import Allocation
 from intents.cash_balancer import CashBalancer
 from intents.close_all import CloseAll
-from intents.collect_market_data import CollectMarketData
+#from intents.collect_market_data import CollectMarketData
 from intents.intent import Intent
 from intents.summary import Summary
 from intents.trade_reconciliation import TradeReconciliation
@@ -26,7 +26,7 @@ INTENTS = {
     "allocation": Allocation,
     "cash-balancer": CashBalancer,
     "close-all": CloseAll,
-    "collect-market-data": CollectMarketData,
+    #"collect-market-data": CollectMarketData,
     "summary": Summary,
     "trade-reconciliation": TradeReconciliation,
 }

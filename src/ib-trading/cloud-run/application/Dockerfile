@@ -1,4 +1,4 @@
-FROM eu.gcr.io/[PROJECT_ID]/cloud-run/base:[TAG]
+FROM gcr.io/keen-rhino-386415/akolotech/ibc/cloudrun_base:v1.1
 
 # copy Python application and pip install packages
 WORKDIR /home
