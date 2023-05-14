@@ -64,9 +64,9 @@ class Utilities:
             state = ""
             while state != "complete":
                 logging.info(f"timeout:{timeout}")
-                rand_res = randint(timeout, 50)
+                rand_res = randint(timeout, 10)
                 logging.info(f"timeout:{timeout}, res:{rand_res}")
-                time.sleep(min(randint(timeout, 50), 10))
+                time.sleep(min(rand_res, 2))
                 logging.error("waiting for complete")
                 state = driver.execute_script("return document.readyState")
         except Exception as ex:
