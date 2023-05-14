@@ -1,12 +1,12 @@
 FROM akolotech/ibc:v0
-ARG TWS_USERID=tws_userid
-ARG TWS_PASSWORD=tws_password
+ARG tws_userid
+ARG tws_password
 
 ENV JAVA_VRSN=1.8.0_202 \
   TWS_MAJOR_VRSN=1019 \
   TRADING_MODE=live \
-  TWSUSERID=${TWS_USERID} \
-  TWSPASSWORD=${TWS_PASSWORD}
+  TWSUSERID=${tws_userid} \
+  TWSPASSWORD=${tws_password}
 
 # set environment variables
 ENV APP=GATEWAY \

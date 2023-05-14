@@ -90,7 +90,7 @@ resources:
     tags:
       items: ["bastion-host"]
     serviceAccounts:
-    - email: 689144972383-compute@developer.gserviceaccount.com
+    - email: 315214571397-compute@developer.gserviceaccount.com
       scopes:
       - https://www.googleapis.com/auth/cloud-platform
       - https://www.googleapis.com/auth/devstorage.read_only

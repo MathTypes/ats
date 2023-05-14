@@ -3,7 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   labels:
     app: ib-trading
-    ib-mode: paper
+    ib-mode: live
     purpose: gateway
   name: ib-gw-paper-volume-0
   namespace: ib-trading
@@ -12,7 +12,7 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 100Mi
+      storage: 5000Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -20,7 +20,7 @@ metadata:
   creationTimestamp: null
   labels:
     app: ib-trading
-    ib-mode: paper
+    ib-mode: live
     purpose: gateway
   name: ib-gw-paper
   namespace: ib-trading
@@ -38,7 +38,7 @@ spec:
       creationTimestamp: null
       labels:
         app: ib-trading
-        ib-mode: paper
+        ib-mode: live
         purpose: gateway
     spec:
       containers:
@@ -55,18 +55,24 @@ spec:
             secretKeyRef:
               name: credentials-ib-gw-paper
               key: ib-user
-        image: gcr.io/keen-rhino-386415/akolotech/ibc/gateway:v1
+        image: gcr.io/keen-rhino-386415/akolotech/ibc/gateway:v1.1.f
         livenessProbe:
           httpGet:
             path: /
             port: 8000
-          initialDelaySeconds: 120
+          initialDelaySeconds: 1200000
           periodSeconds: 60
           timeoutSeconds: 10
         name: ib-gw-paper
         ports:
-        - containerPort: 4003
+        - containerPort: 4001
           name: ib-gw
+          protocol: TCP
+        - containerPort: 4003
+          name: ib-broker
+          protocol: TCP
+        - containerPort: 5900
+          name: vnc
           protocol: TCP
       - image: gcr.io/keen-rhino-386415/akolotech/ibc/healthcheck:v1
         name: ib-gw-paper-healthcheck
@@ -85,17 +91,23 @@ kind: Service
 metadata:
   labels:
     app: ib-trading
-    ib-mode: paper
+    ib-mode: live
     purpose: gateway
   name: ib-gw-paper
   namespace: ib-trading
 spec:
   ports:
   - name: ib-gw
+    port: 4001
+    protocol: TCP
+  - name: ib-broker
     port: 4003
+    protocol: TCP
+  - name: vnc
+    port: 5900
     protocol: TCP
   selector:
     app: ib-trading
-    ib-mode: paper
+    ib-mode: live
     purpose: gateway
   type: ClusterIP
