@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: twitter-job
+spec:
+  template:
+    metadata:
+      name: echo
+    spec:
+      containers:
+      - name: echo
+        image: gcr.io/keen-rhino-386415/akolotech/ats:v1.1
+        command: ['echo', 'Hello']
+      restartPolicy: Never
+  backoffLimit: 4

@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: twitter-selenium-symbol
+spec:
+  template:
+    metadata:
+      name: twitter-selenium-symbol
+    spec:
+      containers:
+      - name: twitter-selenium
+        image: gcr.io/keen-rhino-386415/akolotech/selenium_chrome:v1
+        env:
+        - name: TWITTER_SYMBOLS
+          value: "spy,spx,btc,qqq,iwm,gld,tlt,uso,hg,lbs,tsla,nvda,appl,msft,goog"
+        - name: TWITTER_LOGIN
+          value: "DragonFlye68042"
+        - name: CHROME_PROFILE
+          value: "/opt/ats"
+        - name: FIREBASE_CERT
+          value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
+        - name: TWITTER_ROWS
+          value: "100"
+        command: ['sh', '/opt/ats/twitter/update_twitter_selenium_recent_symbols.sh']
+      restartPolicy: Never
+  backoffLimit: 4

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: twitter-selenium-symbol-cron
+spec:
+  schedule: "* */1 * * *"
+  JobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+         —name: twitter-selenium-symbol-cron
+            image: gcr.io/keen-rhino-386415/akolotech/selenium_chrome:v1
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: TWITTER_SYMBOLS
+              value: "spy,spx,btc,qqq,iwm,gld,tlt,uso,hg,lbs,tsla,nvda,appl,msft,goog"
+            - name: TWITTER_LOGIN
+              value: "DragonFlye68042"
+            - name: CHROME_PROFILE
+              value: "/opt/ats"
+            - name: FIREBASE_CERT
+              value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
+            - name: TWITTER_ROWS
+              value: "100"
+            command: ['sh', '/opt/ats/twitter/update_twitter_selenium_recent_symbols.sh']
+          restartPolicy: OnFailure
