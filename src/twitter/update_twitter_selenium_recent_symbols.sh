@@ -1,0 +1,1 @@
+PYTHONPATH=. python3 twitter/selenium_firebase_recent_symbol.py --symbol=${TWITTER_SYMBOLS} --email=${TWITTER_LOGIN} --browser_profile=${CHROME_PROFILE} --firebase_cert=${FIREBASE_CERT} --rows=${TWITTER_ROWS} --headless=True
