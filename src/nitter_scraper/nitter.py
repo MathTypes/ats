@@ -192,7 +192,7 @@ class Nitter(DockerBase):
 
 
 @contextmanager
-def NitterScraper(host: str = "0.0.0.0", port: int = 8080):
+def NitterScraper(host: str = "0.0.0.0", port: int = 8080, existing_instance: bool=False):
     """The NitterScraper context manager.
 
     Takes care of configuring, starting, and stopping a docker instance of nitter.
@@ -205,10 +205,12 @@ def NitterScraper(host: str = "0.0.0.0", port: int = 8080):
         Nitter: An object representing a started nitter docker container.
     """
     nitter = Nitter(host=host, port=port)
-    nitter.start()
+    if not existing_instance:
+        nitter.start()
 
     try:
         yield nitter
 
     finally:
-        nitter.stop()
+        if not existing_instance:
+            nitter.stop()

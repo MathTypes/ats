@@ -1,17 +1,20 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: twitter-selenium-symbol-cron
+    name: twitter-selenium-symbol-cron-job
 spec:
-  schedule: "* */1 * * *"
-  JobTemplate:
+  schedule: "0,15,30,45 * * * *"
+  jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            app: cron-batch-job
         spec:
+          restartPolicy: OnFailure
           containers:
-         —name: twitter-selenium-symbol-cron
+          - name: kube-cron-job
             image: gcr.io/keen-rhino-386415/akolotech/selenium_chrome:v1
-            imagePullPolicy: IfNotPresent
             env:
             - name: TWITTER_SYMBOLS
               value: "spy,spx,btc,qqq,iwm,gld,tlt,uso,hg,lbs,tsla,nvda,appl,msft,goog"
@@ -24,4 +27,3 @@ spec:
             - name: TWITTER_ROWS
               value: "100"
             command: ['sh', '/opt/ats/twitter/update_twitter_selenium_recent_symbols.sh']
-          restartPolicy: OnFailure

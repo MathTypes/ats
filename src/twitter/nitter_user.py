@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
     parser.add_argument("--users", type=str)
     parser.add_argument("--output_dir", type=str)
+    parser.add_argument("--existing", type=bool, default=False)
     parser.add_argument("--port", type=int, default=8008)
 
     args = parser.parse_args()
@@ -49,7 +50,7 @@ if __name__ == "__main__":
 
     users = args.users.split(",")
     cur_date = datetime.datetime.today()
-    with NitterScraper(host="0.0.0.0", port=args.port) as nitter:
+    with NitterScraper(host="0.0.0.0", port=args.port, existing_instance=args.existing) as nitter:
         for user in users:
             if not user:
                 continue
