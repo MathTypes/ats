@@ -17,7 +17,19 @@ if __name__ == "__main__":
     parser.add_argument("--symbols", type=str)
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--port", type=int, default=8008)
-    
+    parser.add_argument(
+        "--start_date",
+        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
+        required=False,
+        help="Set a start date",
+    )
+    parser.add_argument(
+        "--end_date",
+        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
+        required=False,
+        help="Set a end date",
+    )
+
     args = parser.parse_args()
     config_utils.set_args(args)
     logging_utils.init_logging()
