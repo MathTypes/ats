@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: twitter-nitter-user
+spec:
+  template:
+    metadata:
+      name: twitter-nitter-user
+    spec:
+      containers:
+      - name: twitter-nitter
+        image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.4
+        env:
+        - name: TWITTER_USERS
+          value: "DougKass,pghosh1"
+        - name: FIREBASE_CERT
+          value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
+        - name: NITTER_HOST
+          value: 10.20.14.87
+        - name: TWITTER_ROWS
+          value: "10"
+        command: ['sh', '/opt/ats/twitter/update_nitter_recent_user_gcp.sh']
+      restartPolicy: Never
+  backoffLimit: 4

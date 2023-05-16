@@ -23,12 +23,13 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase import firebase
 
-def read_collection(query):
-    tweets = list(db.collection('recent_tweet').where('search_term', '==', query).stream())
-    logging.info(f"tweets:{tweets}")
-    tweets_dict = list(map(lambda x: x.to_dict(), tweets))
-    df = pd.DataFrame(tweets_dict)
-    return df
+def read_collection(db, query):
+    doc_ref = db.collection('unique_ids').document(query)
+    doc = doc_ref.get()
+    if doc.exists:
+        return doc.to_dict()
+    else:
+        return None
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
@@ -71,11 +72,12 @@ if __name__ == "__main__":
     until = datetime.datetime.today()
     for symbol in args.symbol.split(","):
         keyword = f"${symbol}"
-        df = read_collection(keyword)
+        id_key = f"nitter_recent_symbol_{symbol}"
+        df = read_collection(db, keyword)
         since_id = None
         max_id = None
-        if not df.empty:
-            since_id = df["tweet_id"].max()
+        if df:
+            since_id = df["last_id"]
         if args.since_id:
             since_id = args.since_id
         if args.max_id:
@@ -108,8 +110,11 @@ if __name__ == "__main__":
             email = email,
             login = args.login
         )
-
+        last_tweet_id = since_id
         for key, value in data.items():
             value["search_term"] = keyword
             logging.info(f"key:{key}, value:{value}")
             db.collection(u'recent_tweet').document(key).set(value)
+            if not last_tweet_id or tweet.tweet_id > last_tweet_id:
+                last_tweet_id = tweet.tweet_id
+        db.collection(u'unique_ids').document(id_key).set({"last_id":last_tweet_id})

@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
     name: twitter-selenium-symbol-cron-job
 spec:
-  schedule: "0 * * * *"
+  schedule: "15 * * * *"
   jobTemplate:
     spec:
       template:
@@ -13,17 +13,13 @@ spec:
         spec:
           restartPolicy: OnFailure
           containers:
-          - name: kube-cron-job
+          - name: twitter-nitter-user-cron-job
             image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.4
             env:
-            - name: TWITTER_SYMBOLS
-              value: "spy,spx,btc,qqq,iwm,gld,tlt,uso,hg,lbs,tsla,nvda,appl,msft,goog"
-            - name: TWITTER_LOGIN
-              value: "DragonFlye68042"
-            - name: CHROME_PROFILE
-              value: "/opt/ats"
+            - name: TWITTER_USERS
+              value: "DougKass,pghosh1,DoubleWideCap,PharmD_KS,JimScalpert,eliant_capital,Mayhem4Markets,Tricky_OW"
             - name: FIREBASE_CERT
               value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
             - name: TWITTER_ROWS
-              value: "100"
-            command: ['sh', '/opt/ats/twitter/update_twitter_selenium_recent_symbols.sh']
+              value: "10"
+            command: ['sh', '/opt/ats/twitter/update_nitter_recent_user_gcp.sh']

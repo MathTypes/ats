@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nitter-app-deployment
+  labels:
+    app: nitter-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nitter-app
+  template:
+    metadata:
+      labels:
+        app: nitter-app
+    spec:
+      containers:
+      - name: nitter-app-deployment
+        image: gcr.io/keen-rhino-386415/akolotech/nitter:v1
+        resources:
+          requests:
+            cpu: "100m"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8011

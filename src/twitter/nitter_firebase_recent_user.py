@@ -5,6 +5,7 @@ import os
 import time
 import datetime
 import logging
+import ipaddress
 from pprint import pprint
 
 import pandas as pd
@@ -56,7 +57,7 @@ if __name__ == "__main__":
 
     users = args.users.split(",")
     cur_date = datetime.datetime.today()
-    with NitterScraper(host=args.host, port=args.port, existing_instance=args.existing) as nitter:
+    with NitterScraper(host=ipaddress.ip_address(args.host), port=args.port, existing_instance=args.existing) as nitter:
         for user in users:
             if not user:
                 continue
