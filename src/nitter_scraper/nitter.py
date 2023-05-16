@@ -3,6 +3,7 @@ from ipaddress import IPv4Address
 from tempfile import _TemporaryFileWrapper as TemporaryFile
 from tempfile import NamedTemporaryFile
 import time
+import logging
 from typing import ClassVar, Optional
 
 import docker
@@ -204,6 +205,7 @@ def NitterScraper(host: str = "0.0.0.0", port: int = 8080, existing_instance: bo
     Yields:
         Nitter: An object representing a started nitter docker container.
     """
+    logging.info(f"host:{host}")
     nitter = Nitter(host=host, port=port)
     if not existing_instance:
         nitter.start()
