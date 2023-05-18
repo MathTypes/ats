@@ -1,9 +1,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-    name: twitter-selenium-symbol-cron-job
+    name: twitter-nitter-user-cron-job
 spec:
-  schedule: "15 * * * *"
+  schedule: "*/5 * * * *"
+  ttlSecondsAfterFinished: 100
   jobTemplate:
     spec:
       template:
@@ -11,13 +12,15 @@ spec:
           labels:
             app: cron-batch-job
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never
           containers:
           - name: twitter-nitter-user-cron-job
-            image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.4
+            image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.8
             env:
             - name: TWITTER_USERS
               value: "DougKass,pghosh1,DoubleWideCap,PharmD_KS,JimScalpert,eliant_capital,Mayhem4Markets,Tricky_OW"
+            - name: NITTER_HOST
+              value: 10.20.14.87
             - name: FIREBASE_CERT
               value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
             - name: TWITTER_ROWS

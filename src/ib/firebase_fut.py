@@ -38,12 +38,13 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase import firebase
 
-def read_collection(query):
-    trades = list(db.collection('recent_trades').where('symbol', '==', query).stream())
-    logging.info(f"trades:{trades}")
-    trades_dict = list(map(lambda x: x.to_dict(), trades))
-    df = pd.DataFrame(trades_dict)
-    return df
+def read_collection(db, query):
+    doc_ref = db.collection('unique_ids').document(query)
+    doc = doc_ref.get()
+    if doc.exists:
+        return doc.to_dict()
+    else:
+        return None
 
 ContractList = List[Contract]
 BarDataList = List[BarData]
@@ -66,10 +67,12 @@ def make_download_path(base_directory, security_type, size, contract: Contract) 
 
 
 class DownloadApp(EClient, wrapper.EWrapper):
-    def __init__(self, start_time, symbol, contracts: ContractList, start_date, end_date, duration, base_directory, size, data_type, security_type):
+    def __init__(self, db, id_key, start_time, symbol, contracts: ContractList, start_date, end_date, duration, base_directory, size, data_type, security_type):
         logging.info(f"DownloadApp: start_date:{start_date}, end_date:{end_date}")
         EClient.__init__(self, wrapper=self)
         wrapper.EWrapper.__init__(self)
+        self.db = db
+        self.id_key = id_key
         self.request_id = math.floor(time.time())
         self.started = False
         self.start_time = start_time
@@ -131,10 +134,23 @@ class DownloadApp(EClient, wrapper.EWrapper):
 
     def save_data(self, contract: Contract, bars: BarDataList) -> None:
         #logging.error(f"save_data, contract:{contract}, bars:{bars}")
+        last_time = None
         for b in bars:
-            b["symbol"] = self.symbol
+            val = {"date":str(b.date), "open":str(b.open), "high":str(b.high), "low":str(b.low),
+                   "close":str(b.close), "volume":str(b.volume), "barCount":str(b.barCount)}
+            date_vec = b.date.split(" ")
+            doc_key = date_vec[0] + " " + date_vec[1]
+            ts = datetime.strptime(doc_key, "%Y%m%d %H:%M:%S")
             logging.info(f"key:{b.date}, value:{b}")
-            db.collection(u'recent_trade').document(b.date).set(b)
+            if not self.start_time or ts.timestamp()>self.start_time:
+                db.collection(f'recent_trade_{self.symbol}').document(doc_key).set(val)
+                logging.info(f"comparing {ts} against {last_time}")
+                if not last_time or ts.timestamp()>last_time:
+                    last_time = ts.timestamp()
+            else:
+                logging.info(f"skipping ts:{ts}, start_time:{self.start_time}")
+        logging.info(f"Saving unique_id, id_key:{self.id_key}, last_time:{last_time}")
+        db.collection(u'unique_ids').document(self.id_key).set({"last_time":last_time, "key":self.id_key})
 
     def daily_files(self):
         return SIZES.index(self.size.split()[1]) >= 5
@@ -206,12 +222,8 @@ class DownloadApp(EClient, wrapper.EWrapper):
             else:
                 self.current = datetime.strptime(start, "%Y%m%d  %H:%M:%S")
             logging.info(f"current:{self.current} - start:{self.start_date}")
-            if self.current.date() <= self.start_date.date():
-                # MAX: send termination signal
-                self.send_done(0)
-            else:
-                for contract in self.contracts:
-                    self.historicalDataRequest(contract)
+            # MAX: send termination signal
+            self.send_done(0)
 
     @iswrapper
     def connectAck(self):
@@ -467,7 +479,7 @@ def monthlist(begin,end):
     result.append ([begin, end])
     return result
 
-def download(symbol, start_date, end_date, port, duration,  base_directory, security_type, size, data_type):
+def download(db, id_key, start_time, symbol, host, start_date, end_date, port, duration,  base_directory, security_type, size, data_type):
     contracts = []
     logging.info(f'start_date:{start_date}, end_date:{end_date}')
     for begin, end in monthlist(start_date, end_date):
@@ -484,18 +496,15 @@ def download(symbol, start_date, end_date, port, duration,  base_directory, secu
         )
         download_path = make_download_path(base_directory, security_type, size, contract)
         os.makedirs(download_path, exist_ok=True)
-        done_file = download_path + f"/{begin.strftime('%Y%m%d')}-{end.strftime('%Y%m%d')}.Done"
-        if not os.path.isfile(done_file):
-            contracts.append(contract)
-            logging.info(f"Saving to {download_path}, date:{begin}")
         #if not os.path.isfile(next_done_file):
-        #    contracts.append(next_contract)
+        contracts.append(contract)
         if not contracts:
             logging.info(f"Skipping, date:{begin}")
             continue
-        app = DownloadApp(contracts, symbol, begin, end, duration, base_directory, size, data_type, security_type)
-        logging.error(f"before connection, port:{port}")
-        app.connect("127.0.0.1", port, clientId=1)
+        logging.info(f"start_time:{start_time}")
+        app = DownloadApp(db, id_key, start_time, symbol, contracts, begin, end, duration, base_directory, size, data_type, security_type)
+        logging.error(f"before connection, host:{host}, port:{port}")
+        app.connect(host, port, clientId=1)
         # MAX: Start the application as a separate thread
         Thread(target=app.run).start()
 
@@ -504,10 +513,6 @@ def download(symbol, start_date, end_date, port, duration,  base_directory, secu
         app.disconnect()
         time.sleep(5)
         logging.error(f"code:{code}")
-
-        if code == 0:
-            with open(done_file, 'w') as f:
-                pass
 
 if __name__ == "__main__":
     now = datetime.now()
@@ -538,10 +543,13 @@ if __name__ == "__main__":
         "-p", "--port", type=int, default=7496, help="local port for TWS connection"
     )
     argp.add_argument(
+        "--host", type=str, default="STK", help="host"
+    )
+    argp.add_argument(
         "--security-type", type=str, default="STK", help="security type for symbols"
     )
     argp.add_argument("--firebase_cert", type=str)
-    argp.add_argument("--duration", type=str, default="1 D", help="bar duration")
+    argp.add_argument("--duration", type=str, default="900 S", help="bar duration")
     argp.add_argument("--size", type=str, default="1 min", help="bar size")
     argp.add_argument(
         "-t", "--data-type", type=str, default="TRADES", help="bar data type"
@@ -592,9 +600,12 @@ if __name__ == "__main__":
     default_app = firebase_admin.initialize_app(cred)
     db = firestore.client()
     firebase = firebase.FirebaseApplication('https://keen-rhino-386415.firebaseio.com', None)
-    df = read_collection(args.symbol)
-    start_time = None
-    if not df.empty:
-        start_time = df["Time"].max()
-    download(start_time, args.symbol, args.start_date.replace(tzinfo=pytz.UTC), args.end_date.replace(tzinfo=pytz.UTC),
-             args.port, args.duration, args.base_directory, args.security_type, args.size, args.data_type)
+    for symbol in args.symbol.split(","):
+        fb_key = f"ib_realtime_trade_{symbol}"
+        df = read_collection(db, fb_key)
+        start_time = None
+        if df:
+            start_time = df["last_time"]
+        logging.info(f"Downloading {symbol} from {args.host}:{args.port}")
+        download(db, fb_key, start_time, symbol, args.host, args.start_date.replace(tzinfo=pytz.UTC), args.end_date.replace(tzinfo=pytz.UTC),
+                args.port, args.duration, args.base_directory, args.security_type, args.size, args.data_type)

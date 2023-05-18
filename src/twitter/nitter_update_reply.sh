@@ -2,7 +2,7 @@
 maxsize=10
 
 # Get file size
-filepath="$1"
+filepath="$@"
 filesize=$(stat -c%s "$filepath")
 difference=$(expr $filesize - $maxsize)
 # The following doesn't work

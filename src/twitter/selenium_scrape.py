@@ -75,6 +75,7 @@ if __name__ == "__main__":
         else:
             output_file_name = args.symbol + f"-to-{since}-{until}"
             keyword = f"${args.symbol}"
+        output_file_name = output_file_name.replace(" ","_")
         empty_tweets = set()
         # Creating list to append tweet data
         tweets_list1 = []

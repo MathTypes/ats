@@ -36,6 +36,7 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_rows', None)
     if args.id_file:
+        logging.info(f"Using idfile:{args.id_file}")
         done_file = args.id_file + ".done"
         output_file = args.id_file + ".reply.csv"
         if not os.path.exists(output_file):

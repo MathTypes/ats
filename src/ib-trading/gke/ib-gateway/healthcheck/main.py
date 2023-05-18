@@ -20,7 +20,7 @@ class HealthCheck:
     @staticmethod
     def on_get(_, response):
         try:
-            ib_gw.connect("localhost", 4003, 999)
+            ib_gw.connect("localhost", 4001, 999)
 
             if ib_gw.isConnected() and ib_gw.client.isReady():
                 logger.info("IB Gateway healthcheck succeded.")
