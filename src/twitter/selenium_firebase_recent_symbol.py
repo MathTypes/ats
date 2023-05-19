@@ -72,7 +72,7 @@ if __name__ == "__main__":
     until = datetime.datetime.today()
     for symbol in args.symbol.split(","):
         keyword = f"${symbol}"
-        id_key = f"nitter_recent_symbol_{symbol}"
+        id_key = f"selenium_recent_symbol_{symbol}"
         df = read_collection(db, keyword)
         since_id = None
         max_id = None
@@ -110,11 +110,11 @@ if __name__ == "__main__":
             email = email,
             login = args.login
         )
-        last_tweet_id = since_id
-        for key, value in data.items():
-            value["search_term"] = keyword
-            logging.info(f"key:{key}, value:{value}")
-            db.collection(u'recent_tweet').document(key).set(value)
-            if not last_tweet_id or tweet.tweet_id > last_tweet_id:
-                last_tweet_id = tweet.tweet_id
+        last_tweet_id = int(since_id) if since_id else None
+        if data:
+            for key, value in data.items():
+                logging.info(f"key:{key}, value:{value}")
+                db.collection(u'recent_tweet_symbol').document(key).set(value)
+                if not last_tweet_id or int(value["tweet_id"]) > last_tweet_id:
+                    last_tweet_id = int(value["tweet_id"])
         db.collection(u'unique_ids').document(id_key).set({"last_id":last_tweet_id})

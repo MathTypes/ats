@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
       - name: twitter-selenium
-        image: gcr.io/keen-rhino-386415/akolotech/selenium_chrome:v1
+        image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.13.f
         env:
         - name: TWITTER_SYMBOLS
           value: "spy,spx,btc,qqq,iwm,gld,tlt,uso,hg,lbs,tsla,nvda,appl,msft,goog"
@@ -21,6 +21,9 @@ spec:
           value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
         - name: TWITTER_ROWS
           value: "100"
-        command: ['sh', '/opt/ats/twitter/update_twitter_selenium_recent_symbols.sh']
+        - name: PYTHONPATH
+          value: "."
+        #command: ["python3", "twitter/selenium_firebase_recent_symbol.py", "--symbol=spy,btc,qqq,iwm,gld,tlt,uso,hg,lbs,tsla,nvda,appl,msft,goog", "--email=DragonFlye68042", "--browser_profile=/opt/ats", "--firebase_cert=/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json", "--rows=10", "--headless=True"]
+        command: ["python3", "twitter/selenium_firebase_recent_symbol.py", "--symbol=spy", "--email=AlexSimon190658", "--browser_profile=/opt/ats", "--firebase_cert=/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json", "--rows=5", "--headless=True"]
       restartPolicy: Never
   backoffLimit: 4
