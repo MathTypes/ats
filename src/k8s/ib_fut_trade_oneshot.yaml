@@ -12,7 +12,8 @@ spec:
       hostNetwork: true
       containers:
       - name: ib-fut-trade
-        image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.9
+        image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.13
+        workingDir: /opt/ats
         env:
         - name: SYMBOLS
           value: "ES,NQ,RTY,CL,GC,SI,ZN,ZT"

@@ -57,7 +57,7 @@ spec:
             secretKeyRef:
               name: credentials-ib-gw-paper
               key: ib-user
-        image: gcr.io/keen-rhino-386415/akolotech/ibc/gateway:v1.3.f
+        image: gcr.io/keen-rhino-386415/akolotech/ibc/gateway:v1.4
         command: ["sh", "/home/cmd.sh"]
         livenessProbe:
           httpGet:

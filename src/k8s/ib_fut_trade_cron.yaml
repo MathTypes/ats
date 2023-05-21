@@ -2,6 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
     name: ib-fut-trade-cron-job
+    namespace: ib-trading
 spec:
   schedule: "* 1 * * *"
   jobTemplate:
@@ -12,8 +13,12 @@ spec:
             app: cron-batch-job
         spec:
           restartPolicy: Never
+          hostNetwork: true
           containers:
           - name: ib-fut-trade-cron-job
-            image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.9
+            image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.13
+            workingDir: /opt/ats
             env:
+            - name: PYTHONPATH
+              value: .
             command: ["python3", "ib/firebase_fut.py", "ES,NQ,RTY,GC,SI,ZN,ZT,CL",  "-p=4001",  "--size=1 min", "-t=TRADES", "--host=10.138.0.8",  "--security-type=FUT", "--firebase_cert=/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"]
