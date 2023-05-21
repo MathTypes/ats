@@ -18,7 +18,11 @@ def delete_collection(coll_ref, batch_size):
     deleted = 0
 
     for doc in docs:
-        if not "realtime" in doc.id and not "nitter" in doc.id:
+        if not "realtime" in doc.id and not "nitter" in doc.id and not "selenium_" in doc.id:
+            print(f'Deleting doc {doc.id} => {doc.get().to_dict()}')
+            doc.delete()
+            deleted = deleted + 1
+        if "nitter_recent_user_pghosh1" in doc.id:
             print(f'Deleting doc {doc.id} => {doc.get().to_dict()}')
             doc.delete()
             deleted = deleted + 1

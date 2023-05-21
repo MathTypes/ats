@@ -42,7 +42,9 @@ if __name__ == "__main__":
     parser.add_argument("--users", type=str)
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--existing", type=bool, default=False)
+    parser.add_argument("--since_id", type=int)
     parser.add_argument("--port", type=int, default=8008)
+    parser.add_argument("--rows", type=int, default=10000)
 
     args = parser.parse_args()
     config_utils.set_args(args)
@@ -58,14 +60,17 @@ if __name__ == "__main__":
                 symbol_output_dir = os.path.join(args.output_dir, user)
                 if not os.path.exists(symbol_output_dir):
                     os.makedirs(symbol_output_dir)
-                last_tweet_id = get_last_tweet_id(symbol_output_dir)
+                if args.since_id:
+                    last_tweet_id = args.since_id
+                else:
+                    last_tweet_id = get_last_tweet_id(symbol_output_dir)
                 logging.info(f'last_tweet_id:{last_tweet_id}')
                 output_file = symbol_output_dir + "/" + user + "_" + cur_date.strftime("%Y-%m-%d") + ".csv"
                 if not os.path.exists(output_file):
                     lock = FileLock(f"{output_file}.lock")
                     with lock:
                         df = pd.DataFrame()
-                        tweets = nitter.get_tweets(user, pages=10000, break_on_tweet_id=last_tweet_id, address="https://nitter.it")
+                        tweets = nitter.get_tweets(user, pages=args.rows, break_on_tweet_id=last_tweet_id, address="https://nitter.it")
                         for tweet in tweets:
                             df2 = {'tweet_id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
                             df = df.append(df2, ignore_index = True)

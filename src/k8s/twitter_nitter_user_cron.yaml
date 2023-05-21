@@ -4,18 +4,17 @@ metadata:
     name: twitter-nitter-user-cron-job
 spec:
   schedule: "*/5 * * * *"
-  ttlSecondsAfterFinished: 100
   jobTemplate:
     spec:
       template:
         metadata:
           labels:
-            app: cron-batch-job
+            app: twitter-nitter-cron-batch-job
         spec:
           restartPolicy: Never
           containers:
           - name: twitter-nitter-user-cron-job
-            image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.8
+            image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.14
             env:
             - name: TWITTER_USERS
               value: "DougKass,pghosh1,DoubleWideCap,PharmD_KS,JimScalpert,eliant_capital,Mayhem4Markets,Tricky_OW"
@@ -25,4 +24,6 @@ spec:
               value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
             - name: TWITTER_ROWS
               value: "10"
-            command: ['sh', '/opt/ats/twitter/update_nitter_recent_user_gcp.sh']
+            - name: PYTHONPATH
+              value: .
+            command: ["python3", "twitter/nitter_firebase_recent_user.py", "--host=10.20.14.87", "--users=DougKass,pghosh1,DoubleWideCap,PharmD_KS,JimScalpert,eliant_capital,Mayhem4Markets,Tricky_OW,Emmonspired", "--port=8011", "--existing=True", "--firebase_cert=/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json", "--rows=10"]

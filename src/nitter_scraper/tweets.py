@@ -33,11 +33,13 @@ def link_parser(tweet_link):
 
 def date_parser(tweet_date):
     split_datetime = tweet_date.split(",")
-    #logging.info(f"split_datetime:{split_datetime}")
+    logging.info(f"split_datetime:{split_datetime}")
     tweet_date = split_datetime[0] + split_datetime[1][:6] + "-" + split_datetime[1][7:]
-    #logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
-    dt = datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z').replace(tzinfo=timezone.utc)
-    #logging.info(f"dt:{dt}")
+    logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
+    dt = datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z')
+    if "UTC" in tweet_date:
+        dt = dt.replace(tzinfo=timezone.utc)
+    logging.info(f"dt:{dt}")
     return dt
 
 
