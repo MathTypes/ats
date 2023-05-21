@@ -1,0 +1,155 @@
+{
+  "project_info": {
+    "project_number": "315214571397",
+    "firebase_url": "https://keen-rhino-386415-default-rtdb.firebaseio.com",
+    "project_id": "keen-rhino-386415",
+    "storage_bucket": "keen-rhino-386415.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315214571397:android:7857d9f94d2d30e788c6ec",
+        "android_client_info": {
+          "package_name": "com.akolotech.finbot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMF0e1vnDRxKWtwJuaXEHmwsqAU_uVmHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "315214571397-6rjn1bpd8in4b09ighdc9jjhnh1ua8h7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "akolotech.ats"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315214571397:android:999e36bd9c1a255088c6ec",
+        "android_client_info": {
+          "package_name": "com.example.firebase_multifactor_auth"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMF0e1vnDRxKWtwJuaXEHmwsqAU_uVmHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "315214571397-6rjn1bpd8in4b09ighdc9jjhnh1ua8h7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "akolotech.ats"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315214571397:android:c6215dcfdafd0a2e88c6ec",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_test"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMF0e1vnDRxKWtwJuaXEHmwsqAU_uVmHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "315214571397-6rjn1bpd8in4b09ighdc9jjhnh1ua8h7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "akolotech.ats"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315214571397:android:78d69736ac6fd45a88c6ec",
+        "android_client_info": {
+          "package_name": "com.example.googleauth"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMF0e1vnDRxKWtwJuaXEHmwsqAU_uVmHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "315214571397-9gjnnioqcehrd2fggdpbn96me71t91qt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "315214571397-6rjn1bpd8in4b09ighdc9jjhnh1ua8h7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "akolotech.ats"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

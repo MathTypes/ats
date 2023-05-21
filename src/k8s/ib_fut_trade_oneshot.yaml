@@ -23,6 +23,6 @@ spec:
           value: .
         - name: FIREBASE_CERT
           value: "/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
-        command: ["python3", "ib/firebase_fut.py", "ES,NQ,RTY,GC,SI,ZN,ZT,CL",  "-p=4001",  "--size=1 min", "-t=TRADES", "--host=10.138.0.8",  "--security-type=FUT", "--firebase_cert=/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"]
+        command: ["python3", "ib/firebase_fut.py", "ES",  "-p=4001",  "--size=1 min", "-t=TRADES", "--host=10.138.0.8",  "--security-type=FUT", "--firebase_cert=/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"]
       restartPolicy: Never
   backoffLimit: 4

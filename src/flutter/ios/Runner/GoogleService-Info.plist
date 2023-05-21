@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>315214571397-fg6j8kesead0fgjpqu2ugtopbrh2up92.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.315214571397-fg6j8kesead0fgjpqu2ugtopbrh2up92</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAFzfjmcJn4zmkKQhARvaFqRF2Eqpal3EY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>315214571397</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.akolotech.finbot</string>
+	<key>PROJECT_ID</key>
+	<string>keen-rhino-386415</string>
+	<key>STORAGE_BUCKET</key>
+	<string>keen-rhino-386415.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:315214571397:ios:31123623074b7f0b88c6ec</string>
+	<key>DATABASE_URL</key>
+	<string>https://keen-rhino-386415-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
