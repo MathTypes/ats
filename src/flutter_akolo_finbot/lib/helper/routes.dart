@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 //import 'package:googleauth/screens/welcome.screen.dart';
 import 'customRoute.dart';
+import '../ui/page/welcome.dart';
 import '../ui/page/common/splash.dart';
-import '../ui/page/common/welcome.dart';
 import '../ui/page/auth/signin.dart';
 import '../ui/page/auth/signup.dart';
 
@@ -32,7 +32,7 @@ class Routes {
     switch (pathElements[1]) {
       case "WelcomePage":
         return CustomRoute<bool>(
-            builder: (BuildContext context) => const WelcomeScreen());
+            builder: (BuildContext context) => const WelcomePage());
       case "SignIn":
         return CustomRoute<bool>(builder: (BuildContext context) => Signin());
       case "SignUp":
