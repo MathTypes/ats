@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:googleauth/firebase_options.dart';
-import 'package:googleauth/screens/welcome.screen.dart';
+import 'package:flutter_akolo_finbot/firebase_options.dart';
+import 'package:flutter_akolo_finbot/screens/welcome.screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class MyHomePage extends StatefulWidget {

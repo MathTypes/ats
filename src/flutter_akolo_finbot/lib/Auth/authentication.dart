@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleauth/screens/home.screen.dart';
-import 'package:googleauth/screens/welcome.screen.dart';
+import 'package:flutter_akolo_finbot/screens/home.screen.dart';
+import 'package:flutter_akolo_finbot/screens/welcome.screen.dart';
 
 FirebaseAuth auth = FirebaseAuth.instance;
 

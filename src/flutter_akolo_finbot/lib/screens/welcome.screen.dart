@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:googleauth/screens/login.screen.dart';
-import 'package:googleauth/screens/register.screen.dart';
-import 'package:googleauth/widgets/customized.button.dart';
+import 'package:flutter_akolo_finbot/screens/login.screen.dart';
+import 'package:flutter_akolo_finbot/screens/register.screen.dart';
+import 'package:flutter_akolo_finbot/widgets/customized.button.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({Key? key}) : super(key: key);

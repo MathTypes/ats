@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:googleauth/Auth/authentication.dart';
-import 'package:googleauth/screens/home.screen.dart';
-import 'package:googleauth/screens/welcome.screen.dart';
+import 'package:flutter_akolo_finbot/Auth/authentication.dart';
+import 'package:flutter_akolo_finbot/screens/home.screen.dart';
+import 'package:flutter_akolo_finbot/screens/welcome.screen.dart';
 
 class Signin extends StatelessWidget {
   const Signin({Key? key}) : super(key: key);

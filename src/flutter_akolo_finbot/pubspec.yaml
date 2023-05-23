@@ -1,5 +1,5 @@
-name: googleauth
-description: A new Flutter project.
+name: flutter_akolo_finbot
+description: Akolo FinBot
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -39,6 +39,7 @@ dependencies:
   url_launcher: ^6.0.12
   share: ^2.0.4
   firebase_core: ^2.13.0
+  get_it: ^7.2.0
   package_info: ^2.0.2
   flutter_signin_button: ^2.0.0
   google_sign_in: ^6.1.0
