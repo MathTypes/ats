@@ -38,13 +38,22 @@ dependencies:
   intl: ^0.18.1
   url_launcher: ^6.0.12
   share: ^2.0.4
+  provider: ^6.0.1
+  dartz: ^0.10.0
+  link_preview_generator: ^1.2.0
+  image_picker: ^0.8.4+2
   firebase_core: ^2.13.0
   get_it: ^7.2.0
+  firebase_messaging: ^14.6.1
+  qr_code_scanner: ^1.0.0
   package_info: ^2.0.2
   flutter_signin_button: ^2.0.0
   google_sign_in: ^6.1.0
   cloud_firestore: ^4.7.1
+  firebase_storage: ^11.2.1
+  equatable: ^2.0.3
   firebase_auth: ^4.6.1
+  translator: ^0.1.7
   firebase_database: ^10.2.1
   firebase_analytics: ^10.4.1
   firebase_dynamic_links: ^5.3.1

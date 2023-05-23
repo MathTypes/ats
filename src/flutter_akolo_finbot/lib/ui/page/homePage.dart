@@ -1,89 +1,231 @@
+import 'dart:async';
+
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_akolo_finbot/firebase_options.dart';
-import 'package:flutter_akolo_finbot/screens/welcome.screen.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_akolo_finbot/helper/enum.dart';
+import 'package:flutter_akolo_finbot/helper/utility.dart';
+import 'package:flutter_akolo_finbot/model/push_notification_model.dart';
+import 'package:flutter_akolo_finbot/resource/push_notification_service.dart';
+import 'package:flutter_akolo_finbot/state/appState.dart';
+import 'package:flutter_akolo_finbot/state/authState.dart';
+import 'package:flutter_akolo_finbot/state/suggestionUserState.dart';
+import 'package:flutter_akolo_finbot/state/feedState.dart';
+import 'package:flutter_akolo_finbot/state/notificationState.dart';
+import 'package:flutter_akolo_finbot/state/searchState.dart';
+import 'package:flutter_akolo_finbot/ui/page/feed/feedPage.dart';
+import 'package:flutter_akolo_finbot/ui/page/feed/feedPostDetail.dart';
+import 'package:flutter_akolo_finbot/ui/page/feed/suggestedUsers.dart';
+import 'package:flutter_akolo_finbot/ui/page/profile/profilePage.dart';
+import 'package:flutter_akolo_finbot/widgets/bottomMenuBar/bottomMenuBar.dart';
+import 'package:provider/provider.dart';
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+import 'common/locator.dart';
+import 'common/sidebar.dart';
+import 'notification/notificationPage.dart';
+import 'search/SearchPage.dart';
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+class _HomePageState extends State<HomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+  int pageIndex = 0;
+  // ignore: cancel_subscriptions
+  late StreamSubscription<PushNotificationModel> pushNotificationSubscription;
+  @override
+  void initState() {
+    initDynamicLinks();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      var state = Provider.of<AppState>(context, listen: false);
+      state.setPageIndex = 0;
+      initTweets();
+      initProfile();
+      initSearch();
+      initNotification();
+      initChat();
     });
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // getIt<PushNotificationService>().pushBehaviorSubject.close();
+    super.dispose();
+  }
+
+  void initTweets() {
+    var state = Provider.of<FeedState>(context, listen: false);
+    state.databaseInit();
+    state.getDataFromDatabase();
+  }
+
+  void initProfile() {
+    var state = Provider.of<AuthState>(context, listen: false);
+    state.databaseInit();
+  }
+
+  void initSearch() {
+    var searchState = Provider.of<SearchState>(context, listen: false);
+    searchState.getDataFromDatabase();
+  }
+
+  void initNotification() {
+    var state = Provider.of<NotificationState>(context, listen: false);
+    var authState = Provider.of<AuthState>(context, listen: false);
+    state.databaseInit(authState.userId);
+
+    /// configure push notifications
+    state.initFirebaseService();
+
+    /// Subscribe the push notifications
+    /// Whenever devices receive push notification, `listenPushNotification` callback will trigger.
+    pushNotificationSubscription = getIt<PushNotificationService>()
+        .pushNotificationResponseStream
+        .listen(listenPushNotification);
+  }
+
+  /// Listen for every push notifications when app is in background
+  /// Check for push notifications when app is launched by tapping on push notifications from system tray.
+  /// If notification type is `NotificationType.Message` then chat screen will open
+  /// If notification type is `NotificationType.Mention` then user profile will open who tagged/mentioned you in a tweet
+  void listenPushNotification(PushNotificationModel model) {
+    final authState = Provider.of<AuthState>(context, listen: false);
+    var state = Provider.of<NotificationState>(context, listen: false);
+
+    /// Check if user receive chat notification
+    /// Redirect to chat screen
+    /// `model.data.senderId` is a user id who sends you a message
+    /// `model.data.receiverId` is a your user id.
+    //if (model.type == NotificationType.Message.toString() &&
+    //    model.receiverId == authState.user!.uid) {
+    //  /// Get sender profile detail from firebase
+    //  state.getUserDetail(model.senderId).then((user) {
+    //    final chatState = Provider.of<ChatState>(context, listen: false);
+    //    chatState.setChatUser = user!;
+    //    Navigator.pushNamed(context, '/ChatScreenPage');
+    //  });
+    //}
+
+    /// Checks for user tag tweet notification
+    /// Redirect user to tweet detail if
+    /// Tweet contains
+    /// If you are mentioned in tweet then it redirect to user profile who mentioned you in a tweet
+    /// You can check that tweet on his profile timeline
+    /// `model.data.senderId` is user id who tagged you in a tweet
+    if (model.type == NotificationType.Mention.toString() &&
+        model.receiverId == authState.user!.uid) {
+      var feedState = Provider.of<FeedState>(context, listen: false);
+      feedState.getPostDetailFromDatabase(model.tweetId);
+      Navigator.push(context, FeedPostDetail.getRoute(model.tweetId));
+    }
+  }
+
+  void initChat() {
+    //final chatState = Provider.of<ChatState>(context, listen: false);
+    final state = Provider.of<AuthState>(context, listen: false);
+    //chatState.databaseInit(state.userId, state.userId);
+
+    /// It will update fcm token in database
+    /// fcm token is required to send firebase notification
+    state.updateFCMToken();
+
+    /// It get fcm server key
+    /// Server key is required to configure firebase notification
+    /// Without fcm server notification can not be sent
+    //chatState.getFCMServerKey();
+  }
+
+  /// Initialize the firebase dynamic link sdk
+  void initDynamicLinks() async {
+    FirebaseDynamicLinks.instance.onLink.listen(
+        (PendingDynamicLinkData? dynamicLink) async {
+      final Uri? deepLink = dynamicLink?.link;
+
+      if (deepLink != null) {
+        redirectFromDeepLink(deepLink);
+      }
+    }, onError: (e) async {
+      cprint(e.message, errorIn: "onLinkError");
+    });
+
+    final PendingDynamicLinkData? data =
+        await FirebaseDynamicLinks.instance.getInitialLink();
+    final Uri? deepLink = data?.link;
+
+    if (deepLink != null) {
+      redirectFromDeepLink(deepLink);
+    }
+  }
+
+  /// Redirect user to specific screen when app is launched by tapping on deep link.
+  void redirectFromDeepLink(Uri deepLink) {
+    cprint("Found Url from share: ${deepLink.path}");
+    var type = deepLink.path.split("/")[1];
+    var id = deepLink.path.split("/")[2];
+    if (type == "profilePage") {
+      Navigator.push(context, ProfilePage.getRoute(profileId: id));
+    } else if (type == "tweet") {
+      var feedState = Provider.of<FeedState>(context, listen: false);
+      feedState.getPostDetailFromDatabase(id);
+      Navigator.push(context, FeedPostDetail.getRoute(id));
+    }
+  }
+
+  Widget _body() {
+    return SafeArea(
+      child: Container(
+        child: _getPage(Provider.of<AppState>(context).pageIndex),
+      ),
+    );
+  }
+
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return FeedPage(
+          scaffoldKey: _scaffoldKey,
+          refreshIndicatorKey: refreshIndicatorKey,
+        );
+      case 1:
+        return SearchPage(scaffoldKey: _scaffoldKey);
+      case 2:
+        return NotificationPage(scaffoldKey: _scaffoldKey);
+      //case 3:
+      //  return ChatListPage(scaffoldKey: _scaffoldKey);
+      default:
+        return FeedPage(scaffoldKey: _scaffoldKey);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final state = context.watch<AuthState>();
+    context.read<SuggestionsState>().initUser(state.userModel);
+
+    if (context
+        .select<SuggestionsState, bool>((state) => state.displaySuggestions)) {
+      return SuggestedUsers();
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      key: _scaffoldKey,
+      bottomNavigationBar: const BottomMenubar(),
+      drawer: const SidebarMenu(),
+      body: _body(),
     );
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(
+        DiagnosticsProperty<StreamSubscription<PushNotificationModel>>(
+            'pushNotificationSubscription', pushNotificationSubscription));
   }
 }

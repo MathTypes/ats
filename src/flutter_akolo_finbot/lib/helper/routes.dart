@@ -12,7 +12,7 @@ class Routes {
   static dynamic route() {
     return {
       'SplashPage': (BuildContext context) => const SplashPage(),
-      'WelcomePage': (BuildContext context) => const WelcomePage(),
+      //'WelcomePage': (BuildContext context) => const WelcomePage(),
     };
   }
 
