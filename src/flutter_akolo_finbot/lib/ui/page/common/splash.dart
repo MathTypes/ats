@@ -2,13 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_remote_config/firebase_remote_config.dart';
-import 'package:package_info/package_info.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import './updateApp.dart';
-import '../../page/home.dart';
-import '../../theme/theme.dart';
+import 'package:flutter_akolo_finbot/helper/enum.dart';
+import 'package:flutter_akolo_finbot/helper/utility.dart';
+import 'package:flutter_akolo_finbot/state/authState.dart';
+import 'package:flutter_akolo_finbot/ui/page/auth/selectAuthMethod.dart';
+import 'package:flutter_akolo_finbot/ui/page/common/updateApp.dart';
+import 'package:flutter_akolo_finbot/ui/page/homePage.dart';
+import 'package:flutter_akolo_finbot/ui/theme/theme.dart';
+import 'package:package_info/package_info.dart';
+import 'package:provider/provider.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({Key? key}) : super(key: key);
@@ -31,10 +36,10 @@ class _SplashPageState extends State<SplashPage> {
   void timer() async {
     final isAppUpdated = await _checkAppVersion();
     if (isAppUpdated) {
-      print("App is updated");
+      cprint("App is updated");
       Future.delayed(const Duration(seconds: 1)).then((_) {
-        //var state = Provider.of<AuthState>(context, listen: false);
-        //state.getCurrentUser();
+        var state = Provider.of<AuthState>(context, listen: false);
+        state.getCurrentUser();
       });
     }
   }
@@ -57,10 +62,10 @@ class _SplashPageState extends State<SplashPage> {
       return true;
     } else {
       if (kDebugMode) {
-        print("Latest version of app is not installed on your system");
-        print(
+        cprint("Latest version of app is not installed on your system");
+        cprint(
             "This is for testing purpose only. In debug mode update screen will not be open up");
-        print(
+        cprint(
             "If you are planning to publish app on store then please update app version in firebase config");
         return true;
       }
@@ -94,8 +99,9 @@ class _SplashPageState extends State<SplashPage> {
     if (data.isNotEmpty) {
       return jsonDecode(data) as Map;
     } else {
-      print(
-          "Please add your app's current version into Remote config in firebase");
+      cprint(
+          "Please add your app's current version into Remote config in firebase",
+          errorIn: "_getAppVersionFromFirebaseConfig");
       return null;
     }
   }
@@ -141,14 +147,15 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    //var state = Provider.of<AuthState>(context);
+    var state = Provider.of<AuthState>(context);
+    print('state:' + state.toString());
     return Scaffold(
-        backgroundColor: TwitterColor.white,
-        //body: state.authStatus == AuthStatus.NOT_DETERMINED
-        //    ? _body()
-        //    : state.authStatus == AuthStatus.NOT_LOGGED_IN
-        //        ? const WelcomePage()
-        //        : const HomePage(),
-        body: const HomeScreen());
+      backgroundColor: TwitterColor.white,
+      body: state.authStatus == AuthStatus.NOT_DETERMINED
+          ? _body()
+          : state.authStatus == AuthStatus.NOT_LOGGED_IN
+              ? const WelcomePage()
+              : const HomePage(),
+    );
   }
 }

@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 //import 'package:googleauth/screens/welcome.screen.dart';
 import 'customRoute.dart';
-import '../ui/page/welcome.dart';
-import '../ui/page/common/splash.dart';
-import '../ui/page/auth/signin.dart';
-import '../ui/page/auth/signup.dart';
+import 'package:flutter_akolo_finbot/ui/page/welcome.dart';
+import 'package:flutter_akolo_finbot/ui/page/common/splash.dart';
+import 'package:flutter_akolo_finbot/ui/page/auth/signin.dart';
+import 'package:flutter_akolo_finbot/ui/page/auth/signup.dart';
 
 class Routes {
   static dynamic route() {
@@ -29,12 +29,13 @@ class Routes {
     if (pathElements[0] != '' || pathElements.length == 1) {
       return null;
     }
+    print("pathElements[1]:" + pathElements[1]);
     switch (pathElements[1]) {
       case "WelcomePage":
         return CustomRoute<bool>(
             builder: (BuildContext context) => const WelcomePage());
       case "SignIn":
-        return CustomRoute<bool>(builder: (BuildContext context) => Signin());
+        return CustomRoute<bool>(builder: (BuildContext context) => SignIn());
       case "SignUp":
         return CustomRoute<bool>(builder: (BuildContext context) => Signup());
       default:

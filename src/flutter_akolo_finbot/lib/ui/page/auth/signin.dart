@@ -1,145 +1,167 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:flutter_akolo_finbot/Auth/authentication.dart';
-import 'package:flutter_akolo_finbot/screens/home.screen.dart';
-import 'package:flutter_akolo_finbot/screens/welcome.screen.dart';
+import 'package:flutter_akolo_finbot/helper/utility.dart';
+import 'package:flutter_akolo_finbot/state/authState.dart';
+import 'package:flutter_akolo_finbot/ui/page/auth/widget/googleLoginButton.dart';
+import 'package:flutter_akolo_finbot/ui/theme/theme.dart';
+import 'package:flutter_akolo_finbot/widgets/customFlatButton.dart';
+import 'package:flutter_akolo_finbot/widgets/customWidgets.dart';
+import 'package:flutter_akolo_finbot/widgets/newWidget/customLoader.dart';
+import 'package:provider/provider.dart';
 
-class Signin extends StatelessWidget {
-  const Signin({Key? key}) : super(key: key);
+class SignIn extends StatefulWidget {
+  final VoidCallback? loginCallback; //!
+
+  const SignIn({Key? key, this.loginCallback}) : super(key: key);
+  @override
+  State<StatefulWidget> createState() => _SignInState();
+}
+
+class _SignInState extends State<SignIn> {
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+  late CustomLoader loader;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  @override
+  void initState() {
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    loader = CustomLoader();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Widget _body(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            const SizedBox(height: 150),
+            _entryField('Enter email', controller: _emailController),
+            _entryField('Enter password',
+                controller: _passwordController, isPassword: true),
+            _emailLoginButton(context),
+            const SizedBox(height: 20),
+            _labelButton('Forget password?', onPressed: () {
+              Navigator.of(context).pushNamed('/ForgetPasswordPage');
+            }),
+            const Divider(
+              height: 30,
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            GoogleLoginButton(
+              loginCallback: widget.loginCallback!,
+              loader: loader,
+            ),
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _entryField(String hint,
+      {required TextEditingController controller, bool isPassword = false}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 15),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.emailAddress,
+        style: const TextStyle(
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.normal,
+        ),
+        obscureText: isPassword,
+        decoration: InputDecoration(
+          hintText: hint,
+          border: InputBorder.none,
+          focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(30.0)),
+              borderSide: BorderSide(color: Colors.blue)),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+        ),
+      ),
+    );
+  }
+
+  Widget _labelButton(String title, {Function? onPressed}) {
+    return TextButton(
+      onPressed: () {
+        if (onPressed != null) {
+          onPressed();
+        }
+      },
+      child: Text(
+        title,
+        style: TextStyle(
+            color: TwitterColor.dodgeBlue, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _emailLoginButton(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 35),
+      child: CustomFlatButton(
+        label: "Submit",
+        onPressed: _emailLogin,
+        borderRadius: 30,
+      ),
+    );
+  }
+
+  void _emailLogin() {
+    var state = Provider.of<AuthState>(context, listen: false);
+    if (state.isbusy) {
+      return;
+    }
+    loader.showLoader(context);
+    var isValid = Utility.validateCredentials(
+        context, _emailController.text, _passwordController.text);
+    if (isValid) {
+      state
+          .signIn(_emailController.text, _passwordController.text,
+              context: context)
+          .then((status) {
+        if (state.user != null) {
+          loader.hideLoader();
+          Navigator.pop(context);
+          widget.loginCallback!();
+        } else {
+          cprint('Unable to login', errorIn: '_emailLoginButton');
+          loader.hideLoader();
+        }
+      });
+    } else {
+      loader.hideLoader();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
-        appBar: AppBar(
-          title: const Text('Sign in'),
-          backgroundColor: Color.fromARGB(255, 0, 0, 0),
-        ),
-        body: SingleChildScrollView(
-          child: Container(
-            child: Column(children: [
-              SizedBox(
-                height: 20,
-              ),
-              Container(
-                height: 220,
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    image:
-                        DecorationImage(image: AssetImage("assets/login.png"))),
-              ),
-              const MyStatefulWidget(),
-            ]),
-          ),
-        ));
-  }
-}
-
-class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({super.key});
-
-  @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
-}
-
-class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  @override
-  Widget build(BuildContext context) {
-    TextEditingController email = TextEditingController();
-    TextEditingController password = TextEditingController();
-    return Form(
-      key: _formKey,
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: TextFormField(
-                controller: email,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your email',
-                ),
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  return null;
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: TextFormField(
-                controller: password,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your password',
-                ),
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the password';
-                  }
-                  return null;
-                },
-              ),
-            ),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: SignInButtonBuilder(
-                  text: 'Sign in with Email',
-                  // height: ,
-                  // width: MediaQuery.of(context).size.width-20,
-                  icon: Icons.email,
-                  onPressed: () {
-                    // Validate will return true if the form is valid, or false if
-                    // the form is invalid.
-                    if (_formKey.currentState!.validate()) {
-                      // Process data.
-                      auth
-                          .createUserWithEmailAndPassword(
-                              email: email.text, password: password.text)
-                          .then((_) {
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(
-                            builder: (context) => HomeScreen()));
-                      });
-                    }
-                  },
-                  backgroundColor: Colors.blueGrey[700]!,
-                ),
-              ),
-            ),
-            Center(child: Text("OR")),
-            Center(
-              child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: SignInButton(
-                    Buttons.Google,
-                    text: "Sign in with Google",
-                    onPressed: () {
-                      googleSignIn(context);
-                    },
-                  )),
-            ),
-            Center(child: Text("OR")),
-            Center(
-              child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: SignInButton(
-                    Buttons.Twitter,
-                    text: "Sign in with Twitter",
-                    onPressed: () {
-                      twitterSignIn(context);
-                    },
-                  )),
-            ),
-          ],
-        ),
+      key: _scaffoldKey,
+      appBar: AppBar(
+        title: customText('Sign in',
+            context: context, style: const TextStyle(fontSize: 20)),
+        centerTitle: true,
       ),
+      body: _body(context),
     );
   }
 }

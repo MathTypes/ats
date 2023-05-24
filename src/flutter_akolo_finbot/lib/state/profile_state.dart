@@ -8,8 +8,8 @@ import 'package:flutter_akolo_finbot/helper/enum.dart';
 import 'package:flutter_akolo_finbot/helper/utility.dart';
 import 'package:flutter_akolo_finbot/model/user.dart';
 
-class AssetState extends ChangeNotifier {
-  AssetState(this.profileId) {
+class ProfileState extends ChangeNotifier {
+  ProfileState(this.profileId) {
     databaseInit();
     userId = FirebaseAuth.instance.currentUser!.uid;
     _getloggedInUserProfile(userId);
