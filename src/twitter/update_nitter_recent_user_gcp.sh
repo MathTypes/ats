@@ -1,0 +1,1 @@
+PYTHONPATH=. python3 twitter/nitter_firebase_recent_user.py --host=${NITTER_HOST} --users=${TWITTER_USERS} --port=8011 --existing=True --firebase_cer=${FIREBASE_CERT} --rows=${TWITTER_ROWS}

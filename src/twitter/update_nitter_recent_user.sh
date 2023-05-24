@@ -1,0 +1,1 @@
+PYTHONPATH=. python3 twitter/nitter_user.py --users=pghosh1 --port=8012 --rows=2 --output_dir=/Volumes/Seagate\ Portable\ Drive/data/nitter_tweet_ids/recent_user --existing=True

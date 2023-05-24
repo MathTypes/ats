@@ -1,0 +1,1 @@
+ PYTHONPATH=. python3 twitter/download_tweet_by_id.py --id_file=/data/nitter_tweet_ids/symbol/qqq/qqq_2010-05-10T00:00:00_2010-05-11T00:00:00.csv
