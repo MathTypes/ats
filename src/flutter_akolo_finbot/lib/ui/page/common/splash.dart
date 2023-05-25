@@ -36,7 +36,7 @@ class _SplashPageState extends State<SplashPage> {
   void timer() async {
     final isAppUpdated = await _checkAppVersion();
     if (isAppUpdated) {
-      cprint("App is updated");
+      print("App is updated");
       Future.delayed(const Duration(seconds: 1)).then((_) {
         var state = Provider.of<AuthState>(context, listen: false);
         state.getCurrentUser();
@@ -148,7 +148,10 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     var state = Provider.of<AuthState>(context);
-    print('state:' + state.toString());
+    print('state.user:' + state.toString());
+    if (state.userModel != null) {
+      print('state.user:' + state.userModel!.toString());
+    }
     return Scaffold(
       backgroundColor: TwitterColor.white,
       body: state.authStatus == AuthStatus.NOT_DETERMINED

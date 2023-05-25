@@ -2,7 +2,7 @@
 
 import 'dart:async';
 import 'dart:developer' as developer;
-
+import 'package:stack_trace/stack_trace.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
@@ -154,9 +154,12 @@ class Utility {
   }
 
   static void logEvent(String event, {Map<String, dynamic>? parameter}) {
-    kReleaseMode
-        ? kAnalytics.logEvent(name: event, parameters: parameter)
-        : print("[EVENT]: $event");
+    if (kReleaseMode) {
+      kAnalytics.logEvent(name: event, parameters: parameter);
+    } else {
+      String line = Trace.from(StackTrace.current).terse.frames[1].toString();
+      print("[EVENT:$line]: $event");
+    }
   }
 
   static void debugLog(String log, {dynamic param = ""}) {

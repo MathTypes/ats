@@ -9,6 +9,7 @@ import 'package:flutter_akolo_finbot/model/push_notification_model.dart';
 import 'package:flutter_akolo_finbot/resource/push_notification_service.dart';
 import 'package:flutter_akolo_finbot/state/appState.dart';
 import 'package:flutter_akolo_finbot/state/authState.dart';
+import 'package:flutter_akolo_finbot/state/chats/chatState.dart';
 import 'package:flutter_akolo_finbot/state/suggestionUserState.dart';
 import 'package:flutter_akolo_finbot/state/feedState.dart';
 import 'package:flutter_akolo_finbot/state/notificationState.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_akolo_finbot/state/searchState.dart';
 import 'package:flutter_akolo_finbot/ui/page/feed/feedPage.dart';
 import 'package:flutter_akolo_finbot/ui/page/feed/feedPostDetail.dart';
 import 'package:flutter_akolo_finbot/ui/page/feed/suggestedUsers.dart';
+import 'package:flutter_akolo_finbot/ui/page/message/chatListPage.dart';
 import 'package:flutter_akolo_finbot/ui/page/profile/profilePage.dart';
 import 'package:flutter_akolo_finbot/widgets/bottomMenuBar/bottomMenuBar.dart';
 import 'package:provider/provider.dart';
@@ -102,15 +104,15 @@ class _HomePageState extends State<HomePage> {
     /// Redirect to chat screen
     /// `model.data.senderId` is a user id who sends you a message
     /// `model.data.receiverId` is a your user id.
-    //if (model.type == NotificationType.Message.toString() &&
-    //    model.receiverId == authState.user!.uid) {
-    //  /// Get sender profile detail from firebase
-    //  state.getUserDetail(model.senderId).then((user) {
-    //    final chatState = Provider.of<ChatState>(context, listen: false);
-    //    chatState.setChatUser = user!;
-    //    Navigator.pushNamed(context, '/ChatScreenPage');
-    //  });
-    //}
+    if (model.type == NotificationType.Message.toString() &&
+        model.receiverId == authState.user!.uid) {
+      /// Get sender profile detail from firebase
+      state.getUserDetail(model.senderId).then((user) {
+        final chatState = Provider.of<ChatState>(context, listen: false);
+        chatState.setChatUser = user!;
+        Navigator.pushNamed(context, '/ChatScreenPage');
+      });
+    }
 
     /// Checks for user tag tweet notification
     /// Redirect user to tweet detail if
@@ -118,7 +120,7 @@ class _HomePageState extends State<HomePage> {
     /// If you are mentioned in tweet then it redirect to user profile who mentioned you in a tweet
     /// You can check that tweet on his profile timeline
     /// `model.data.senderId` is user id who tagged you in a tweet
-    if (model.type == NotificationType.Mention.toString() &&
+    else if (model.type == NotificationType.Mention.toString() &&
         model.receiverId == authState.user!.uid) {
       var feedState = Provider.of<FeedState>(context, listen: false);
       feedState.getPostDetailFromDatabase(model.tweetId);
@@ -127,9 +129,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void initChat() {
-    //final chatState = Provider.of<ChatState>(context, listen: false);
+    final chatState = Provider.of<ChatState>(context, listen: false);
     final state = Provider.of<AuthState>(context, listen: false);
-    //chatState.databaseInit(state.userId, state.userId);
+    chatState.databaseInit(state.userId, state.userId);
 
     /// It will update fcm token in database
     /// fcm token is required to send firebase notification
@@ -138,7 +140,7 @@ class _HomePageState extends State<HomePage> {
     /// It get fcm server key
     /// Server key is required to configure firebase notification
     /// Without fcm server notification can not be sent
-    //chatState.getFCMServerKey();
+    chatState.getFCMServerKey();
   }
 
   /// Initialize the firebase dynamic link sdk
@@ -196,8 +198,8 @@ class _HomePageState extends State<HomePage> {
         return SearchPage(scaffoldKey: _scaffoldKey);
       case 2:
         return NotificationPage(scaffoldKey: _scaffoldKey);
-      //case 3:
-      //  return ChatListPage(scaffoldKey: _scaffoldKey);
+      case 3:
+        return ChatListPage(scaffoldKey: _scaffoldKey);
       default:
         return FeedPage(scaffoldKey: _scaffoldKey);
     }

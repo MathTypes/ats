@@ -8,9 +8,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_akolo_finbot/helper/utility.dart';
 import 'package:flutter_akolo_finbot/helper/enum.dart';
 import 'package:flutter_akolo_finbot/helper/shared_prefrence_helper.dart';
-import 'package:flutter_akolo_finbot/helper/utility.dart';
 import 'package:flutter_akolo_finbot/model/user.dart';
 import 'package:flutter_akolo_finbot/ui/page/common/locator.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -147,22 +147,23 @@ class AuthState extends AppState {
       userId = user!.uid;
       isSignInWithGoogle = true;
       createUserFromGoogleSignIn(user!);
+      Utility.logEvent('createUser, userModel:' + _userModel.toString());
       notifyListeners();
       return user;
     } on PlatformException catch (error) {
       user = null;
       authStatus = AuthStatus.NOT_LOGGED_IN;
-      cprint(error, errorIn: 'handleGoogleSignIn');
+      Utility.logEvent(error.toString());
       return null;
     } on Exception catch (error) {
       user = null;
       authStatus = AuthStatus.NOT_LOGGED_IN;
-      cprint(error, errorIn: 'handleGoogleSignIn');
+      Utility.logEvent(error.toString());
       return null;
     } catch (error) {
       user = null;
       authStatus = AuthStatus.NOT_LOGGED_IN;
-      cprint(error, errorIn: 'handleGoogleSignIn');
+      Utility.logEvent(error.toString());
       return null;
     }
   }
@@ -172,25 +173,36 @@ class AuthState extends AppState {
     var diff = DateTime.now().difference(user.metadata.creationTime!);
     // Check if user is new or old
     // If user is new then add new user to firebase realtime kDatabase
+    Utility.logEvent(
+        'diff: ${diff} creationTime: ${user.metadata.lastSignInTime}');
     if (diff < const Duration(seconds: 15)) {
+      Utility.logEvent(
+          'createUserFromGoogleSignIn, before creating model:${user}');
+      //UserModel model = UserModel(
+      //  bio: 'Edit profile to update bio',
+      //  dob: DateTime(1950, DateTime.now().month, DateTime.now().day + 3)
+      //      .toString(),
+      //   location: 'Somewhere in universe',
+      //   profilePic: user.photoURL!,
+      //    displayName: user.displayName!,
+      //    email: user.email!,
+      //    key: user.uid,
+      //    userId: user.uid,
+      //    contact: user.phoneNumber!,
+      //    isVerified: user.emailVerified,
+      //  );
       UserModel model = UserModel(
-        bio: 'Edit profile to update bio',
-        dob: DateTime(1950, DateTime.now().month, DateTime.now().day + 3)
-            .toString(),
-        location: 'Somewhere in universe',
-        profilePic: user.photoURL!,
-        displayName: user.displayName!,
+        userId: user.uid,
         email: user.email!,
         key: user.uid,
-        userId: user.uid,
-        contact: user.phoneNumber!,
+        displayName: user.displayName!,
+        contact: user.phoneNumber,
         isVerified: user.emailVerified,
       );
-      Utility.logEvent('createUserFromGoogleSignIn, model:' + model.toString(),
-          parameter: {});
+      Utility.logEvent('createUserFromGoogleSignIn, model:${model}');
       createUser(model, newUser: true);
     } else {
-      cprint('Last login at: ${user.metadata.lastSignInTime}');
+      Utility.logEvent('Last login at: ${user.metadata.lastSignInTime}');
     }
   }
 
@@ -233,10 +245,12 @@ class AuthState extends AppState {
   /// IF `newUser` is true new user is created
   /// Else existing user will update with new values
   void createUser(UserModel user, {bool newUser = false}) {
+    Utility.logEvent('createUser, user:' + user.toString());
     if (newUser) {
       // Create username by the combination of name and id
       user.userName =
           Utility.getUserName(id: user.userId!, name: user.displayName!);
+      Utility.logEvent('creatNeweUser');
       kAnalytics.logEvent(name: 'create_newUser');
 
       // Time at which user is created
@@ -468,6 +482,7 @@ class AuthState extends AppState {
   /// Trigger when logged-in user's profile change or updated
   /// Firebase event callback for profile update
   void _onProfileChanged(DatabaseEvent event) {
+    Utility.logEvent('$event');
     final val = event.snapshot.value;
     if (val is Map) {
       final updatedUser = UserModel.fromJson(val);
@@ -479,6 +494,7 @@ class AuthState extends AppState {
   }
 
   void _onProfileUpdated(DatabaseEvent event) {
+    Utility.logEvent('$event');
     final val = event.snapshot.value;
     if (val is List &&
         ['following', 'followers'].contains(event.snapshot.key)) {
@@ -495,7 +511,7 @@ class AuthState extends AppState {
         );
       }
       getIt<SharedPreferenceHelper>().saveUserProfile(_userModel!);
-      cprint('UserModel Updated');
+      Utility.logEvent('UserModel Updated');
       notifyListeners();
     }
   }

@@ -70,7 +70,8 @@ class DefaultFirebaseOptions {
     projectId: 'keen-rhino-386415',
     databaseURL: 'https://keen-rhino-386415-default-rtdb.firebaseio.com',
     storageBucket: 'keen-rhino-386415.appspot.com',
-    iosClientId: '315214571397-fg6j8kesead0fgjpqu2ugtopbrh2up92.apps.googleusercontent.com',
+    iosClientId:
+        '315214571397-fg6j8kesead0fgjpqu2ugtopbrh2up92.apps.googleusercontent.com',
     iosBundleId: 'com.akolotech.finbot',
   );
 
@@ -81,7 +82,8 @@ class DefaultFirebaseOptions {
     projectId: 'keen-rhino-386415',
     databaseURL: 'https://keen-rhino-386415-default-rtdb.firebaseio.com',
     storageBucket: 'keen-rhino-386415.appspot.com',
-    iosClientId: '315214571397-liiqnme6c0acdrkvva1ctvjuideg9com.apps.googleusercontent.com',
-    iosBundleId: 'com.example.googleauth',
+    iosClientId:
+        '315214571397-liiqnme6c0acdrkvva1ctvjuideg9com.apps.googleusercontent.com',
+    iosBundleId: 'com.akolotech.finbot',
   );
 }

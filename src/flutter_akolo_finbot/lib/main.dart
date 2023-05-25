@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_akolo_finbot/firebase_options.dart';
-import 'package:flutter_akolo_finbot/screens/welcome.screen.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_akolo_finbot/state/suggestionUserState.dart';
@@ -15,13 +13,14 @@ import 'package:flutter_akolo_finbot/ui/theme/theme.dart';
 import 'helper/routes.dart';
 import 'state/appState.dart';
 import 'state/authState.dart';
+import 'state/chats/chatState.dart';
 import 'state/feedState.dart';
 import 'state/notificationState.dart';
-import 'helper/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  setupDependencies();
   runApp(const MyApp());
 }
 
@@ -35,6 +34,7 @@ class MyApp extends StatelessWidget {
         providers: [
           ChangeNotifierProvider<AppState>(create: (_) => AppState()),
           ChangeNotifierProvider<AuthState>(create: (_) => AuthState()),
+          ChangeNotifierProvider<ChatState>(create: (_) => ChatState()),
           ChangeNotifierProvider<FeedState>(create: (_) => FeedState()),
           ChangeNotifierProvider<SearchState>(create: (_) => SearchState()),
           ChangeNotifierProvider<NotificationState>(
