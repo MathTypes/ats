@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/firebase_database.dart' as database;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_akolo_finbot/helper/enum.dart';
 import 'package:flutter_akolo_finbot/helper/shared_prefrence_helper.dart';
@@ -27,7 +26,7 @@ class FeedState extends AppState {
   late List<FeedModel> _commentList;
 
   List<FeedModel>? _feedList;
-  database.Query? _feedQuery;
+  Stream? _feedQuery;
   List<FeedModel>? _tweetDetailModelList;
 
   List<FeedModel>? get tweetDetailModel => _tweetDetailModelList;
@@ -127,11 +126,29 @@ class FeedState extends AppState {
   Future<bool> databaseInit() {
     try {
       if (_feedQuery == null) {
-        _feedQuery = kDatabase.child("recent_tweet_by_user");
-        print("loading feedQuery: $_feedQuery");
-        _feedQuery!.onChildAdded.listen(_onTweetAdded);
-        _feedQuery!.onChildChanged.listen(_onTweetChanged);
-        _feedQuery!.onChildRemoved.listen(_onTweetRemoved);
+        _feedQuery = kFirestore.collection("recent_tweet_by_user").snapshots();
+        Utility.logEvent("loading feedQuery: $_feedQuery");
+        _feedQuery!.listen((event) {
+          Utility.logEvent(event.toString());
+          for (var change in event.docChanges) {
+            Utility.logEvent(change.toString());
+            if (change.type == DocumentChangeType.added) {
+              for (var doc in event.docs) {
+                _onTweetAdded(doc);
+              }
+            }
+            if (change.type == DocumentChangeType.modified) {
+              for (var doc in event.docs) {
+                _onTweetChanged(doc);
+              }
+            }
+            if (change.type == DocumentChangeType.removed) {
+              for (var doc in event.docs) {
+                _onTweetRemoved(doc);
+              }
+            }
+          }
+        });
       }
 
       return Future.value(true);
@@ -148,32 +165,25 @@ class FeedState extends AppState {
       _feedList = null;
       print("getDataFromDatabase");
       notifyListeners();
-      kDatabase
-          .child('recent_tweet_by_user')
-          .once()
-          .then((DatabaseEvent event) {
-        print("getDataFromDatabase_event: $event");
-        final snapshot = event.snapshot;
+      kFirestore
+          .collection('recent_tweet_by_user')
+          .get()
+          .then((QuerySnapshot snapshot) {
+        print("getDataFromDatabase_event: $snapshot");
         _feedList = <FeedModel>[];
-        if (snapshot.value != null) {
-          var map = snapshot.value as Map<dynamic, dynamic>?;
-          if (map != null) {
-            map.forEach((key, value) {
-              var model = FeedModel.fromJson(value);
-              model.key = key;
-              if (model.isValidTweet) {
-                _feedList!.add(model);
-              }
-            });
-
-            /// Sort Tweet by time
-            /// It helps to display newest Tweet first.
-            _feedList!.sort((x, y) => DateTime.parse(x.createdAt)
-                .compareTo(DateTime.parse(y.createdAt)));
+        var map = snapshot.docs;
+        map.forEach((value) {
+          var model = FeedModel.fromJson(value.data() as Map);
+          model.key = value.id;
+          if (model.isValidTweet) {
+            _feedList!.add(model);
           }
-        } else {
-          _feedList = null;
-        }
+        });
+
+        /// Sort Tweet by time
+        /// It helps to display newest Tweet first.
+        _feedList!.sort((x, y) =>
+            DateTime.parse(x.createdAt).compareTo(DateTime.parse(y.createdAt)));
         isBusy = false;
         notifyListeners();
       });
@@ -199,16 +209,15 @@ class FeedState extends AppState {
       } else {
         assert(postID != null);
         // Fetch tweet data from firebase
-        kDatabase
-            .child('tweet')
-            .child(postID!)
-            .once()
-            .then((DatabaseEvent event) {
-          final snapshot = event.snapshot;
-          if (snapshot.value != null) {
-            var map = snapshot.value as Map<dynamic, dynamic>;
+        kFirestore
+            .collection('tweet')
+            .doc(postID!)
+            .get()
+            .then((DocumentSnapshot snapshot) {
+          if (snapshot.exists) {
+            var map = snapshot.data as Map<dynamic, dynamic>;
             _tweetDetail = FeedModel.fromJson(map);
-            _tweetDetail!.key = snapshot.key!;
+            _tweetDetail!.key = snapshot.id!;
             setFeedModel = _tweetDetail!;
           }
         });
@@ -224,15 +233,14 @@ class FeedState extends AppState {
             if (x == null) {
               return;
             }
-            kDatabase
-                .child('tweet')
-                .child(x)
-                .once()
-                .then((DatabaseEvent event) {
-              final snapshot = event.snapshot;
-              if (snapshot.value != null) {
-                var commentModel = FeedModel.fromJson(snapshot.value as Map);
-                String key = snapshot.key!;
+            kFirestore
+                .collection('tweet')
+                .doc(x)
+                .get()
+                .then((DocumentSnapshot snapshot) {
+              if (snapshot.exists) {
+                var commentModel = FeedModel.fromJson(snapshot.data as Map);
+                String key = snapshot.id!;
                 commentModel.key = key;
 
                 /// add comment tweet to list if tweet is not present in [comment tweet ]list
@@ -274,13 +282,12 @@ class FeedState extends AppState {
     /// If tweet is not available in feedList then need to fetch it from firebase
     else {
       cprint("Fetched from DB: " + postID);
-      var model = await kDatabase.child('tweet').child(postID).once().then(
-        (DatabaseEvent event) {
-          final snapshot = event.snapshot;
-          if (snapshot.value != null) {
-            var map = snapshot.value as Map<dynamic, dynamic>;
+      var model = await kFirestore.collection('tweet').doc(postID).get().then(
+        (DocumentSnapshot snapshot) {
+          if (snapshot.exists) {
+            var map = snapshot.data as Map<dynamic, dynamic>;
             _tweetDetail = FeedModel.fromJson(map);
-            _tweetDetail!.key = snapshot.key!;
+            _tweetDetail!.key = snapshot.id!;
             print(_tweetDetail!.description);
           }
         },
@@ -302,11 +309,8 @@ class FeedState extends AppState {
     notifyListeners();
     String? tweetKey;
     try {
-      DatabaseReference dbReference = kDatabase.child('tweet').push();
-
-      await dbReference.set(model.toJson());
-
-      tweetKey = dbReference.key;
+      kFirestore.collection('tweet').add(model.toJson());
+      tweetKey = model.key;
     } catch (error) {
       cprint(error, errorIn: 'createTweet');
     }
@@ -342,7 +346,7 @@ class FeedState extends AppState {
       ) {
     try {
       /// Delete tweet if it is in nested tweet detail page
-      kDatabase.child('tweet').child(tweetId).remove().then((_) {
+      kFirestore.collection('tweet').doc(tweetId).delete().then((_) {
         if (type == TweetType.Detail &&
             _tweetDetailModelList != null &&
             _tweetDetailModelList!.isNotEmpty) {
@@ -405,9 +409,9 @@ class FeedState extends AppState {
 
   /// [update] tweet
   Future<void> updateTweet(FeedModel model) async {
-    await kDatabase
-        .child('recent_tweet_by_user')
-        .child(model.key!)
+    await kFirestore
+        .collection('recent_tweet_by_user')
+        .doc(model.key!)
         .set(model.toJson());
   }
 
@@ -428,18 +432,17 @@ class FeedState extends AppState {
         tweet.likeCount = tweet.likeCount! + 1;
       }
       // update likeList of a tweet
-      kDatabase
-          .child('recent_tweet_by_user')
-          .child(tweet.key!)
-          .child('likeList')
-          .set(tweet.likeList);
+      //kFirestore
+      //    .collection('recent_tweet_by_user')
+      //    .doc(tweet.key!)
+      //    .child('likeList')
+      //    .set(tweet.likeList);
 
       // Sends notification to user who created tweet
       // UserModel owner can see notification on notification page
-      kDatabase
-          .child('notification')
-          .child(tweet.userId)
-          .child(tweet.key!)
+      kFirestore
+          .collection('notification')
+          .doc(tweet.userId + "_" + tweet.key!)
           .set({
         'type':
             tweet.likeList!.isEmpty ? null : NotificationType.Like.toString(),
@@ -462,11 +465,13 @@ class FeedState extends AppState {
         FeedModel tweet =
             _feedList!.firstWhere((x) => x.key == _tweetToReplyModel!.key);
         var json = replyTweet.toJson();
-        DatabaseReference ref = kDatabase.child('recent_tweet_by_user').push();
-        await ref.set(json);
-        tweet.replyTweetKeyList!.add(ref.key);
+        var key = await kFirestore
+            .collection('recent_tweet_by_user')
+            .add(json)
+            .then((DocumentReference doc) => doc.id);
+        tweet.replyTweetKeyList!.add(key);
         await updateTweet(tweet);
-        return ref.key;
+        return key;
       } else {
         return null;
       }
@@ -483,22 +488,21 @@ class FeedState extends AppState {
   Future addBookmark(String tweetId) async {
     final pref = getIt<SharedPreferenceHelper>();
     var userId = await pref.getUserProfile().then((value) => value!.userId);
-    DatabaseReference dbReference =
-        kDatabase.child('bookmark').child(userId!).child(tweetId);
-    await dbReference.set(
+    var key = userId! + "_" + tweetId;
+    await kFirestore.collection('bookmark').doc(key).set(
         {"tweetId": tweetId, "created_at": DateTime.now().toUtc().toString()});
   }
 
   /// Trigger when any tweet changes or update
   /// When any tweet changes it update it in UI
   /// No matter if Tweet is in home page or in detail page or in comment section.
-  _onTweetChanged(DatabaseEvent event) {
-    var model =
-        FeedModel.fromJson(event.snapshot.value as Map<dynamic, dynamic>);
-    model.key = event.snapshot.key!;
+  _onTweetChanged(DocumentSnapshot snapshot) {
+    Utility.logEvent(snapshot.toString());
+    var model = FeedModel.fromJson(snapshot.data as Map<dynamic, dynamic>);
+    model.key = snapshot.id!;
     if (_feedList!.any((x) => x.key == model.key)) {
       var oldEntry = _feedList!.lastWhere((entry) {
-        return entry.key == event.snapshot.key;
+        return entry.key == snapshot.id;
       });
       _feedList![_feedList!.indexOf(oldEntry)] = model;
     }
@@ -506,7 +510,7 @@ class FeedState extends AppState {
     if (_tweetDetailModelList != null && _tweetDetailModelList!.isNotEmpty) {
       if (_tweetDetailModelList!.any((x) => x.key == model.key)) {
         var oldEntry = _tweetDetailModelList!.lastWhere((entry) {
-          return entry.key == event.snapshot.key;
+          return entry.key == snapshot.id;
         });
         _tweetDetailModelList![_tweetDetailModelList!.indexOf(oldEntry)] =
             model;
@@ -536,13 +540,16 @@ class FeedState extends AppState {
   /// Trigger when new tweet added
   /// It will add new Tweet in home page list.
   /// IF Tweet is comment it will be added in comment section too.
-  _onTweetAdded(DatabaseEvent event) {
-    FeedModel tweet = FeedModel.fromJson(event.snapshot.value as Map);
-    tweet.key = event.snapshot.key!;
+  _onTweetAdded(DocumentSnapshot snapshot) {
+    Utility.logEvent(snapshot.id);
+    Utility.logEvent(snapshot.data().toString());
+    FeedModel tweet =
+        FeedModel.fromJson(snapshot.data() as Map<String, dynamic>);
+    tweet.key = snapshot.id!;
 
     /// Check if Tweet is a comment
     _onCommentAdded(tweet);
-    tweet.key = event.snapshot.key!;
+    tweet.key = snapshot.id!;
     _feedList ??= <FeedModel>[];
     if ((_feedList!.isEmpty || _feedList!.any((x) => x.key != tweet.key)) &&
         tweet.isValidTweet) {
@@ -577,9 +584,9 @@ class FeedState extends AppState {
 
   /// Trigger when Tweet `Deleted`
   /// It removed Tweet from home page list, Tweet detail page list and from comment section if present
-  _onTweetRemoved(DatabaseEvent event) async {
-    FeedModel tweet = FeedModel.fromJson(event.snapshot.value as Map);
-    tweet.key = event.snapshot.key!;
+  _onTweetRemoved(DocumentSnapshot snapshot) async {
+    FeedModel tweet = FeedModel.fromJson(snapshot.data as Map);
+    tweet.key = snapshot.id!;
     var tweetId = tweet.key;
     var parentkey = tweet.parentkey;
 
@@ -657,11 +664,10 @@ class FeedState extends AppState {
 
       /// Delete notification related to deleted Tweet.
       if (deletedTweet.likeCount! > 0) {
-        kDatabase
-            .child('notification')
-            .child(tweet.userId)
-            .child(tweet.key!)
-            .remove();
+        kFirestore
+            .collection('notification')
+            .doc(tweet.userId + "_" + tweet.key!)
+            .delete();
       }
       notifyListeners();
     } catch (error) {

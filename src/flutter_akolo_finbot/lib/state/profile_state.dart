@@ -1,8 +1,7 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/firebase_database.dart' as dabase;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_akolo_finbot/helper/enum.dart';
 import 'package:flutter_akolo_finbot/helper/utility.dart';
@@ -23,8 +22,8 @@ class ProfileState extends ChangeNotifier {
   late UserModel _userModel;
   UserModel get userModel => _userModel;
 
-  dabase.Query? _profileQuery;
-  late StreamSubscription<DatabaseEvent> profileSubscription;
+  DocumentReference? _profileQuery;
+  late StreamSubscription profileSubscription;
 
   /// This is the id of user whose profile is open.
   final String profileId;
@@ -43,8 +42,10 @@ class ProfileState extends ChangeNotifier {
   databaseInit() {
     try {
       if (_profileQuery == null) {
-        _profileQuery = kDatabase.child("profile").child(profileId);
-        profileSubscription = _profileQuery!.onValue.listen(_onProfileChanged);
+        _profileQuery = kFirestore.collection("profile").doc(profileId);
+        profileSubscription = _profileQuery!.snapshots().listen((event) {
+          _onProfileChanged(event);
+        });
       }
     } catch (error) {
       cprint(error, errorIn: 'databaseInit');
@@ -55,10 +56,13 @@ class ProfileState extends ChangeNotifier {
 
   /// Fetch profile of logged in  user
   void _getloggedInUserProfile(String userId) async {
-    kDatabase.child("profile").child(userId).once().then((DatabaseEvent event) {
-      final snapshot = event.snapshot;
-      if (snapshot.value != null) {
-        var map = snapshot.value as Map<dynamic, dynamic>?;
+    kFirestore
+        .collection("profile")
+        .doc(userId)
+        .get()
+        .then((DocumentSnapshot snapshot) {
+      if (snapshot.exists) {
+        var map = snapshot.data as Map<dynamic, dynamic>?;
         if (map != null) {
           _userModel = UserModel.fromJson(map);
         }
@@ -71,14 +75,13 @@ class ProfileState extends ChangeNotifier {
     assert(userProfileId != null);
     try {
       loading = true;
-      kDatabase
-          .child("profile")
-          .child(userProfileId!)
-          .once()
-          .then((DatabaseEvent event) {
-        final snapshot = event.snapshot;
-        if (snapshot.value != null) {
-          var map = snapshot.value as Map;
+      kFirestore
+          .collection("profile")
+          .doc(userProfileId!)
+          .get()
+          .then((DocumentSnapshot snapshot) {
+        if (snapshot.exists) {
+          var map = snapshot.data as Map;
           // ignore: unnecessary_null_comparison
           if (map != null) {
             _profileUserModel = UserModel.fromJson(map);
@@ -126,16 +129,14 @@ class ProfileState extends ChangeNotifier {
       profileUserModel.followers = profileUserModel.followersList!.length;
       // update logged-in user's following count
       userModel.following = userModel.followingList!.length;
-      kDatabase
-          .child('profile')
-          .child(profileUserModel.userId!)
-          .child('followerList')
-          .set(profileUserModel.followersList);
-      kDatabase
-          .child('profile')
-          .child(userModel.userId!)
-          .child('followingList')
-          .set(userModel.followingList);
+      kFirestore
+          .collection('profile')
+          .doc(profileUserModel.userId!)
+          .set({"followersList": profileUserModel.followersList});
+      kFirestore
+          .collection('profile')
+          .doc(userModel.userId!)
+          .set({'followingList': userModel.followingList});
       cprint('user added to following list', event: 'add_follow');
 
       notifyListeners();
@@ -147,7 +148,7 @@ class ProfileState extends ChangeNotifier {
   void addFollowNotification() {
     // Sends notification to user who created tweet
     // UserModel owner can see notification on notification page
-    kDatabase.child('notification').child(profileId).child(userId).set({
+    kFirestore.collection('notification').doc(profileId + "_" + userId).set({
       'type': NotificationType.Follow.toString(),
       'createdAt': DateTime.now().toUtc().toString(),
       'data': UserModel(
@@ -165,10 +166,10 @@ class ProfileState extends ChangeNotifier {
 
   /// Trigger when logged-in user's profile change or updated
   /// Firebase event callback for profile update
-  void _onProfileChanged(DatabaseEvent event) {
+  void _onProfileChanged(DocumentSnapshot snapshot) {
     // if (event.snapshot != null) {
 
-    final updatedUser = UserModel.fromJson(event.snapshot.value as Map);
+    final updatedUser = UserModel.fromJson(snapshot.data as Map);
     if (updatedUser.userId == profileId) {
       _profileUserModel = updatedUser;
     }
@@ -178,7 +179,7 @@ class ProfileState extends ChangeNotifier {
 
   @override
   void dispose() {
-    _profileQuery!.onValue.drain();
+    _profileQuery!.snapshots().drain();
     profileSubscription.cancel();
     // _profileQuery.
     super.dispose();

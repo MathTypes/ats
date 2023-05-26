@@ -57,7 +57,8 @@ class FeedModel {
   FeedModel.fromJson(Map<dynamic, dynamic> map) {
     key = map['key'];
     description = map['description'];
-    userId = map['userId'];
+    //userId = map['userId'];
+    userId = map['userName'];
     //  name = map['name'];
     //  profilePic = map['profilePic'];
     likeCount = map['likeCount'] ?? 0;

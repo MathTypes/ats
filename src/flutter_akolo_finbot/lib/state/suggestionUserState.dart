@@ -93,11 +93,10 @@ class SuggestionsState extends AppState {
           user.followersList ??= [];
           user.followersList!.add(currentUser!.userId!);
           user.followers = user.followersList!.length;
-          await kDatabase
-              .child('profile')
-              .child(user.userId!)
-              .child('followerList')
-              .set(user.followersList);
+          await kFirestore
+              .collection('profile')
+              .doc(user.userId!)
+              .set({'followerList': user.followersList});
 
           cprint('user added to following list');
         }
@@ -107,11 +106,10 @@ class SuggestionsState extends AppState {
         currentUser!.followingList!
             .addAll(_selectedUsers.map((e) => e.userId!));
         currentUser!.following = currentUser!.followingList!.length;
-        await kDatabase
-            .child('profile')
-            .child(currentUser!.userId!)
-            .child('followingList')
-            .set(currentUser!.followingList);
+        await kFirestore
+            .collection('profile')
+            .doc(currentUser!.userId!)
+            .set({'followingList': currentUser!.followingList});
 
         // await getIt<SharedPreferenceHelper>().saveUserProfile(currentUser!);
 

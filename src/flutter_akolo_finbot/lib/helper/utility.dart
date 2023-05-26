@@ -13,9 +13,12 @@ import 'package:intl/intl.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/newWidget/customLoader.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 final kAnalytics = FirebaseAnalytics.instance;
-final DatabaseReference kDatabase = FirebaseDatabase.instance.ref();
+//final DatabaseReference kDatabase = FirebaseDatabase.instance.ref();
+final FirebaseFirestore kFirestore = FirebaseFirestore.instance;
+
 final kScreenLoader = CustomLoader();
 void cprint(dynamic data,
     {String? errorIn, String? event, String label = 'Log'}) {

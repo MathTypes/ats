@@ -58,18 +58,16 @@ class FollowListState extends AppState {
       _currentUser!.following = _currentUser!.followingList!.length;
 
       /// Update other user profile
-      kDatabase
-          .child('profile')
-          .child(secondUser.userId!)
-          .child('followerList')
-          .set(secondUser.followersList);
+      kFirestore
+          .collection('profile')
+          .doc(secondUser.userId!)
+          .set({'followerList': secondUser.followersList});
 
       /// update current user profile
-      kDatabase
-          .child('profile')
-          .child(_currentUser!.userId!)
-          .child('followingList')
-          .set(_currentUser!.followingList);
+      kFirestore
+          .collection('profile')
+          .doc(_currentUser!.userId!)
+          .set({'followingList': _currentUser!.followingList});
       cprint('Operation Success');
       // await getIt<SharedPreferenceHelper>().saveUserProfile(_currentUser!);
 
@@ -92,10 +90,9 @@ class FollowListState extends AppState {
   void addFollowNotification(String profileId) {
     // Sends notification to user who created tweet
     // UserModel owner can see notification on notification page
-    kDatabase
-        .child('notification')
-        .child(profileId)
-        .child(_currentUser!.userId!)
+    kFirestore
+        .collection('notification')
+        .doc(profileId + "_" + _currentUser!.userId!)
         .set({
       'type': NotificationType.Follow.toString(),
       'createdAt': DateTime.now().toUtc().toString(),

@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_akolo_finbot/helper/enum.dart';
 import 'package:flutter_akolo_finbot/helper/utility.dart';
 import 'package:flutter_akolo_finbot/model/user.dart';
@@ -22,27 +22,19 @@ class SearchState extends AppState {
   void getDataFromDatabase() {
     try {
       isBusy = true;
-      kDatabase.child('profile').once().then(
-        (DatabaseEvent event) {
-          final snapshot = event.snapshot;
+      kFirestore.collection('profile').get().then(
+        (QuerySnapshot snapshot) {
           _userlist = <UserModel>[];
           _userFilterList = <UserModel>[];
-          if (snapshot.value != null) {
-            var map = snapshot.value as Map?;
-            if (map != null) {
-              map.forEach((key, value) {
-                var model = UserModel.fromJson(value);
-                model.key = key;
-                _userlist!.add(model);
-                _userFilterList!.add(model);
-              });
-              _userFilterList!
-                  .sort((x, y) => y.followers!.compareTo(x.followers!));
-              notifyListeners();
-            }
-          } else {
-            _userlist = null;
-          }
+          var map = snapshot.docs;
+          map.forEach((value) {
+            var model = UserModel.fromJson(value.data() as Map);
+            model.key = value.id;
+            _userlist!.add(model);
+            _userFilterList!.add(model);
+          });
+          _userFilterList!.sort((x, y) => y.followers!.compareTo(x.followers!));
+          notifyListeners();
           isBusy = false;
         },
       );

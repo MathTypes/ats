@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/firebase_database.dart' as db;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +27,7 @@ class AuthState extends AppState {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
-  db.Query? _profileQuery;
+  Stream? _profileQuery;
   // List<UserModel> _profileUserModelList;
   UserModel? _userModel;
 
@@ -41,7 +41,7 @@ class AuthState extends AppState {
     userId = '';
     _userModel = null;
     user = null;
-    _profileQuery!.onValue.drain();
+    _profileQuery!.drain();
     _profileQuery = null;
     Utility.logEvent('isSignInWithGoogle:' + isSignInWithGoogle.toString(),
         parameter: {});
@@ -68,9 +68,19 @@ class AuthState extends AppState {
           parameter: {});
       Utility.logEvent('user:' + user.toString(), parameter: {});
       if (_profileQuery == null) {
-        _profileQuery = kDatabase.child("profile").child(user!.uid);
-        _profileQuery!.onValue.listen(_onProfileChanged);
-        _profileQuery!.onChildChanged.listen(_onProfileUpdated);
+        _profileQuery = kFirestore
+            .collection("profile")
+            .where(userId = user!.uid)
+            .snapshots();
+        _profileQuery!.listen((event) {
+          for (var change in event.docChanges) {
+            if (change.type == DocumentChangeType.modified) {
+              for (var doc in event.docs) {
+                _onProfileChanged(doc);
+              }
+            }
+          }
+        });
       }
     } catch (error) {
       cprint(error, errorIn: 'databaseInit');
@@ -258,7 +268,7 @@ class AuthState extends AppState {
     }
 
     Utility.logEvent('createUser, user:' + user.toString(), parameter: {});
-    kDatabase.child('profile').child(user.userId!).set(user.toJson());
+    kFirestore.collection('profile').doc(user.userId!).set(user.toJson());
     Utility.logEvent('after createUser, user:' + user.toString(),
         parameter: {});
     _userModel = user;
@@ -410,12 +420,12 @@ class AuthState extends AppState {
   /// `Fetch` user `detail` whose userId is passed
   Future<UserModel?> getUserDetail(String userId) async {
     UserModel user;
-    var event = await kDatabase.child('profile').child(userId).once();
+    var event = await kFirestore.collection('profile').doc(userId).get();
 
-    final map = event.snapshot.value as Map?;
+    final map = event.data as Map?;
     if (map != null) {
       user = UserModel.fromJson(map);
-      user.key = event.snapshot.key!;
+      user.key = event.id!;
       return user;
     } else {
       return null;
@@ -427,14 +437,13 @@ class AuthState extends AppState {
   FutureOr<void> getProfileUser({String? userProfileId}) {
     try {
       userProfileId = userProfileId ?? user!.uid;
-      kDatabase
-          .child("profile")
-          .child(userProfileId)
-          .once()
-          .then((DatabaseEvent event) async {
-        final snapshot = event.snapshot;
-        if (snapshot.value != null) {
-          var map = snapshot.value as Map<dynamic, dynamic>?;
+      kFirestore
+          .collection("profile")
+          .doc(userProfileId)
+          .get()
+          .then((DocumentSnapshot snapshot) async {
+        if (snapshot.exists) {
+          var map = snapshot.data as Map<dynamic, dynamic>?;
           if (map != null) {
             if (userProfileId == user!.uid) {
               _userModel = UserModel.fromJson(map);
