@@ -14,6 +14,7 @@ import 'package:flutter_akolo_finbot/state/suggestionUserState.dart';
 import 'package:flutter_akolo_finbot/state/feedState.dart';
 import 'package:flutter_akolo_finbot/state/notificationState.dart';
 import 'package:flutter_akolo_finbot/state/searchState.dart';
+import 'package:flutter_akolo_finbot/ui/page/feed/summaryPage.dart';
 import 'package:flutter_akolo_finbot/ui/page/feed/feedPage.dart';
 import 'package:flutter_akolo_finbot/ui/page/feed/feedPostDetail.dart';
 import 'package:flutter_akolo_finbot/ui/page/feed/suggestedUsers.dart';
@@ -190,7 +191,7 @@ class _HomePageState extends State<HomePage> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return FeedPage(
+        return SummaryFeedPage(
           scaffoldKey: _scaffoldKey,
           refreshIndicatorKey: refreshIndicatorKey,
         );
@@ -200,6 +201,11 @@ class _HomePageState extends State<HomePage> {
         return NotificationPage(scaffoldKey: _scaffoldKey);
       case 3:
         return ChatListPage(scaffoldKey: _scaffoldKey);
+      case 4:
+        return FeedPage(
+          scaffoldKey: _scaffoldKey,
+          refreshIndicatorKey: refreshIndicatorKey,
+        );
       default:
         return FeedPage(scaffoldKey: _scaffoldKey);
     }

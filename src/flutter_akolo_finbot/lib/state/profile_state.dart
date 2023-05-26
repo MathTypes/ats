@@ -62,7 +62,7 @@ class ProfileState extends ChangeNotifier {
         .get()
         .then((DocumentSnapshot snapshot) {
       if (snapshot.exists) {
-        var map = snapshot.data as Map<dynamic, dynamic>?;
+        var map = snapshot.data() as Map<dynamic, dynamic>?;
         if (map != null) {
           _userModel = UserModel.fromJson(map);
         }
@@ -81,7 +81,7 @@ class ProfileState extends ChangeNotifier {
           .get()
           .then((DocumentSnapshot snapshot) {
         if (snapshot.exists) {
-          var map = snapshot.data as Map;
+          var map = snapshot.data() as Map;
           // ignore: unnecessary_null_comparison
           if (map != null) {
             _profileUserModel = UserModel.fromJson(map);
@@ -169,7 +169,7 @@ class ProfileState extends ChangeNotifier {
   void _onProfileChanged(DocumentSnapshot snapshot) {
     // if (event.snapshot != null) {
 
-    final updatedUser = UserModel.fromJson(snapshot.data as Map);
+    final updatedUser = UserModel.fromJson(snapshot.data() as Map);
     if (updatedUser.userId == profileId) {
       _profileUserModel = updatedUser;
     }

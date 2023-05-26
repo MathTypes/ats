@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:flutter_akolo_finbot/state/searchState.dart';
+import 'package:flutter_akolo_finbot/state/searchTweetState.dart';
 import 'package:flutter_akolo_finbot/ui/page/common/locator.dart';
 import 'package:flutter_akolo_finbot/ui/theme/theme.dart';
 
@@ -37,6 +38,8 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider<ChatState>(create: (_) => ChatState()),
           ChangeNotifierProvider<FeedState>(create: (_) => FeedState()),
           ChangeNotifierProvider<SearchState>(create: (_) => SearchState()),
+          ChangeNotifierProvider<SearchTweetState>(
+              create: (_) => SearchTweetState()),
           ChangeNotifierProvider<NotificationState>(
               create: (_) => NotificationState()),
           ChangeNotifierProvider<SuggestionsState>(

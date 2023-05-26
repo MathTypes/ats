@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_akolo_finbot/helper/utility.dart';
 import 'package:flutter_akolo_finbot/model/user.dart';
-import 'package:flutter_akolo_finbot/state/searchState.dart';
+import 'package:flutter_akolo_finbot/model/feedModel.dart';
+//import 'package:flutter_akolo_finbot/state/searchState.dart';
+import 'package:flutter_akolo_finbot/state/searchTweetState.dart';
 import 'package:flutter_akolo_finbot/ui/page/profile/profilePage.dart';
 import 'package:flutter_akolo_finbot/ui/page/profile/widgets/circular_image.dart';
 import 'package:flutter_akolo_finbot/ui/theme/theme.dart';
@@ -24,7 +26,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = Provider.of<SearchState>(context, listen: false);
+      final state = Provider.of<SearchTweetState>(context, listen: false);
       state.resetFilterList();
     });
     super.initState();
@@ -36,7 +38,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<SearchState>(context);
+    final state = Provider.of<SearchTweetState>(context);
     final list = state.userlist;
     return Scaffold(
       appBar: CustomAppBar(
@@ -44,7 +46,9 @@ class _SearchPageState extends State<SearchPage> {
         icon: AppIcon.settings,
         onActionPressed: onSettingIconPressed,
         onSearchChanged: (text) {
-          state.filterByUsername(text);
+          Utility.logEvent("searching: $text");
+          //state.filterByUsername(text);
+          state.filterBySymbol(text);
         },
       ),
       body: RefreshIndicator(
@@ -68,29 +72,29 @@ class _SearchPageState extends State<SearchPage> {
 
 class _UserTile extends StatelessWidget {
   const _UserTile({Key? key, required this.user}) : super(key: key);
-  final UserModel user;
+  final FeedModel user;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       onTap: () {
         if (kReleaseMode) {
-          kAnalytics.logViewSearchResults(searchTerm: user.userName!);
+          kAnalytics.logViewSearchResults(searchTerm: user.userId!);
         }
         Navigator.push(context, ProfilePage.getRoute(profileId: user.userId!));
       },
-      leading: CircularImage(path: user.profilePic, height: 40),
+      leading: CircularImage(path: user.imagePath, height: 40),
       title: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Flexible(
-            child: TitleText(user.displayName!,
+            child: TitleText(user.description!,
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 overflow: TextOverflow.ellipsis),
           ),
           const SizedBox(width: 3),
-          user.isVerified!
+          user.isValidTweet!
               ? customIcon(
                   context,
                   icon: AppIcon.blueTick,
@@ -102,7 +106,7 @@ class _UserTile extends StatelessWidget {
               : const SizedBox(width: 0),
         ],
       ),
-      subtitle: Text(user.userName!),
+      subtitle: Text(user.userId!),
     );
   }
 }

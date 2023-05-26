@@ -56,6 +56,9 @@ class _BottomMenubarState extends State<BottomMenubar> {
                   ? AppIcon.messageFill
                   : AppIcon.messageEmpty,
               isCustomIcon: true),
+          _icon(null, 4,
+              icon: 4 == state.pageIndex ? AppIcon.homeFill : AppIcon.home,
+              isCustomIcon: true),
         ],
       ),
     );

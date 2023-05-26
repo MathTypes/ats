@@ -126,12 +126,15 @@ class FeedState extends AppState {
   Future<bool> databaseInit() {
     try {
       if (_feedQuery == null) {
-        _feedQuery = kFirestore.collection("recent_tweet_by_user").snapshots();
-        Utility.logEvent("loading feedQuery: $_feedQuery");
+        _feedQuery = kFirestore
+            .collection("recent_tweet_by_user")
+            .limit(1000)
+            .snapshots();
+        //Utility.logEvent("loading feedQuery: $_feedQuery");
         _feedQuery!.listen((event) {
-          Utility.logEvent(event.toString());
+          //Utility.logEvent(event.toString());
           for (var change in event.docChanges) {
-            Utility.logEvent(change.toString());
+            // Utility.logEvent(change.toString());
             if (change.type == DocumentChangeType.added) {
               for (var doc in event.docs) {
                 _onTweetAdded(doc);
@@ -167,9 +170,11 @@ class FeedState extends AppState {
       notifyListeners();
       kFirestore
           .collection('recent_tweet_by_user')
+          .orderBy('tweet_id')
+          .limitToLast(1000)
           .get()
           .then((QuerySnapshot snapshot) {
-        print("getDataFromDatabase_event: $snapshot");
+        //print("getDataFromDatabase_event: $snapshot");
         _feedList = <FeedModel>[];
         var map = snapshot.docs;
         map.forEach((value) {
@@ -182,8 +187,7 @@ class FeedState extends AppState {
 
         /// Sort Tweet by time
         /// It helps to display newest Tweet first.
-        _feedList!.sort((x, y) =>
-            DateTime.parse(x.createdAt).compareTo(DateTime.parse(y.createdAt)));
+        _feedList!.sort((x, y) => x.createdAt.compareTo(y.createdAt));
         isBusy = false;
         notifyListeners();
       });
@@ -215,7 +219,7 @@ class FeedState extends AppState {
             .get()
             .then((DocumentSnapshot snapshot) {
           if (snapshot.exists) {
-            var map = snapshot.data as Map<dynamic, dynamic>;
+            var map = snapshot.data() as Map<dynamic, dynamic>;
             _tweetDetail = FeedModel.fromJson(map);
             _tweetDetail!.key = snapshot.id!;
             setFeedModel = _tweetDetail!;
@@ -239,7 +243,7 @@ class FeedState extends AppState {
                 .get()
                 .then((DocumentSnapshot snapshot) {
               if (snapshot.exists) {
-                var commentModel = FeedModel.fromJson(snapshot.data as Map);
+                var commentModel = FeedModel.fromJson(snapshot.data() as Map);
                 String key = snapshot.id!;
                 commentModel.key = key;
 
@@ -252,8 +256,7 @@ class FeedState extends AppState {
               if (x == _tweetDetail!.replyTweetKeyList!.last) {
                 /// Sort comment by time
                 /// It helps to display newest Tweet first.
-                _commentList.sort((x, y) => DateTime.parse(y.createdAt)
-                    .compareTo(DateTime.parse(x.createdAt)));
+                _commentList.sort((x, y) => y.createdAt.compareTo(x.createdAt));
                 tweetReplyMap!.putIfAbsent(postID!, () => _commentList);
                 notifyListeners();
               }
@@ -285,7 +288,7 @@ class FeedState extends AppState {
       var model = await kFirestore.collection('tweet').doc(postID).get().then(
         (DocumentSnapshot snapshot) {
           if (snapshot.exists) {
-            var map = snapshot.data as Map<dynamic, dynamic>;
+            var map = snapshot.data() as Map<dynamic, dynamic>;
             _tweetDetail = FeedModel.fromJson(map);
             _tweetDetail!.key = snapshot.id!;
             print(_tweetDetail!.description);
@@ -497,8 +500,8 @@ class FeedState extends AppState {
   /// When any tweet changes it update it in UI
   /// No matter if Tweet is in home page or in detail page or in comment section.
   _onTweetChanged(DocumentSnapshot snapshot) {
-    Utility.logEvent(snapshot.toString());
-    var model = FeedModel.fromJson(snapshot.data as Map<dynamic, dynamic>);
+    //Utility.logEvent(snapshot.toString());
+    var model = FeedModel.fromJson(snapshot.data() as Map<String, dynamic>);
     model.key = snapshot.id!;
     if (_feedList!.any((x) => x.key == model.key)) {
       var oldEntry = _feedList!.lastWhere((entry) {
@@ -541,8 +544,8 @@ class FeedState extends AppState {
   /// It will add new Tweet in home page list.
   /// IF Tweet is comment it will be added in comment section too.
   _onTweetAdded(DocumentSnapshot snapshot) {
-    Utility.logEvent(snapshot.id);
-    Utility.logEvent(snapshot.data().toString());
+    /// Utility.logEvent(snapshot.id);
+    //Utility.logEvent(snapshot.data().toString());
     FeedModel tweet =
         FeedModel.fromJson(snapshot.data() as Map<String, dynamic>);
     tweet.key = snapshot.id!;
@@ -554,7 +557,7 @@ class FeedState extends AppState {
     if ((_feedList!.isEmpty || _feedList!.any((x) => x.key != tweet.key)) &&
         tweet.isValidTweet) {
       _feedList!.add(tweet);
-      cprint('Tweet Added');
+      // cprint('Tweet Added');
     }
     isBusy = false;
     notifyListeners();

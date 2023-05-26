@@ -82,7 +82,7 @@ class NotificationState extends AppState {
           .get()
           .then((DocumentSnapshot snapshot) {
         if (snapshot.exists) {
-          var map = snapshot.data as Map<dynamic, dynamic>?;
+          var map = snapshot.data() as Map<dynamic, dynamic>?;
           if (map != null) {
             map.forEach((tweetKey, value) {
               var map = value as Map<dynamic, dynamic>;
@@ -110,7 +110,7 @@ class NotificationState extends AppState {
         .get()
         .then((DocumentSnapshot snapshot) {
       if (snapshot.exists) {
-        var map = snapshot.data as Map<dynamic, dynamic>;
+        var map = snapshot.data() as Map<dynamic, dynamic>;
         _tweetDetail = FeedModel.fromJson(map);
         _tweetDetail.key = snapshot.id!;
         return _tweetDetail;
@@ -132,7 +132,7 @@ class NotificationState extends AppState {
         .get()
         .then((DocumentSnapshot snapshot) {
       if (snapshot.exists) {
-        var map = snapshot.data as Map<dynamic, dynamic>;
+        var map = snapshot.data() as Map<dynamic, dynamic>;
         user = UserModel.fromJson(map);
         user.key = snapshot.id!;
         userList.add(user);
@@ -151,7 +151,7 @@ class NotificationState extends AppState {
   /// Trigger when somneone like your tweet
   void _onNotificationAdded(DocumentSnapshot snapshot) {
     if (snapshot.exists) {
-      var map = snapshot.data as Map<dynamic, dynamic>;
+      var map = snapshot.data() as Map<dynamic, dynamic>;
       var model = NotificationModel.fromJson(snapshot.id!, map);
 
       addNotificationList(model);
@@ -172,7 +172,7 @@ class NotificationState extends AppState {
   /// Trigger when someone undo his like on tweet
   void _onNotificationRemoved(DocumentSnapshot snapshot) {
     if (snapshot.exists) {
-      var map = snapshot.data as Map<dynamic, dynamic>;
+      var map = snapshot.data() as Map<dynamic, dynamic>;
       var model = NotificationModel.fromJson(snapshot.id!, map);
       // remove notification from list
       _notificationList!.removeWhere((x) => x.tweetKey == model.tweetKey);

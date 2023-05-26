@@ -41,11 +41,11 @@ void cprint(dynamic data,
 }
 
 class Utility {
-  static String getPostTime2(String? date) {
-    if (date == null || date.isEmpty) {
+  static String getPostTime2(DateTime? date) {
+    if (date == null) {
       return '';
     }
-    var dt = DateTime.parse(date).toLocal();
+    var dt = date.toLocal();
     var dat =
         DateFormat.jm().format(dt) + ' - ' + DateFormat("dd MMM yy").format(dt);
     return dat;
@@ -69,15 +69,15 @@ class Utility {
     return 'Joined $dat';
   }
 
-  static String getChatTime(String? date) {
-    if (date == null || date.isEmpty) {
+  static String getChatTime(DateTime? date) {
+    if (date == null) {
       return '';
     }
     String msg = '';
-    var dt = DateTime.parse(date).toLocal();
+    var dt = date.toLocal();
 
     if (DateTime.now().toLocal().isBefore(dt)) {
-      return DateFormat.jm().format(DateTime.parse(date).toLocal()).toString();
+      return DateFormat.jm().format(dt).toString();
     }
 
     var dur = DateTime.now().toLocal().difference(dt);

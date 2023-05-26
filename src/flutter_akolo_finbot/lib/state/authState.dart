@@ -443,7 +443,7 @@ class AuthState extends AppState {
           .get()
           .then((DocumentSnapshot snapshot) async {
         if (snapshot.exists) {
-          var map = snapshot.data as Map<dynamic, dynamic>?;
+          var map = snapshot.data() as Map<dynamic, dynamic>?;
           if (map != null) {
             if (userProfileId == user!.uid) {
               _userModel = UserModel.fromJson(map);

@@ -443,7 +443,7 @@ class TweetBottomSheet {
             // Prepare current Tweet model to reply
             FeedModel post = FeedModel(
                 childRetwetkey: model.getTweetKeyToRetweet,
-                createdAt: DateTime.now().toUtc().toString(),
+                createdAt: DateTime.now().toUtc(),
                 user: myUser,
                 userId: myUser.userId!);
             state.createTweet(post);

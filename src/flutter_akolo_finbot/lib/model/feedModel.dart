@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter_akolo_finbot/model/user.dart';
+import 'package:flutter_akolo_finbot/helper/utility.dart';
 
 class FeedModel {
   String? key;
@@ -12,7 +13,7 @@ class FeedModel {
   List<String>? likeList;
   int? commentCount;
   int? retweetCount;
-  late String createdAt;
+  late DateTime createdAt;
   String? imagePath;
   List<String>? tags;
   List<String?>? replyTweetKeyList;
@@ -58,18 +59,18 @@ class FeedModel {
     key = map['key'];
     description = map['description'];
     //userId = map['userId'];
-    userId = map['userName'];
+    userId = map['username'];
     //  name = map['name'];
     //  profilePic = map['profilePic'];
     likeCount = map['likeCount'] ?? 0;
     commentCount = map['commentCount'];
     retweetCount = map["retweetCount"] ?? 0;
     imagePath = map['imagePath'];
-    createdAt = map['createdAt'];
+    createdAt = DateTime.fromMillisecondsSinceEpoch(map['ts']);
     imagePath = map['imagePath'];
-    lanCode = map['lanCode'];
-    //  username = map['username'];
-    user = UserModel.fromJson(map['user']);
+    // lanCode = map['lanCode'];
+    user = UserModel(userId: userId, userName: userId);
+    //user = UserModel.fromJson(map['user']);
     parentkey = map['parentkey'];
     childRetwetkey = map['childRetwetkey'];
     if (map['tags'] != null) {
@@ -126,7 +127,7 @@ class FeedModel {
     if (user != null && user!.userName != null && user!.userName!.isNotEmpty) {
       isValid = true;
     } else {
-      print("Invalid Tweet found. Id:- $key");
+      Utility.logEvent("Invalid Tweet found. Id:- $key, $user");
     }
     return isValid;
   }
