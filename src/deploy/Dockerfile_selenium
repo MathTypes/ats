@@ -1,0 +1,26 @@
+FROM ubuntu:17.04
+FROM selenium/standalone-chrome:4.9.0
+#selenium/standalone-chrome
+FROM python:3.8
+RUN apt update
+RUN apt-get install -y libnss3 libgconf-2-4
+ADD . /opt/ats/
+
+#RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+#RUN echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | tee /etc/apt/sources.list.d/google-chrome.list
+RUN apt-get update
+#RUN apt-get install -y google-chrome-stable
+
+ENV Selenium_UseHeadlessDriver=true
+
+RUN pip3 install fake_headers
+RUN pip3 install selenium
+RUN pip3 install selenium-wire
+RUN pip3 install webdriver_manager
+RUN pip3 install firebase
+RUN pip3 install firebase-admin
+# rights?
+#RUN chmod +x /opt/ats/assets/chromedriver
+WORKDIR /opt/ats
+#CMD ["python","-u","program.py"]
+

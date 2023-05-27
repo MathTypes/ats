@@ -1,0 +1,11 @@
+# Need to reuse prior image since we have selenium profiles
+FROM  gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.13.f
+
+ENV FIREBASE_CERT=/opt/ats/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json
+ENV TWITTER_LOGIN=AlexSimon190658
+ENV TWITTER_SYMBOLS=spy,qqq,vix,uso,gld,vix,iwm,tsla,appl,nvda,msft,goog
+ENV TWITTER_USER_PROFILE=/opt/ats
+ENV TWITTER_ROWS=100
+
+
+ADD . /opt/ats/
