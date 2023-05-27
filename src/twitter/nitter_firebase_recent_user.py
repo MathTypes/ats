@@ -73,7 +73,7 @@ if __name__ == "__main__":
                 if args.max_id:
                     max_id = args.max_id
                 logging.info(f"search:{user}, since_id:{since_id}, max_id:{max_id}")
-                last_tweet_id = since_id
+                last_tweet_id = int(since_id)
                 logging.info(f'last_tweet_id:{last_tweet_id}')
                 tweets = nitter.get_tweets(user, pages=args.rows, break_on_tweet_id=last_tweet_id, address="https://nitter.it")
                 for tweet in tweets:

@@ -5,12 +5,11 @@ import sys
 import argparse
 import pandas as pd
 
-from nlp.keyword_util import add_subject_keyword
+from data.front_end_utils import subject_analysis
 import firebase_api
+from nlp import keyword_util
 from util import config_utils
 from util import logging_utils
-from data.front_end_utils import subject_analysis
-
 import re
 
 def get_cash_tags(text):
@@ -63,13 +62,18 @@ if __name__ == "__main__":
         data = data[data.power_user]
         if data.empty:
             break
-        #logging.info(f'unprocess_data:{data["tweet_id"]}')
+        logging.info(f'unprocess_data:{data["text"]}')
         data["symbol"] = data["text"].apply(lambda x: find_symbol(x))
-        data = add_subject_keyword(data)
-        data = subject_analysis(data)
         data["cash_tags"] = data.text.apply(get_cash_tags)
+        data["orig_text"] = data["text"]
+        data = keyword_util.add_hb_sentiment(data)
+        #data = keyword_util.add_subject_keyword(data)
+        #data = subject_analysis(data)
+        logging.info(f"{data.head()}")
         logging.info(f"{data.info()}")
-        #firebase_api.update_processed_text(data)
+        break
+        firebase_api.update_processed_text(data)
+        #
         #logging.error(f"process_data:{data}")
         #break
         # break

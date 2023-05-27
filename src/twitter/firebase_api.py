@@ -39,7 +39,7 @@ def get_unprocessed_tweets(tab_name, start_time, end_time, batch_size):
     tweets = list(get_db().collection(tab_name).stream())
     tweets_dict = list(map(lambda x: x.to_dict(), tweets))
     df = pd.DataFrame(tweets_dict)
-    df = df[df["process_time"].isnull()]
+    #df = df[df["process_time"].isnull()]
     #logging.info(f"df:{df}")
     return df
 

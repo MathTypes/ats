@@ -134,19 +134,22 @@ def find(c, text_ner, text_ner_count):
         yield [i, j, k]
 
 
+def get_polarity(parag):
+    try:
+        #logging.info(f'parag:{parag}')
+        blob = TextBlob(parag)
+        return blob.sentiment.polarity
+    except:
+        return -1
+
 def subject_analysis(df):
     df["polarity"] = np.nan
-    logging.info(f'subject_analysis:{df["text"]}')
-    for i in range(df.shape[0]):
-        try:
-            parag = df["text"][i]            
-            blob = TextBlob(parag)
-            result = blob.sentiment.polarity
-            df["polarity"].iloc[i] = result
-        except:
-            pass
+    logging.info(f"df:{df['text']}")
+    df["palarity"] = df["text"].apply(get_polarity)
 
     def sentiment(x):
+        if x==-1:
+            return "NA"
         if x < 0:
             return "Negative"
         elif x == 0:
@@ -155,6 +158,8 @@ def subject_analysis(df):
             return "Positive"
 
     def sentimentClass(x):
+        if x.lower() == "na":
+            return -100
         if x.lower() == "negative":
             return -1
         elif x.lower() == "positive":
