@@ -1,0 +1,25 @@
+embeddings {
+  tensor_name: "ticker:02300"
+  metadata_path: "02300/ticker/metadata.tsv"
+  tensor_path: "02300/ticker/tensors.tsv"
+}
+embeddings {
+  tensor_name: "month:02300"
+  metadata_path: "02300/month/metadata.tsv"
+  tensor_path: "02300/month/tensors.tsv"
+}
+embeddings {
+  tensor_name: "hour_of_day:02300"
+  metadata_path: "02300/hour_of_day/metadata.tsv"
+  tensor_path: "02300/hour_of_day/tensors.tsv"
+}
+embeddings {
+  tensor_name: "day_of_week:02300"
+  metadata_path: "02300/day_of_week/metadata.tsv"
+  tensor_path: "02300/day_of_week/tensors.tsv"
+}
+embeddings {
+  tensor_name: "week_of_month:02300"
+  metadata_path: "02300/week_of_month/metadata.tsv"
+  tensor_path: "02300/week_of_month/tensors.tsv"
+}
