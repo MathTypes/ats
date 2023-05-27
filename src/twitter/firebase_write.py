@@ -30,9 +30,27 @@ def delete_collection(coll_ref, batch_size):
     if deleted >= batch_size:
         return delete_collection(coll_ref, batch_size)
 
-doc_ref = db.collection(u'unique_ids')
-delete_collection(doc_ref, 100)
+def is_power_user(username):
+    return username in ['PharmD_KS','pghosh1','DougKass','JimScalpert','eliant_capital','Mayhem4Markets', 'Tricky_OW', 'DoubleWideCap']
 
+def delete_tweets(coll_ref, batch_size):
+    docs = coll_ref.list_documents(page_size=batch_size)
+    deleted = 0
+
+    for doc in docs:
+        data = doc.get().to_dict()
+        if not is_power_user(data["username"]):
+            doc.delete()
+            deleted = deleted + 1
+
+    if deleted >= batch_size:
+        return delete_collection(coll_ref, batch_size)
+
+#doc_ref = db.collection(u'unique_ids')
+#delete_collection(doc_ref, 100)
+
+doc_ref = db.collection(u'recent_tweet_by_user')
+delete_collection(doc_ref, 100)
 exit(0)
 data = {'1657852295558709248': {'tweet_id': '1657852295558709248', 'username': 'davidcharting', 'name': 'David', 'profile_picture': 'https://pbs.twimg.com/profile_images/1641528445149519895/f5IC8trq_x96.jpg', 'replies': 0, 'retweets': 0, 'likes': 0, 'is_retweet': False, 'posted_time': '2023-05-14T20:56:03+00:00', 'content': 'Relatively light week until Powell speaks on Friday. Hopefully the $SPY does not stay trapped in this 404-417 range.\n\nThere is also a range within that range… first level of support is at 408.75 and first level of resistance is at 414.75.', 'hashtags': [], 'mentions': [], 'images': ['https://pbs.twimg.com/media/FwHf4BXWwAYuF9r?format=jpg&name=medium', 'https://pbs.twimg.com/media/FwHf4BTXoAAcos0?format=jpg&name=medium'], 'videos': [], 'tweet_url': 'https://twitter.com/davidcharting/status/1657852295558709248', 'link': ''}}
 #doc_ref = db.collection(u'recent_tweet')

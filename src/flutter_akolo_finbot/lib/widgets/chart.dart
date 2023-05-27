@@ -4,61 +4,72 @@ import 'dart:math' as math;
 
 /// Package imports
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_akolo_finbot/helper/utility.dart';
 
 /// Chart import
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ChartWidget extends StatefulWidget {
-  const ChartWidget({Key? key}) : super(key: key);
+  const ChartWidget({Key? key, this.table_name}) : super(key: key);
 
+  final String? table_name;
   @override
-  State<ChartWidget> createState() => _ChartWidgetState();
+  State<ChartWidget> createState() => _ChartWidgetState(table_name);
+}
+
+/// Private class for storing the chart series data points.
+class _ChartData {
+  _ChartData(this.time, this.sentiment);
+
+  final int time;
+  final num sentiment;
 }
 
 class _ChartWidgetState extends State<ChartWidget> {
-  _ChartWidgetState() {
-    timer =
-        Timer.periodic(const Duration(milliseconds: 1000), _updateDataSource);
-  }
+  _ChartWidgetState(this.tableName) {}
 
   Timer? timer;
-  List<_ChartData>? chartData;
+  final String? tableName;
+  late List<_ChartData> chartData;
   late int count;
   ChartSeriesController? _chartSeriesController;
+  int? _lastTime;
 
   @override
   void dispose() {
     timer?.cancel();
-    chartData!.clear();
+    chartData.clear();
     _chartSeriesController = null;
     super.dispose();
   }
 
   @override
   void initState() {
-    count = 19;
-    chartData = <_ChartData>[
-      _ChartData(0, 42),
-      _ChartData(1, 47),
-      _ChartData(2, 33),
-      _ChartData(3, 49),
-      _ChartData(4, 54),
-      _ChartData(5, 41),
-      _ChartData(6, 58),
-      _ChartData(7, 51),
-      _ChartData(8, 98),
-      _ChartData(9, 41),
-      _ChartData(10, 53),
-      _ChartData(11, 72),
-      _ChartData(12, 86),
-      _ChartData(13, 52),
-      _ChartData(14, 94),
-      _ChartData(15, 92),
-      _ChartData(16, 86),
-      _ChartData(17, 72),
-      _ChartData(18, 94),
-    ];
+    try {
+      Utility.logEvent("init sentiment");
+      kFirestore
+          .collection('recent_sentiment')
+          .orderBy('asof')
+          .limitToLast(19)
+          .get()
+          .then((QuerySnapshot snapshot) {
+        //print("getDataFromDatabase_event: $snapshot");
+        chartData = <_ChartData>[];
+        var map = snapshot.docs;
+        map.forEach((value) {
+          var data = value.data() as Map;
+          Utility.logEvent("sentiment:${data}");
+          chartData.add(_ChartData(data["asof"], int(data["sentiment"])));
+        });
+      });
+      _lastTime = chartData!.last.time;
+    } catch (error) {
+      Utility.logEvent(error.toString());
+    }
     super.initState();
+    timer =
+        Timer.periodic(const Duration(milliseconds: 1000), _updateDataSource);
   }
 
   @override
@@ -91,10 +102,10 @@ class _ChartWidgetState extends State<ChartWidget> {
             onRendererCreated: (ChartSeriesController controller) {
               _chartSeriesController = controller;
             },
-            dataSource: chartData!,
+            dataSource: chartData,
             color: const Color.fromRGBO(192, 108, 132, 1),
-            xValueMapper: (_ChartData sales, _) => sales.country,
-            yValueMapper: (_ChartData sales, _) => sales.sales,
+            xValueMapper: (_ChartData value, _) => value.time,
+            yValueMapper: (_ChartData value, _) => value.sentiment,
             animationDuration: 0,
           ),
         ],
@@ -103,28 +114,28 @@ class _ChartWidgetState extends State<ChartWidget> {
   }
 
   void _updateDataSource(Timer timer) {
-    chartData!.add(_ChartData(count, _getRandomInt(10, 100)));
-    if (chartData!.length == 20) {
-      chartData!.removeAt(0);
+    kFirestore
+        .collection('recent_sentiment')
+        .where('time', isGreaterThan: _lastTime)
+        .orderBy('time')
+        .limitToLast(19)
+        .get()
+        .then((QuerySnapshot snapshot) {
+      //print("getDataFromDatabase_event: $snapshot");
+      chartData = <_ChartData>[];
+      var map = snapshot.docs;
+      map.forEach((value) {
+        var data = value.data() as Map;
+        chartData!.add(_ChartData(data["time"], data["sentiment"]));
+      });
+    });
+
+    while (chartData!.length == 20) {
+      chartData.removeAt(0);
       _chartSeriesController?.updateDataSource(
-        addedDataIndexes: <int>[chartData!.length - 1],
+        addedDataIndexes: <int>[chartData.length - 1],
         removedDataIndexes: <int>[0],
       );
     }
-    count = count + 1;
   }
-
-  /// Get the random data
-  int _getRandomInt(int min, int max) {
-    final math.Random random = math.Random();
-    return min + random.nextInt(max - min);
-  }
-}
-
-/// Private class for storing the chart series data points.
-class _ChartData {
-  _ChartData(this.country, this.sales);
-
-  final int country;
-  final num sales;
 }

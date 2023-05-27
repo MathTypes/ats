@@ -69,7 +69,7 @@ if __name__ == "__main__":
         data = subject_analysis(data)
         data["cash_tags"] = data.text.apply(get_cash_tags)
         logging.info(f"{data.info()}")
-        firebase_api.update_processed_text(data)
+        #firebase_api.update_processed_text(data)
         #logging.error(f"process_data:{data}")
         #break
         # break
