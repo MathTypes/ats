@@ -114,4 +114,5 @@ def update_asset_sentiment(df):
             'polarity' :row['polarity'],
             'sentiment' :row['sentiment'],
             'sentimentClass' :row['sentimentClass'],
+            'text' :row['text'],
             })
