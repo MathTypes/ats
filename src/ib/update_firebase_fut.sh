@@ -1,0 +1,1 @@
+PYTHONPATH=. python3 ib/firebase_fut.py ${SYMBOLS}  -p=4001  --size="1 min" -t TRADES --host=${IB_HOST}  --security-type=FUT --firebase_cert=${FIREBASE_CERT} 
