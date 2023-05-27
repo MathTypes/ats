@@ -13,6 +13,7 @@ src/model/data
 src/model/futures
 src/model/twitter
 src/model/results
+src/model/lightning_logs
 data/tweet_ids
 rawdata/
 # Distribution / packaging
