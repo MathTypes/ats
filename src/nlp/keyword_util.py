@@ -8,6 +8,7 @@ import inflect
 import spacy
 import nltk
 
+nltk.download('wordnet')
 nltk.download("stopwords")
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
@@ -79,7 +80,7 @@ def text_process(text, word_cloud=False, stemming=False, lemmetization=False):
     if not isinstance(text, str):
         text = str(text)
     text = text[:4000]
-    logging.info(f"text:{text}")
+    #logging.info(f"text:{text}")
     if lemmetization:
         text = "".join([i for i in text if i not in string.punctuation])
         text = text.lower()
