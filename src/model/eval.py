@@ -143,11 +143,13 @@ if __name__ == "__main__":
     #logging.info(f"t:{mae}")
 
     # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
-    raw_predictions = best_tft.predict(val_dataloader, mode="raw", return_x=True)
-    logging.info(f"raw_predictions.x:{raw_predictions.x}")
-    logging.info(f"raw_predictions.output:{raw_predictions.output}")
+    result = best_tft.predict(val_dataloader, mode="raw", return_x=True)
+    raw_predictions = result.output
+    x = result.x
+    logging.info(f"x:{x}")
+    logging.info(f"raw_predictions:{raw_predictions}")
     for idx in range(10):  # plot 10 examples
-        best_tft.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+        best_tft.plot_prediction(x, raw_predictions, idx=idx, add_loss_to_title=True)
     exit(0)
 
     # calcualte metric by which to display
