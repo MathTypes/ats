@@ -17,7 +17,7 @@ spec:
             image: gcr.io/keen-rhino-386415/akolotech/twitter_app:v1.14
             env:
             - name: TWITTER_USERS
-              value: "DougKass,pghosh1,DoubleWideCap,PharmD_KS,JimScalpert,eliant_capital,Mayhem4Markets,Tricky_OW"
+              value: "DougKass,pghosh1,DoubleWideCap,PharmD_KS,xtrends,JimScalpert,eliant_capital,Mayhem4Markets,Tricky_OW"
             - name: NITTER_HOST
               value: 10.20.14.87
             - name: FIREBASE_CERT
