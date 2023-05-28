@@ -77,14 +77,24 @@ def get_irony_model():
 def topic_analysis(data):
     if data:
         topic_result = get_topic_model().topic(data, return_probability=True)        
-        label = topic_result["label"]
-        probability = topic_result["probability"][label]
-        return label + ":" + str(probability)
+        #logging.info(f"topic_result:{topic_result}")
+        topics = ""
+        prob = ""
+        for topic in topic_result["label"]:
+            probability = topic_result["probability"][topic]
+            if topics:
+                topics = topics + "," + topic
+                prob = prob + "," + str(probability)
+            else:
+                topics = topic
+                prob =  str(probability)
+        return topics + ":" + prob
     return ""
 
 def sentiment_analysis(data):
     if data:
         topic_result = get_sentiment_model().sentiment(data, return_probability=True)        
+        #logging.info(f"topic_result:{topic_result}")
         label = topic_result["label"]
         probability = topic_result["probability"][label]
         return label + ":" + str(probability)
@@ -135,10 +145,29 @@ def get_score(sentiment):
         return float(val[1])
     return -100
 
+def get_topic_score(sentiment):
+    if ":" in sentiment:
+        val = sentiment.split(":")
+        return val[1]
+    return ""
+
 def add_hb_sentiment(df):
     df["nlp_sentiment"] = df["orig_text"].apply(sentiment_analysis)
     df["nlp_sentiment_label"] = df["nlp_sentiment"].apply(get_label)
     df["nlp_sentiment_score"] = df["nlp_sentiment"].apply(get_score)
+    df["nlp_topic"] = df["orig_text"].apply(topic_analysis)
+    df["nlp_topic_label"] = df["nlp_topic"].apply(get_label)
+    df["nlp_topic_score"] = df["nlp_topic"].apply(get_topic_score)
+    df["nlp_emotion"] = df["orig_text"].apply(emotion_analysis)
+    df["nlp_emotion_label"] = df["nlp_emotion"].apply(get_label)
+    df["nlp_emotion_score"] = df["nlp_emotion"].apply(get_score)
+    df["nlp_emoji"] = df["orig_text"].apply(emoji_analysis)
+    df["nlp_emoji_label"] = df["nlp_emoji"].apply(get_label)
+    df["nlp_emoji_score"] = df["nlp_emoji"].apply(get_score)
+    df["nlp_irony"] = df["orig_text"].apply(irony_analysis)
+    df["nlp_irony_label"] = df["nlp_irony"].apply(get_label)
+    df["nlp_irony_score"] = df["nlp_irony"].apply(get_score)
+    df["nlp_ner_event"] = df["orig_text"].apply(ner_analysis)
     return df
 
 def add_subject_keyword(df):

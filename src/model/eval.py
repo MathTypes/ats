@@ -133,7 +133,7 @@ if __name__ == "__main__":
     pl.seed_everything(42)
     # load the best model according to the validation loss
     # (given that we use early stopping, this is not necessarily the last epoch)
-    best_model_path = "lightning_logs/lightning_logs/version_0/checkpoints/epoch=45-step=2300.ckpt"
+    best_model_path = "lightning_logs/lightning_logs/version_1/checkpoints/epoch=19-step=1000.ckpt"
     best_tft = TemporalFusionTransformer.load_from_checkpoint(best_model_path)
     logging.info(f'best_model_path:{best_model_path}')
 
