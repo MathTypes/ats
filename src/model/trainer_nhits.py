@@ -143,13 +143,15 @@ if __name__ == "__main__":
     val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
 
     # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
-    baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
+    #baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
     #MAE()(baseline_predictions.output, baseline_predictions.y)
 
     # configure network and trainer
+    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    device = "cpu"
     pl.seed_everything(42)
     trainer = pl.Trainer(
-        accelerator="cpu",
+        accelerator=device,
         # clipping gradients is a hyperparameter and important to prevent divergance
         # of the gradient for recurrent neural networks
         gradient_clip_val=0.1,
@@ -169,7 +171,7 @@ if __name__ == "__main__":
 
     print(f"Number of parameters in network: {net.size()/1e3:.1f}k")
     res = Tuner(trainer).lr_find(
-        net,
+        net.to(device),
         train_dataloaders=train_dataloader,
         val_dataloaders=val_dataloader,
         min_lr=1e-5,
@@ -185,10 +187,9 @@ if __name__ == "__main__":
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
     logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
-
     trainer = pl.Trainer(
         max_epochs=5,
-        accelerator="cpu",
+        accelerator=device,
         enable_model_summary=True,
         gradient_clip_val=0.1,
         limit_train_batches=50,  # coment in for training, running valiation every 30 batches
@@ -206,33 +207,33 @@ if __name__ == "__main__":
     # load the best model according to the validation loss
     # (given that we use early stopping, this is not necessarily the last epoch)
     best_model_path = trainer.checkpoint_callback.best_model_path
-    best_model = NHiTS.load_from_checkpoint(best_model_path)
+    best_model = NHiTS.load_from_checkpoint(best_model_path).to(device)
     logging.info(f'best_model_path:{best_model_path}')
 
     # calcualte mean absolute error on validation set
-    predictions = best_model.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu"))
+    predictions = best_model.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator=device))
     #MAE()(predictions.output, predictions.y)
 
     # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
-    raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True)
+    raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True, trainer_kwargs=dict(accelerator=device))
 
-    import streamlit as st
     #ticker = validation.x_to_index(raw_predictions.x)["ticker"]
-    for idx in range(5):  # plot 10 examples
-        logging.info(f"x:{raw_predictions.x}")
-        #logging.info(f"validation.x_to_index(raw_predictions.x):{validation.x_to_index(raw_predictions.x)}")
-        time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][0]
+    fig, axs = plt.subplots(8)        
+    fig.suptitle('Vertically stacked subplots')
+    logging.info(f"x:{raw_predictions.x}")
+    logging.info(f"x.encoder_cat.shape:{raw_predictions.x['encoder_cat'].shape}")    
+    for idx in range(8):  # plot 10 examples
+        time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
         time = data[data.time_idx==time_idx_val]["Time"]
         time = datetime.datetime.fromtimestamp(time)
-        fig1, fig2 = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=False)
-        st.write(f"Time: {time}")
-        st.pyplot(fig1)
-        st.pyplot(fig2)
-        #print(f"fig:{fig}")
+        #logging.info(f"validation.x_to_index(raw_predictions.x):{validation.x_to_index(raw_predictions.x)}")
+        fig1, fig2 = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=False, ax=axs[idx])
+        axs[idx].set_title(str(time))
+        print(f"fig:{fig1}, {fig2}")
         #filename = f"/tmp/file_{idx}.png"
         #fig.savefig(filename)
         #img = mpimg.imread(filename)
-        #plt.imshow()
+    plt.show()
         #imgplot = plt.imshow(img)
         #plt.show()
         
