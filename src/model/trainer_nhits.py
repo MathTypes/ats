@@ -3,11 +3,12 @@ import os
 import warnings
 import datetime
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
-
+import matplotlib as mpl
 import copy
 from pathlib import Path
 import warnings
 
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -42,11 +43,12 @@ def week_of_month(dt):
 if __name__ == "__main__":
     logging_utils.init_logging()
     pd.set_option('display.max_columns', None)
-    data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    data = raw_data[["ClosePct"]]
+    data = data.rename(columns={"ClosePct":"close"})
     data["Time"] = data.index
     data["ticker"] = "ES"
-    data["volume"]=data["VolumePct"]
-    data["close"]=data["ClosePct"]
+    #data["volume"]=data["VolumePct"]
     data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
     logging.info(f"data:{data.head()}")
 
@@ -61,7 +63,7 @@ if __name__ == "__main__":
     data["year"] = data.date.dt.year.astype(str).astype("category")  # categories have be strings
     data["series"]=data.apply(lambda x: x.ticker + "_"  + x.year, axis=1)    
     #data["log_volume"] = np.log(data.volume + 1e-8)
-    data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
+    #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
     data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
     data["day_of_week"] = data.index.dayofweek.astype(str).astype("category")
     data["day_of_month"] = data.index.day.astype(str).astype("category")
@@ -89,8 +91,8 @@ if __name__ == "__main__":
     #data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
     #data.sample(10, random_state=521)
 
-    max_encoder_length = 60
-    max_prediction_length = 20
+    max_encoder_length = 48
+    max_prediction_length = 12
     val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
     training_cutoff = val_idx
@@ -102,7 +104,7 @@ if __name__ == "__main__":
     training = TimeSeriesDataSet(
         train_data,
         time_idx="time_idx",
-        target=["close", "volume"],
+        target="close",
         group_ids=["series"],
         #min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
         max_encoder_length=context_length,
@@ -117,7 +119,7 @@ if __name__ == "__main__":
         #time_varying_known_reals=["time_idx"],
         #time_varying_known_reals=["hour_of_day", "day_of_week", "week_of_month", "month"],
         #time_varying_unknown_categoricals=[],
-        time_varying_unknown_reals=["close", "volume"],
+        time_varying_unknown_reals=["close"],
         categorical_encoders={
             'series': NaNLabelEncoder(add_nan=True).fit(train_data.series),
             'month': NaNLabelEncoder(add_nan=True).fit(train_data.month),
@@ -162,10 +164,11 @@ if __name__ == "__main__":
         learning_rate=3e-2,
         weight_decay=1e-2,
         #loss=MQF2DistributionLoss(prediction_length=max_prediction_length),
-        loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
-        MQF2DistributionLoss(prediction_length=max_prediction_length)], weights=[2.0, 1.0]),
+        #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
+        #MQF2DistributionLoss(prediction_length=max_prediction_length)], weights=[2.0, 1.0]),
+        loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
         backcast_loss_ratio=0.0,
-        hidden_size=64,
+        hidden_size=32,
         optimizer="AdamW",
     )
 
@@ -218,57 +221,35 @@ if __name__ == "__main__":
     raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True, trainer_kwargs=dict(accelerator=device))
 
     #ticker = validation.x_to_index(raw_predictions.x)["ticker"]
-    fig, axs = plt.subplots(8)        
+    #fig, axs = plt.subplots(4, 2)
+    fig, axs = plt.subplots(4)
     fig.suptitle('Vertically stacked subplots')
     logging.info(f"x:{raw_predictions.x}")
-    logging.info(f"x.encoder_cat.shape:{raw_predictions.x['encoder_cat'].shape}")    
-    for idx in range(8):  # plot 10 examples
+    logging.info(f"x.encoder_cat.shape:{raw_predictions.x['encoder_cat'].shape}")
+    prediction_kwargs = {"use_metric":False}
+    quantiles_kwargs = {"use_metric":False}
+    #mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=["r", "k", "c"]) 
+    for idx in range(4):  # plot 10 examples
         time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
         time = data[data.time_idx==time_idx_val]["Time"]
         time = datetime.datetime.fromtimestamp(time)
         #logging.info(f"validation.x_to_index(raw_predictions.x):{validation.x_to_index(raw_predictions.x)}")
-        fig1, fig2 = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=False, ax=axs[idx])
+        figs = best_model.plot_prediction(
+            raw_predictions.x, raw_predictions.output, idx=idx,
+            add_loss_to_title=False, ax=axs[idx],
+            show_future_observed=True,
+            quantiles_kwargs=quantiles_kwargs,
+            prediction_kwargs=prediction_kwargs)
+        #figs = best_model.plot_interpretation(raw_predictions.x, raw_predictions.output, idx=idx, ax=[axs[idx, 0], axs[idx,1]])
+        #axs[idx, 0].set_title(str(time))
         axs[idx].set_title(str(time))
-        print(f"fig:{fig1}, {fig2}")
+        #axs[idx, 1].set_title(str(time))
+        #print(f"fig:{fig1}, {fig2}")
         #filename = f"/tmp/file_{idx}.png"
         #fig.savefig(filename)
         #img = mpimg.imread(filename)
     plt.show()
         #imgplot = plt.imshow(img)
         #plt.show()
-        
 
 
-    samples = best_model.loss.sample(raw_predictions.output["prediction"][[0]], n_samples=500)[0]
-
-    # plot prediction
-    time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][0]
-    time = data[data["time_idx"]==time_idx_val]["Time"]
-    time = datetime.datetime.fromtimestamp(time)
-    fig1, fig2 = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=0, add_loss_to_title=True)
-    st.write(f"Time: {time}")
-    st.pyplot(fig1)
-    st.pyplot(fig2)
-    ax = fig.get_axes()[0]
-    # plot first two sampled paths
-    ax.plot(samples[:, 0], color="g", label="Sample 1")
-    ax.plot(samples[:, 1], color="r", label="Sample 2")
-    fig.legend()
-
-    print(f"fig:{fig}")
-    filename = "/tmp/file.png"
-    fig.savefig(filename)
-    img = mpimg.imread(filename)
-    #plt.imshow()
-    imgplot = plt.imshow(img)
-    plt.suptitle(f"Time: {time}")
-    plt.show()
-
-    print(f"Var(all samples) = {samples.var():.4f}")
-    print(f"Mean(Var(sample)) = {samples.var(0).mean():.4f}")
-
-    plt.hist(samples.sum(0).numpy(), bins=30)
-    plt.xlabel("Sum of predictions")
-    plt.ylabel("Frequency")
-
-    plt.show()
