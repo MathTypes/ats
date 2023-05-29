@@ -1,7 +1,7 @@
 import logging
 import os
 import warnings
-
+import datetime
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 import copy
@@ -42,11 +42,13 @@ def week_of_month(dt):
 if __name__ == "__main__":
     logging_utils.init_logging()
     pd.set_option('display.max_columns', None)
-    data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    data = raw_data[["ClosePct", "VolumePct"]]
+    data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})    
     data["Time"] = data.index
     data["ticker"] = "ES"
-    data["volume"]=data["VolumePct"]
-    data["close"]=data["ClosePct"]
+    #data["volume"]=data["VolumePct"]
+    #data["close"]=data["ClosePct"]
     data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
     logging.info(f"data:{data.head()}")
 
@@ -57,11 +59,12 @@ if __name__ == "__main__":
     #data["time_idx"] -= data["time_idx"].min()
 
     # add additional features
+    data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
     data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
     data["year"] = data.date.dt.year.astype(str).astype("category")  # categories have be strings
-    data["series"]=data.apply(lambda x: x.ticker + "_"  + x.year, axis=1)    
+    data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
     #data["log_volume"] = np.log(data.volume + 1e-8)
-    data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
+    #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
     data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
     data["day_of_week"] = data.index.dayofweek.astype(str).astype("category")
     data["day_of_month"] = data.index.day.astype(str).astype("category")
@@ -117,9 +120,7 @@ if __name__ == "__main__":
         #time_varying_known_reals=["time_idx"],
         time_varying_known_reals=["hour_of_day", "day_of_week", "week_of_month", "month"],
         time_varying_unknown_categoricals=[],
-        time_varying_unknown_reals=[
-            "close"
-        ],
+        time_varying_unknown_reals=["close"],
         categorical_encoders={
             'series': NaNLabelEncoder(add_nan=True).fit(train_data.series),
             'month': NaNLabelEncoder(add_nan=True).fit(train_data.month),
@@ -141,7 +142,7 @@ if __name__ == "__main__":
 
     # create dataloaders for model
     batch_size = 128  # set this between 32 to 128
-    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0)
+    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0, shuffle=True)
     val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
 
     # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
@@ -210,22 +211,21 @@ if __name__ == "__main__":
 
     # calcualte mean absolute error on validation set
     predictions = best_model.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu"))
-    MAE()(predictions.output, predictions.y)
+    metrics = MAE()(predictions.output, predictions.y)
+    logging.info(f"metrics:{metrics}")
 
     # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
     raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True)
 
+    fig, axs = plt.subplots(8)
+    fig.suptitle('Vertically stacked subplots')
     #ticker = validation.x_to_index(raw_predictions.x)["ticker"]
-    for idx in range(5):  # plot 10 examples
-        logging.info(f"x:{raw_predictions.x}")
-        logging.info(f"output:{raw_predictions.output}")
-        fig = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
-        print(f"fig:{fig}")
-        filename = "/tmp/file.png"
-        fig.savefig(filename)
-        img = mpimg.imread(filename)
-        #plt.imshow()
-        imgplot = plt.imshow(img)
-        #plt.suptitle(f"ticker: {ticker.iloc[idx]}")
-        plt.show()
+    for idx in range(8):  # plot 10 examples
+        time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
+        time = data[data.time_idx==time_idx_val]["Time"]
+        time = datetime.datetime.fromtimestamp(time)
+        fig = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True, ax=axs[idx])
+        axs[idx].set_title(str(time))
+    #plt.suptitle(f"ticker: {ticker.iloc[idx]}")
+    plt.show()
 

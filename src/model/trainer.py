@@ -1,13 +1,14 @@
 import logging
 import os
 import warnings
-
+import datetime
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 import copy
 from pathlib import Path
 import warnings
 
+import matplotlib.pyplot as plt
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -15,6 +16,7 @@ import numpy as np
 import pandas as pd
 import torch
 
+from lightning.pytorch.tuner import Tuner
 from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
 from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
@@ -37,11 +39,13 @@ def week_of_month(dt):
 if __name__ == "__main__":
     logging_utils.init_logging()
 
-    data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    data = raw_data[["ClosePct", "VolumePct"]]
+    data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})    
     data["Time"] = data.index
     data["ticker"] = "ES"
-    data["volume"]=data["Volume"]
-    data["close"]=data["Close"]
+    #data["volume"]=data["Volume"]
+    #data["close"]=data["Close"]
     data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
     logging.info(f"data:{data.head()}")
 
@@ -52,9 +56,11 @@ if __name__ == "__main__":
     #data["time_idx"] -= data["time_idx"].min()
 
     # add additional features
+    data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
     data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
-    data["log_volume"] = np.log(data.volume + 1e-8)
-    data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
+    data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
+    #data["log_volume"] = np.log(data.volume + 1e-8)
+    #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
     data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
     data["day_of_week"] = data.index.dayofweek.astype(str).astype("category")
     data["day_of_month"] = data.index.day.astype(str).astype("category")
@@ -92,7 +98,7 @@ if __name__ == "__main__":
         train_data,
         time_idx="time_idx",
         target="close",
-        group_ids=["ticker"],
+        group_ids=["series"],
         min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
         max_encoder_length=max_encoder_length,
         min_prediction_length=1,
@@ -106,14 +112,14 @@ if __name__ == "__main__":
         time_varying_known_reals=["time_idx"],
         time_varying_unknown_categoricals=[],
         time_varying_unknown_reals=[
-            "close",
-            "volume",
-            "log_volume",
-            "avg_volume_by_ticker",
+            "close"
+            #"volume",
+            #"log_volume",
+            #"avg_volume_by_ticker",
         ],
-        target_normalizer=GroupNormalizer(
-            groups=["ticker"], transformation="softplus"
-        ),  # use softplus and normalize by group
+        #target_normalizer=GroupNormalizer(
+        #    groups=["se"], transformation="softplus"
+        #),  # use softplus and normalize by group
         add_relative_time_idx=True,
         add_target_scales=True,
         add_encoder_length=True,
@@ -125,8 +131,8 @@ if __name__ == "__main__":
 
     # create dataloaders for model
     batch_size = 128  # set this between 32 to 128
-    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0)
-    val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
+    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=4, shuffle=True)
+    val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=4)
 
     # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
     baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
@@ -156,6 +162,18 @@ if __name__ == "__main__":
         # reduce_on_plateau_patience=1000,
     )
     print(f"Number of parameters in network: {tft.size()/1e3:.1f}k")
+    res = Tuner(trainer).lr_find(
+        tft,
+        train_dataloaders=train_dataloader,
+        val_dataloaders=val_dataloader,
+        min_lr=1e-5,
+        max_lr=1e0,
+        early_stop_threshold=100,
+    )
+    print(f"suggested learning rate: {res.suggestion()}")
+    fig = res.plot(show=True, suggest=True)
+    fig.show()
+    tft.hparams.learning_rate = res.suggestion()
 
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
@@ -163,7 +181,7 @@ if __name__ == "__main__":
     logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
 
     trainer = pl.Trainer(
-        max_epochs=20,
+        max_epochs=10,
         accelerator="cpu",
         enable_model_summary=True,
         gradient_clip_val=0.1,
@@ -202,14 +220,23 @@ if __name__ == "__main__":
 
     # calcualte mean absolute error on validation set
     predictions = best_tft.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu"))
-    MAE()(predictions.output, predictions.y)
+    metrics = MAE()(predictions.output, predictions.y)
+    logging.info(f"metrics:{metrics}")
 
     # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
     raw_predictions = best_tft.predict(val_dataloader, mode="raw", return_x=True)
 
-    for idx in range(10):  # plot 10 examples
-        best_tft.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+    fig, axs = plt.subplots(8)
+    fig.suptitle('Vertically stacked subplots')
+    for idx in range(8):  # plot 10 examples
+        time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
+        time = data[data.time_idx==time_idx_val]["Time"]
+        time = datetime.datetime.fromtimestamp(time)
+        best_tft.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True, ax=axs[idx])
+        axs[idx].set_title(str(time))
+    plt.show()
 
+    exit(0)
     # calcualte metric by which to display
     predictions = best_tft.predict(val_dataloader, return_y=True)
     mean_losses = SMAPE(reduction="none")(predictions.output, predictions.y).mean(1)
