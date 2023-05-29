@@ -86,7 +86,11 @@ if __name__ == "__main__":
     ]
     #data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
     data.sample(10, random_state=521)
-
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
     max_prediction_length = 6
     max_encoder_length = 24
     val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
