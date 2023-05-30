@@ -85,7 +85,7 @@ if __name__ == "__main__":
         "music_fest",
     ]
     #data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
-    data.sample(10, random_state=521)
+    #data.sample(10, random_state=521)
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
@@ -116,8 +116,8 @@ if __name__ == "__main__":
         time_varying_known_reals=["time_idx"],
         time_varying_unknown_categoricals=[],
         time_varying_unknown_reals=[
-            "close"
-            #"volume",
+            "close",
+            "volume",
             #"log_volume",
             #"avg_volume_by_ticker",
         ],
@@ -135,8 +135,8 @@ if __name__ == "__main__":
 
     # create dataloaders for model
     batch_size = 128  # set this between 32 to 128
-    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=4, shuffle=True)
-    val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=4)
+    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0, shuffle=True)
+    val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
 
     # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
     baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     fig.suptitle('Vertically stacked subplots')
     for idx in range(8):  # plot 10 examples
         time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
-        time = data[data.time_idx==time_idx_val]["Time"]
+        time = data[data.time_idx==time_idx_val]["Time"][0]
         time = datetime.datetime.fromtimestamp(time)
         best_tft.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True, ax=axs[idx])
         axs[idx].set_title(str(time))
