@@ -11,7 +11,7 @@ from pytorch_forecasting.data.encoders import (
     NaNLabelEncoder,
     TorchNormalizer,
 )
-from pytorch_forecasting.data.samplers import TimeSynchronizedBatchSampler
+from pytorch_forecasting.data.samplers import TimeSynchronizedBatchSampler, RollingGroupedSampler
 from pytorch_forecasting.data.timeseries import TimeSeriesDataSet
 
 __all__ = [

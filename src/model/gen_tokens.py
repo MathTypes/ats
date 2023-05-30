@@ -1,5 +1,5 @@
 # Usage:
-#   PYTHONPATH=.. python3 write_parquet.py ES FUT
+#   PYTHONPATH=.. python3 gen_tokens.py ES FUT
 #
 from math import log
 from datetime import datetime, timezone, timedelta

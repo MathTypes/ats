@@ -21,6 +21,8 @@ from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesD
 from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
+from torch.utils.data.sampler import SequentialSampler
+from pytorch_forecasting.data import RollingGroupedSampler
 
 from pytorch_forecasting.data.examples import get_stallion_data
 from datasets import generate_stock_returns
@@ -41,7 +43,8 @@ if __name__ == "__main__":
 
     raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
     data = raw_data[["ClosePct", "VolumePct"]]
-    data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})    
+    data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})
+
     data["Time"] = data.index
     data["ticker"] = "ES"
     #data["volume"]=data["Volume"]
@@ -58,7 +61,8 @@ if __name__ == "__main__":
     # add additional features
     data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
     data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
-    data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
+    #data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
+    data["series"]=data.apply(lambda x: x.ticker, axis=1)    
     #data["log_volume"] = np.log(data.volume + 1e-8)
     #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
     data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
@@ -135,8 +139,10 @@ if __name__ == "__main__":
 
     # create dataloaders for model
     batch_size = 128  # set this between 32 to 128
-    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0, shuffle=True)
-    val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
+    train_dataloader = training.to_dataloader(train=True,
+        batch_sampler=RollingGroupedSampler(SequentialSampler(training), batch_size=batch_size, shuffle=True))
+    val_dataloader = validation.to_dataloader(train=False,
+        batch_sampler=RollingGroupedSampler(SequentialSampler(validation), batch_size=batch_size*10))
 
     # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
     baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
@@ -230,9 +236,9 @@ if __name__ == "__main__":
     # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
     raw_predictions = best_tft.predict(val_dataloader, mode="raw", return_x=True)
 
-    fig, axs = plt.subplots(8)
+    fig, axs = plt.subplots(0)
     fig.suptitle('Vertically stacked subplots')
-    for idx in range(8):  # plot 10 examples
+    for idx in range(0):  # plot 10 examples
         time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
         time = data[data.time_idx==time_idx_val]["Time"][0]
         time = datetime.datetime.fromtimestamp(time)

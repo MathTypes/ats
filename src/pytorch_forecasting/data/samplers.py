@@ -2,7 +2,7 @@
 Samplers for sampling time series from the :py:class:`~pytorch_forecasting.data.timeseries.TimeSeriesDataSet`
 """
 import warnings
-
+import logging
 import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
@@ -91,8 +91,10 @@ class GroupedSampler(Sampler):
         # create index from which can be sampled: index is equal to number of batches
         # associate index with prediction time
         self._group_index = np.repeat(list(self._group_sizes.keys()), list(self._group_sizes.values()))
+        logging.info(f"self._group_index:{self._group_index}")
         # associate index with batch within prediction time group
         self._sub_group_index = np.concatenate([np.arange(size) for size in self._group_sizes.values()])
+        logging.info(f"self._sub_group_index:{self._sub_group_index}")
 
     def __iter__(self):
         if self.shuffle:  # shuffle samples
@@ -112,6 +114,40 @@ class GroupedSampler(Sampler):
 
     def __len__(self):
         return len(self._group_index)
+
+
+class RollingGroupedSampler(GroupedSampler):
+
+    def get_groups(self, sampler: Sampler):
+        data_source = sampler.data_source
+        index = data_source.index
+        logging.info(f"index:{index}")
+        # get groups, i.e. group all samples by first predict time
+        last_time = data_source.data["time"][index["index_end"].to_numpy()].numpy()
+        logging.info(f"last_time:{last_time}")
+        decoder_lengths = data_source.calculate_decoder_length(last_time, index.sequence_length)
+        logging.info(f"decoder_lengths:{decoder_lengths}")
+        first_prediction_time = index.time + index.sequence_length - decoder_lengths + 1
+        logging.info(f"first_prediction_time:{first_prediction_time}")
+        groups = pd.RangeIndex(0, len(index.index)).groupby(first_prediction_time)
+        logging.info(f"groups:{groups}")
+        return groups
+
+    def __iter__(self):
+        if self.shuffle:  # shuffle samples
+            groups = {name: shuffle(group) for name, group in self._groups.items()}
+            batch_samples = np.random.permutation(len(self))
+        else:
+            groups = self._groups
+            batch_samples = np.arange(len(self))
+
+        for idx in batch_samples:
+            name = self._group_index[idx]
+            sub_group = self._sub_group_index[idx]
+            sub_group_start = sub_group
+            sub_group_end = sub_group_start + self.batch_size
+            batch = groups[name][sub_group_start:sub_group_end]
+            yield batch
 
 
 class TimeSynchronizedBatchSampler(GroupedSampler):
