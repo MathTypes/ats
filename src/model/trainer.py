@@ -22,12 +22,12 @@ from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
 from torch.utils.data.sampler import SequentialSampler
-from pytorch_forecasting.data import RollingGroupedSampler
+from pytorch_forecasting.data import RollingGroupedSampler, TimeSynchronizedBatchSampler
 
 from pytorch_forecasting.data.examples import get_stallion_data
 from datasets import generate_stock_returns
 from util import logging_utils
-
+from util import config_utils
 from math import ceil
 
 def week_of_month(dt):
@@ -39,7 +39,12 @@ def week_of_month(dt):
     return int(ceil(adjusted_dom/7.0))
 
 if __name__ == "__main__":
+    parser = config_utils.get_arg_parser("Trainer")
+    parser.add_argument("--mode", type=str)
+    parser.add_argument("--checkpoint", type=str)
+    parser.add_argument("--lr", type=float, default=4.4668359215096314e-05)
     logging_utils.init_logging()
+    args = parser.parse_args()
 
     raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
     data = raw_data[["ClosePct", "VolumePct"]]
@@ -61,8 +66,8 @@ if __name__ == "__main__":
     # add additional features
     data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
     data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
-    #data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
-    data["series"]=data.apply(lambda x: x.ticker, axis=1)    
+    data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
+    #data["series"]=data.apply(lambda x: x.ticker, axis=1)    
     #data["log_volume"] = np.log(data.volume + 1e-8)
     #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
     data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
@@ -139,14 +144,10 @@ if __name__ == "__main__":
 
     # create dataloaders for model
     batch_size = 128  # set this between 32 to 128
-    train_dataloader = training.to_dataloader(train=True,
-        batch_sampler=RollingGroupedSampler(SequentialSampler(training), batch_size=batch_size, shuffle=True))
-    val_dataloader = validation.to_dataloader(train=False,
-        batch_sampler=RollingGroupedSampler(SequentialSampler(validation), batch_size=batch_size*10))
 
     # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
-    baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
-    MAE()(baseline_predictions.output, baseline_predictions.y)
+    #baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
+    #MAE()(baseline_predictions.output, baseline_predictions.y)
 
     # configure network and trainer
     pl.seed_everything(42)
@@ -172,92 +173,119 @@ if __name__ == "__main__":
         # reduce_on_plateau_patience=1000,
     )
     print(f"Number of parameters in network: {tft.size()/1e3:.1f}k")
-    res = Tuner(trainer).lr_find(
-        tft,
-        train_dataloaders=train_dataloader,
-        val_dataloaders=val_dataloader,
-        min_lr=1e-5,
-        max_lr=1e0,
-        early_stop_threshold=100,
-    )
-    print(f"suggested learning rate: {res.suggestion()}")
-    fig = res.plot(show=True, suggest=True)
-    fig.show()
-    tft.hparams.learning_rate = res.suggestion()
+    if args.mode == "tune":
+        train_dataloader = training.to_dataloader(train=True,
+            batch_sampler=RollingGroupedSampler(SequentialSampler(training), batch_size=batch_size, shuffle=True))
+        val_dataloader = validation.to_dataloader(train=False,
+            batch_sampler=RollingGroupedSampler(SequentialSampler(validation), batch_size=batch_size*10))
+        res = Tuner(trainer).lr_find(
+            tft,
+            train_dataloaders=train_dataloader,
+            val_dataloaders=val_dataloader,
+            min_lr=1e-5,
+            max_lr=1e0,
+            early_stop_threshold=100,
+        )
+        print(f"suggested learning rate: {res.suggestion()}")
+        fig = res.plot(show=True, suggest=True)
+        fig.show()
+        exit (0)
+    if args.mode == "train":
+        tft.hparams.learning_rate = args.lr
+        train_dataloader = training.to_dataloader(train=True,
+            batch_sampler=RollingGroupedSampler(SequentialSampler(training), batch_size=batch_size, shuffle=True))
+        #val_dataloader = validation.to_dataloader(train=False,
+        #    batch_sampler=RollingGroupedSampler(SequentialSampler(validation), batch_size=batch_size*10))
+        val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
+        # configure network and trainer
+        early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
+        lr_logger = LearningRateMonitor()  # log the learning rate
+        logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
 
-    # configure network and trainer
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
-    lr_logger = LearningRateMonitor()  # log the learning rate
-    logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
+        trainer = pl.Trainer(
+            max_epochs=10,
+            accelerator="cpu",
+            enable_model_summary=True,
+            gradient_clip_val=0.1,
+            limit_train_batches=50,  # coment in for training, running valiation every 30 batches
+            # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
+            callbacks=[lr_logger, early_stop_callback],
+            logger=logger,
+        )
 
-    trainer = pl.Trainer(
-        max_epochs=10,
-        accelerator="cpu",
-        enable_model_summary=True,
-        gradient_clip_val=0.1,
-        limit_train_batches=50,  # coment in for training, running valiation every 30 batches
-        # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
-        callbacks=[lr_logger, early_stop_callback],
-        logger=logger,
-    )
+        tft = TemporalFusionTransformer.from_dataset(
+            training,
+            learning_rate=0.3,
+            hidden_size=16,
+            attention_head_size=2,
+            dropout=0.1,
+            hidden_continuous_size=8,
+            loss=QuantileLoss(),
+            log_interval=10,  # uncomment for learning rate finder and otherwise, e.g. to 10 for logging every 10 batches
+            optimizer="Ranger",
+            reduce_on_plateau_patience=4,
+        )
+        print(f"Number of parameters in network: {tft.size()/1e3:.1f}k")
 
-    tft = TemporalFusionTransformer.from_dataset(
-        training,
-        learning_rate=0.3,
-        hidden_size=16,
-        attention_head_size=2,
-        dropout=0.1,
-        hidden_continuous_size=8,
-        loss=QuantileLoss(),
-        log_interval=10,  # uncomment for learning rate finder and otherwise, e.g. to 10 for logging every 10 batches
-        optimizer="Ranger",
-        reduce_on_plateau_patience=4,
-    )
-    print(f"Number of parameters in network: {tft.size()/1e3:.1f}k")
+        # fit network
+        trainer.fit(
+            tft,
+            train_dataloaders=train_dataloader,
+            val_dataloaders=val_dataloader,
+        )
 
-    # fit network
-    trainer.fit(
-        tft,
-        train_dataloaders=train_dataloader,
-        val_dataloaders=val_dataloader,
-    )
+        # load the best model according to the validation loss
+        # (given that we use early stopping, this is not necessarily the last epoch)
+        best_model_path = trainer.checkpoint_callback.best_model_path
+        best_tft = TemporalFusionTransformer.load_from_checkpoint(best_model_path)
+        logging.info(f'best_model_path:{best_model_path}')
 
-    # load the best model according to the validation loss
-    # (given that we use early stopping, this is not necessarily the last epoch)
-    best_model_path = trainer.checkpoint_callback.best_model_path
-    best_tft = TemporalFusionTransformer.load_from_checkpoint(best_model_path)
-    logging.info(f'best_model_path:{best_model_path}')
+        # calcualte mean absolute error on validation set
+        predictions = best_tft.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu"))
+        metrics = MAE()(predictions.output, predictions.y)
+        logging.info(f"metrics:{metrics}")
+        exit (0)
+    
+    if args.mode == "eval":
+        #val_dataloader = validation.to_dataloader(train=False,
+            #batch_sampler=RollingGroupedSampler(SequentialSampler(validation), batch_size=batch_size*10))
+            #batch_sampler=RollingGroupedSampler(SequentialSampler(validation), batch_size=batch_size*10))
+        val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
+        # load the best model according to the validation loss
+        # (given that we use early stopping, this is not necessarily the last epoch)
+        best_model_path = args.checkpoint
+        best_tft = TemporalFusionTransformer.load_from_checkpoint(best_model_path)
+        logging.info(f'best_model_path:{best_model_path}')
+        # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
+        raw_predictions = best_tft.predict(val_dataloader, mode="raw", return_x=True)
 
-    # calcualte mean absolute error on validation set
-    predictions = best_tft.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu"))
-    metrics = MAE()(predictions.output, predictions.y)
-    logging.info(f"metrics:{metrics}")
+        fig, axs = plt.subplots(1)
+        fig.suptitle('Sampled examples')
+        logging.info(f'raw_predictions.x:{raw_predictions.x}')
+        logging.info(f'raw_predictions.output:{raw_predictions.output}')
+        for idx in range(0):  # plot 10 examples
+            time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
+            time = data[data.time_idx==time_idx_val]["Time"][0]
+            time = datetime.datetime.fromtimestamp(time)
+            best_tft.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True, ax=axs[idx])
+            axs[idx].set_title(str(time))
+        plt.show()
 
-    # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
-    raw_predictions = best_tft.predict(val_dataloader, mode="raw", return_x=True)
-
-    fig, axs = plt.subplots(0)
-    fig.suptitle('Vertically stacked subplots')
-    for idx in range(0):  # plot 10 examples
-        time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
-        time = data[data.time_idx==time_idx_val]["Time"][0]
-        time = datetime.datetime.fromtimestamp(time)
-        best_tft.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True, ax=axs[idx])
-        axs[idx].set_title(str(time))
-    plt.show()
-
+        predictions = best_tft.predict(val_dataloader, return_y=True)
+        mean_losses = SMAPE(reduction="none")(predictions.output, predictions.y).mean(1)
+        indices = mean_losses.argsort(descending=True)  # sort losses
+        fig, axs = plt.subplots(0)
+        fig.suptitle('Worse cases')
+        for idx in range(10):  # plot 10 examples
+            best_tft.plot_prediction(
+                raw_predictions.x,
+                raw_predictions.output,
+                idx=indices[idx],
+                add_loss_to_title=SMAPE(quantiles=best_tft.loss.quantiles),
+            )
+        exit(0)
     exit(0)
     # calcualte metric by which to display
-    predictions = best_tft.predict(val_dataloader, return_y=True)
-    mean_losses = SMAPE(reduction="none")(predictions.output, predictions.y).mean(1)
-    indices = mean_losses.argsort(descending=True)  # sort losses
-    for idx in range(10):  # plot 10 examples
-        best_tft.plot_prediction(
-            raw_predictions.x,
-            raw_predictions.output,
-            idx=indices[idx],
-            add_loss_to_title=SMAPE(quantiles=best_tft.loss.quantiles),
-        )
 
     predictions = best_tft.predict(val_dataloader, return_x=True)
     predictions_vs_actuals = best_tft.calculate_prediction_actual_by_variable(predictions.x, predictions.output)

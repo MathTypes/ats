@@ -110,6 +110,7 @@ class GroupedSampler(Sampler):
             sub_group_start = sub_group * self.batch_size
             sub_group_end = sub_group_start + self.batch_size
             batch = groups[name][sub_group_start:sub_group_end]
+            logging.info(f"batch: start={sub_group_start}, end={sub_group_end}, name={name}")
             yield batch
 
     def __len__(self):
@@ -147,6 +148,7 @@ class RollingGroupedSampler(GroupedSampler):
             sub_group_start = sub_group
             sub_group_end = sub_group_start + self.batch_size
             batch = groups[name][sub_group_start:sub_group_end]
+            logging.info(f"batch: start={sub_group_start}, end={sub_group_end}, name={name}")
             yield batch
 
 

@@ -59,7 +59,7 @@ if __name__ == "__main__":
     #data["time_idx"] -= data["time_idx"].min()
 
     # add additional features
-    data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
+    data["date_str"] = data.date.apply(lambda x: x.strftime("%Y"))
     data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
     data["year"] = data.date.dt.year.astype(str).astype("category")  # categories have be strings
     data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    

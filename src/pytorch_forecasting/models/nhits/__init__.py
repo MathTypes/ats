@@ -173,6 +173,21 @@ class NHiTS(BaseModelWithCovariates):
             embedding_paddings=self.hparams.embedding_paddings,
             x_categoricals=self.hparams.x_categoricals,
         )
+        if isinstance(self.hparams.output_size, int):
+            output_size = self.hparams.output_size
+        else:
+            output_size = sum(self.hparams.output_size)
+        
+        logging.info(f"self.hparams.time_varying_reals_encoder:{self.hparams.time_varying_reals_encoder}")
+        logging.info(f"self.hparams.target_names:{self.hparams.target_names}")
+        logging.info(f"self.hparams.time_varying_categoricals_encoder:{self.hparams.time_varying_categoricals_encoder}")
+        logging.info(f"self.hparams.time_varying_reals_decoder:{self.hparams.time_varying_reals_decoder}")
+        self.customer_encoder_covariate_size = len(set(self.hparams.time_varying_reals_encoder)) - len(set(self.target_names)) + sum(
+            self.embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_encoder
+        )
+        self.customer_decoder_covariate_size = len(set(self.hparams.time_varying_reals_decoder)) + sum(
+            self.embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_decoder
+        )
 
         self.model = NHiTSModule(
             context_length=self.hparams.context_length,
@@ -180,6 +195,8 @@ class NHiTS(BaseModelWithCovariates):
             output_size=to_list(output_size),
             static_size=self.static_size,
             covariate_size=self.covariate_size,
+            encoder_covariate_size=self.customer_encoder_covariate_size,
+            decoder_covariate_size=self.customer_decoder_covariate_size,
             static_hidden_size=self.hparams.static_hidden_size,
             n_blocks=self.hparams.n_blocks,
             n_layers=self.hparams.n_layers,
