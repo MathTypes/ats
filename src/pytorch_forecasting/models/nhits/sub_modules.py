@@ -237,7 +237,7 @@ class NHiTS(nn.Module):
         naive_level: bool,
     ):
         super().__init__()
-
+        logging.info(f"output_size:{output_size}")
         self.prediction_length = prediction_length
         self.context_length = context_length
         self.output_size = output_size

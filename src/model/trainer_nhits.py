@@ -94,7 +94,7 @@ if __name__ == "__main__":
     #data.sample(10, random_state=521)
 
     max_encoder_length = 48
-    max_prediction_length = 12
+    max_prediction_length = 6
     val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
     training_cutoff = val_idx
@@ -115,10 +115,12 @@ if __name__ == "__main__":
         #static_categoricals=["ticker"],
         #static_reals=[],
         #allow_missing_timesteps=True,        
-        time_varying_known_categoricals=["month", "hour_of_day", "day_of_week", "week_of_month"],
+        #time_varying_known_categoricals=["month", "hour_of_day", "day_of_week", "week_of_month"],
+        time_varying_known_categoricals=[],
         #variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
         #variable_groups={},  # group of categorical variables can be treated as one variable
         time_varying_known_reals=["time_idx"],
+        #time_varying_known_reals=[],
         #time_varying_known_reals=["hour_of_day", "day_of_week", "week_of_month", "month"],
         #time_varying_unknown_categoricals=[],
         time_varying_unknown_reals=["close", "volume"],

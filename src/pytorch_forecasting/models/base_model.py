@@ -573,10 +573,13 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
         # infer output size
         def get_output_size(normalizer, loss):
             if isinstance(loss, QuantileLoss):
+                logging.info(f"QuantileLoss:{len(loss.quantiles)}")
                 return len(loss.quantiles)
             elif isinstance(normalizer, NaNLabelEncoder):
+                logging.info(f"normalizer.classes_:{len(normalizer.classes_)}")
                 return len(normalizer.classes_)
             elif isinstance(loss, DistributionLoss):
+                logging.info(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
                 return len(loss.distribution_arguments)
             else:
                 return 1  # default to 1
@@ -591,13 +594,16 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
             if not isinstance(loss, MultiLoss):
                 loss = MultiLoss([deepcopy(loss)] * n_targets)
                 new_kwargs["loss"] = loss
+                logging.info(f"not multiloss:{new_kwargs}")
             if isinstance(loss, MultiLoss) and "output_size" not in kwargs:
                 new_kwargs["output_size"] = [
                     get_output_size(normalizer, l)
                     for normalizer, l in zip(dataset.target_normalizer.normalizers, loss.metrics)
                 ]
+                logging.info(f"multiloss:{new_kwargs}")
         elif "output_size" not in kwargs:
             new_kwargs["output_size"] = get_output_size(dataset.target_normalizer, loss)
+            logging.info(f"n_targets:{new_kwargs}")
         return new_kwargs
 
     def size(self) -> int:

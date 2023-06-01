@@ -3,7 +3,7 @@ N-HiTS model for timeseries forecasting with covariates.
 """
 from copy import copy
 from typing import Dict, List, Optional, Tuple, Union
-
+import logging
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
@@ -140,6 +140,7 @@ class NHiTS(BaseModelWithCovariates):
                 Defaults to nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE(), MASE()])
             **kwargs: additional arguments to :py:class:`~BaseModel`.
         """
+        logging.info(f"self.hparams:{self.hparams}")
         if logging_metrics is None:
             logging_metrics = nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE(), MASE()])
         if loss is None:
@@ -166,6 +167,7 @@ class NHiTS(BaseModelWithCovariates):
 
         self.save_hyperparameters()
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
+        logging.info(f"self.hparams.output_size:{self.hparams.output_size}")
 
         self.embeddings = MultiEmbedding(
             embedding_sizes=self.hparams.embedding_sizes,
@@ -179,7 +181,8 @@ class NHiTS(BaseModelWithCovariates):
             output_size = sum(self.hparams.output_size)
         
         logging.info(f"self.hparams.time_varying_reals_encoder:{self.hparams.time_varying_reals_encoder}")
-        logging.info(f"self.hparams.target_names:{self.hparams.target_names}")
+        logging.info(f"self.target_names:{self.target_names}")
+        logging.info(f"self.embeddings.output_size:{self.embeddings.output_size}")
         logging.info(f"self.hparams.time_varying_categoricals_encoder:{self.hparams.time_varying_categoricals_encoder}")
         logging.info(f"self.hparams.time_varying_reals_decoder:{self.hparams.time_varying_reals_decoder}")
         self.customer_encoder_covariate_size = len(set(self.hparams.time_varying_reals_encoder)) - len(set(self.target_names)) + sum(
@@ -188,6 +191,8 @@ class NHiTS(BaseModelWithCovariates):
         self.customer_decoder_covariate_size = len(set(self.hparams.time_varying_reals_decoder)) + sum(
             self.embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_decoder
         )
+        logging.info(f"self.customer_encoder_covariate_size:{self.customer_encoder_covariate_size}")
+        logging.info(f"self.customer_decoder_covariate_size:{self.customer_decoder_covariate_size}")
 
         self.model = NHiTSModule(
             context_length=self.hparams.context_length,
@@ -256,6 +261,7 @@ class NHiTS(BaseModelWithCovariates):
             Dict[str, torch.Tensor]: output of model
         """
         # covariates
+        logging.info(f"self.covariate_size :{self.covariate_size}")
         if self.covariate_size > 0:
             encoder_features = self.extract_features(x, self.embeddings, period="encoder")
             encoder_x_t = torch.concat(
