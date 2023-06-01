@@ -236,7 +236,7 @@ if __name__ == "__main__":
     #mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=["r", "k", "c"]) 
     for idx in range(4):  # plot 10 examples
         time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
-        time = data[data.time_idx==time_idx_val]["Time"]
+        time = data[data.time_idx==time_idx_val]["Time"][0]
         time = datetime.datetime.fromtimestamp(time)
         #logging.info(f"validation.x_to_index(raw_predictions.x):{validation.x_to_index(raw_predictions.x)}")
         figs = best_model.plot_prediction(
