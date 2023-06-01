@@ -93,8 +93,8 @@ if __name__ == "__main__":
     #data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
     #data.sample(10, random_state=521)
 
-    max_encoder_length = 48
-    max_prediction_length = 6
+    max_encoder_length = 13*14
+    max_prediction_length = 13*3
     val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
     training_cutoff = val_idx
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     for idx in range(4):  # plot 10 examples
         time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
         time = data[data.time_idx==time_idx_val]["Time"][0]
-        time = datetime.datetime.fromtimestamp(time)
+        time = datetime.datetime.fromtimestamp(time.astype(int))
         #logging.info(f"validation.x_to_index(raw_predictions.x):{validation.x_to_index(raw_predictions.x)}")
         figs = best_model.plot_prediction(
             raw_predictions.x, raw_predictions.output, idx=idx,
