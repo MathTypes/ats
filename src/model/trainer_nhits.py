@@ -116,7 +116,7 @@ if __name__ == "__main__":
         #static_reals=[],
         #allow_missing_timesteps=True,        
         #time_varying_known_categoricals=["month", "hour_of_day", "day_of_week", "week_of_month"],
-        time_varying_known_categoricals=[],
+        time_varying_known_categoricals=["hour_of_day"],
         #variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
         #variable_groups={},  # group of categorical variables can be treated as one variable
         time_varying_known_reals=["time_idx"],
@@ -172,7 +172,7 @@ if __name__ == "__main__":
         #MQF2DistributionLoss(prediction_length=max_prediction_length)], weights=[2.0, 1.0]),
         loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
         backcast_loss_ratio=0.0,
-        hidden_size=32,
+        hidden_size=8,
         optimizer="AdamW",
     )
 
