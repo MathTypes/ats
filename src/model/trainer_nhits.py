@@ -29,20 +29,68 @@ from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimi
 from pytorch_forecasting.data.examples import get_stallion_data
 from datasets import generate_stock_returns
 from util import logging_utils
-
+from util import config_utils
+import nhits_tuner
 from math import ceil
 
-def week_of_month(dt):
-    """ Returns the week of the month for the specified date.
-    """
-    first_day = dt.replace(day=1)
-    dom = dt.day
-    adjusted_dom = dom + first_day.weekday()
-    return int(ceil(adjusted_dom/7.0))
+def get_model(config, training):
+    device = config['device']
+    max_prediction_length = config['max_prediction_length']
+    # configure network and trainer
+    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    pl.seed_everything(42)
+    net = NHiTS.from_dataset(
+        training,
+        learning_rate=3e-2,
+        weight_decay=1e-2,
+        #loss=MQF2DistributionLoss(prediction_length=max_prediction_length),
+        #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
+        #MQF2DistributionLoss(prediction_length=max_prediction_length)], weights=[2.0, 1.0]),
+        loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
+        backcast_loss_ratio=0.0,
+        hidden_size=8,
+        optimizer="AdamW",
+    )
+    return net
 
-if __name__ == "__main__":
-    logging_utils.init_logging()
-    pd.set_option('display.max_columns', None)
+def get_trainer(config):
+    device = config['device']
+    # configure network and trainer
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
+    lr_logger = LearningRateMonitor()  # log the learning rate
+    logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
+    trainer = pl.Trainer(
+        max_epochs=5,
+        accelerator=device,
+        enable_model_summary=True,
+        gradient_clip_val=0.1,
+        limit_train_batches=50,  # coment in for training, running valiation every 30 batches
+        # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
+        callbacks=[lr_logger, early_stop_callback],
+        logger=logger,
+    )
+    return trainer
+
+def run_tune(config, net, trainer, train_dataloader, val_dataloader):
+    study = optimize_hyperparameters(train_dataloader, val_dataloader,
+                             config['model_path'])
+    print(f"study:{study}")
+    #device = config['device']
+    #print(f"Number of parameters in network: {net.size()/1e3:.1f}k")
+    #res = Tuner(trainer).lr_find(
+    #    net.to(device),
+    #    train_dataloaders=train_dataloader,
+    #    val_dataloaders=val_dataloader,
+    #    min_lr=1e-5,
+    #    max_lr=1e0,
+    #    early_stop_threshold=100,
+    #)
+    #print(f"suggested learning rate: {res.suggestion()}")
+    #fig = res.plot(show=True, suggest=True)
+    #fig.show()
+    #net.hparams.learning_rate = res.suggestion()
+
+def get_input_data(config):
     raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
     data = raw_data[["ClosePct", "VolumePct"]]
     data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})
@@ -93,14 +141,10 @@ if __name__ == "__main__":
     #data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
     #data.sample(10, random_state=521)
 
-    max_encoder_length = 13*14
-    max_prediction_length = 13*3
     val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
     training_cutoff = val_idx
     train_data = data[:val_idx]
-    context_length = max_encoder_length
-    prediction_length = max_prediction_length
 
     #logging.info(f"train_data:{train_data.head()}, training_cutoff={training_cutoff}")
     training = TimeSeriesDataSet(
@@ -109,9 +153,9 @@ if __name__ == "__main__":
         target="close",
         group_ids=["series"],
         #min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
-        max_encoder_length=context_length,
+        max_encoder_length=config['context_length'],
         #min_prediction_length=1,
-        max_prediction_length=prediction_length,
+        max_prediction_length=config['prediction_length'],
         #static_categoricals=["ticker"],
         #static_reals=[],
         #allow_missing_timesteps=True,        
@@ -147,63 +191,11 @@ if __name__ == "__main__":
     batch_size = 128  # set this between 32 to 128
     train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=4, pin_memory=True, drop_last=False)
     val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=4, pin_memory=True, drop_last=False)
+    return training, train_dataloader, val_dataloader
 
-    # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
-    #baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
-    #MAE()(baseline_predictions.output, baseline_predictions.y)
 
-    # configure network and trainer
-    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    device = "cpu"
-    pl.seed_everything(42)
-    trainer = pl.Trainer(
-        accelerator=device,
-        # clipping gradients is a hyperparameter and important to prevent divergance
-        # of the gradient for recurrent neural networks
-        gradient_clip_val=0.1,
-    )
-
-    net = NHiTS.from_dataset(
-        training,
-        learning_rate=3e-2,
-        weight_decay=1e-2,
-        #loss=MQF2DistributionLoss(prediction_length=max_prediction_length),
-        #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
-        #MQF2DistributionLoss(prediction_length=max_prediction_length)], weights=[2.0, 1.0]),
-        loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
-        backcast_loss_ratio=0.0,
-        hidden_size=8,
-        optimizer="AdamW",
-    )
-
-    print(f"Number of parameters in network: {net.size()/1e3:.1f}k")
-    res = Tuner(trainer).lr_find(
-        net.to(device),
-        train_dataloaders=train_dataloader,
-        val_dataloaders=val_dataloader,
-        min_lr=1e-5,
-        max_lr=1e0,
-        early_stop_threshold=100,
-    )
-    print(f"suggested learning rate: {res.suggestion()}")
-    fig = res.plot(show=True, suggest=True)
-    fig.show()
-    net.hparams.learning_rate = res.suggestion()
-
-    # configure network and trainer
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
-    lr_logger = LearningRateMonitor()  # log the learning rate
-    logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
-    trainer = pl.Trainer(
-        max_epochs=5,
-        accelerator=device,
-        enable_model_summary=True,
-        gradient_clip_val=0.1,
-        limit_train_batches=50,  # coment in for training, running valiation every 30 batches
-        # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
-        callbacks=[lr_logger, early_stop_callback],
-        logger=logger,
-    )
+def run_train(config, net, trainer, train_dataloader, val_dataloader):
+    device = config['device']
     # fit network
     trainer.fit(
         net,
@@ -257,4 +249,38 @@ if __name__ == "__main__":
         #imgplot = plt.imshow(img)
         #plt.show()
 
+def week_of_month(dt):
+    """ Returns the week of the month for the specified date.
+    """
+    first_day = dt.replace(day=1)
+    dom = dt.day
+    adjusted_dom = dom + first_day.weekday()
+    return int(ceil(adjusted_dom/7.0))
+
+if __name__ == "__main__":
+    logging_utils.init_logging()
+    pd.set_option('display.max_columns', None)
+    parser = config_utils.get_arg_parser("Trainer")
+    parser.add_argument("--mode", type=str)
+    parser.add_argument("--checkpoint", type=str)
+    parser.add_argument("--lr", type=float, default=4.4668359215096314e-05)
+    logging_utils.init_logging()
+    args = parser.parse_args()
+    
+    config = {
+        'device' : "cpu",
+        'max_encoder_length' : 13*14,
+        'max_prediction_length' : 13*3,
+        'context_length' : 13*14,
+        'prediction_length' : 13*3,
+        'model_path' : 'lightning_logs'}
+    training, train_dataloader, val_dataloader = get_input_data(config)
+    net = get_model(config, training)
+    trainer = get_trainer(config)
+    if args.mode == "tune":
+        run_tune(config, net, trainer, train_dataloader, val_dataloader)
+    elif args.mode == "train":
+        run_train(config, net, trainer, train_dataloader, val_dataloader)
+    elif args.mode == "eval":
+        run_eval(config, net, val_dataloader)
 
