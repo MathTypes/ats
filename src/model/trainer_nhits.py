@@ -120,7 +120,7 @@ def get_input_data(config):
     data["week_of_month"] = data["date"].apply(week_of_month).astype(str).astype("category")
     data["week_of_year"] = data.index.isocalendar().week.astype(str).astype("category")
     logging.info(f"data:{data.head()}")
-    #logging.info(f"data:{data.describe()}")
+    logging.info(f"data:{data.describe()}")
     logging.info(f"data:{data.info()}")
 
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding

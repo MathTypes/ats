@@ -34,7 +34,7 @@ def optimize_hyperparameters(
     train_dataloaders: DataLoader,
     val_dataloaders: DataLoader,
     model_path: str,
-    max_epochs: int = 20,
+    max_epochs: int = 10,
     n_trials: int = 100,
     timeout: float = 3600 * 8.0,  # 8 hours
     gradient_clip_val_range: Tuple[float, float] = (0.01, 100.0),
@@ -148,6 +148,7 @@ def optimize_hyperparameters(
         context_length = trial.suggest_int("context_length", *context_length_range, log=True)
         prediction_length = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
         kwargs["loss"] = copy.deepcopy(loss)
+        logging.info(f"hidden_size:{hidden_size}, embedding_size:{embedding_size}, context_length:{context_length}, prediction_length:{prediction_length}")
         model = NHiTS.from_dataset(
             train_dataloaders.dataset,
             embedding_size=embedding_size,
@@ -184,6 +185,9 @@ def optimize_hyperparameters(
                 max_lr=learning_rate_range[1],
             )
 
+            print(f"suggested learning rate: {res.suggestion()}")
+            fig = res.plot(show=True, suggest=True)
+            fig.show()
             loss_finite = np.isfinite(res.results["loss"])
             if loss_finite.sum() > 3:  # at least 3 valid values required for learning rate finder
                 lr_smoothed, loss_smoothed = sm.nonparametric.lowess(
@@ -204,7 +208,8 @@ def optimize_hyperparameters(
 
         # fit
         trainer.fit(model, train_dataloaders=train_dataloaders, val_dataloaders=val_dataloaders)
-
+        optuna_logger.info(f"Trainer: {trainer}")
+        optuna_logger.info(f"Trainer metrics {trainer.callback_metrics}")
         # report result
         return trainer.callback_metrics["val_loss"].item()
 
