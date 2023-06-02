@@ -127,6 +127,7 @@ def optimize_hyperparameters(
             accelerator="auto",
             max_epochs=max_epochs,
             gradient_clip_val=gradient_clip_val,
+            limit_train_batches=50,
             callbacks=[
                 learning_rate_callback,
                 checkpoint_callback,
@@ -153,12 +154,12 @@ def optimize_hyperparameters(
             prediction_length=prediction_length,
             dropout=trial.suggest_uniform("dropout", *dropout_range),
             hidden_size=hidden_size,
-            static_hidden_size=trial.suggest_int(
-                "static_hidden_size",
-                static_hidden_size_range[0],
-                min(static_hidden_size_range[1], hidden_size),
-                log=True,
-            ),
+            #static_hidden_size=trial.suggest_int(
+            #    "static_hidden_size",
+            #    static_hidden_size_range[0],
+            #    min(static_hidden_size_range[1], hidden_size),
+            #    log=True,
+            #),
             log_interval=-1,
             **kwargs,
         )

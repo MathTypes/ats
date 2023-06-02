@@ -60,7 +60,7 @@ def get_trainer(config):
     lr_logger = LearningRateMonitor()  # log the learning rate
     logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
     trainer = pl.Trainer(
-        max_epochs=5,
+        max_epochs=config['max_epochs'],
         accelerator=device,
         enable_model_summary=True,
         gradient_clip_val=0.1,
@@ -97,7 +97,7 @@ def get_input_data(config):
     raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
     data = raw_data[["ClosePct", "VolumePct"]]
     data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})
-    data["volume"] = data["volume"].ewm(span=60, min_periods=60).std().fillna(method="bfill")
+    #data["volume"] = data["volume"].ewm(span=60, min_periods=60).std().fillna(method="bfill")
     data["Time"] = data.index
     data["ticker"] = "ES"
     #data["volume"]=data["VolumePct"]
@@ -214,9 +214,9 @@ def run_train(config, net, trainer, train_dataloader, val_dataloader):
     logging.info(f'best_model_path:{best_model_path}')
 
     # calcualte mean absolute error on validation set
-    predictions = best_model.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator=device))
-    metrics = MAE()(predictions.output, predictions.y)
-    logging.info(f"metrics:{metrics}")
+    #predictions = best_model.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator=device))
+    #metrics = MAE()(predictions.output, predictions.y)
+    #logging.info(f"metrics:{metrics}")
 
     # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
     raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True, trainer_kwargs=dict(accelerator=device))
