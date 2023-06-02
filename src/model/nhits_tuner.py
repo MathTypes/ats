@@ -18,7 +18,7 @@ import statsmodels.api as sm
 import torch
 from torch.utils.data import DataLoader
 
-from pytorch_forecasting import TemporalFusionTransformer
+from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.metrics import QuantileLoss
 
@@ -38,7 +38,6 @@ def optimize_hyperparameters(
     n_trials: int = 100,
     timeout: float = 3600 * 8.0,  # 8 hours
     gradient_clip_val_range: Tuple[float, float] = (0.01, 100.0),
-    embedding_size_range: Tuple[int, int] = (8, 64),
     context_length_range: Tuple[int, int] = (8, 256),
     prediction_length_range: Tuple[int, int] = (4, 48),
     static_hidden_size_range: Tuple[int, int] = (8, 64),
@@ -144,14 +143,12 @@ def optimize_hyperparameters(
 
         # create model
         hidden_size = trial.suggest_int("hidden_size", *hidden_size_range, log=True)
-        embedding_size = trial.suggest_int("embedding_size", *embedding_size_range, log=True)
         context_length = trial.suggest_int("context_length", *context_length_range, log=True)
         prediction_length = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
         kwargs["loss"] = copy.deepcopy(loss)
-        logging.info(f"hidden_size:{hidden_size}, embedding_size:{embedding_size}, context_length:{context_length}, prediction_length:{prediction_length}")
+        logging.info(f"hidden_size:{hidden_size}, context_length:{context_length}, prediction_length:{prediction_length}")
         model = NHiTS.from_dataset(
             train_dataloaders.dataset,
-            embedding_size=embedding_size,
             context_length=context_length,
             prediction_length=prediction_length,
             dropout=trial.suggest_uniform("dropout", *dropout_range),

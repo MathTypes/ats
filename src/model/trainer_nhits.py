@@ -24,7 +24,7 @@ from pytorch_forecasting.data.examples import generate_ar_data
 from pytorch_forecasting.metrics import MAE, SMAPE, MultivariateNormalDistributionLoss
 from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
+#from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
 
 from pytorch_forecasting.data.examples import get_stallion_data
 from datasets import generate_stock_returns
@@ -72,8 +72,11 @@ def get_trainer(config):
     return trainer
 
 def run_tune(config, net, trainer, train_dataloader, val_dataloader):
-    study = optimize_hyperparameters(train_dataloader, val_dataloader,
-                             config['model_path'])
+    study = nhits_tuner.optimize_hyperparameters(
+        train_dataloader, val_dataloader,
+        config['model_path'],
+        config['max_epochs'],
+        config['n_trials'])
     print(f"study:{study}")
     #device = config['device']
     #print(f"Number of parameters in network: {net.size()/1e3:.1f}k")
@@ -114,7 +117,8 @@ def get_input_data(config):
     data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
     #data["log_volume"] = np.log(data.volume + 1e-8)
     #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
-    data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
+    #data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
+    data["hour_of_day"] = data["date"].apply(lambda x:x.hour)
     data["day_of_week"] = data.index.dayofweek.astype(str).astype("category")
     data["day_of_month"] = data.index.day.astype(str).astype("category")
     data["week_of_month"] = data["date"].apply(week_of_month).astype(str).astype("category")
@@ -160,10 +164,10 @@ def get_input_data(config):
         #static_reals=[],
         #allow_missing_timesteps=True,        
         #time_varying_known_categoricals=["month", "hour_of_day", "day_of_week", "week_of_month"],
-        time_varying_known_categoricals=["hour_of_day"],
+        #time_varying_known_categoricals=["hour_of_day"],
         #variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
         #variable_groups={},  # group of categorical variables can be treated as one variable
-        time_varying_known_reals=["time_idx"],
+        time_varying_known_reals=["time_idx", "hour_of_day"],
         #time_varying_known_reals=[],
         #time_varying_known_reals=["hour_of_day", "day_of_week", "week_of_month", "month"],
         #time_varying_unknown_categoricals=[],
@@ -227,7 +231,7 @@ def run_train(config, net, trainer, train_dataloader, val_dataloader):
     quantiles_kwargs = {"use_metric":False}
     #mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=["r", "k", "c"]) 
     for idx in range(4):  # plot 10 examples
-        time_idx_val = validation.x_to_index(raw_predictions.x)["time_idx"][idx]
+        time_idx_val = val_dataloader.dataset.x_to_index(raw_predictions.x)["time_idx"][idx]
         time = data[data.time_idx==time_idx_val]["Time"][0]
         time = datetime.datetime.fromtimestamp(time.astype(int))
         #logging.info(f"validation.x_to_index(raw_predictions.x):{validation.x_to_index(raw_predictions.x)}")
@@ -264,6 +268,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str)
     parser.add_argument("--checkpoint", type=str)
     parser.add_argument("--lr", type=float, default=4.4668359215096314e-05)
+    parser.add_argument("--n_trials", type=int, default=100)
+    parser.add_argument("--max_epochs", type=int, default=10)
     logging_utils.init_logging()
     args = parser.parse_args()
     
@@ -273,7 +279,9 @@ if __name__ == "__main__":
         'max_prediction_length' : 13*3,
         'context_length' : 13*14,
         'prediction_length' : 13*3,
-        'model_path' : 'lightning_logs'}
+        'max_epochs' : args.max_epochs,
+        'n_trials' : args.n_trials,
+        'model_path' : 'checkpoint'}
     training, train_dataloader, val_dataloader = get_input_data(config)
     net = get_model(config, training)
     trainer = get_trainer(config)
