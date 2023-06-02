@@ -195,10 +195,10 @@ def get_input_data(config):
     batch_size = 128  # set this between 32 to 128
     train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=4, pin_memory=True, drop_last=False)
     val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=4, pin_memory=True, drop_last=False)
-    return training, train_dataloader, val_dataloader
+    return training, train_dataloader, val_dataloader, data
 
 
-def run_train(config, net, trainer, train_dataloader, val_dataloader):
+def run_train(config, net, trainer, train_dataloader, val_dataloader, data):
     device = config['device']
     # fit network
     trainer.fit(
@@ -282,13 +282,13 @@ if __name__ == "__main__":
         'max_epochs' : args.max_epochs,
         'n_trials' : args.n_trials,
         'model_path' : 'checkpoint'}
-    training, train_dataloader, val_dataloader = get_input_data(config)
+    training, train_dataloader, val_dataloader, data = get_input_data(config)
     net = get_model(config, training)
     trainer = get_trainer(config)
     if args.mode == "tune":
         run_tune(config, net, trainer, train_dataloader, val_dataloader)
     elif args.mode == "train":
-        run_train(config, net, trainer, train_dataloader, val_dataloader)
+        run_train(config, net, trainer, train_dataloader, val_dataloader, data)
     elif args.mode == "eval":
         run_eval(config, net, val_dataloader)
 
