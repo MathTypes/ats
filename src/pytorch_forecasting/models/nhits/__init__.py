@@ -261,7 +261,7 @@ class NHiTS(BaseModelWithCovariates):
             Dict[str, torch.Tensor]: output of model
         """
         # covariates
-        logging.info(f"self.covariate_size :{self.covariate_size}")
+        #logging.info(f"self.covariate_size :{self.covariate_size}")
         if self.covariate_size > 0:
             encoder_features = self.extract_features(x, self.embeddings, period="encoder")
             encoder_x_t = torch.concat(
