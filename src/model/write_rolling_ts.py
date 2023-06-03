@@ -1,5 +1,5 @@
 # Usage:
-#   PYTHONPATH=.. python3 write_parquet.py ES FUT
+#   PYTHONPATH=.. python3 write_rolling_ts.py --ticker=ES --asset_type=FUT --start_date=2008-01-01 --end_date=2009-01-01
 #
 import datetime
 import logging
