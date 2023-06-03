@@ -1,6 +1,8 @@
 import logging
 import os
 import warnings
+import ray
+from ray_lightning import RayPlugin
 import datetime
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 import matplotlib as mpl
@@ -55,6 +57,8 @@ def get_model(config, training):
 
 def get_trainer(config):
     device = config['device']
+    use_gpu = device == "cuda"
+    logging.info(f"device:{device}, use_gpu:{use_gpu}")
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
@@ -67,6 +71,8 @@ def get_trainer(config):
         limit_train_batches=50,  # coment in for training, running valiation every 30 batches
         # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
         callbacks=[lr_logger, early_stop_callback],
+        plugins=[RayPlugin(num_workers=config['num_workers'],
+                           use_gpu=use_gpu)],
         logger=logger,
     )
     return trainer
@@ -94,19 +100,20 @@ def run_tune(config, net, trainer, train_dataloader, val_dataloader):
     #net.hparams.learning_rate = res.suggestion()
 
 def get_input_data(config):
-    raw_data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
-    data = raw_data[["ClosePct", "VolumePct"]]
+    raw_data = pd.read_parquet("data/FUT/30min_rolled_sampled/ES", engine='fastparquet')
+    data = raw_data[["Close", "Volume"]]
     data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})
     #data["volume"] = data["volume"].ewm(span=60, min_periods=60).std().fillna(method="bfill")
-    data["Time"] = data.index
+    data["Time"] = data["time"]
     data["ticker"] = "ES"
     #data["volume"]=data["VolumePct"]
     data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
     logging.info(f"data:{data.head()}")
-
-    data["date"] = data.index
+    data = data.dropna()
+    data["date"] = data.est_time
+    data["time_idx"] = data.index
     # add time index
-    data.insert(0, 'time_idx', range(0, len(data)))
+    #data.insert(0, 'time_idx', range(0, len(data)))
     #data["time_idx"] = data['date'].apply(lambda x:int(x.timestamp()))
     #data["time_idx"] -= data["time_idx"].min()
 
@@ -114,7 +121,8 @@ def get_input_data(config):
     data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
     data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
     data["year"] = data.date.dt.year.astype(str).astype("category")  # categories have be strings
-    data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
+    #data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
+    data["series"] = data["id"]
     #data["log_volume"] = np.log(data.volume + 1e-8)
     #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
     #data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
@@ -266,15 +274,20 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     parser = config_utils.get_arg_parser("Trainer")
     parser.add_argument("--mode", type=str)
+    parser.add_argument("--ray_url", type=str)
+    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--checkpoint", type=str)
     parser.add_argument("--lr", type=float, default=4.4668359215096314e-05)
     parser.add_argument("--n_trials", type=int, default=100)
     parser.add_argument("--max_epochs", type=int, default=10)
     logging_utils.init_logging()
     args = parser.parse_args()
-    
+    ray.init(args.ray_url)
+    device = args.device
     config = {
-        'device' : "cpu",
+        'device' : args.device,
+        'workers': args.workers,
         'max_encoder_length' : 13*14,
         'max_prediction_length' : 13*3,
         'context_length' : 13*14,
