@@ -274,7 +274,7 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     parser = config_utils.get_arg_parser("Trainer")
     parser.add_argument("--mode", type=str)
-    parser.add_argument("--ray_url", type=str)
+    parser.add_argument("--ray_url", type=str, default="tcp://8.tcp.ngrok.io:10243")
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--checkpoint", type=str)
