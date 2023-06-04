@@ -36,6 +36,7 @@ from util import logging_utils
 from util import config_utils
 import nhits_tuner
 from math import ceil
+from util import time_util
 
 def get_model(config, training):
     device = config['device']
@@ -102,12 +103,24 @@ def run_tune(config, net, trainer, train_dataloader, val_dataloader):
     #fig.show()
     #net.hparams.learning_rate = res.suggestion()
 
+def get_input_dirs(config):
+    base_dir = "data/FUT/30min_rsp/ES"
+    input_dirs = []
+    for cur_date in time_util.monthlist(config['start_date'], config['end_date']):
+        for_date = cur_date[0]
+        date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
+        files = os.listdir(date_dir)
+        files = [date_dir+'/'+f for f in files if os.path.isfile(date_dir+'/'+f)] #Filtering only the files.
+        input_dirs.extend(files)
+    return input_dirs
+
 def get_input_data(config):
     start = time.time()
     filter_expr = (
         (pds.field("hour_of_day").isin([3]))
     )
-    ds = ray.data.read_parquet("data/FUT/30min_rolled_sampled/ES", parallelism=10, filter=filter_expr)
+    input_dirs = get_input_dirs(config)
+    ds = ray.data.read_parquet(input_dirs, parallelism=10, filter=filter_expr)
     data_loading_time = time.time() - start
     logging.info(f"Data loading time: {data_loading_time:.2f} seconds")
     #raw_data = pd.read_parquet("data/FUT/30min_rolled_sampled/ES", engine='fastparquet')
@@ -170,7 +183,7 @@ def get_input_data(config):
     training = TimeSeriesDataSet(
         train_data,
         time_idx="time_idx",
-        target="Close",
+        target="close",
         group_ids=["id"],
         #min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
         max_encoder_length=config['context_length'],
@@ -288,6 +301,18 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--checkpoint", type=str)
+    parser.add_argument(
+        "--start_date",
+        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
+        required=False,
+        help="Set a start date",
+    )
+    parser.add_argument(
+        "--end_date",
+        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
+        required=False,
+        help="Set a end date",
+    )
     parser.add_argument("--lr", type=float, default=4.4668359215096314e-05)
     parser.add_argument("--n_trials", type=int, default=100)
     parser.add_argument("--max_epochs", type=int, default=10)
@@ -301,6 +326,8 @@ if __name__ == "__main__":
     config = {
         'device' : args.device,
         'workers': args.workers,
+        'start_date': args.start_date,
+        'end_date': args.end_date,
         'max_encoder_length' : 13*14,
         'max_prediction_length' : 13*3,
         'context_length' : 13*14,
