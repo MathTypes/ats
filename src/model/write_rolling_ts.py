@@ -18,6 +18,7 @@ from util import config_utils
 from util import logging_utils
 from util import time_util
 
+from tsfresh.utilities.dataframe_functions import roll_time_series
 from settings.default import PINNACLE_DATA_CUT, PINNACLE_DATA_FOLDER
 
 def pull_sample_data(ticker: str, intraday: bool) -> pd.DataFrame:
@@ -38,8 +39,6 @@ def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date,
                            parse_options=parse_options, read_options=read_options)
     ds = ds.sort("Time")
     return ds
-
-from tsfresh.utilities.dataframe_functions import roll_time_series
 
 if __name__ == '__main__':
     parser = config_utils.get_arg_parser("Scrape tweet by id")
@@ -92,8 +91,8 @@ if __name__ == '__main__':
         df["cum_volume"]  = df.volume.cumsum()
         df["cum_dv"]  = df.dv.cumsum()
         logging.info(f"df:{df.head()}")
-        df_pct_back = df.pct_change(periods=1)
-        df_pct_forward = df.pct_change(periods=-1)
+        df_pct_back = df[["close", "volume", "dv"]].pct_change(periods=1)
+        df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
         df = df.join(df_pct_back).join(df_pct_forward)
         logging.info(f"df:{df.head()}")
         #df = roll_time_series(df, column_id="ticker", column_sort="time")
