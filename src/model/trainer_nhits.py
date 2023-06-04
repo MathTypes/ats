@@ -2,7 +2,7 @@ import logging
 import os
 import warnings
 import ray
-from ray_lightning import RayPlugin
+from ray_lightning import RayStrategy
 import datetime
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 import matplotlib as mpl
@@ -59,6 +59,8 @@ def get_trainer(config):
     device = config['device']
     use_gpu = device == "cuda"
     logging.info(f"device:{device}, use_gpu:{use_gpu}")
+    strategy = RayStrategy(num_workers=config['num_workers'],
+                           num_cpus_per_worker=1, use_gpu=use_gpu)
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
@@ -71,8 +73,7 @@ def get_trainer(config):
         limit_train_batches=50,  # coment in for training, running valiation every 30 batches
         # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
         callbacks=[lr_logger, early_stop_callback],
-        plugins=[RayPlugin(num_workers=config['num_workers'],
-                           use_gpu=use_gpu)],
+        strategy=strategy,
         logger=logger,
     )
     return trainer
@@ -274,7 +275,7 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     parser = config_utils.get_arg_parser("Trainer")
     parser.add_argument("--mode", type=str)
-    parser.add_argument("--ray_url", type=str, default="tcp://8.tcp.ngrok.io:10243")
+    parser.add_argument("--ray_url", type=str, default="ray://8.tcp.ngrok.io:10243")
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--checkpoint", type=str)
@@ -283,7 +284,9 @@ if __name__ == "__main__":
     parser.add_argument("--max_epochs", type=int, default=10)
     logging_utils.init_logging()
     args = parser.parse_args()
-    ray.init(args.ray_url)
+    logging.info(f"init from {args.ray_url}")
+    #ray.init(args.ray_url)
+    ray.init()
     device = args.device
     config = {
         'device' : args.device,
