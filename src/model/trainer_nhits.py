@@ -2,6 +2,7 @@ import logging
 import os
 import warnings
 import ray
+import time
 from ray.util.dask import enable_dask_on_ray
 from ray_lightning import RayStrategy
 import datetime
@@ -10,7 +11,7 @@ import matplotlib as mpl
 import copy
 from pathlib import Path
 import warnings
-
+import pyarrow.dataset as pds
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
@@ -102,7 +103,13 @@ def run_tune(config, net, trainer, train_dataloader, val_dataloader):
     #net.hparams.learning_rate = res.suggestion()
 
 def get_input_data(config):
-    ds = ray.data.read_parquet("data/FUT/30min_rolled_sampled/ES")
+    start = time.time()
+    filter_expr = (
+        (pds.field("hour_of_day").isin([3]))
+    )
+    ds = ray.data.read_parquet("data/FUT/30min_rolled_sampled/ES", parallelism=10, filter=filter_expr)
+    data_loading_time = time.time() - start
+    logging.info(f"Data loading time: {data_loading_time:.2f} seconds")
     #raw_data = pd.read_parquet("data/FUT/30min_rolled_sampled/ES", engine='fastparquet')
     #data = raw_data[["Close", "Volume"]]
     #data = raw_data
@@ -159,7 +166,7 @@ def get_input_data(config):
     #logging.info(f"train_data:{train_data.head()}, training_cutoff={training_cutoff}")
     train_data = train_data.to_dask().compute()
     train_data["time_idx"] = train_data.index
-    train_data.index = train_data.apply(lambda x: x.id + "_" + x.time_idx)
+    train_data.index = train_data.apply(lambda x: x.id + "_" + str(x.time_idx), axis=1)
     training = TimeSeriesDataSet(
         train_data,
         time_idx="time_idx",
@@ -171,7 +178,7 @@ def get_input_data(config):
         max_prediction_length=config['prediction_length'],
         #static_categoricals=["ticker"],
         #static_reals=[],
-        #allow_missing_timesteps=True,        
+        allow_missing_timesteps=True,        
         #time_varying_known_categoricals=["month", "hour_of_day", "day_of_week", "week_of_month"],
         #time_varying_known_categoricals=["hour_of_day"],
         #variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
