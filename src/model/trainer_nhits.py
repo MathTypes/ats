@@ -102,7 +102,8 @@ def run_tune(config, net, trainer, train_dataloader, val_dataloader):
 
 def get_input_data(config):
     raw_data = pd.read_parquet("data/FUT/30min_rolled_sampled/ES", engine='fastparquet')
-    data = raw_data[["Close", "Volume"]]
+    #data = raw_data[["Close", "Volume"]]
+    data = raw_data
     data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})
     #data["volume"] = data["volume"].ewm(span=60, min_periods=60).std().fillna(method="bfill")
     data["Time"] = data["time"]
