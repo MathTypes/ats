@@ -76,16 +76,36 @@ if __name__ == '__main__':
         df = ds.to_dask()
         df = df.set_index('Time')
         df = df[since:until]
-        df = df.resample('30Min').agg({'Open': 'first', 
-                                    'High': 'max', 
-                                    'Low': 'min', 
-                                    'Close': 'last',
-                                    'Volume': 'sum'})
-        df = df.compute()                             
+        df = df.rename(columns = {"Volume":"volume", "Open":"open",
+                                  "High":"high", "Low":"low", "Close":"close"})                      
+        df["dv"] = df["close"]*df["volume"]
+        df = df.resample('30Min').agg({'open': 'first', 
+                                        'high': 'max', 
+                                        'low': 'min', 
+                                        'close': 'last',
+                                        'volume': 'sum',
+                                        "dv": 'sum'})
+        df = df.compute()
+        df = df.dropna()
         df["ticker"] = ticker
         df["time"] = df.index
+        df["cum_volume"]  = df.volume.cumsum()
+        df["cum_dv"]  = df.dv.cumsum()
         logging.info(f"df:{df.head()}")
-        df = roll_time_series(df, column_id="ticker", column_sort="time")
+        df_pct_back = df.pct_change(periods=1)
+        df_pct_forward = df.pct_change(periods=-1)
+        df = df.join(df_pct_back).join(df_pct_forward)
+        logging.info(f"df:{df.head()}")
+        #df = roll_time_series(df, column_id="ticker", column_sort="time")
+        id_column = "ticker"
+        sort_column = "time"
+        df = roll_time_series(df,
+                column_id=id_column,
+                column_sort=sort_column,
+                column_kind=None,
+                rolling_direction=1,
+                max_timeshift=13*(50*4+3),
+                min_timeshift=13*(50*4+3))
         df["id"] = df["id"].astype(str)
         df["month"] = df.time.dt.month  # categories have be strings
         df["year"] = df.time.dt.year  # categories have be strings
@@ -97,10 +117,13 @@ if __name__ == '__main__':
         #df["date"] = df.est_time
         df["time_idx"] = df.index
         df = df.dropna()
+        logging.info(f"df:{df.describe()}")
+        df = df[df.hour_of_day.isin([3]) & df.day_of_month.isin(0)]
         logging.info(f"df_schema:{df.info()}")
         logging.info(f"df:{df.head()}")
-        file_path = os.path.join(args.output_dir, asset_type, "30min_rs", ticker)
+        file_path = os.path.join(args.output_dir, asset_type, "30min_rsp", ticker)
         if not os.path.exists(file_path):
             os.makedirs(file_path)
-        df.to_parquet(file_path + "/" + for_date.strftime("%Y%m%d"), engine='fastparquet')
+        ds = ray.data.from_pandas(df).repartition(100)
+        ds.write_parquet(file_path + "/" + for_date.strftime("%Y%m%d"))
     ray.shutdown()
