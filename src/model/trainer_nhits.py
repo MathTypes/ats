@@ -101,41 +101,35 @@ def run_tune(config, net, trainer, train_dataloader, val_dataloader):
     #net.hparams.learning_rate = res.suggestion()
 
 def get_input_data(config):
-    raw_data = pd.read_parquet("data/FUT/30min_rolled_sampled/ES", engine='fastparquet')
+    ds = ray.data.read_parquet("data/FUT/30min_rolled_sampled/ES")
+    #raw_data = pd.read_parquet("data/FUT/30min_rolled_sampled/ES", engine='fastparquet')
     #data = raw_data[["Close", "Volume"]]
-    data = raw_data
-    data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})
+    #data = raw_data
+    #data = data.rename(columns={"ClosePct":"close", "VolumePct":"volume"})
     #data["volume"] = data["volume"].ewm(span=60, min_periods=60).std().fillna(method="bfill")
-    data["Time"] = data["time"]
-    data["ticker"] = "ES"
+    #data["Time"] = data["time"]
+    #data["ticker"] = "ES"
     #data["volume"]=data["VolumePct"]
-    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
-    logging.info(f"data:{data.head()}")
-    data = data.dropna()
-    data["date"] = data.est_time
-    data["time_idx"] = data.index
+    #data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
+    #logging.info(f"data:{data.head()}")
+    #data = data.dropna()
+    #data["date"] = data.est_time
+    #data["time_idx"] = data.index
     # add time index
     #data.insert(0, 'time_idx', range(0, len(data)))
     #data["time_idx"] = data['date'].apply(lambda x:int(x.timestamp()))
     #data["time_idx"] -= data["time_idx"].min()
 
     # add additional features
-    data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
-    data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
-    data["year"] = data.date.dt.year.astype(str).astype("category")  # categories have be strings
+    #data["date_str"] = data.date.apply(lambda x: x.strftime("%Y%U"))
     #data["series"]=data.apply(lambda x: x.ticker + "_"  + x.date_str, axis=1)    
-    data["series"] = data["id"]
+    #data["series"] = data["id"]
     #data["log_volume"] = np.log(data.volume + 1e-8)
     #data["avg_volume_by_ticker"] = data.groupby(["time_idx", "ticker"], observed=True).volume.transform("mean")
     #data["hour_of_day"] = data["date"].apply(lambda x:x.hour).astype(str).astype("category")
-    data["hour_of_day"] = data["date"].apply(lambda x:x.hour)
-    data["day_of_week"] = data.index.dayofweek.astype(str).astype("category")
-    data["day_of_month"] = data.index.day.astype(str).astype("category")
-    data["week_of_month"] = data["date"].apply(week_of_month).astype(str).astype("category")
-    data["week_of_year"] = data.index.isocalendar().week.astype(str).astype("category")
-    logging.info(f"data:{data.head()}")
-    logging.info(f"data:{data.describe()}")
-    logging.info(f"data:{data.info()}")
+    #logging.info(f"data:{data.head()}")
+    #logging.info(f"data:{data.describe()}")
+    #logging.info(f"data:{data.info()}")
 
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding
     special_days = [
@@ -154,18 +148,19 @@ def get_input_data(config):
     ]
     #data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
     #data.sample(10, random_state=521)
-
-    val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
-    tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
-    training_cutoff = val_idx
-    train_data = data[:val_idx]
+    train_data, test_data = ds.train_test_split(test_size=0.25)
+    #data_len = data.count()
+    #val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
+    #tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
+    #training_cutoff = val_idx
+    #train_data = data[:val_idx]
 
     #logging.info(f"train_data:{train_data.head()}, training_cutoff={training_cutoff}")
     training = TimeSeriesDataSet(
         train_data,
         time_idx="time_idx",
         target="close",
-        group_ids=["series"],
+        group_ids=["id"],
         #min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
         max_encoder_length=config['context_length'],
         #min_prediction_length=1,
@@ -196,10 +191,9 @@ def get_input_data(config):
         add_target_scales=True,
         #add_encoder_length=True,
     )
-
     # create validation set (predict=True) which means to predict the last max_prediction_length points in time
     # for each series
-    validation = TimeSeriesDataSet.from_dataset(training, data, predict=True, stop_randomization=True)
+    validation = TimeSeriesDataSet.from_dataset(training, test_data, predict=True, stop_randomization=True)
 
     # create dataloaders for model
     batch_size = 128  # set this between 32 to 128

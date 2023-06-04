@@ -23,15 +23,13 @@ from settings.default import PINNACLE_DATA_CUT, PINNACLE_DATA_FOLDER
 def pull_sample_data(ticker: str, intraday: bool) -> pd.DataFrame:
     return pull_futures_sample_data(ticker)
 
-def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date) -> pd.DataFrame:
+def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
     #ticker = ticker.replace("CME_","")
     names = ["Time", "Open", "High", "Low", "Close", "Volume"]
     if asset_type in ["FUT"]:
-        file_path = os.path.join("/Users/alex/git_repo/ats/src/model/futures",
-                                f"{ticker}_1min_continuous_adjusted.txt")
+        file_path = os.path.join(f"{raw_dir}/futures", f"{ticker}_1min_continuous_adjusted.txt")
     else:
-        file_path = os.path.join("/Users/alex/git_repo/ats/src/model/data/stock",
-                                f"{ticker}_full_1min_adjsplitdiv.txt")
+        file_path = os.path.join(f"{raw_dir}/stock", f"{ticker}_full_1min_adjsplitdiv.txt")
     read_options = csv.ReadOptions(
                column_names=names,
                skip_rows=1)
@@ -45,6 +43,8 @@ from tsfresh.utilities.dataframe_functions import roll_time_series
 
 if __name__ == '__main__':
     parser = config_utils.get_arg_parser("Scrape tweet by id")
+    parser.add_argument("--input_dir", type=str)
+    parser.add_argument("--output_dir", type=str)
     parser.add_argument("--ticker", type=str)
     parser.add_argument("--asset_type", type=str)
     parser.add_argument(
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         since = cur_date[0] + datetime.timedelta(days=-50)
         until = cur_date[1] + datetime.timedelta(days=5)
             
-        ds = pull_futures_sample_data(ticker, asset_type, since, until)
+        ds = pull_futures_sample_data(ticker, asset_type, since, until, args.input_dir)
         df = ds.to_dask()
         df = df.set_index('Time')
         df = df[since:until]
@@ -84,12 +84,23 @@ if __name__ == '__main__':
         df = df.compute()                             
         df["ticker"] = ticker
         df["time"] = df.index
-        df_rolled = roll_time_series(df, column_id="ticker", column_sort="time")
-        df_rolled["id"] = df_rolled["id"].astype(str)
+        logging.info(f"df:{df.head()}")
+        df = roll_time_series(df, column_id="ticker", column_sort="time")
+        df["id"] = df["id"].astype(str)
+        df["month"] = df.time.dt.month  # categories have be strings
+        df["year"] = df.time.dt.year  # categories have be strings
+        df["hour_of_day"] = df.time.apply(lambda x:x.hour)
+        df["day_of_week"] = df.time.apply(lambda x:x.dayofweek)
+        df["day_of_month"] = df.time.apply(lambda x:x.day)
+        #df["week_of_month"] = df.time.apply(lambda x:x.isocalendar().week_of_month)
+        df["week_of_year"] = df.time.apply(lambda x:x.isocalendar().week)
+        #df["date"] = df.est_time
+        df["time_idx"] = df.index
+        df = df.dropna()
         logging.info(f"df_schema:{df.info()}")
-        logging.info(f"df_schema:{df_rolled.info()}")
-        file_path = os.path.join("/Users/alex/git_repo/ats/src/model/data", asset_type, "30min_rolled", ticker)
+        logging.info(f"df:{df.head()}")
+        file_path = os.path.join(args.output_dir, asset_type, "30min_rs", ticker)
         if not os.path.exists(file_path):
             os.makedirs(file_path)
-        df_rolled.to_parquet(file_path + "/" + for_date.strftime("%Y%m%d"), engine='fastparquet')
+        df.to_parquet(file_path + "/" + for_date.strftime("%Y%m%d"), engine='fastparquet')
     ray.shutdown()
