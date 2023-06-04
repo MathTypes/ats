@@ -2,6 +2,7 @@ import logging
 import os
 import warnings
 import ray
+from ray.util.dask import enable_dask_on_ray
 from ray_lightning import RayStrategy
 import datetime
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
@@ -156,10 +157,13 @@ def get_input_data(config):
     #train_data = data[:val_idx]
 
     #logging.info(f"train_data:{train_data.head()}, training_cutoff={training_cutoff}")
+    train_data = train_data.to_dask().compute()
+    train_data["time_idx"] = train_data.index
+    train_data.index = train_data.apply(lambda x: x.id + "_" + x.time_idx)
     training = TimeSeriesDataSet(
         train_data,
         time_idx="time_idx",
-        target="close",
+        target="Close",
         group_ids=["id"],
         #min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
         max_encoder_length=config['context_length'],
@@ -176,23 +180,26 @@ def get_input_data(config):
         #time_varying_known_reals=[],
         #time_varying_known_reals=["hour_of_day", "day_of_week", "week_of_month", "month"],
         #time_varying_unknown_categoricals=[],
-        time_varying_unknown_reals=["close", "volume"],
+        time_varying_unknown_reals=["Close", "Volume"],
         categorical_encoders={
-            'series': NaNLabelEncoder(add_nan=True).fit(train_data.series),
-            'month': NaNLabelEncoder(add_nan=True).fit(train_data.month),
-            'hour_of_day': NaNLabelEncoder(add_nan=True).fit(train_data.hour_of_day),
-            'day_of_week': NaNLabelEncoder(add_nan=True).fit(train_data.day_of_week),
-            'week_of_month': NaNLabelEncoder(add_nan=True).fit(train_data.week_of_month),
+            #'series': NaNLabelEncoder(add_nan=True).fit(train_data.series),
+            #'month': NaNLabelEncoder(add_nan=True).fit(train_data.month),
+            #'hour_of_day': NaNLabelEncoder(add_nan=True).fit(train_data.hour_of_day),
+            #'day_of_week': NaNLabelEncoder(add_nan=True).fit(train_data.day_of_week),
+            #'week_of_month': NaNLabelEncoder(add_nan=True).fit(train_data.week_of_month),
         },
         #target_normalizer=GroupNormalizer(
         #    groups=["series"], transformation="softplus"
         #),  # use softplus and normalize by group
         #add_relative_time_idx=True,
-        add_target_scales=True,
+        #add_target_scales=True,
         #add_encoder_length=True,
     )
     # create validation set (predict=True) which means to predict the last max_prediction_length points in time
     # for each series
+    test_data = test_data.to_dask().compute()
+    test_data["time_idx"] = test_data.index
+    test_data.index = test_data.apply(lambda x: x.id + "_" + x.time_idx)
     validation = TimeSeriesDataSet.from_dataset(training, test_data, predict=True, stop_randomization=True)
 
     # create dataloaders for model
@@ -282,6 +289,7 @@ if __name__ == "__main__":
     logging.info(f"init from {args.ray_url}")
     #ray.init(args.ray_url)
     ray.init()
+    enable_dask_on_ray()
     device = args.device
     config = {
         'device' : args.device,
