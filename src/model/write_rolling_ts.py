@@ -134,8 +134,8 @@ if __name__ == '__main__':
         logging.info(f"df:{df.head()}")
         logging.info(f"df:{df.describe()}")
         df = df[(df.id_hour_of_day.isin([10, 15])) & (df.id_day_of_month.isin([1]))]
-        since_ts = datetime.combine(orig_since, datetime.min.time()).timestamp()
-        until_ts = datetime.combine(orig_until, datetime.min.time()).timestamp()
+        since_ts = datetime.datetime.combine(orig_since, datetime.datetime.min.time()).timestamp()
+        until_ts = datetime.datetime.combine(orig_until, datetime.datetime.min.time()).timestamp()
         df = df[(df.id_timestamp>=since_ts) & (df.id_timestamp<=until_ts)]
         df = df.dropna()
         logging.info(f"df_schema:{df.info()}")
