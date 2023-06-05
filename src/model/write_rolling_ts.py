@@ -72,13 +72,17 @@ if __name__ == '__main__':
     logging_utils.init_logging()
     ticker = args.ticker
     asset_type = args.asset_type
+    if ray.is_initialized():
+        ray.shutdown()
     ray.init()  # Start or connect to Ray.
     enable_dask_on_ray()  # Enable the Ray scheduler backend for Dask.
 
     for cur_date in time_util.monthlist(args.start_date, args.end_date):
         for_date = cur_date[0]
-        since = cur_date[0] + datetime.timedelta(days=-50*5)
-        until = cur_date[1] + datetime.timedelta(days=5)
+        orig_since = cur_date[0]
+        orig_until = cur_date[1]
+        since = orig_since + datetime.timedelta(days=-50*5)
+        until = orig_until + datetime.timedelta(days=5)
             
         ds = pull_futures_sample_data(ticker, asset_type, since, until, args.input_dir)
         df = ds.to_dask()
@@ -102,7 +106,6 @@ if __name__ == '__main__':
         df_pct_back = df[["close", "volume", "dv"]].pct_change(periods=1)
         df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
         df = df.join(df_pct_back, rsuffix='_back').join(df_pct_forward, rsuffix='_fwd')
-        logging.info(f"df:{df.head()}")
         #df = roll_time_series(df, column_id="ticker", column_sort="time")
         id_column = "ticker"
         sort_column = "time"
@@ -113,6 +116,7 @@ if __name__ == '__main__':
                 rolling_direction=1,
                 max_timeshift=13*(50*4+3),
                 min_timeshift=13*(50+3))
+        df = df.dropna()
         df["id"] = df["id"].astype(str)
         df["month"] = df.time.dt.month  # categories have be strings
         df["year"] = df.time.dt.year  # categories have be strings
@@ -120,15 +124,20 @@ if __name__ == '__main__':
         df["day_of_week"] = df.time.apply(lambda x:x.dayofweek)
         df["day_of_month"] = df.time.apply(lambda x:x.day)
         #df["week_of_month"] = df.time.apply(lambda x:x.isocalendar().week_of_month)
-        df["week_of_year"] = df.time.apply(lambda x:x.isocalendar().week)
+        #df["week_of_year"] = df.time.apply(lambda x:x.isocalendar().week)
         #df["date"] = df.est_time
         df["time_idx"] = df.index
         df["id_time"] = df["id"].apply(get_id_time)
+        df["id_timestamp"] = df["id_time"].apply(lambda x:x.timestamp())
         df["id_hour_of_day"] = df.id_time.apply(lambda x:x.hour)
         df["id_day_of_month"] = df.id_time.apply(lambda x:x.day)
-        df = df.dropna()
+        logging.info(f"df:{df.head()}")
         logging.info(f"df:{df.describe()}")
         df = df[(df.id_hour_of_day.isin([10, 15])) & (df.id_day_of_month.isin([1]))]
+        since_ts = datetime.combine(orig_since, datetime.min.time()).timestamp()
+        until_ts = datetime.combine(orig_until, datetime.min.time()).timestamp()
+        df = df[(df.id_timestamp>=since_ts) & (df.id_timestamp<=until_ts)]
+        df = df.dropna()
         logging.info(f"df_schema:{df.info()}")
         logging.info(f"df:{df.head()}")
         file_path = os.path.join(args.output_dir, asset_type, "30min_rsp", ticker)
