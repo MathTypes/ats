@@ -1,10 +1,12 @@
+import datetime
 import logging
 import os
-import modin.pandas as pd
+import pandas as pd
 from pyarrow import csv
 import ray
+from util import time_util
 
-def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
+def get_tick_data_with_ray(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
     #ticker = ticker.replace("CME_","")
     names = ["Time", "Open", "High", "Low", "Close", "Volume"]
     if asset_type in ["FUT"]:
@@ -17,6 +19,46 @@ def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date,
                            parse_options=parse_options, read_options=read_options)
     ds = ds.sort("Time")
     return ds
+
+def get_tick_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
+    #ticker = ticker.replace("CME_","")
+    names = ["Time", "Open", "High", "Low", "Close", "Volume"]
+    if asset_type in ["FUT"]:
+        file_path = os.path.join(f"{raw_dir}/futures", f"{ticker}_1min_continuous_adjusted.txt")
+    else:
+        file_path = os.path.join(f"{raw_dir}/stock", f"{ticker}_full_1min_adjsplitdiv.txt")
+    ds = pd.read_csv(file_path, delimiter=",", header=0, names=names)
+    ds["Time"] = ds.Time.apply(lambda x:datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+    ds.set_index("Time")
+    logging.info(f"ds:{ds.head()}")
+    logging.info(f"ds:{ds.info()}")
+    return ds
+
+def get_input_dirs(config, ticker, asset_type):
+    base_dir = f"data/{asset_type}/30min/{ticker}"
+    input_dirs = []
+    for cur_date in time_util.monthlist(config["start_date"], config["end_date"]):
+        for_date = cur_date[0]
+        date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
+        files = os.listdir(date_dir)
+        files = [date_dir+'/'+f for f in files if os.path.isfile(date_dir+'/'+f)] #Filtering only the files.
+        input_dirs.extend(files)
+    return input_dirs
+
+def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
+    #ticker = ticker.replace("CME_","")
+    input_dirs = get_input_dirs(config, ticker, asset_type)
+    ds = ray.data.read_parquet(input_dirs, parallelism=100)
+    #ds["Time"] = ds.Time.apply(lambda x:datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+    ds = ds.to_pandas(10000000)
+    logging.info(f"ds:{ds}")
+    #ds.set_index("Time")
+    ds.sort_index()
+    ds = ds[~ds.index.duplicated(keep='first')]
+    logging.info(f"ds:{ds.head()}")
+    logging.info(f"ds:{ds.info()}")
+    return ds
+
 
 class Preprocessor:
     def __init__(self, ticker, since, until):
