@@ -36,7 +36,7 @@ def monthlist(begin,end):
             next_month = begin.replace(month=begin.month+1, day=1)
         if next_month > end:
             break
-        result.append ([begin,last_day_of_month(begin)])
+        result.append ([begin, last_day_of_month(begin)])
         begin = next_month
     result.append ([begin, end])
     return result

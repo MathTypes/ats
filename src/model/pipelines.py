@@ -3,10 +3,11 @@ import logging
 import numpy as np
 from utils import Pipeline
 from timeseries_transformer import TimeSeriesTFT
-from data_module import TransformerDataModule, LSTMDataModule
+from data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
 from models import (
     AttentionEmbeddingLSTM
 )
+import trainer_nhits_with_dp as nhits
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -77,3 +78,16 @@ class AttentionEmbeddingLSTMPipeline(Pipeline):
             hidden_size=4
         )
         self.model = model.to(self.device, non_blocking=True)
+
+
+class TimeSeriesPipeline(Pipeline):
+    def __init__(self, dataset="fut", device=None, config=None):
+        super().__init__(device)
+        self.dataset = dataset
+        self.config = config
+
+    def create_model(self):
+        self.data_module = nhits.get_data_module(self.config)
+        self.model = nhits.get_model(self.config, self.data_module)
+        self.trainer = nhits.get_trainer(self.config, self.data_module)
+        self.model = self.model.to(self.device, non_blocking=True)

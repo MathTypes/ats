@@ -37,7 +37,10 @@ def get_tick_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -
 def get_input_dirs(config, ticker, asset_type):
     base_dir = f"data/{asset_type}/30min/{ticker}"
     input_dirs = []
-    for cur_date in time_util.monthlist(config["start_date"], config["end_date"]):
+    start_date = config["start_date"] + datetime.timedelta(days=-60)
+    start_date = start_date.replace(day=1)
+    end_date = config["end_date"]
+    for cur_date in time_util.monthlist(start_date, end_date):
         for_date = cur_date[0]
         date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
         files = os.listdir(date_dir)
@@ -46,13 +49,10 @@ def get_input_dirs(config, ticker, asset_type):
     return input_dirs
 
 def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
-    #ticker = ticker.replace("CME_","")
     input_dirs = get_input_dirs(config, ticker, asset_type)
     ds = ray.data.read_parquet(input_dirs, parallelism=100)
-    #ds["Time"] = ds.Time.apply(lambda x:datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
     ds = ds.to_pandas(10000000)
     logging.info(f"ds:{ds}")
-    #ds.set_index("Time")
     ds.sort_index()
     ds = ds[~ds.index.duplicated(keep='first')]
     logging.info(f"ds:{ds.head()}")

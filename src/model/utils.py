@@ -1,7 +1,6 @@
 import logging
 import torch
 import numpy as np
-from accelerate import Accelerator
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
@@ -106,7 +105,6 @@ class Pipeline:
         #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         wandb_logger = WandbLogger(project='ATS', log_model='all')
-        accelerator = Accelerator()
         #log_predictions_callback = LogPredictionsCallback(wandb_logger,
         #                                                  self.data_module.X_test,
         #                                                  window_size=self.data_module.window_size,
@@ -120,9 +118,12 @@ class Pipeline:
         # till 9th epoch it will accumulate every 4 batches and after that no accumulation
         # will happen. Note that you need to use zero-indexed epoch keys here
         #accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
-        devices = 1 if self.device == "cpu" else -1
+        #devices = 1 if self.device == "cpu" else -1
+        devices = 1
+        logging.info(f"device:{self.device}")
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
-                             callbacks=[checkpoint_callback, lr_monitor, log_predictions_callback,
+                             callbacks=[checkpoint_callback, lr_monitor,
+                                        log_predictions_callback,
                                         StochasticWeightAveraging(swa_lrs=1e-2)],
                              devices=devices,
                              accelerator=self.device,
@@ -134,7 +135,7 @@ class Pipeline:
                              detect_anomaly=True,
                              #precision='16-mixed',
                              # train in half precision
-                             deterministic=False, strategy='auto')
+                             deterministic=False, strategy='ddp')
         self.history = trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
         trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model

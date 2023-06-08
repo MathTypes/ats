@@ -6,6 +6,10 @@ import warnings
 import ray
 import time
 import wandb
+import lightning.pytorch as pl
+#from import lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
+from lightning.pytorch.loggers import TensorBoardLogger
 from pytorch_lightning.loggers import WandbLogger
 from ray.util.dask import enable_dask_on_ray
 from ray_lightning import RayStrategy
@@ -19,8 +23,6 @@ import warnings
 import pyarrow.dataset as pds
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import lightning.pytorch as pl
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-from lightning.pytorch.loggers import TensorBoardLogger
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -34,6 +36,8 @@ from pytorch_forecasting.metrics import MAE, SMAPE, MultivariateNormalDistributi
 from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss
 #from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
+from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
+from data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
 
 from pytorch_forecasting.data.examples import get_stallion_data
 from datasets import generate_stock_returns
@@ -44,8 +48,9 @@ from math import ceil
 from util import time_util
 import data_util
 
-def get_model(config, training):
+def get_model(config, data_module):
     device = config['device']
+    training = data_module.training
     max_prediction_length = config['max_prediction_length']
     # configure network and trainer
     #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
@@ -61,7 +66,8 @@ def get_model(config, training):
     )
     return net
 
-def get_trainer(config):
+
+def get_trainer(config, data_module):
     device = config['device']
     use_gpu = device == "cuda"
     logging.info(f"device:{device}, use_gpu:{use_gpu}")
@@ -72,6 +78,7 @@ def get_trainer(config):
     lr_logger = LearningRateMonitor()  # log the learning rate
     wandb_logger = WandbLogger(project='ATS', log_model=True)
     logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
+    log_predictions_callback = LSTMLogPredictionsCallback(wandb_logger, [data_module.X_test, data_module.y_test])
     trainer = pl.Trainer(
         max_epochs=config['max_epochs'],
         accelerator=device,
@@ -79,20 +86,24 @@ def get_trainer(config):
         gradient_clip_val=0.1,
         limit_train_batches=50,  # coment in for training, running valiation every 30 batches
         # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
-        callbacks=[lr_logger, early_stop_callback],
+        callbacks=[lr_logger, early_stop_callback,
+                   #log_predictions_callback
+        ],
         #strategy=strategy,
         strategy = "auto",
         logger=wandb_logger,
     )
     return trainer
 
-def run_tune(config, net, trainer, train_dataloader, val_dataloader):
+
+def run_tune(config, net, trainer, data_module):
     study = nhits_tuner.optimize_hyperparameters(
-        train_dataloader, val_dataloader,
+        data_module.train_dataloader, data_module.val_dataloader,
         config['model_path'],
         config['max_epochs'],
         config['n_trials'])
     print(f"study:{study}")
+
 
 def get_input_dirs(config):
     base_dir = "data/FUT/30min_rsp/ES"
@@ -106,17 +117,26 @@ def get_input_dirs(config):
     return input_dirs
 
 
-def get_input_data(config):
-    start = time.time()
-    ticker = config["model_ticker"]
+def get_input_for_ticker(config, ticker):
     since  = config["start_date"]
     until = config["end_date"]
-    #ds = data_util.get_tick_data(ticker, "FUT", since, until, config["raw_dir"])
     train_data = data_util.get_processed_data(config, ticker, "FUT")
-    #train_data = data_util.Preprocessor(ticker, since, until)(ds)
     train_data = train_data.replace([np.inf, -np.inf], np.nan)
     train_data = train_data.dropna()
     train_data = train_data.drop(columns=["time_idx"])
+    return train_data
+
+
+def get_data_module(config):
+    start = time.time()
+    train_data_vec = []
+    for ticker in config["model_tickers"]:
+        ticker_train_data = get_input_for_ticker(config, ticker)
+        ticker_train_data["new_idx"] = ticker_train_data.apply(lambda x : x.ticker + "_" + str(x.series_idx), axis=1)
+        ticker_train_data = ticker_train_data.set_index("new_idx")
+        train_data_vec.append(ticker_train_data)
+    train_data = pd.concat(train_data_vec)
+
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
     data_loading_time = time.time() - start
     logging.info(f"Data loading time: {data_loading_time:.2f} seconds")
@@ -136,50 +156,17 @@ def get_input_data(config):
         "beer_capital",
         "music_fest",
     ]
-    training_cutoff = int(train_data["time_idx"].max() * 0.8)
-    logging.info(f"train_data:{train_data}")
-    training = TimeSeriesDataSet(
-        train_data,
-        time_idx="time_idx",
-        target="close_back",
-        group_ids=["ticker"],
-        min_encoder_length=config['min_encoder_length'],  # keep encoder length long (as it is in the validation set)
-        max_encoder_length=config['max_encoder_length'],
-        min_prediction_length=config['min_prediction_length'],
-        max_prediction_length=config['max_prediction_length'],
-        #static_categoricals=["ticker"],
-        #static_reals=[],
-        allow_missing_timesteps=True,        
-        #time_varying_known_categoricals=["month", "hour_of_day", "day_of_week", "week_of_month"],
-        #time_varying_known_categoricals=["hour_of_day"],
-        #variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
-        #variable_groups={},  # group of categorical variables can be treated as one variable
-        time_varying_known_reals=["time_idx", "hour_of_day"],
-        #time_varying_known_reals=[],
-        #time_varying_known_reals=["hour_of_day", "day_of_week", "week_of_month", "month"],
-        #time_varying_unknown_categoricals=[],
-        time_varying_unknown_reals=["close_back", "volume_back"],
-        categorical_encoders={
-        },
-    )
-    # create validation set (predict=True) which means to predict the last max_prediction_length points in time
-    # for each series
-    validation = TimeSeriesDataSet.from_dataset(training, train_data, min_prediction_idx=training_cutoff + 1)
-
-    # create dataloaders for model
-    batch_size = 1280  # set this between 32 to 128
-    train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0, pin_memory=True, drop_last=False)
-    val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0, pin_memory=True, drop_last=False)
-    return training, train_dataloader, val_dataloader, train_data
+    data_module = TimeSeriesDataModule(config, train_data)
+    return data_module
 
 
-def run_train(config, net, trainer, train_dataloader, val_dataloader, data):
+def run_train(config, net, trainer, data_module):
     device = config['device']
     # fit network
     trainer.fit(
         net,
-        train_dataloaders=train_dataloader,
-        val_dataloaders=val_dataloader,
+        train_dataloaders=data_module.train_dataloader,
+        val_dataloaders=data_module.val_dataloader,
     )
 
     # load the best model according to the validation loss
@@ -189,32 +176,6 @@ def run_train(config, net, trainer, train_dataloader, val_dataloader, data):
     logging.info(f'best_model_path:{best_model_path}')
 
 
-    # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
-    raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True, trainer_kwargs=dict(accelerator=device))
-
-    fig, axs = plt.subplots(4)
-    fig.suptitle('Vertically stacked subplots')
-    #logging.info(f"x:{raw_predictions.x}")
-    logging.info(f"x.encoder_cat.shape:{raw_predictions.x['encoder_cat'].shape}")
-    prediction_kwargs = {"use_metric":False}
-    quantiles_kwargs = {"use_metric":False}
-    #mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=["r", "k", "c"]) 
-    for idx in range(4):  # plot 10 examples
-        time_idx_val = val_dataloader.dataset.x_to_index(raw_predictions.x)["time_idx"][idx]
-        time = data[data.time_idx==time_idx_val].index[0]
-        time = time.to_pydatetime()
-        #logging.info(f"validation.x_to_index(raw_predictions.x):{validation.x_to_index(raw_predictions.x)}")
-        figs = best_model.plot_prediction(
-            raw_predictions.x, raw_predictions.output, idx=idx,
-            add_loss_to_title=False, ax=axs[idx],
-            show_future_observed=True,
-            quantiles_kwargs=quantiles_kwargs,
-            prediction_kwargs=prediction_kwargs)
-        axs[idx].set_title(str(time))
-    plt.show()
-        #imgplot = plt.imshow(img)
-        #plt.show()
-
 def week_of_month(dt):
     """ Returns the week of the month for the specified date.
     """
@@ -222,6 +183,7 @@ def week_of_month(dt):
     dom = dt.day
     adjusted_dom = dom + first_day.weekday()
     return int(ceil(adjusted_dom/7.0))
+
 
 if __name__ == "__main__":
     logging_utils.init_logging()
@@ -256,7 +218,7 @@ if __name__ == "__main__":
     enable_dask_on_ray()
     device = args.device
     config = {
-        'model_ticker': 'ES',
+        'model_tickers': ['ES','NQ','CL','RTY','HG'],
         'raw_dir': '.',
         'num_workers': 8,
         'device' : args.device,
@@ -272,15 +234,15 @@ if __name__ == "__main__":
         'max_epochs' : args.max_epochs,
         'n_trials' : args.n_trials,
         'model_path' : 'checkpoint'}
-    training, train_dataloader, val_dataloader, data = get_input_data(config)
-    net = get_model(config, training)
-    trainer = get_trainer(config)
+    data_module = get_data_module(config)
+    net = get_model(config, data_module)
+    trainer = get_trainer(config, data_module)
     if args.mode == "tune":
-        run_tune(config, net, trainer, train_dataloader, val_dataloader)
+        run_tune(config, net, trainer, data_module)
     elif args.mode == "train":
-        run_train(config, net, trainer, train_dataloader, val_dataloader, data)
+        run_train(config, net, trainer, data_module)
     elif args.mode == "eval":
-        run_eval(config, net, val_dataloader)
+        run_eval(config, net, data_module)
 
     time.sleep(10)
     ray.shutdown()
