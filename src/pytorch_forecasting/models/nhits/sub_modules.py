@@ -207,7 +207,7 @@ class NHiTSBlock(nn.Module):
         return backcast, forecast
 
 
-class NHiTS(nn.Module):
+class NHiTSModule(nn.Module):
     """
     N-HiTS Model.
     """
@@ -382,3 +382,4 @@ class NHiTS(nn.Module):
         backcast = residuals
 
         return forecast, backcast, block_forecasts, block_backcasts
+
