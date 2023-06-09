@@ -543,7 +543,7 @@ class NHiTS(BaseModelWithCovariates):
             else:
                 name += f"batch {batch_idx}"
             #self.logger.experiment.add_figure(name, fig, global_step=self.global_step)
-            self.logger.experiment.log({"chart":fig})
+            self.logger.experiment.log({name:fig})
             if isinstance(fig, (list, tuple)):
                 for idx, f in enumerate(fig):
                     #self.logger.experiment.add_figure(
@@ -551,11 +551,11 @@ class NHiTS(BaseModelWithCovariates):
                     #    f,
                     #    global_step=self.global_step,
                     #)
-                    self.logger.experiment.log({"chart": f})
+                    self.logger.experiment.log({name: f})
                 else:
                     #self.logger.experiment.add_figure(
                     #    name,
                     #    fig,
                     #    global_step=self.global_step,
                     #)
-                    self.logger.experiment.log({"chart": fig})
+                    self.logger.experiment.log({name: fig})
