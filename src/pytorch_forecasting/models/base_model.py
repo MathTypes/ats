@@ -625,7 +625,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         x, y = batch
         log, out = self.step(x, y, batch_idx)
-        self.training_step_outputs.append(log)
+        #self.training_step_outputs.append(log)
         return log
 
     def on_train_epoch_end(self):
@@ -963,14 +963,14 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                         #    f,
                         #    global_step=self.global_step,
                         #)
-                        self.logger.experiment.log({"chart": f})
+                        self.logger.experiment.log({f"{self.target_names[idx]} {tag}": f})
                 else:
                     #self.logger.experiment.add_figure(
                     #    tag,
                     #    fig,
                     #    global_step=self.global_step,
                     #)
-                    self.logger.experiment.log({"chart": fig})
+                    self.logger.experiment.log({tag: fig})
 
     def plot_prediction(
         self,
