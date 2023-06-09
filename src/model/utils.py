@@ -10,7 +10,7 @@ from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
 
 from data_module import LSTMDataModule, TransformerDataModule
-from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
+from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback, TSLogPredictionsCallback
 import wandb
 from wandb.keras import WandbCallback
 from pathlib import Path
@@ -113,7 +113,7 @@ class Pipeline:
         #                                                  dec_seq_len=self.data_module.dec_seq_len,
         #                                                  device="cuda",
         #                                                  output_sequence_length=self.data_module.output_sequence_length)
-        log_predictions_callback = LSTMLogPredictionsCallback(wandb_logger, [self.data_module.X_test, self.data_module.y_test])
+        #log_predictions_callback = TSLogPredictionsCallback(wandb_logger, self.data_module.test_dataloader())
         # till 5th epoch, it will accumulate every 8 batches. From 5th epoch
         # till 9th epoch it will accumulate every 4 batches and after that no accumulation
         # will happen. Note that you need to use zero-indexed epoch keys here
@@ -123,7 +123,7 @@ class Pipeline:
         logging.info(f"device:{self.device}")
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor,
-                                        log_predictions_callback,
+                                        #log_predictions_callback,
                                         StochasticWeightAveraging(swa_lrs=1e-2)],
                              devices=devices,
                              accelerator=self.device,

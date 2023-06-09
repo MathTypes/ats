@@ -9,7 +9,7 @@ from functools import lru_cache
 import inspect
 from typing import Any, Callable, Dict, List, Tuple, Union
 import warnings
-
+import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -1223,7 +1223,6 @@ class TimeSeriesDataSet(Dataset):
         df_index["count"] = (df_index["time_last"] - df_index["time_first"]).astype(int) + 1
         sequence_ids = g.ngroup()
         df_index["sequence_id"] = sequence_ids
-
         min_sequence_length = self.min_prediction_length + self.min_encoder_length
         max_sequence_length = self.max_prediction_length + self.max_encoder_length
 
@@ -1253,7 +1252,8 @@ class TimeSeriesDataSet(Dataset):
 
         # filter out where encode and decode length are not satisfied
         df_index["sequence_length"] = df_index["time"].iloc[df_index["index_end"]].to_numpy() - df_index["time"] + 1
-
+        logging.info(f"df_index:{df_index}")
+        logging.info(f"min_sequence_length:{min_sequence_length}")
         # filter too short sequences
         df_index = df_index[
             # sequence must be at least of minimal prediction length

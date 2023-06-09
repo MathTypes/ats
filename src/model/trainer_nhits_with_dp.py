@@ -63,6 +63,8 @@ def get_model(config, data_module):
         backcast_loss_ratio=0.0,
         hidden_size=8,
         optimizer="AdamW",
+        log_interval=10,
+        log_val_interval=10
     )
     return net
 

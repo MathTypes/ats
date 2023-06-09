@@ -195,7 +195,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
         self.validation = TimeSeriesDataSet.from_dataset(self.training, train_data[val_idx:tst_idx])
-        self.test = TimeSeriesDataSet.from_dataset(self.training, train_data[:tst_idx])
+        self.test = TimeSeriesDataSet.from_dataset(self.training, train_data[tst_idx:])
         # create dataloaders for model
         self.batch_size = 1280  # set this between 32 to 128
         

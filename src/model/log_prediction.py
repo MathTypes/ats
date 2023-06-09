@@ -168,7 +168,85 @@ class LSTMLogPredictionsCallback(Callback):
         #wandb.init()
         val_inputs = self.val_inputs.to(device=pl_module.device)
         future_values = self.val_labels.to(device=pl_module.device)
-        output = pl_module(val_inputs, return_dict= True, future_values=future_values)
+        output = pl_module({"x:":val_inputs, "y":future_values})
+        loss = output.loss
+        logging.info(f"example level loss:{loss}")
+        return
+        #logging.info(f"pred:{preds[0]}")
+        #logging.info(f"val_labels:{self.val_labels[0]}")
+        #metrics = self.criterion(preds, self.val_labels.to(device=pl_module.device)).cpu()
+        #metrics = torch.sum(metrics, dim=2)
+        #metrics = torch.sum(metrics, dim=1)
+        #logging.info(f"metrics:{metrics.shape}")
+        #logging.info(f"metrics:{metrics}")
+        ind = np.argsort(metrics, axis=0)
+        ind = np.take(ind, np.arange(128), axis=0)
+        val_inputs = self.val_inputs[ind]
+        preds = preds[ind]
+        val_labels = self.val_labels[ind]
+        #val_times = self.val_times[ind]
+        #logging.info(f"after ind:{ind}")
+
+        #logging.info(f"preds:{preds.shape}")
+        #logging.info(f"val_inputs:{val_inputs.shape}")
+        #logging.info(f"val_labels:{val_labels.shape}")
+        #fig = plt.figure(figsize=(400,200))
+        fig_cnt = val_inputs.shape[0] // 4
+        for i in range(0, fig_cnt):
+            fig = plt.figure()
+            fig.set_figwidth(40)
+            for j in range(0, 4):
+                x = val_inputs[i*4+j].cpu()
+                pred = preds[i*4+j].cpu()
+                y = val_labels[i*4+j].cpu()
+                #times = val_times[i*4+j].cpu()
+                open = x[0]
+                high = x[1]
+                low = x[2]
+                close = x[3]
+                pred_close = pred[3]
+                #logging.info(f"pred_close:{pred_close.shape}")
+                #pred_close = pred
+                y_close = y[3]
+                #y_close = y
+                #logging.info(f"time:{times}")
+                ax1 = fig.add_subplot(1, 4, j+1)
+                ax1.plot(np.arange(close.shape[0]), close, label='Training data')
+                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred_close.shape[0]), np.concatenate(([close[-1]], pred_close)), label='Prediction', color="red")
+                ax1.plot(np.arange(close.shape[0]-1, close.shape[0]+pred_close.shape[0]), np.concatenate(([close[-1]], y_close)), label='Groud Truth', color="purple")
+                #now = datetime.fromtimestamp(times.numpy()[-1])
+                #ax1.set_xlabel(f'{now.strftime("%y-%m-%d %H:%M")}')
+                ax1.set_ylabel('y')
+            self.wandb_logger.log_image(f"chart-{i}", images=[fig])
+
+
+class TSLogPredictionsCallback(Callback):
+    def __init__(self, wandb_logger, val_dataloader, num_samples=2048):
+        '''method used to define our model parameters'''
+        super().__init__()
+        self.wandb_logger = wandb_logger
+        for X_batch, y_batch in val_dataloader:
+            self.val_inputs = X_batch
+            self.val_labels = y_batch
+            break
+        self.criterion = torch.nn.L1Loss(reduction="none")
+        logging.info(f"val_inputs:{self.val_inputs}")
+        logging.info(f"val_labels:{self.val_labels}")
+
+    def topk_by_sort(input, k, axis=None, ascending=True):
+        if not ascending:
+            input *= -1
+        ind = np.argsort(input, axis=axis)
+        ind = np.take(ind, np.arange(k), axis=axis)
+        if not ascending:
+            input *= -1
+        val = np.take_along_axis(input, ind, axis=axis) 
+        return ind, val
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        output = pl_module(self.val_inputs)
+        #, "y":self.val_labels})
+        logging.info(f"example level output:{output}")
         loss = output.loss
         logging.info(f"example level loss:{loss}")
         return

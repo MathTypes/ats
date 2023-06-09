@@ -224,23 +224,13 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         x, y = batch
-        #x = x.permute(0, 2, 1)
-        #y = y.permute(0, 2, 1)
-        #logging.info(f"x:{x.shape}")
-        #logging.info(f"y:{y.shape}")
         output = self.forward(x, return_dict= True, future_values=y)
         loss = output.loss
-        #logging.info(f"y_hat:{y_hat.shape}")
-        #loss = self.compute_loss(y_hat, y)
         self.log('train_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        #x = x.permute(0, 2, 1)
-        #y = y.permute(0, 2, 1)
-        #logging.info(f"x:{x.shape}")
-        #logging.info(f"y:{y.shape}")
         output = self.forward(x, return_dict= True, future_values=y)
         loss = output.loss
         self.log('val_loss', loss)

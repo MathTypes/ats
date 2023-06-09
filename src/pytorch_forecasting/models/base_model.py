@@ -2,6 +2,7 @@
 Timeseries models share a number of common characteristics. This module implements these in a common base class.
 """
 from collections import namedtuple
+import pytorch_lightning as pl
 import copy
 from copy import deepcopy
 import inspect
@@ -9,12 +10,19 @@ import logging
 import os
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import warnings
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
-import lightning.pytorch as pl
-from lightning.pytorch import LightningModule, Trainer
+#import lightning.pytorch as pl
+#from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks import BasePredictionWriter, LearningRateFinder
-from lightning.pytorch.trainer.states import RunningStage
-from lightning.pytorch.utilities.parsing import AttributeDict, get_init_args
+#from lightning.pytorch.trainer.states import RunningStage
+#from lightning.pytorch.utilities.parsing import AttributeDict, get_init_args
+
+from pytorch_lightning import LightningModule, Trainer
+#from pytorch_lightning.callbacks import BasePredictionWriter, LearningRateFinder
+from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.parsing import AttributeDict, get_init_args
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib.function_base import iterable
@@ -339,7 +347,7 @@ class PredictCallback(BasePredictionWriter):
             return None
 
 
-class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMixIn):
+class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutputMixIn):
     """
     BaseModel from which new timeseries models should inherit from.
     The ``hparams`` of the created object will default to the parameters indicated in :py:meth:`~__init__`.
@@ -449,7 +457,6 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
         self.save_hyperparameters(
             {name: val for name, val in init_args.items() if name not in self.hparams and name not in ["self"]}
         )
-
         # update log interval if not defined
         if self.hparams.log_val_interval is None:
             self.hparams.log_val_interval = self.hparams.log_interval
@@ -622,7 +629,8 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
         return log
 
     def on_train_epoch_end(self):
-        self.on_epoch_end(self.training_step_outputs)
+        #self.on_epoch_end(self.training_step_outputs)
+        self.on_epoch_end()
         self.training_step_outputs.clear()
 
     def predict_step(self, batch, batch_idx):
@@ -639,7 +647,8 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
         return log
 
     def on_validation_epoch_end(self):
-        self.on_epoch_end(self.validation_step_outputs)
+        #self.on_epoch_end(self.validation_step_outputs)
+        self.on_epoch_end()
         self.validation_step_outputs.clear()
 
     def test_step(self, batch, batch_idx):
@@ -650,7 +659,8 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
         return log
 
     def on_test_epoch_end(self):
-        self.on_epoch_end(self.testing_step_outputs)
+        #self.on_epoch_end(self.testing_step_outputs)
+        self.on_epoch_end()
         self.testing_step_outputs.clear()
 
     def create_log(
@@ -901,7 +911,7 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
         """
         raise NotImplementedError()
 
-    def on_epoch_end(self, outputs):
+    def on_epoch_end(self):
         """
         Run at epoch end for training or validation. Can be overriden in models.
         """
@@ -948,17 +958,19 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
                     tag += f" of item {idx} in batch {batch_idx}"
                 if isinstance(fig, (list, tuple)):
                     for idx, f in enumerate(fig):
-                        self.logger.experiment.add_figure(
-                            f"{self.target_names[idx]} {tag}",
-                            f,
-                            global_step=self.global_step,
-                        )
+                        #self.logger.experiment.add_figure(
+                        #    f"{self.target_names[idx]} {tag}",
+                        #    f,
+                        #    global_step=self.global_step,
+                        #)
+                        self.logger.experiment.log({"chart": f})
                 else:
-                    self.logger.experiment.add_figure(
-                        tag,
-                        fig,
-                        global_step=self.global_step,
-                    )
+                    #self.logger.experiment.add_figure(
+                    #    tag,
+                    #    fig,
+                    #    global_step=self.global_step,
+                    #)
+                    self.logger.experiment.log({"chart": fig})
 
     def plot_prediction(
         self,
@@ -1018,10 +1030,11 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
             # move to cpu
             y = y.detach().cpu()
             # create figure
-            if ax is None:
-                fig, ax = plt.subplots()
-            else:
-                fig = ax.get_figure()
+            #if ax is None:
+            #    fig, ax = plt.subplots()
+            #else:
+            #    fig = ax.get_figure()
+            fig = make_subplots()
             n_pred = y_hat.shape[0]
             x_obs = np.arange(-(y.shape[0] - n_pred), 0)
             x_pred = np.arange(n_pred)
@@ -1031,36 +1044,44 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
             # plot observed history
             if len(x_obs) > 0:
                 if len(x_obs) > 1:
-                    plotter = ax.plot
+                    #plotter = ax.plot
+                    plotter = go.Scatter
                 else:
-                    plotter = ax.scatter
-                plotter(x_obs, y[:-n_pred], label="observed", c=obs_color)
+                    #plotter = ax.scatter
+                    plotter = go.Scatter
+                plot = plotter(x=x_obs, y=y[:-n_pred], name="observed", line=dict(color=obs_color))
+                fig.add_trace(plot)
             if len(x_pred) > 1:
-                plotter = ax.plot
+                plotter = go.Scatter
             else:
-                plotter = ax.scatter
+                plotter = go.Scatter
 
             # plot observed prediction
             if show_future_observed:
-                plotter(x_pred, y[-n_pred:], label=None, c=obs_color)
+                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name=None, line=dict(color=obs_color)))
 
             # plot prediction
-            plotter(x_pred, y_hat, label="predicted", c=pred_color)
+            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted", line=dict(color=pred_color)))
 
             # plot predicted quantiles
-            plotter(x_pred, y_quantile[:, y_quantile.shape[1] // 2], c=pred_color, alpha=0.15)
+            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], line=dict(color=pred_color)))
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
-                    ax.fill_between(x_pred, y_quantile[:, i], y_quantile[:, -i - 1], alpha=0.15, fc=pred_color)
+                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
+                                             fill=None, mode='lines',
+                                             line_color=pred_color))
+                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1],
+                                             fill='tonexty', # fill area between trace0 and trace1
+                                             mode='lines', line_color=pred_color))
                 else:
                     quantiles = torch.tensor([[y_quantile[0, i]], [y_quantile[0, -i - 1]]])
-                    ax.errorbar(
+                    fig.add_trace(go.errorbar(
                         x_pred,
                         y[[-n_pred]],
                         yerr=quantiles - y[-n_pred],
                         c=pred_color,
                         capsize=1.0,
-                    )
+                    ))
 
             if add_loss_to_title is not False:
                 if isinstance(add_loss_to_title, bool):
@@ -1080,9 +1101,8 @@ class BaseModel(InitialParameterRepresenterMixIn, LightningModule, TupleOutputMi
                         loss_value = "-"
                 else:
                     loss_value = loss
-                ax.set_title(f"Loss {loss_value}")
-            ax.set_xlabel("Time index")
-            fig.legend()
+                #go.set_title(f"Loss {loss_value}")
+            #go.set_xlabel("Time index")
             figs.append(fig)
 
         # return multiple of target is a list, otherwise return single figure

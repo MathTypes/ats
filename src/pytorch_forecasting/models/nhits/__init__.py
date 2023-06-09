@@ -2,18 +2,22 @@
 N-HiTS model for timeseries forecasting with covariates.
 """
 from copy import copy
+import pytorch_lightning as pl
+import plotly as py
 from typing import Dict, List, Optional, Tuple, Union
 import logging
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
 from torch import nn
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
 from pytorch_forecasting.metrics import MAE, MAPE, MASE, RMSE, SMAPE, MultiHorizonMetric, MultiLoss
 from pytorch_forecasting.models.base_model import BaseModelWithCovariates
-from pytorch_forecasting.models.nhits.sub_modules import NHiTS as NHiTSModule
+from pytorch_forecasting.models.nhits.sub_modules import NHiTSModule
 from pytorch_forecasting.models.nn.embeddings import MultiEmbedding
 from pytorch_forecasting.utils import create_mask, detach, to_list
 
@@ -483,55 +487,47 @@ class NHiTS(BaseModelWithCovariates):
             block_forecasts = output["block_forecasts"]
 
         if ax is None:
-            fig, ax = plt.subplots(2, 1, figsize=(6, 8), sharex=True, sharey=True)
+            #fig, ax = plt.subplots(2, 1, figsize=(6, 8), sharex=True, sharey=True)
+            fig = make_subplots(2, 1)
         else:
-            fig = ax[0].get_figure()
+            #fig = ax[0].get_figure()
+            pass
 
         # plot target vs prediction
         # target
         prop_cycle = iter(plt.rcParams["axes.prop_cycle"])
         color = next(prop_cycle)["color"]
-        ax[0].plot(torch.arange(-self.hparams.context_length, 0), x["encoder_target"][idx].detach().cpu(), c=color)
-        ax[0].plot(
-            torch.arange(self.hparams.prediction_length),
-            x["decoder_target"][idx].detach().cpu(),
-            label="Target",
-            c=color,
-        )
+        go.Figure(data=go.Scatter(x=torch.arange(-self.hparams.context_length, 0), y=x["encoder_target"][idx].detach().cpu(), line=dict(color=color)))
+        go.Figure(data=go.Scatter(x=torch.arange(self.hparams.prediction_length),
+                                  y=x["decoder_target"][idx].detach().cpu(),
+                                  line=dict(color=color)))
         # prediction
         color = next(prop_cycle)["color"]
-        ax[0].plot(
-            torch.arange(-self.hparams.context_length, 0),
-            output["backcast"][idx][..., 0].detach().cpu(),
-            label="Backcast",
-            c=color,
-        )
-        ax[0].plot(
-            torch.arange(self.hparams.prediction_length),
-            prediction,
-            label="Forecast",
-            c=color,
-        )
+        go.Figure(data=go.Scatter(x=torch.arange(-self.hparams.context_length, 0),
+                                  y=output["backcast"][idx][..., 0].detach().cpu(),
+                                  name="Backcast",
+                                  line=dict(color=color)))
+        go.Figure(data=go.Scatter(
+            x=torch.arange(self.hparams.prediction_length),
+            y=prediction,
+            name="Forecast",
+            line=dict(color=color)))
 
         # plot blocks
         for pooling_size, block_backcast, block_forecast in zip(
             self.hparams.pooling_sizes, output["block_backcasts"][1:], block_forecasts
         ):
             color = next(prop_cycle)["color"]
-            ax[1].plot(
-                torch.arange(-self.hparams.context_length, 0),
-                block_backcast[idx][..., 0].detach().cpu(),
-                c=color,
-            )
-            ax[1].plot(
-                torch.arange(self.hparams.prediction_length),
-                block_forecast,
-                c=color,
-                label=f"Pooling size: {pooling_size}",
-            )
-        ax[1].set_xlabel("Time")
+            fig.add_trace(
+                go.Scatter(x=torch.arange(-self.hparams.context_length, 0),
+                           y=block_backcast[idx][..., 0].detach().cpu(),
+                           line=dict(color=color)), row=1, col=1)
+            fig.add_trace(
+                go.Scatter(x=torch.arange(self.hparams.prediction_length),
+                           y=block_forecast,
+                           line=dict(color=color),
+                           name=f"Pooling size: {pooling_size}"), row=1, col=1)
 
-        fig.legend()
         return fig
 
     def log_interpretation(self, x, out, batch_idx):
@@ -546,17 +542,20 @@ class NHiTS(BaseModelWithCovariates):
                 name += f"step {self.global_step}"
             else:
                 name += f"batch {batch_idx}"
-            self.logger.experiment.add_figure(name, fig, global_step=self.global_step)
+            #self.logger.experiment.add_figure(name, fig, global_step=self.global_step)
+            self.logger.experiment.log({"chart":fig})
             if isinstance(fig, (list, tuple)):
                 for idx, f in enumerate(fig):
-                    self.logger.experiment.add_figure(
-                        f"{self.target_names[idx]} {name}",
-                        f,
-                        global_step=self.global_step,
-                    )
+                    #self.logger.experiment.add_figure(
+                    #    f"{self.target_names[idx]} {name}",
+                    #    f,
+                    #    global_step=self.global_step,
+                    #)
+                    self.logger.experiment.log({"chart": f})
                 else:
-                    self.logger.experiment.add_figure(
-                        name,
-                        fig,
-                        global_step=self.global_step,
-                    )
+                    #self.logger.experiment.add_figure(
+                    #    name,
+                    #    fig,
+                    #    global_step=self.global_step,
+                    #)
+                    self.logger.experiment.log({"chart": fig})
