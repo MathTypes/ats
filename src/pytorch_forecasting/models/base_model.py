@@ -2,7 +2,7 @@
 Timeseries models share a number of common characteristics. This module implements these in a common base class.
 """
 from collections import namedtuple
-import pytorch_lightning as pl
+#import pytorch_lightning as pl
 import copy
 from copy import deepcopy
 import inspect
@@ -17,16 +17,16 @@ import plotly.graph_objects as go
 import numpy
 import wandb
 
-#import lightning.pytorch as pl
-#from lightning.pytorch import LightningModule, Trainer
+import lightning.pytorch as pl
+from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks import BasePredictionWriter, LearningRateFinder
-#from lightning.pytorch.trainer.states import RunningStage
-#from lightning.pytorch.utilities.parsing import AttributeDict, get_init_args
+from lightning.pytorch.trainer.states import RunningStage
+from lightning.pytorch.utilities.parsing import AttributeDict, get_init_args
 
-from pytorch_lightning import LightningModule, Trainer
+#from pytorch_lightning import LightningModule, Trainer
 #from pytorch_lightning.callbacks import BasePredictionWriter, LearningRateFinder
-from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.parsing import AttributeDict, get_init_args
+#from pytorch_lightning.trainer.states import RunningStage
+#from pytorch_lightning.utilities.parsing import AttributeDict, get_init_args
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib.function_base import iterable
@@ -500,6 +500,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         self.validation_step_outputs = []
         self.testing_step_outputs = []
 
+
     def log(self, *args, **kwargs):
         """See :meth:`lightning.pytorch.core.lightning.LightningModule.log`."""
         # never log for prediction
@@ -636,6 +637,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         #self.on_epoch_end(self.training_step_outputs)
         self.on_epoch_end()
         self.training_step_outputs.clear()
+
 
     def predict_step(self, batch, batch_idx):
         predict_callback = [c for c in self.trainer.callbacks if isinstance(c, PredictCallback)][0]
@@ -861,7 +863,6 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     target_tag = self.target_names[idx] + " "
                 else:
                     target_tag = ""
-                #logging.info(f"y_true:{y_true}, y_point:{y_point}, loss_value:{loss_value}, idx:{idx}, metric:{metric}")
                 self.log(
                     f"{target_tag}{self.current_stage}_{metric.name}",
                     loss_value,
@@ -957,19 +958,14 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 log_indices = [0]
             
             #columns=["time", "image", "prediction"]
-            columns=["time", "image"]
-            my_table = wandb.Table(columns=columns)
+            #columns=["time", "image", "prediction"]
+            #my_table = wandb.Table(columns=columns)
             for idx in log_indices:
                 fig = self.plot_prediction(x, out, idx=idx, add_loss_to_title=True, **kwargs)
-                logging.info(f"x:{x}")
-                logging.info(f"out:{out}")
-                logging.info(f"idx:{idx}")
-                img_bytes = fig.to_image(format="png") # kaleido library
-                im = PIL.Image.open(BytesIO(img_bytes))
-                #img_array = np.asarray(img_bytes)
-                img = wandb.Image(im)
-                #my_table.add_data(x["decoder_time_idx"][-1], img, out["prediction"][0])
-                my_table.add_data(x["decoder_time_idx"][-1], img)
+                #img_bytes = fig.to_image(format="png") # kaleido library
+                #im = PIL.Image.open(BytesIO(img_bytes))
+                #img = wandb.Image(im)
+                #my_table.add_data(x["decoder_time_idx"][idx][-1], img, out["prediction"][idx][0])
                 tag = f"{self.current_stage} prediction"
                 if self.training:
                     tag += f" of item {idx} in global batch {self.global_step}"
@@ -994,7 +990,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 tag += f" global batch {self.global_step}"
             else:
                 tag += f" batch {batch_idx}"
-            self.logger.experiment.log({"tag": my_table})
+            #self.logger.experiment.log({tag: my_table})
+            #test_data_at = wandb.Artifact("test_samples_" + str(wandb.run.id), type="predictions")
+            #test_data_at.add(my_table, "predictions")
+            #self.logger.experiment.log_artifact(test_data_at)
 
     def plot_prediction(
         self,

@@ -2,7 +2,8 @@
 N-HiTS model for timeseries forecasting with covariates.
 """
 from copy import copy
-import pytorch_lightning as pl
+#import pytorch_lightning as pl
+import lightning.pytorch as pl
 import plotly as py
 from typing import Dict, List, Optional, Tuple, Union
 import logging
