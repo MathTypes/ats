@@ -19,7 +19,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Learning
 torch.manual_seed(0)
 np.random.seed(0)
 
-LOG_EVERY_N_STEPS = 100
+LOG_EVERY_N_STEPS = 10000
 BASE_DIR = Path(__file__).parent
 LIGHTNING_DIR = BASE_DIR.joinpath("data/lightning")
 MODELS_DIR = LIGHTNING_DIR.joinpath("models")
@@ -104,7 +104,7 @@ class Pipeline:
         )
         #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
-        wandb_logger = WandbLogger(project='ATS', log_model='all')
+        wandb_logger = WandbLogger(project='ATS', log_model=True)
         #log_predictions_callback = LogPredictionsCallback(wandb_logger,
         #                                                  self.data_module.X_test,
         #                                                  window_size=self.data_module.window_size,
@@ -121,21 +121,26 @@ class Pipeline:
         #devices = 1 if self.device == "cpu" else -1
         devices = 1
         logging.info(f"device:{self.device}")
+        #profiler = AdvancedProfiler()
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor,
                                         #log_predictions_callback,
                                         StochasticWeightAveraging(swa_lrs=1e-2)],
                              devices=devices,
-                             accelerator=self.device,
+                             #accelerator=self.device,
+                             accelerator="gpu",
+                             accumulate_grad_batches=8,
+                             stochastic_weight_avg=True,
                              #precision="bf16",
-                             accumulate_grad_batches=7,
                              gradient_clip_val=0.5,
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,
                              detect_anomaly=True,
+                             precision=16,
+                             #profiler="advanced",
                              #precision='16-mixed',
                              # train in half precision
-                             deterministic=False, strategy='ddp')
+                             deterministic=False, strategy='dp')
         self.history = trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
         trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
