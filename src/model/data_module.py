@@ -188,8 +188,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             allow_missing_timesteps=True,        
             time_varying_known_reals=["time_idx", "hour_of_day"],
             time_varying_unknown_reals=["close_back", "volume_back"],
-            categorical_encoders={
-            },
+            categorical_encoders={},
         )
         logging.info(f"train_data:{train_data.describe()}")
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
@@ -197,7 +196,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.validation = TimeSeriesDataSet.from_dataset(self.training, train_data[val_idx:tst_idx])
         self.test = TimeSeriesDataSet.from_dataset(self.training, train_data[tst_idx:])
         # create dataloaders for model
-        self.batch_size = 1280  # set this between 32 to 128
+        self.batch_size = 128*20  # set this between 32 to 128
         
 
     def prepare_data(self):
@@ -207,14 +206,14 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         pass
         
     def train_dataloader(self):
-        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size, num_workers=0, pin_memory=True, drop_last=False)
+        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size, num_workers=100, pin_memory=True, drop_last=False)
         return train_dataloader
     
     def val_dataloader(self):
-        val_dataloader = self.validation.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=0, pin_memory=True, drop_last=False)
+        val_dataloader = self.validation.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=25, pin_memory=True, drop_last=False)
         return val_dataloader
 
     
     def test_dataloader(self):
-        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=0, pin_memory=True, drop_last=False)
+        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=25, pin_memory=True, drop_last=False)
         return test_dataloader
