@@ -5,16 +5,19 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
 from pytorch_lightning.callbacks import GradientAccumulationScheduler, StochasticWeightAveraging
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning import Trainer
+#import pytorch_lightning as pl
+import lightning.pytorch as pl
+#from pytorch_lightning.loggers import WandbLogger
+from lightning.pytorch.loggers import WandbLogger
+#from pytorch_lightning import Trainer
 
 from data_module import LSTMDataModule, TransformerDataModule
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback, TSLogPredictionsCallback
 import wandb
 from wandb.keras import WandbCallback
 from pathlib import Path
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+#from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -123,14 +126,15 @@ class Pipeline:
         logging.info(f"device:{self.device}")
         #profiler = AdvancedProfiler()
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
-                             callbacks=[checkpoint_callback, lr_monitor,
+                             callbacks=[#checkpoint_callback, lr_monitor,
                                         #log_predictions_callback,
-                                        StochasticWeightAveraging(swa_lrs=1e-2)],
+                                        #StochasticWeightAveraging(swa_lrs=1e-2)
+                             ],
                              devices=devices,
                              #accelerator=self.device,
                              accelerator="gpu",
                              accumulate_grad_batches=8,
-                             stochastic_weight_avg=True,
+                             #stochastic_weight_avg=True,
                              #precision="bf16",
                              gradient_clip_val=0.5,
                              default_root_dir=LIGHTNING_DIR,
@@ -140,7 +144,7 @@ class Pipeline:
                              #profiler="advanced",
                              #precision='16-mixed',
                              # train in half precision
-                             deterministic=False, strategy='dp')
+                             deterministic=False, strategy='auto')
         self.history = trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
         trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model

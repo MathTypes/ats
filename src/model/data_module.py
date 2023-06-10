@@ -1,4 +1,5 @@
-import pytorch_lightning as pl
+#import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 import logging
 from torch.utils.data import DataLoader
@@ -185,7 +186,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             max_encoder_length=config['context_length'],
             min_prediction_length=config['prediction_length'],
             max_prediction_length=config['prediction_length'],
-            allow_missing_timesteps=True,        
+            allow_missing_timesteps=True,
             time_varying_known_reals=["time_idx", "hour_of_day"],
             time_varying_unknown_reals=["close_back", "volume_back"],
             categorical_encoders={},

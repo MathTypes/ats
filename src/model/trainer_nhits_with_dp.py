@@ -1,52 +1,56 @@
 # Usage
 # PYTHONPATH=.. python3 trainer_nhits_with_dp.py --start_date=2009-01-01 --end_date=2009-10-01 --mode=train --checkpoint=checkpoint
+import datetime
 import logging
 import os
 import warnings
 import ray
 import time
 import wandb
-import lightning.pytorch as pl
-#from import lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-from lightning.pytorch.loggers import TensorBoardLogger
-from pytorch_lightning.loggers import WandbLogger
-from ray.util.dask import enable_dask_on_ray
-from ray_lightning import RayStrategy
-from ray.data import ActorPoolStrategy
-import datetime
-warnings.filterwarnings("ignore")  # avoid printing out absolute paths
-import matplotlib as mpl
 import copy
 from pathlib import Path
 import warnings
 import pyarrow.dataset as pds
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
-import lightning.pytorch as pl
+#import lightning.pytorch as pl
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import torch
+
+#import lightning.pytorch as pl
+#from import lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
+from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.tuner import Tuner
+#import pytorch_lightning as pl
+import lightning.pytorch as pl
+
+from pytorch_lightning.loggers import WandbLogger
 from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
-from pytorch_forecasting.data import NaNLabelEncoder
-from pytorch_forecasting.data.examples import generate_ar_data
-from pytorch_forecasting.metrics import MAE, SMAPE, MultivariateNormalDistributionLoss
-from pytorch_forecasting.data import GroupNormalizer
+from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss
+
+from ray.util.dask import enable_dask_on_ray
+from ray_lightning import RayStrategy
+from ray.data import ActorPoolStrategy
+
+from data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
+from datasets import generate_stock_returns
+warnings.filterwarnings("ignore")  # avoid printing out absolute paths
+import matplotlib as mpl
 #from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
-from data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
-
-from pytorch_forecasting.data.examples import get_stallion_data
-from datasets import generate_stock_returns
 from util import logging_utils
 from util import config_utils
 import nhits_tuner
 from math import ceil
 from util import time_util
 import data_util
+
+from wandb.keras import WandbMetricsLogger
+from eval_callback import WandbClfEvalCallback
 
 def get_model(config, data_module):
     device = config['device']
@@ -60,11 +64,18 @@ def get_model(config, data_module):
         learning_rate=3e-2,
         weight_decay=1e-2,
         loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
+        #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
+                                #MQF2DistributionLoss(prediction_length=max_prediction_length),
+                                #MQF2DistributionLoss(prediction_length=max_prediction_length)],
+        #                        ],
+        #               weights=[1.0
+                                #, 0.0, 0.0
+        #               ]),
         backcast_loss_ratio=0.0,
         hidden_size=8,
         optimizer="AdamW",
-        log_interval=10,
-        log_val_interval=10
+        log_interval=0.25,
+        #log_val_interval=10000
     )
     return net
 
@@ -80,7 +91,12 @@ def get_trainer(config, data_module):
     lr_logger = LearningRateMonitor()  # log the learning rate
     wandb_logger = WandbLogger(project='ATS', log_model=True)
     logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
-    log_predictions_callback = LSTMLogPredictionsCallback(wandb_logger, [data_module.X_test, data_module.y_test])
+    #log_predictions_callback = LSTMLogPredictionsCallback(wandb_logger, [data_module.X_test, data_module.y_test])
+    metrics_logger = WandbMetricsLogger(log_freq=10)
+    prediction_logger = WandbClfEvalCallback(
+        data_module.val_dataloader(),
+        data_table_columns=["time", "close_pct"],
+        pred_table_columns=["epoch", "time", "close_pct", "pred_close_pct"])
     trainer = pl.Trainer(
         max_epochs=config['max_epochs'],
         accelerator=device,
@@ -88,8 +104,11 @@ def get_trainer(config, data_module):
         gradient_clip_val=0.1,
         limit_train_batches=50,  # coment in for training, running valiation every 30 batches
         # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
-        callbacks=[lr_logger, early_stop_callback,
-                   #log_predictions_callback
+        callbacks=[#lr_logger,
+                   #early_stop_callback,
+                   #log_predictions_callback,
+                   #metrics_logger,
+                   #prediction_logger
         ],
         #strategy=strategy,
         strategy = "auto",

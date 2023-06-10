@@ -89,5 +89,5 @@ class TimeSeriesPipeline(Pipeline):
     def create_model(self):
         self.data_module = nhits.get_data_module(self.config)
         self.model = nhits.get_model(self.config, self.data_module)
-        self.trainer = nhits.get_trainer(self.config, self.data_module)
+        #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
