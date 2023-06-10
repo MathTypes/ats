@@ -93,10 +93,10 @@ def get_trainer(config, data_module):
     logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
     #log_predictions_callback = LSTMLogPredictionsCallback(wandb_logger, [data_module.X_test, data_module.y_test])
     metrics_logger = WandbMetricsLogger(log_freq=10)
-    prediction_logger = WandbClfEvalCallback(
-        data_module.val_dataloader(),
-        data_table_columns=["time", "close_pct"],
-        pred_table_columns=["epoch", "time", "close_pct", "pred_close_pct"])
+    #prediction_logger = WandbClfEvalCallback(
+    #    data_module.val_dataloader(),
+    #    data_table_columns=["time", "close_pct"],
+    #    pred_table_columns=["epoch", "time", "close_pct", "pred_close_pct"])
     trainer = pl.Trainer(
         max_epochs=config['max_epochs'],
         accelerator=device,

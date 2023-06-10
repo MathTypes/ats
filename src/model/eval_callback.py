@@ -1,11 +1,25 @@
+from typing import Any, Dict, Optional, Set
 from wandb.keras import WandbEvalCallback
+from lightning.pytorch.callbacks.callback import Callback
+from lightning.pytorch.utilities.types import STEP_OUTPUT
 
-class WandbClfEvalCallback(WandbEvalCallback):
+class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
         self, validloader, data_table_columns, pred_table_columns, num_samples=100
     ):
         super().__init__(data_table_columns, pred_table_columns)
         self.val_data = next(iter(validloader))
+
+    def on_train_batch_end(
+        self,
+        trainer: "pl.Trainer",
+        pl_module: "pl.LightningModule",
+        outputs: STEP_OUTPUT,
+        batch: Any,
+        batch_idx: int,
+    ) -> None:
+        """Save checkpoint on train batch end if we meet the criteria for `every_n_train_steps`"""
+        super().on_train_batch_end(batch)
 
     def add_ground_truth(self, logs=None):
         for idx, (x, y) in enumerate(self.val_data):

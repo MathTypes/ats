@@ -211,10 +211,10 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         return train_dataloader
     
     def val_dataloader(self):
-        val_dataloader = self.validation.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=4, pin_memory=True, drop_last=False)
+        val_dataloader = self.validation.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=0, pin_memory=True, drop_last=False)
         return val_dataloader
 
     
     def test_dataloader(self):
-        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=4, pin_memory=True, drop_last=False)
+        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=0, pin_memory=True, drop_last=False)
         return test_dataloader

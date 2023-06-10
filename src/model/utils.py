@@ -4,21 +4,25 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
-from pytorch_lightning.callbacks import GradientAccumulationScheduler, StochasticWeightAveraging
+from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
+#from pytorch_lightning.callbacks import GradientAccumulationScheduler, StochasticWeightAveraging
 #import pytorch_lightning as pl
 import lightning.pytorch as pl
 #from pytorch_lightning.loggers import WandbLogger
 from lightning.pytorch.loggers import WandbLogger
 #from pytorch_lightning import Trainer
 
+from wandb.keras import WandbCallback
+from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
+from eval_callback import WandbClfEvalCallback
+
 from data_module import LSTMDataModule, TransformerDataModule
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback, TSLogPredictionsCallback
 import wandb
-from wandb.keras import WandbCallback
 from pathlib import Path
 #from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-
+import data_module
 torch.manual_seed(0)
 np.random.seed(0)
 
@@ -125,9 +129,18 @@ class Pipeline:
         devices = 1
         logging.info(f"device:{self.device}")
         #profiler = AdvancedProfiler()
+        wandb_logger = WandbLogger(project='ATS', log_model=True)
+        logging.info(f"data_module:{self.data_module}")
+        prediction_logger = WandbClfEvalCallback(
+            self.data_module.val_dataloader(),
+            data_table_columns=["time", "close_pct"],
+            pred_table_columns=["epoch", "time", "close_pct", "pred_close_pct"])
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
-                             callbacks=[#checkpoint_callback, lr_monitor,
+                             callbacks=[checkpoint_callback, lr_monitor,
                                         #log_predictions_callback,
+                                        prediction_logger,
+                                        #WandbModelCheckpoint("models"),
+                                        #WandbMetricsLogger(),
                                         #StochasticWeightAveraging(swa_lrs=1e-2)
                              ],
                              devices=devices,
