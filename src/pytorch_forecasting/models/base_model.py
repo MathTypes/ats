@@ -8,10 +8,14 @@ from copy import deepcopy
 import inspect
 import logging
 import os
+import PIL
+from io import BytesIO
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import warnings
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import numpy
+import wandb
 
 #import lightning.pytorch as pl
 #from lightning.pytorch import LightningModule, Trainer
@@ -460,7 +464,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # update log interval if not defined
         if self.hparams.log_val_interval is None:
             self.hparams.log_val_interval = self.hparams.log_interval
-
+        logging.info(f"self.hparams.log_interval:{self.hparams.log_interval}")
         if not hasattr(self, "loss"):
             if isinstance(loss, (tuple, list)):
                 self.loss = MultiLoss(metrics=[convert_torchmetric_to_pytorch_forecasting_metric(l) for l in loss])
@@ -696,6 +700,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             quantiles_kwargs.setdefault("use_metric", True)
 
         self.log_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
+        logging.info(f"self.log_interval:{self.log_interval}")
         if self.log_interval > 0:
             self.log_prediction(
                 x, out, batch_idx, prediction_kwargs=prediction_kwargs, quantiles_kwargs=quantiles_kwargs
@@ -856,6 +861,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     target_tag = self.target_names[idx] + " "
                 else:
                     target_tag = ""
+                #logging.info(f"y_true:{y_true}, y_point:{y_point}, loss_value:{loss_value}, idx:{idx}, metric:{metric}")
                 self.log(
                     f"{target_tag}{self.current_stage}_{metric.name}",
                     loss_value,
@@ -949,8 +955,21 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 )
             else:
                 log_indices = [0]
+            
+            #columns=["time", "image", "prediction"]
+            columns=["time", "image"]
+            my_table = wandb.Table(columns=columns)
             for idx in log_indices:
                 fig = self.plot_prediction(x, out, idx=idx, add_loss_to_title=True, **kwargs)
+                logging.info(f"x:{x}")
+                logging.info(f"out:{out}")
+                logging.info(f"idx:{idx}")
+                img_bytes = fig.to_image(format="png") # kaleido library
+                im = PIL.Image.open(BytesIO(img_bytes))
+                #img_array = np.asarray(img_bytes)
+                img = wandb.Image(im)
+                #my_table.add_data(x["decoder_time_idx"][-1], img, out["prediction"][0])
+                my_table.add_data(x["decoder_time_idx"][-1], img)
                 tag = f"{self.current_stage} prediction"
                 if self.training:
                     tag += f" of item {idx} in global batch {self.global_step}"
@@ -971,6 +990,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     #    global_step=self.global_step,
                     #)
                     self.logger.experiment.log({tag: fig})
+            if self.training:
+                tag += f" global batch {self.global_step}"
+            else:
+                tag += f" batch {batch_idx}"
+            self.logger.experiment.log({"tag": my_table})
 
     def plot_prediction(
         self,
@@ -1877,6 +1901,7 @@ class BaseModelWithCovariates(BaseModel):
         Returns:
             Union[Dict[str, plt.Figure], plt.Figure]: matplotlib figure
         """
+        logging.info(f"self.plot_prediction_actual_by_variable, {data}, {name}")
         if name is None:  # run recursion for figures
             figs = {name: self.plot_prediction_actual_by_variable(data, name) for name in data["support"].keys()}
             return figs

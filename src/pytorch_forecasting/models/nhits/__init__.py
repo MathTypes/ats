@@ -500,6 +500,7 @@ class NHiTS(BaseModelWithCovariates):
         go.Figure(data=go.Scatter(x=torch.arange(-self.hparams.context_length, 0), y=x["encoder_target"][idx].detach().cpu(), line=dict(color=color)))
         go.Figure(data=go.Scatter(x=torch.arange(self.hparams.prediction_length),
                                   y=x["decoder_target"][idx].detach().cpu(),
+                                  name="Target",
                                   line=dict(color=color)))
         # prediction
         color = next(prop_cycle)["color"]
