@@ -17,7 +17,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
     ):
         super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "act_close_pct_max", "act_close_pct_min"],
                          ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "act_close_pct_max", "act_close_pct_min",
-                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img"])
+                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min"])
         self.val_x, self.val_y = next(iter(data_module.val_dataloader()))
         logging.info(f"self.val_x:{self.val_x}")
         logging.info(f"self.val_y:{self.val_y}")
@@ -95,10 +95,13 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 self.data_table_ref.data[idx][4], # hour of day
                 self.data_table_ref.data[idx][5], # act_max_close_pct
                 self.data_table_ref.data[idx][6], # act_min_close_pct
-                pred[0],
-                pred[1],
-                pred[2],
-                pred[3]
+                pred[0], # pred_time_idx
+                pred[1], # pred_close_pct_max
+                pred[2], # pred_close_pct_min
+                pred[3], # img
+                pred[1] - self.data_table_ref.data[idx][5], # error_max
+                pred[2] - self.data_table_ref.data[idx][6], # error_min
+                
             )
 
     def _inference(self):
@@ -106,25 +109,25 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
       x = self.val_x
       y = self.val_y
       
-      logging.info(f"x:{x}")
-      logging.info(f"y:{y}")
+      #logging.info(f"x:{x}")
+      #logging.info(f"y:{y}")
       device = self.pl_module.device
       x = {key:val.to(device) for key, val in x.items()}
       y = [val.to(device) if val is not None else None for val in y]
       kwargs={'nolog': True}
       #logging.info(f"pl_module:{self.pl_module}, {dir(self.pl_module)}")
       log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
-      logging.info(f"log:{log}")
-      logging.info(f"out:{out}")
+      #logging.info(f"log:{log}")
+      #logging.info(f"out:{out}")
 
       y_raws = to_list(out["prediction"])[0]  # raw predictions - used for calculating loss
       prediction_kwargs = {}
       quantiles_kwargs = {}
       y_hats = to_list(self.pl_module.to_prediction(out, **prediction_kwargs))[0]
       y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[0]
-      logging.info(f"y_raws:{y_raws.shape}")
-      logging.info(f"y_hats:{y_hats.shape}")
-      logging.info(f"y_quantiles:{y_quantiles.shape}")
+      #logging.info(f"y_raws:{y_raws.shape}")
+      #logging.info(f"y_hats:{y_hats.shape}")
+      #logging.info(f"y_quantiles:{y_quantiles.shape}")
       for idx in range(self.num_samples):
           fig = self.pl_module.plot_prediction(x, out, idx=idx, add_loss_to_title=True)
           img_bytes = fig.to_image(format="png") # kaleido library
