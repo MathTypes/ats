@@ -379,7 +379,8 @@ class NHiTS(BaseModelWithCovariates):
         """
         Take training / validation step.
         """
-        log, out = super().step(x, y, batch_idx=batch_idx)
+        #new_kwargs = {k:v for k,v in kwargs.items() if k not in ["nolog"]}
+        log, out = super().step(x, y, batch_idx=batch_idx, **kwargs)
 
         if self.hparams.backcast_loss_ratio > 0 and not self.predicting:  # add loss from backcast
             backcast = out["backcast"]

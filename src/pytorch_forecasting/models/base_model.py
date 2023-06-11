@@ -464,7 +464,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # update log interval if not defined
         if self.hparams.log_val_interval is None:
             self.hparams.log_val_interval = self.hparams.log_interval
-        logging.info(f"self.hparams.log_interval:{self.hparams.log_interval}")
+        #logging.info(f"self.hparams.log_interval:{self.hparams.log_interval}")
         if not hasattr(self, "loss"):
             if isinstance(loss, (tuple, list)):
                 self.loss = MultiLoss(metrics=[convert_torchmetric_to_pytorch_forecasting_metric(l) for l in loss])
@@ -730,7 +730,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 ``on_epoch_end`` hook and the second entry is the model's output.
         """
         # pack y sequence if different encoder lengths exist
-        logging.info(f"kwargs:{kwargs}, batch_idx:{batch_idx}")
+        #logging.info(f"kwargs:{kwargs}, batch_idx:{batch_idx}")
         if (x["decoder_lengths"] < x["decoder_lengths"].max()).any():
             if isinstance(y[0], (list, tuple)):
                 y = (
@@ -801,7 +801,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             else:
                 loss = None
         else:
-            out = self(x, **kwargs)
+            new_kwargs = {k:v for k,v in kwargs.items() if k not in ["nolog"]} 
+            out = self(x, **new_kwargs)
 
             # calculate loss
             prediction = out["prediction"]
@@ -813,7 +814,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     loss = self.loss(prediction, y)
             else:
                 loss = None
-        if "nolog" in kwargs:
+        if not "nolog" in kwargs:
             self.log(
                 f"{self.current_stage}_loss",
                 loss,

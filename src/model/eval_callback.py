@@ -87,7 +87,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         for idx in table_idxs:
             pred = preds[idx]
             self.pred_table.add_data(
-                epoch,
+                #epoch,
                 self.data_table_ref.data[idx][0], # ticker
                 self.data_table_ref.data[idx][1], # time
                 self.data_table_ref.data[idx][2], # time_idx
@@ -139,6 +139,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           #y_raw_cum_sum = torch.cumsum(y_raw, dim=-1)
           img = wandb.Image(im)
           preds.append([decoder_time_idx, torch.max(y_hat_cum_sum), torch.min(y_hat_cum_sum), img])
-      logging.info(f"preds:{len(preds)}")
+      #logging.info(f"preds:{len(preds)}")
       return preds
      
