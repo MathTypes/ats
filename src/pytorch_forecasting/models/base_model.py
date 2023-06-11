@@ -16,7 +16,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import numpy
 import wandb
-
+import traceback
 import lightning.pytorch as pl
 from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks import BasePredictionWriter, LearningRateFinder
@@ -695,6 +695,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             Dict[str, Any]: log dictionary to be returned by training and validation steps
         """
         # log
+        #logging.info(f"prediction_kwargs:{prediction_kwargs}")
+        #logging.info(f"{traceback.print_stack()}")
         if isinstance(self.loss, DistributionLoss):
             prediction_kwargs.setdefault("n_samples", 20)
             prediction_kwargs.setdefault("use_metric", True)
@@ -702,7 +704,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             quantiles_kwargs.setdefault("use_metric", True)
 
         self.log_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
-        logging.info(f"self.log_interval:{self.log_interval}")
+        #logging.info(f"self.log_interval:{self.log_interval}")
         if self.log_interval > 0:
             self.log_prediction(
                 x, out, batch_idx, prediction_kwargs=prediction_kwargs, quantiles_kwargs=quantiles_kwargs
@@ -710,7 +712,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         return {}
 
     def step(
-        self, x: Dict[str, torch.Tensor], y: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, **kwargs
+        self, x: Dict[str, torch.Tensor], y: Tuple[torch.Tensor, torch.Tensor], batch_idx: int,
+            **kwargs
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Run for each train/val step.
@@ -727,6 +730,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 ``on_epoch_end`` hook and the second entry is the model's output.
         """
         # pack y sequence if different encoder lengths exist
+        logging.info(f"kwargs:{kwargs}")
         if (x["decoder_lengths"] < x["decoder_lengths"].max()).any():
             if isinstance(y[0], (list, tuple)):
                 y = (
@@ -809,14 +813,15 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     loss = self.loss(prediction, y)
             else:
                 loss = None
-        self.log(
-            f"{self.current_stage}_loss",
-            loss,
-            on_step=self.training,
-            on_epoch=True,
-            prog_bar=True,
-            batch_size=len(x["decoder_target"]),
-        )
+        if "nolog" in kwargs:
+            self.log(
+                f"{self.current_stage}_loss",
+                loss,
+                on_step=self.training,
+                on_epoch=True,
+                prog_bar=True,
+                batch_size=len(x["decoder_target"]),
+            )
         log = {"loss": loss, "n_samples": x["decoder_lengths"].size(0)}
         return log, out
 
@@ -960,6 +965,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #columns=["time", "image", "prediction"]
             #columns=["time", "image", "prediction"]
             #my_table = wandb.Table(columns=columns)
+            #logging.info(f"kwargs:{kwargs}")
             for idx in log_indices:
                 fig = self.plot_prediction(x, out, idx=idx, add_loss_to_title=True, **kwargs)
                 #img_bytes = fig.to_image(format="png") # kaleido library

@@ -131,10 +131,7 @@ class Pipeline:
         #profiler = AdvancedProfiler()
         wandb_logger = WandbLogger(project='ATS', log_model=True)
         logging.info(f"data_module:{self.data_module}")
-        prediction_logger = WandbClfEvalCallback(
-            self.data_module.val_dataloader(),
-            data_table_columns=["time", "close_pct"],
-            pred_table_columns=["epoch", "time", "close_pct", "pred_close_pct"])
+        prediction_logger = WandbClfEvalCallback(self.data_module)
         trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor,
                                         #log_predictions_callback,
