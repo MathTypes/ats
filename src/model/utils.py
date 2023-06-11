@@ -111,7 +111,7 @@ class Pipeline:
         )
         #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
-        wandb_logger = WandbLogger(project='ATS', log_model=True)
+        #wandb_logger = WandbLogger(project='ATS', log_model=True)
         #log_predictions_callback = LogPredictionsCallback(wandb_logger,
         #                                                  self.data_module.X_test,
         #                                                  window_size=self.data_module.window_size,

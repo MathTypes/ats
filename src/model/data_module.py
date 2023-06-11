@@ -12,6 +12,7 @@ from datasets import (
 import timeseries_dataset
 import timeseries_utils
 from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
+from pytorch_forecasting.data.encoders import NaNLabelEncoder
 
 eval_batch_size = 10
 
@@ -158,26 +159,26 @@ class LSTMDataModule(pl.LightningDataModule):
 class TimeSeriesDataModule(pl.LightningDataModule):
     def __init__(self, config, train_data):
         super().__init__()
-        self.train_data = train_data.sample(frac=1)
-        val_idx = int(len(train_data) * 0.7)
-        tst_idx = max(int(len(train_data) * 0.8), len(train_data) - 2048)
-        n_past = config['context_length']
-        n_future = config['prediction_length']
-        X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-            train_data[["ticker", "time", "time_idx", "hour_of_day", "volume_back", "close_back"]].values,
-            validation_idx=val_idx,
-            test_idx=tst_idx,
-            n_past=n_past,
-            n_future=n_future
-        )
-        logging.info(f"X_train:{X_train}")
-        logging.info(f"X_val:{X_val}")
-        self.X_train = X_train
-        self.X_val = X_val
-        self.X_test = X_test
-        self.y_train = y_train
-        self.y_val = y_val
-        self.y_test = y_test
+        self.train_data = train_data
+        #val_idx = int(len(train_data) * 0.7)
+        #tst_idx = max(int(len(train_data) * 0.8), len(train_data) - 2048)
+        #n_past = config['context_length']
+        #n_future = config['prediction_length']
+        #X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
+        #    train_data[["ticker", "time", "time_idx", "hour_of_day", "volume_back", "close_back"]].values,
+        #    validation_idx=val_idx,
+        #    test_idx=tst_idx,
+        #    n_past=n_past,
+        #    n_future=n_future
+        #)
+        #logging.info(f"X_train:{X_train}")
+        #logging.info(f"X_val:{X_val}")
+        #self.X_train = X_train
+        #self.X_val = X_val
+        #self.X_test = X_test
+        #self.y_train = y_train
+        #self.y_val = y_val
+        #self.y_test = y_test
         logging.info(f"train_data:{self.train_data}")
         self.training = TimeSeriesDataSet(
             self.train_data,
@@ -191,16 +192,18 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             allow_missing_timesteps=True,
             time_varying_known_reals=["time_idx", "hour_of_day"],
             time_varying_unknown_reals=["close_back", "volume_back"],
-            categorical_encoders={},
+            categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
         )
         logging.info(f"train_data:{self.train_data.describe()}")
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
-        logging.info(f"val_idx:{val_idx}, tst_idx:{tst_idx}")
-        self.validation = TimeSeriesDataSet.from_dataset(self.training, self.train_data[val_idx:tst_idx])
-        self.test = TimeSeriesDataSet.from_dataset(self.training, self.train_data[tst_idx:])
+        #logging.info(f"val_idx:{val_idx}, tst_idx:{tst_idx}")
+        #self.validation = TimeSeriesDataSet.from_dataset(self.training, self.train_data[val_idx:tst_idx])
+        self.validation = self.training
+        #self.test = TimeSeriesDataSet.from_dataset(self.training, self.train_data[tst_idx:])
+        self.test = self.training
         # create dataloaders for model
-        self.batch_size = 128*20  # set this between 32 to 128
+        self.batch_size = 128*100  # set this between 32 to 128
         
 
     def prepare_data(self):
@@ -210,15 +213,20 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         pass
         
     def train_dataloader(self):
-        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size, num_workers=10, pin_memory=True, drop_last=False)
+        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size, num_workers=4, pin_memory=True, drop_last=False)
         return train_dataloader
     
     def val_dataloader(self):
         logging.info(f"val_dataloader_batch:{self.batch_size * 10}")
-        val_dataloader = self.validation.to_dataloader(train=False, batch_size=self.batch_size, num_workers=0, pin_memory=True, drop_last=False)
+        # train = True is the hack to randomly sample from time series from different ticker. 
+        val_dataloader = self.validation.to_dataloader(train=True,
+                                                       batch_size=self.batch_size, num_workers=4,
+                                                       batch_sampler=None,
+                                                       pin_memory=True, drop_last=False)
         return val_dataloader
 
     
     def test_dataloader(self):
-        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=0, pin_memory=True, drop_last=False)
+        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=0,
+                                                  batch_sampler=None, pin_memory=True, drop_last=False)
         return test_dataloader

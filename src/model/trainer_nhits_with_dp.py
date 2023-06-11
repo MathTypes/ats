@@ -157,7 +157,7 @@ def get_data_module(config):
         ticker_train_data = ticker_train_data.set_index("new_idx")
         train_data_vec.append(ticker_train_data)
     train_data = pd.concat(train_data_vec)
-
+    train_data = train_data.sort_values(["ticker", "time"])
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
     data_loading_time = time.time() - start
     logging.info(f"Data loading time: {data_loading_time:.2f} seconds")

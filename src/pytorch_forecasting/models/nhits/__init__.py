@@ -375,7 +375,7 @@ class NHiTS(BaseModelWithCovariates):
         # initialize class
         return super().from_dataset(dataset, **new_kwargs)
 
-    def step(self, x, y, batch_idx) -> Dict[str, torch.Tensor]:
+    def step(self, x, y, batch_idx, **kwargs) -> Dict[str, torch.Tensor]:
         """
         Take training / validation step.
         """
@@ -401,24 +401,26 @@ class NHiTS(BaseModelWithCovariates):
             else:
                 backcast_loss = self.loss(backcast, x["encoder_target"]) * backcast_weight
             label = ["val", "train"][self.training]
-            self.log(
-                f"{label}_backcast_loss",
-                backcast_loss,
-                on_epoch=True,
-                on_step=self.training,
-                batch_size=len(x["decoder_target"]),
-            )
-            self.log(
-                f"{label}_forecast_loss",
-                log["loss"],
-                on_epoch=True,
-                on_step=self.training,
-                batch_size=len(x["decoder_target"]),
-            )
-            log["loss"] = log["loss"] * forecast_weight + backcast_loss
+            if not "nolog" in kwargs:
+                self.log(
+                    f"{label}_backcast_loss",
+                    backcast_loss,
+                    on_epoch=True,
+                    on_step=self.training,
+                    batch_size=len(x["decoder_target"]),
+                )
+                self.log(
+                    f"{label}_forecast_loss",
+                    log["loss"],
+                    on_epoch=True,
+                    on_step=self.training,
+                    batch_size=len(x["decoder_target"]),
+                )
+                log["loss"] = log["loss"] * forecast_weight + backcast_loss
 
-        # log interpretation
-        self.log_interpretation(x, out, batch_idx=batch_idx)
+        if not "nolog" in kwargs:
+          # log interpretation
+          self.log_interpretation(x, out, batch_idx=batch_idx)
         return log, out
 
     def plot_interpretation(

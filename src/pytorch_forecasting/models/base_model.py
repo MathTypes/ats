@@ -730,7 +730,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 ``on_epoch_end`` hook and the second entry is the model's output.
         """
         # pack y sequence if different encoder lengths exist
-        logging.info(f"kwargs:{kwargs}")
+        logging.info(f"kwargs:{kwargs}, batch_idx:{batch_idx}")
         if (x["decoder_lengths"] < x["decoder_lengths"].max()).any():
             if isinstance(y[0], (list, tuple)):
                 y = (
@@ -1382,9 +1382,12 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     for idx, loss in enumerate(self.loss)
                 ]
             else:
+                logging.info(f"quantiles:{kwargs.get('quantiles', self.loss.quantiles)}")
+                logging.info(f"prediction:{prediction}")
                 out = Metric.to_quantiles(
                     self.loss, out["prediction"], quantiles=kwargs.get("quantiles", self.loss.quantiles)
                 )
+                logging.info(f"out:{out}")
         else:
             try:
                 out = self.loss.to_quantiles(out["prediction"], **kwargs)
