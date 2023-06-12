@@ -160,38 +160,19 @@ class TimeSeriesDataModule(pl.LightningDataModule):
     def __init__(self, config, train_data):
         super().__init__()
         self.train_data = train_data
-        #val_idx = int(len(train_data) * 0.7)
-        #tst_idx = max(int(len(train_data) * 0.8), len(train_data) - 2048)
-        #n_past = config['context_length']
-        #n_future = config['prediction_length']
-        #X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
-        #    train_data[["ticker", "time", "time_idx", "hour_of_day", "volume_back", "close_back"]].values,
-        #    validation_idx=val_idx,
-        #    test_idx=tst_idx,
-        #    n_past=n_past,
-        #    n_future=n_future
-        #)
-        #logging.info(f"X_train:{X_train}")
-        #logging.info(f"X_val:{X_val}")
-        #self.X_train = X_train
-        #self.X_val = X_val
-        #self.X_test = X_test
-        #self.y_train = y_train
-        #self.y_val = y_val
-        #self.y_test = y_test
         logging.info(f"train_data:{self.train_data}")
         self.training = TimeSeriesDataSet(
             self.train_data,
             time_idx="time_idx",
-            target="close_back",
+            target="high_39",
             group_ids=["ticker"],
             min_encoder_length=config['context_length'],  # keep encoder length long (as it is in the validation set)
             max_encoder_length=config['context_length'],
             min_prediction_length=config['prediction_length'],
             max_prediction_length=config['prediction_length'],
             allow_missing_timesteps=True,
-            time_varying_known_reals=["time_idx", "hour_of_day"],
-            time_varying_unknown_reals=["close_back", "volume_back"],
+            time_varying_known_reals=["time_idx", "hour_of_day", "day_of_week", "day_of_month"],
+            time_varying_unknown_reals=["close_back", "volume_back", "high_39"],
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
         )
         logging.info(f"train_data:{self.train_data.describe()}")

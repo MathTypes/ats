@@ -41,16 +41,18 @@ from datasets import generate_stock_returns
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 import matplotlib as mpl
 #from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
+from wandb.keras import WandbMetricsLogger
+
+
+import data_util
+from eval_callback import WandbClfEvalCallback
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
+from math import ceil
+import nhits_tuner
 from util import logging_utils
 from util import config_utils
-import nhits_tuner
-from math import ceil
 from util import time_util
-import data_util
 
-from wandb.keras import WandbMetricsLogger
-from eval_callback import WandbClfEvalCallback
 
 def get_model(config, data_module):
     device = config['device']
@@ -84,19 +86,12 @@ def get_trainer(config, data_module):
     device = config['device']
     use_gpu = device == "cuda"
     logging.info(f"device:{device}, use_gpu:{use_gpu}")
-    #strategy = RayStrategy(num_workers=config['num_workers'],
-    #                       num_cpus_per_worker=1, use_gpu=use_gpu)
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
     wandb_logger = WandbLogger(project='ATS', log_model=True)
-    logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
-    #log_predictions_callback = LSTMLogPredictionsCallback(wandb_logger, [data_module.X_test, data_module.y_test])
+    #logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
     metrics_logger = WandbMetricsLogger(log_freq=10)
-    #prediction_logger = WandbClfEvalCallback(
-    #    data_module.val_dataloader(),
-    #    data_table_columns=["time", "close_pct"],
-    #    pred_table_columns=["epoch", "time", "close_pct", "pred_close_pct"])
     trainer = pl.Trainer(
         max_epochs=config['max_epochs'],
         accelerator=device,
@@ -110,7 +105,6 @@ def get_trainer(config, data_module):
                    #metrics_logger,
                    #prediction_logger
         ],
-        #strategy=strategy,
         strategy = "auto",
         logger=wandb_logger,
     )

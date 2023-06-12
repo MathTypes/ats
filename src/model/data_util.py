@@ -52,11 +52,11 @@ def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
     input_dirs = get_input_dirs(config, ticker, asset_type)
     ds = ray.data.read_parquet(input_dirs, parallelism=100)
     ds = ds.to_pandas(10000000)
-    logging.info(f"ds:{ds}")
+    #logging.info(f"ds:{ds}")
     ds.sort_index()
     ds = ds[~ds.index.duplicated(keep='first')]
-    logging.info(f"ds:{ds.head()}")
-    logging.info(f"ds:{ds.info()}")
+    #logging.info(f"ds:{ds.head()}")
+    #logging.info(f"ds:{ds.info()}")
     return ds
 
 

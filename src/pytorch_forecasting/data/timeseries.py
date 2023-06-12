@@ -13,6 +13,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.utils.validation import check_is_fitted
@@ -114,6 +115,21 @@ def check_for_nonfinite(tensor: torch.Tensor, names: Union[str, List[str]]) -> t
 
 NORMALIZER = Union[TorchNormalizer, NaNLabelEncoder, EncoderNormalizer]
 
+def add_highs(df, width):
+    df_cumsum = df.cumsum()
+    high_idx, _ = find_peaks(df_cumsum, width=width)
+    high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
+    df_high = df_cumsum.to_frame(name="close_cumsum").join(high)
+    df_high = df_high.bfill()
+    return df_high["close_cumsum_high"]
+
+def add_lows(df, width):
+    df_cumsum = df.cumsum()
+    low_idx, _ = find_peaks(np.negative(df_cumsum), width=width)
+    low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
+    df_low = df_cumsum.to_frame(name="close_cumsum").join(low)
+    df_low = df_low.bfill()
+    return df_low["close_cumsum_low"]
 
 class TimeSeriesDataSet(Dataset):
     """
@@ -391,6 +407,24 @@ class TimeSeriesDataSet(Dataset):
         ), f"add_encoder_length should be boolean or 'auto' but found {add_encoder_length}"
         self.add_encoder_length = add_encoder_length
 
+        g = data.groupby(self.group_ids, observed=True)
+        df_index_high_13 = g['close_back'].transform(add_highs, width=13)
+        logging.info(f"df_index_high_13:{df_index_high_13}")
+        df_index_low_13 = g['close_back'].transform(add_lows, width=13)
+        df_index_high_91 = g['close_back'].transform(add_highs, width=13*7)
+        df_index_low_91 = g['close_back'].transform(add_lows, width=13*7)
+        df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
+        df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
+        logging.info(f"df_index_low_13:{df_index_low_13}")
+        data["high_13"] = df_index_high_13
+        data["low_13"] = df_index_low_13
+        data["high_39"] = df_index_high_39
+        data["low_39"] = df_index_low_39
+        data["high_91"] = df_index_high_91
+        data["low_91"] = df_index_low_91
+        data = data.dropna()
+        logging.info(f"enhanced_data:{data}")
+        
         # target normalizer
         self._set_target_normalizer(data)
 
@@ -1199,6 +1233,7 @@ class TimeSeriesDataSet(Dataset):
 
         new = cls(data, **parameters)
         return new
+
 
     def _construct_index(self, data: pd.DataFrame, predict_mode: bool) -> pd.DataFrame:
         """
