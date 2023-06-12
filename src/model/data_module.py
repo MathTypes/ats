@@ -164,7 +164,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.training = TimeSeriesDataSet(
             self.train_data,
             time_idx="time_idx",
-            target="high_39",
+            target="close_back",
             group_ids=["ticker"],
             min_encoder_length=config['context_length'],  # keep encoder length long (as it is in the validation set)
             max_encoder_length=config['context_length'],
@@ -172,7 +172,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             max_prediction_length=config['prediction_length'],
             allow_missing_timesteps=True,
             time_varying_known_reals=["time_idx", "hour_of_day", "day_of_week", "day_of_month"],
-            time_varying_unknown_reals=["close_back", "volume_back", "high_39"],
+            time_varying_unknown_reals=["close_back", "volume_back"],
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
         )
         logging.info(f"train_data:{self.train_data.describe()}")
