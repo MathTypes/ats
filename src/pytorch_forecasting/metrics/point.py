@@ -2,6 +2,7 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import scipy.stats
+from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
 import torch
 import torch.nn.functional as F
 from torch.nn.utils import rnn
@@ -208,6 +209,132 @@ class MASE(MultiHorizonMetric):
         self._update_losses_and_lengths(losses, lengths)
 
     def loss(self, y_pred, target, scaling):
+        return (self.to_prediction(y_pred) - target).abs() / scaling.unsqueeze(-1)
+
+    def calculate_scaling(self, target, lengths, encoder_target, encoder_lengths):
+        # calcualte mean(abs(diff(targets)))
+        eps = 1e-6
+        batch_size = target.size(0)
+        total_lengths = lengths + encoder_lengths
+        assert (total_lengths > 1).all(), "Need at least 2 target values to be able to calculate MASE"
+        max_length = target.size(1) + encoder_target.size(1)
+        if (total_lengths != max_length).any():  # if decoder or encoder targets have sequences of different lengths
+            targets = torch.cat(
+                [
+                    encoder_target,
+                    torch.zeros(batch_size, target.size(1), device=target.device, dtype=encoder_target.dtype),
+                ],
+                dim=1,
+            )
+            target_index = torch.arange(target.size(1), device=target.device, dtype=torch.long).unsqueeze(0).expand(
+                batch_size, -1
+            ) + encoder_lengths.unsqueeze(-1)
+            targets.scatter_(dim=1, src=target, index=target_index)
+        else:
+            targets = torch.cat([encoder_target, target], dim=1)
+
+        # take absolute difference
+        diffs = (targets[:, :-1] - targets[:, 1:]).abs()
+
+        # set last difference to 0
+        not_maximum_length = total_lengths != max_length
+        zero_correction_indices = total_lengths[not_maximum_length] - 1
+        if len(zero_correction_indices) > 0:
+            diffs[
+                torch.arange(batch_size, dtype=torch.long, device=diffs.device)[not_maximum_length],
+                zero_correction_indices,
+            ] = 0.0
+
+        # calculate mean over differences
+        scaling = diffs.sum(1) / total_lengths + eps
+
+        return scaling
+
+
+class MAPCSE(MultiHorizonMetric):
+    """
+    Mean absolute scaled cum error
+
+    Defined as ``(y_pred - target).abs() / all_targets[:, :-1] - all_targets[:, 1:]).mean(1)``.
+    ``all_targets`` are here the concatenated encoder and decoder targets
+    """
+
+    def update(
+        self,
+        y_pred,
+        target,
+        encoder_target,
+        encoder_lengths=None,
+    ) -> torch.Tensor:
+        """
+        Update metric that handles masking of values.
+
+        Args:
+            y_pred (Dict[str, torch.Tensor]): network output
+            target (Tuple[Union[torch.Tensor, rnn.PackedSequence], torch.Tensor]): tuple of actual values and weights
+            encoder_target (Union[torch.Tensor, rnn.PackedSequence]): historic actual values
+            encoder_lengths (torch.Tensor): optional encoder lengths, not necessary if encoder_target
+                is rnn.PackedSequence. Assumed encoder_target is torch.Tensor
+
+        Returns:
+            torch.Tensor: loss as a single number for backpropagation
+        """
+        # unpack weight
+        if isinstance(target, (list, tuple)):
+            weight = target[1]
+            target = target[0]
+        else:
+            weight = None
+
+        # unpack target
+        if isinstance(target, rnn.PackedSequence):
+            target, lengths = unpack_sequence(target)
+        else:
+            lengths = torch.full((target.size(0),), fill_value=target.size(1), dtype=torch.long, device=target.device)
+
+        # determine lengths for encoder
+        if encoder_lengths is None:
+            encoder_target, encoder_lengths = unpack_sequence(target)
+        else:
+            assert isinstance(encoder_target, torch.Tensor)
+        assert not target.requires_grad
+
+        # calculate loss with "none" reduction
+        scaling = self.calculate_scaling(target, lengths, encoder_target, encoder_lengths)
+        logging.info(f"orig_y_pred:{y_pred}")
+        logging.info(f"orig_target:{target}")
+        y_pred = torch.cumsum(y_pred)
+        target = torch.cumsum(target)
+        logging.info(f"y_pred:{y_pred}")
+        logging.info(f"target:{target}")
+
+        high_idx_pred, _ = find_peaks(y_pred, width=4)
+        high_idx_target, _ = find_peaks(target, width=4)
+        low_idx_pred, _ = find_peaks(np.negative(pred), width=4)
+        low_idx_target, _ = find_peaks(np.negative(target), width=4)
+        idx = high_idx_pred + high_idx_target + low_idx_pred + low_idx_target
+
+        logging.info(f"scaling:{scaling}")
+        logging.info(f"high_idx_pred:{high_idx_pred}")
+        logging.info(f"low_idx_pred:{low_idx_pred}")
+        logging.info(f"high_idx_target:{high_idx_target}")
+        logging.info(f"low_idx_target:{low_idx_target}")
+
+        y_pred = y_pred.iloc[idx]
+        target = target.iloc[idx]
+        logging.info(f"peak_y_pred:{y_pred}")
+        logging.info(f"peak_target:{target}")
+        
+        losses = self.loss(pred, target, scaling)
+
+        # weight samples
+        if weight is not None:
+            losses = losses * weight.unsqueeze(-1)
+
+        self._update_losses_and_lengths(losses, lengths)
+
+    def loss(self, y_pred, target, scaling):
+        
         return (self.to_prediction(y_pred) - target).abs() / scaling.unsqueeze(-1)
 
     def calculate_scaling(self, target, lengths, encoder_target, encoder_lengths):
