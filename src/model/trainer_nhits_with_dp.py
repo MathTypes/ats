@@ -65,7 +65,7 @@ def get_model(config, data_module):
         training,
         learning_rate=3e-2,
         weight_decay=1e-2,
-        loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
+        #loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
         #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
                                 #MQF2DistributionLoss(prediction_length=max_prediction_length),
                                 #MQF2DistributionLoss(prediction_length=max_prediction_length)],

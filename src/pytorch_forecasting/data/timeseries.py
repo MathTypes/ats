@@ -408,20 +408,21 @@ class TimeSeriesDataSet(Dataset):
         self.add_encoder_length = add_encoder_length
 
         g = data.groupby(self.group_ids, observed=True)
-        df_index_high_13 = g['close_back'].transform(add_highs, width=13)
-        logging.info(f"df_index_high_13:{df_index_high_13}")
-        df_index_low_13 = g['close_back'].transform(add_lows, width=13)
-        df_index_high_91 = g['close_back'].transform(add_highs, width=13*7)
-        df_index_low_91 = g['close_back'].transform(add_lows, width=13*7)
-        df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
-        df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
-        logging.info(f"df_index_low_13:{df_index_low_13}")
-        data["high_13"] = df_index_high_13
-        data["low_13"] = df_index_low_13
-        data["high_39"] = df_index_high_39
-        data["low_39"] = df_index_low_39
-        data["high_91"] = df_index_high_91
-        data["low_91"] = df_index_low_91
+        #df_index_high_13 = g['close_back'].transform(add_highs, width=13)
+        #logging.info(f"df_index_high_13:{df_index_high_13}")
+        #df_index_low_13 = g['close_back'].transform(add_lows, width=13)
+        #df_index_high_91 = g['close_back'].transform(add_highs, width=13*7)
+        #df_index_low_91 = g['close_back'].transform(add_lows, width=13*7)
+        #df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
+        #df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
+        data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
+        #logging.info(f"df_index_low_13:{df_index_low_13}")
+        #data["high_13"] = df_index_high_13
+        #data["low_13"] = df_index_low_13
+        #data["high_39"] = df_index_high_39
+        #data["low_39"] = df_index_low_39
+        #data["high_91"] = df_index_high_91
+        #data["low_91"] = df_index_low_91
         data = data.dropna()
         logging.info(f"enhanced_data:{data}")
         

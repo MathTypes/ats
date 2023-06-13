@@ -1088,7 +1088,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
             # plot observed prediction
             if show_future_observed:
-                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name=None, line=dict(color=obs_color)))
+                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed", line=dict(color=obs_color)))
 
             # plot prediction
             fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted", line=dict(color=pred_color)))
@@ -1098,9 +1098,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
-                                             fill=None, mode='lines',
+                                             fill=None, mode='lines', name=f"quantile {i}",
                                              line_color=pred_color))
-                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1],
+                    idx = y_quantile.shape[1]-(i+1)
+                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {idx}",
                                              fill='tonexty', # fill area between trace0 and trace1
                                              mode='lines', line_color=pred_color))
                 else:
