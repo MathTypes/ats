@@ -115,8 +115,8 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 pred[1], # pred_close_pct_max
                 pred[2], # pred_close_pct_min
                 pred[3], # img
-                pred[1] - self.data_table_ref.data[idx][5], # error_max
-                pred[2] - self.data_table_ref.data[idx][6], # error_min
+                pred[1] - self.data_table_ref.data[idx][8], # error_max
+                pred[2] - self.data_table_ref.data[idx][9], # error_min
                 
             )
 
