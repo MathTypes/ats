@@ -3,6 +3,7 @@ import datetime
 import functools
 import logging
 import os
+from pyarrow import csv
 import time
 import traceback
 
@@ -128,3 +129,20 @@ if __name__ == "__main__":
     logging_utils.init_logging()
     price_df = get_time_series_by_range(args.instr, args.start_date, args.end_date)
     logging.info(f"price_df_time:{price_df.index}")
+
+
+def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
+    #ticker = ticker.replace("CME_","")
+    names = ["Time", "Open", "High", "Low", "Close", "Volume"]
+    if asset_type in ["FUT"]:
+        file_path = os.path.join(f"{raw_dir}/futures", f"{ticker}_1min_continuous_adjusted.txt")
+    else:
+        file_path = os.path.join(f"{raw_dir}/stock", f"{ticker}_full_1min_adjsplitdiv.txt")
+    read_options = csv.ReadOptions(
+               column_names=names,
+               skip_rows=1)
+    parse_options = csv.ParseOptions(delimiter=",")
+    ds = ray.data.read_csv(file_path,
+                           parse_options=parse_options, read_options=read_options)
+    ds = ds.sort("Time")
+    return ds
