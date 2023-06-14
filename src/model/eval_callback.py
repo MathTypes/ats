@@ -13,7 +13,7 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
-            self, data_module, num_samples=1000, every_n_epochs=10
+            self, data_module, num_samples=10, every_n_epochs=10
     ):
         super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min"],
@@ -21,14 +21,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                           "act_close_pct_max", "act_close_pct_min",
                           "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min"])
         self.val_x, self.val_y = next(iter(data_module.val_dataloader()))
-        logging.info(f"self.val_x:{self.val_x}")
-        logging.info(f"self.val_y:{self.val_y}")
+        #logging.info(f"self.val_x:{self.val_x}")
+        #logging.info(f"self.val_y:{self.val_y}")
         self.indices = data_module.training.x_to_index(self.val_x)
-        logging.info(f"self.indices:{self.indices}")
+        #logging.info(f"self.indices:{self.indices}")
         train_data = data_module.train_data
         #self.matched_train_data = train_data[train_data.isin({"time_idx":self.indices})]
         self.matched_train_data = train_data
-        logging.info(f"self.matched_train_data:{self.matched_train_data}")
+        #logging.info(f"self.matched_train_data:{self.matched_train_data}")
         self.ticker_decoder = data_module.training.categorical_encoders["ticker"]
         self.num_samples = num_samples
         self.every_n_epochs = every_n_epochs
@@ -72,20 +72,20 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             dm = train_data_row["time"]
             #logging.info(f"dm:{dir(dm)}")
             y_close_cum_sum_row = y_close_cum_sum[idx]
-            #logging.info(f"y_close_cum_sum_row:{y_close_cum_sum_row}")
+            logging.info(f"y_close_cum_sum_row:{y_close_cum_sum_row}")
             self.data_table.add_data(
-                train_data_row["ticker"], # ticker
-                dm, # time
-                train_data_row["time_idx"], # time_idx
-                train_data_row["day_of_week"], # day of week
-                train_data_row["hour_of_day"], # hour of day
-                train_data_row["year"], # year
-                train_data_row["month"], # month
-                train_data_row["day_of_month"], # day_of_month
+                train_data_row["ticker"], # 0 ticker
+                dm, # 1 time
+                train_data_row["time_idx"], # 2 time_idx
+                train_data_row["day_of_week"], # 3 day of week
+                train_data_row["hour_of_day"], # 4 hour of day
+                train_data_row["year"], # 5 year
+                train_data_row["month"], # 6 month
+                train_data_row["day_of_month"], # 7 day_of_month
                 #wandb.Image(image),
                 #np.argmax(label, axis=-1)
-                torch.max(y_close_cum_sum_row),
-                torch.min(y_close_cum_sum_row)
+                torch.max(y_close_cum_sum_row), # 8 max
+                torch.min(y_close_cum_sum_row) # 9 min
             )
         #logging.info(f"self.data_table:{self.data_table}")
 
@@ -126,7 +126,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
       y = self.val_y
       
       #logging.info(f"x:{x}")
-      #logging.info(f"y:{y}")
+      #logging.info(f"inference val_y:{y}")
       device = self.pl_module.device
       x = {key:val.to(device) for key, val in x.items()}
       y = [val.to(device) if val is not None else None for val in y]
@@ -142,7 +142,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
       y_hats = to_list(self.pl_module.to_prediction(out, **prediction_kwargs))[0]
       y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[0]
       #logging.info(f"y_raws:{y_raws.shape}")
-      logging.info(f"y_hats:{y_hats}")
+      #logging.info(f"y_hats:{y_hats}")
       #logging.info(f"y_quantiles:{y_quantiles.shape}")
       for idx in range(self.num_samples):
           prediction_date_time = str(self.data_table_ref.data[idx][5]) + "-" + str(self.data_table_ref.data[idx][6]) + "-" + str(self.data_table_ref.data[idx][7]) + " " + str(self.data_table_ref.data[idx][4])
@@ -154,8 +154,8 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           #logging.info(f"decoder_time_idx:{decoder_time_idx}")
           y_hat = y_hats[idx]
           y_raw = y_raws[idx]
-          #logging.info(f"y_hat:{y_hat}")
-          #logging.info(f"y_raw:{y_raw}")
+          logging.info(f"y_hat:{y_hat}")
+          logging.info(f"y_raw:{y_raw}")
           #y_hat_cum_sum = torch.cumsum(y_hat, dim=-1)
           #y_raw_cum_sum = torch.cumsum(y_raw, dim=-1)
           img = wandb.Image(im)

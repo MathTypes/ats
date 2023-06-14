@@ -233,7 +233,7 @@ if __name__ == "__main__":
     enable_dask_on_ray()
     device = args.device
     config = {
-        'model_tickers': ['ES','NQ','CL','RTY','HG'],
+        'model_tickers': ['ES'],
         'raw_dir': '.',
         'num_workers': 8,
         'device' : args.device,

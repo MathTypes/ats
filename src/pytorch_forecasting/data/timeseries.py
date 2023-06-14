@@ -10,6 +10,7 @@ import inspect
 from typing import Any, Callable, Dict, List, Tuple, Union
 import warnings
 import logging
+import traceback
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -390,9 +391,11 @@ class TimeSeriesDataSet(Dataset):
         self.predict_mode = predict_mode
         self.allow_missing_timesteps = allow_missing_timesteps
         self.target_normalizer = target_normalizer
+        #logging.info(f"target_normalizer:{self.target_normalizer}")
         self.categorical_encoders = {} if len(categorical_encoders) == 0 else categorical_encoders
         self.scalers = {} if len(scalers) == 0 else scalers
         self.add_target_scales = add_target_scales
+        #logging.info(f"self.add_target_scales: {self.add_target_scales}")
         self.variable_groups = {} if len(variable_groups) == 0 else variable_groups
         self.lags = {} if len(lags) == 0 else lags
 
@@ -424,9 +427,10 @@ class TimeSeriesDataSet(Dataset):
         #data["high_91"] = df_index_high_91
         #data["low_91"] = df_index_low_91
         data = data.dropna()
-        logging.info(f"enhanced_data:{data}")
+        #logging.info(f"enhanced_data:{data}")
         
         # target normalizer
+        # JJ: disable target normalizer
         self._set_target_normalizer(data)
 
         # overwrite values
@@ -597,6 +601,7 @@ class TimeSeriesDataSet(Dataset):
         Args:
             data (pd.DataFrame): input data
         """
+        logging.info(f"target_normalizer:{self.target_normalizer}")
         if isinstance(self.target_normalizer, str) and self.target_normalizer == "auto":
             normalizers = []
             for target in self.target_names:
@@ -636,6 +641,7 @@ class TimeSeriesDataSet(Dataset):
             "multiple targets / list of targets requires MultiNormalizer as target_normalizer "
             f"but found {self.target_normalizer}"
         )
+        logging.info(f"self.target_normalizer:{self.target_normalizer}")
 
     @property
     @lru_cache(None)
@@ -786,6 +792,7 @@ class TimeSeriesDataSet(Dataset):
             try:
                 check_is_fitted(self.target_normalizer)
             except NotFittedError:
+                logging.info(f"fitting target, {self.target_normalizer}")
                 if isinstance(self.target_normalizer, EncoderNormalizer):
                     self.target_normalizer.fit(data[self.target])
                 elif isinstance(self.target_normalizer, (GroupNormalizer, MultiNormalizer)):
@@ -806,12 +813,15 @@ class TimeSeriesDataSet(Dataset):
                 copy_kwargs = {name: getattr(self.target_normalizer, name) for name in common_init_args}
                 normalizer = GroupNormalizer(groups=self.group_ids, **copy_kwargs)
                 data[self.target], scales = normalizer.fit_transform(data[self.target], data, return_norm=True)
+                logging.info(f"encoder normalizr scales:{scales}")
 
             elif isinstance(self.target_normalizer, GroupNormalizer):
                 data[self.target], scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
+                logging.info(f"group normalizr scales:{scales}")
 
             elif isinstance(self.target_normalizer, MultiNormalizer):
                 transformed, scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
+                logging.info(f"multi normalizr scales:{scales}")
 
                 for idx, target in enumerate(self.target_names):
                     data[target] = transformed[idx]
@@ -822,15 +832,19 @@ class TimeSeriesDataSet(Dataset):
 
             elif isinstance(self.target_normalizer, NaNLabelEncoder):
                 data[self.target] = self.target_normalizer.transform(data[self.target])
+                logging.info(f"nan label normalizr scales:{scales}")
                 # overwrite target because it requires encoding (continuous targets should not be normalized)
                 data[f"__target__{self.target}"] = data[self.target]
                 scales = None
 
             else:
                 data[self.target], scales = self.target_normalizer.transform(data[self.target], return_norm=True)
+                logging.info(f"default normalizr scales:{scales}")
 
             # add target scales
             if self.add_target_scales:
+                #logging.info(f"does not expect add_target_scales")
+                exit(0)
                 if not isinstance(self.target_normalizer, MultiNormalizer):
                     scales = [scales]
                 for target_idx, target in enumerate(self.target_names):
@@ -862,6 +876,7 @@ class TimeSeriesDataSet(Dataset):
 
         # encode after fitting
         for name in self.reals:
+            logging.info(f"encode name:{name}")
             # targets are handled separately
             transformer = self.get_transformer(name)
             if (
@@ -1511,7 +1526,10 @@ class TimeSeriesDataSet(Dataset):
         Returns:
             Tuple[Dict[str, torch.Tensor], torch.Tensor]: x and y for model
         """
+        #logging.info(f"idx:{idx}")
+        #traceback.print_stack()
         index = self.index.iloc[idx]
+        #logging.info(f"index:{index}")
         # get index data
         data_cont = self.data["reals"][index.index_start : index.index_end + 1].clone()
         data_cat = self.data["categoricals"][index.index_start : index.index_end + 1].clone()
@@ -1526,7 +1544,7 @@ class TimeSeriesDataSet(Dataset):
         target_scale = self.target_normalizer.get_parameters(groups, self.group_ids)
         if not isinstance(self.target_normalizer, MultiNormalizer):
             target_scale = [target_scale]
-
+        #logging.info(f"target_scale:{target_scale}")
         # fill in missing values (if not all time indices are specified
         sequence_length = len(time)
         if sequence_length < index.sequence_length:
@@ -1627,8 +1645,12 @@ class TimeSeriesDataSet(Dataset):
                 single_target_scale = target_normalizer.get_parameters()
                 # modify input data
                 if target_name in self.reals:
+                    #logging.info(f"does not expect transform target:{target_name}, idx:{idx}")
+                    #exit(0)
                     data_cont[:, self.reals.index(target_name)] = target_normalizer.transform(target[idx])
                 if self.add_target_scales:
+                    #logging.info(f"does not expect add_target_scales")
+                    #exit(0)
                     data_cont[:, self.reals.index(f"{target_name}_center")] = self.transform_values(
                         f"{target_name}_center", single_target_scale[0]
                     )[0]
@@ -1640,6 +1662,7 @@ class TimeSeriesDataSet(Dataset):
 
         # rescale covariates
         for name in self.reals:
+            #logging.info(f"rescale real:{name}")
             if name not in self.target_names and name not in self.lagged_variables:
                 normalizer = self.get_transformer(name)
                 if isinstance(normalizer, EncoderNormalizer):
@@ -1651,6 +1674,7 @@ class TimeSeriesDataSet(Dataset):
 
         # also normalize lagged variables
         for name in self.reals:
+            #logging.info(f"normalize real:{name}")
             if name in self.lagged_variables:
                 normalizer = self.get_transformer(name)
                 if isinstance(normalizer, EncoderNormalizer):
@@ -1686,11 +1710,31 @@ class TimeSeriesDataSet(Dataset):
         if self.multi_target:
             encoder_target = [t[:encoder_length] for t in target]
             target = [t[encoder_length:] for t in target]
+            logging.info("multi_target")
         else:
             encoder_target = target[0][:encoder_length]
             target = target[0][encoder_length:]
             target_scale = target_scale[0]
-
+            base = encoder_target[0]
+            
+            encoder_target = encoder_target - base
+            target = target - base
+            target_name = self.target_names[0]
+            # modify input data
+            #logging.info(f"target_name:{target_name}")
+            if target_name in self.reals:
+                #logging.info(f"Debase target from data_cont, base:{base}")
+                #shape = data_cont[:, self.reals.index(target_name)]
+                #logging.info(f"target_cont: shape:{shape}, {data_cont[:, self.reals.index(target_name)]}")
+                data_cont[:, self.reals.index(target_name)] = data_cont[:, self.reals.index(target_name)] - base
+                #logging.info(f"after target_cont: {data_cont[:, self.reals.index(target_name)]}")
+                #exit(0)
+        
+        #logging.info(f"target:{target}")
+        #logging.info(f"adjusted target:{target}")
+        #logging.info(f"get_itme_data_cont:{data_cont}")
+        #logging.info(f"get_itme_data_cont:{data_cont.shape}")
+        #exit(0)
         return (
             dict(
                 x_cat=data_cat,
@@ -1721,6 +1765,7 @@ class TimeSeriesDataSet(Dataset):
         """
         # collate function for dataloader
         # lengths
+        #traceback.print_stack()
         encoder_lengths = torch.tensor([batch[0]["encoder_length"] for batch in batches], dtype=torch.long)
         decoder_lengths = torch.tensor([batch[0]["decoder_length"] for batch in batches], dtype=torch.long)
 
@@ -1742,6 +1787,7 @@ class TimeSeriesDataSet(Dataset):
         decoder_cont = rnn.pad_sequence(
             [batch[0]["x_cont"][length:] for length, batch in zip(encoder_lengths, batches)], batch_first=True
         )
+        #logging.info(f"collate_decoder_cont:{decoder_cont}, {decoder_cont.shape}")
         decoder_cat = rnn.pad_sequence(
             [batch[0]["x_cat"][length:] for length, batch in zip(encoder_lengths, batches)], batch_first=True
         )
@@ -1783,6 +1829,18 @@ class TimeSeriesDataSet(Dataset):
         else:
             weight = None
 
+        #logging.info(f"encoder_cat:{encoder_cat.shape}, {encoder_cat}")
+        #logging.info(f"encoder_cont:{encoder_cont.shape}, {encoder_cont}")
+        #logging.info(f"encoder_target:{encoder_target.shape}, dir(encoder_target)")
+        #logging.info(f"target:{target.shape}, dir(target)")
+        #logging.info(f"decoder_cat:{decoder_cat.shape}, {decoder_cat}")
+        #logging.info(f"decoder_cont:{decoder_cont.shape}, {decoder_cont}")
+        #logging.info(f"target_scale:{target_scale.shape}, {target_scale}")
+        base = torch.unsqueeze(encoder_target[:,0], 1)
+        #logging.info(f"base:{base.shape}")
+        #exit(0)
+        encoder_target = encoder_target - base
+        target = target - base
         return (
             dict(
                 encoder_cat=encoder_cat,

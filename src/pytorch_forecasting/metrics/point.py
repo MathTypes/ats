@@ -1,4 +1,5 @@
 """Point metrics for forecasting a single point per time step."""
+import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import scipy.stats
@@ -209,10 +210,12 @@ class MASE(MultiHorizonMetric):
         self._update_losses_and_lengths(losses, lengths)
 
     def loss(self, y_pred, target, scaling):
+        #logging.info(f"y_pred_shape:{y_pred.shape}, y_pred:{y_pred}, target:{target}")
         return (self.to_prediction(y_pred) - target).abs() / scaling.unsqueeze(-1)
 
     def calculate_scaling(self, target, lengths, encoder_target, encoder_lengths):
         # calcualte mean(abs(diff(targets)))
+        #logging.info(f"target:{target}, shape={target.shape}")
         eps = 1e-6
         batch_size = target.size(0)
         total_lengths = lengths + encoder_lengths
@@ -247,7 +250,7 @@ class MASE(MultiHorizonMetric):
 
         # calculate mean over differences
         scaling = diffs.sum(1) / total_lengths + eps
-
+        #logging.info(f"scaling:{scaling}, shape={scaling.shape}")
         return scaling
 
 
@@ -301,12 +304,12 @@ class MAPCSE(MultiHorizonMetric):
 
         # calculate loss with "none" reduction
         scaling = self.calculate_scaling(target, lengths, encoder_target, encoder_lengths)
-        logging.info(f"orig_y_pred:{y_pred}")
-        logging.info(f"orig_target:{target}")
-        y_pred = torch.cumsum(y_pred)
-        target = torch.cumsum(target)
-        logging.info(f"y_pred:{y_pred}")
-        logging.info(f"target:{target}")
+        #logging.info(f"orig_y_pred:{y_pred}")
+        #logging.info(f"orig_target:{target}")
+        #y_pred = torch.cumsum(y_pred)
+        #target = torch.cumsum(target)
+        #logging.info(f"y_pred:{y_pred}")
+        #logging.info(f"target:{target}")
 
         high_idx_pred, _ = find_peaks(y_pred, width=4)
         high_idx_target, _ = find_peaks(target, width=4)
@@ -314,16 +317,16 @@ class MAPCSE(MultiHorizonMetric):
         low_idx_target, _ = find_peaks(np.negative(target), width=4)
         idx = high_idx_pred + high_idx_target + low_idx_pred + low_idx_target
 
-        logging.info(f"scaling:{scaling}")
-        logging.info(f"high_idx_pred:{high_idx_pred}")
-        logging.info(f"low_idx_pred:{low_idx_pred}")
-        logging.info(f"high_idx_target:{high_idx_target}")
-        logging.info(f"low_idx_target:{low_idx_target}")
+        #logging.info(f"scaling:{scaling}")
+        #logging.info(f"high_idx_pred:{high_idx_pred}")
+        #logging.info(f"low_idx_pred:{low_idx_pred}")
+        #logging.info(f"high_idx_target:{high_idx_target}")
+        #logging.info(f"low_idx_target:{low_idx_target}")
 
         y_pred = y_pred.iloc[idx]
         target = target.iloc[idx]
-        logging.info(f"peak_y_pred:{y_pred}")
-        logging.info(f"peak_target:{target}")
+        #logging.info(f"peak_y_pred:{y_pred}")
+        #logging.info(f"peak_target:{target}")
         
         losses = self.loss(pred, target, scaling)
 

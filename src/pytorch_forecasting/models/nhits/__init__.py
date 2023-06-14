@@ -2,6 +2,7 @@
 N-HiTS model for timeseries forecasting with covariates.
 """
 from copy import copy
+import traceback
 #import pytorch_lightning as pl
 import lightning.pytorch as pl
 import plotly as py
@@ -145,7 +146,7 @@ class NHiTS(BaseModelWithCovariates):
                 Defaults to nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE(), MASE()])
             **kwargs: additional arguments to :py:class:`~BaseModel`.
         """
-        logging.info(f"self.hparams:{self.hparams}")
+        #logging.info(f"self.hparams:{self.hparams}")
         if logging_metrics is None:
             logging_metrics = nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE(), MASE()])
         if loss is None:
@@ -185,20 +186,20 @@ class NHiTS(BaseModelWithCovariates):
         else:
             output_size = sum(self.hparams.output_size)
         
-        logging.info(f"self.hparams.time_varying_reals_encoder:{self.hparams.time_varying_reals_encoder}")
-        logging.info(f"self.target_names:{self.target_names}")
-        logging.info(f"self.embeddings.output_size:{self.embeddings.output_size}")
-        logging.info(f"self.hparams.time_varying_categoricals_encoder:{self.hparams.time_varying_categoricals_encoder}")
-        logging.info(f"self.hparams.time_varying_reals_decoder:{self.hparams.time_varying_reals_decoder}")
+        #logging.info(f"self.hparams.time_varying_reals_encoder:{self.hparams.time_varying_reals_encoder}")
+        #logging.info(f"self.target_names:{self.target_names}")
+        #logging.info(f"self.embeddings.output_size:{self.embeddings.output_size}")
+        #logging.info(f"self.hparams.time_varying_categoricals_encoder:{self.hparams.time_varying_categoricals_encoder}")
+        #logging.info(f"self.hparams.time_varying_reals_decoder:{self.hparams.time_varying_reals_decoder}")
         self.customer_encoder_covariate_size = len(set(self.hparams.time_varying_reals_encoder)) - len(set(self.target_names)) + sum(
             self.embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_encoder
         )
         self.customer_decoder_covariate_size = len(set(self.hparams.time_varying_reals_decoder)) + sum(
             self.embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_decoder
         )
-        logging.info(f"self.customer_encoder_covariate_size:{self.customer_encoder_covariate_size}")
-        logging.info(f"self.customer_decoder_covariate_size:{self.customer_decoder_covariate_size}")
-
+        #logging.info(f"self.customer_encoder_covariate_size:{self.customer_encoder_covariate_size}")
+        #logging.info(f"self.customer_decoder_covariate_size:{self.customer_decoder_covariate_size}")
+        logging.info(f"hparams:{self.hparams}")
         self.model = NHiTSModule(
             context_length=self.hparams.context_length,
             prediction_length=self.hparams.prediction_length,
@@ -266,13 +267,16 @@ class NHiTS(BaseModelWithCovariates):
             Dict[str, torch.Tensor]: output of model
         """
         # covariates
+        #traceback.print_stack()
         #logging.info(f"self.covariate_size :{self.covariate_size}")
+        #logging.info(f"forward_x:{x}")
         if self.covariate_size > 0:
             encoder_features = self.extract_features(x, self.embeddings, period="encoder")
             encoder_x_t = torch.concat(
                 [encoder_features[name] for name in self.encoder_variables if name not in self.target_names],
                 dim=2,
             )
+            #logging.info(f"encoder_x_t:{encoder_x_t}")
             decoder_features = self.extract_features(x, self.embeddings, period="decoder")
             decoder_x_t = torch.concat([decoder_features[name] for name in self.decoder_variables], dim=2)
         else:
@@ -288,7 +292,11 @@ class NHiTS(BaseModelWithCovariates):
         # target
         encoder_y = x["encoder_cont"][..., self.target_positions]
         encoder_mask = create_mask(x["encoder_lengths"].max(), x["encoder_lengths"], inverse=True)
-
+        #logging.info(f"encoder_y: {encoder_y.shape} {encoder_y}")
+        #logging.info(f"encoder_x_t:  {encoder_x_t}")
+        #logging.info(f"encoder_mask: {encoder_mask.shape}, {encoder_mask}")
+        #logging.info(f"decoder_x_t: {decoder_x_t.shape}, {decoder_x_t}")
+        #logging.info(f"x_s:{x_s}")
         # run model
         forecast, backcast, block_forecasts, block_backcasts = self.model(
             encoder_y, encoder_mask, encoder_x_t, decoder_x_t, x_s
@@ -321,11 +329,14 @@ class NHiTS(BaseModelWithCovariates):
                 self.transform_output(block.squeeze(3), target_scale=x["target_scale"])
                 for block in block_forecasts.split(1, dim=3)
             )
-
-        return self.to_network_output(
-            prediction=self.transform_output(
+        prediction = self.transform_output(
                 forecast, target_scale=x["target_scale"]
-            ),  # (n_outputs x) n_samples x n_timesteps x output_size
+            )
+        #logging.info(f"forecast:{forecast}")    
+        #logging.info(f"prediction:{prediction}")
+        #logging.info(f"x['target_scale']:{x['target_scale']}")
+        return self.to_network_output(
+            prediction=prediction,  # (n_outputs x) n_samples x n_timesteps x output_size
             backcast=self.transform_output(
                 backcast, target_scale=x["target_scale"], loss=MultiHorizonMetric()
             ),  # (n_outputs x) n_samples x n_timesteps x 1
@@ -381,6 +392,9 @@ class NHiTS(BaseModelWithCovariates):
         """
         #new_kwargs = {k:v for k,v in kwargs.items() if k not in ["nolog"]}
         log, out = super().step(x, y, batch_idx=batch_idx, **kwargs)
+        #logging.info(f"x:{x}")
+        #logging.info(f"y:{y}")
+        #logging.info(f"out:{out}")
 
         if self.hparams.backcast_loss_ratio > 0 and not self.predicting:  # add loss from backcast
             backcast = out["backcast"]

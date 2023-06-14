@@ -585,13 +585,13 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # infer output size
         def get_output_size(normalizer, loss):
             if isinstance(loss, QuantileLoss):
-                logging.info(f"QuantileLoss:{len(loss.quantiles)}")
+                #logging.info(f"QuantileLoss:{len(loss.quantiles)}")
                 return len(loss.quantiles)
             elif isinstance(normalizer, NaNLabelEncoder):
-                logging.info(f"normalizer.classes_:{len(normalizer.classes_)}")
+                #logging.info(f"normalizer.classes_:{len(normalizer.classes_)}")
                 return len(normalizer.classes_)
             elif isinstance(loss, DistributionLoss):
-                logging.info(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
+                #logging.info(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
                 return len(loss.distribution_arguments)
             else:
                 return 1  # default to 1
@@ -606,16 +606,16 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             if not isinstance(loss, MultiLoss):
                 loss = MultiLoss([deepcopy(loss)] * n_targets)
                 new_kwargs["loss"] = loss
-                logging.info(f"not multiloss:{new_kwargs}")
+                #logging.info(f"not multiloss:{new_kwargs}")
             if isinstance(loss, MultiLoss) and "output_size" not in kwargs:
                 new_kwargs["output_size"] = [
                     get_output_size(normalizer, l)
                     for normalizer, l in zip(dataset.target_normalizer.normalizers, loss.metrics)
                 ]
-                logging.info(f"multiloss:{new_kwargs}")
+                #logging.info(f"multiloss:{new_kwargs}")
         elif "output_size" not in kwargs:
             new_kwargs["output_size"] = get_output_size(dataset.target_normalizer, loss)
-            logging.info(f"n_targets:{new_kwargs}")
+            #logging.info(f"n_targets:{new_kwargs}")
         return new_kwargs
 
     def size(self) -> int:
@@ -630,6 +630,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         x, y = batch
         log, out = self.step(x, y, batch_idx)
+        #logging.info(f"train_step, x:{x}, y:{y}, out:{out}")
         #self.training_step_outputs.append(log)
         return log
 
@@ -648,6 +649,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
     def validation_step(self, batch, batch_idx):
         x, y = batch
         log, out = self.step(x, y, batch_idx)
+        #logging.info(f"validation_step, x:{x}, y:{y}, out:{out}")
         log.update(self.create_log(x, y, out, batch_idx))
         self.validation_step_outputs.append(log)
         return log
@@ -731,6 +733,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         # pack y sequence if different encoder lengths exist
         #logging.info(f"kwargs:{kwargs}, batch_idx:{batch_idx}")
+        #logging.info(f"y:{y}")
         if (x["decoder_lengths"] < x["decoder_lengths"].max()).any():
             if isinstance(y[0], (list, tuple)):
                 y = (
@@ -759,7 +762,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             )
             out = self(x, **kwargs)
             prediction = out["prediction"]
-
+            logging.info(f"x:{x}, out:{out}")
             # handle multiple targets
             prediction_list = to_list(prediction)
             gradient = 0
@@ -803,7 +806,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         else:
             new_kwargs = {k:v for k,v in kwargs.items() if k not in ["nolog"]} 
             out = self(x, **new_kwargs)
-
+            #logging.info(f"x:{x}, out:{out}")
             # calculate loss
             prediction = out["prediction"]
             if not self.predicting:
@@ -1094,7 +1097,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted", line=dict(color=pred_color)))
 
             # plot predicted quantiles
-            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], line=dict(color=pred_color)))
+            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean", line=dict(color=pred_color)))
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
@@ -1347,15 +1350,19 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         Returns:
             torch.Tensor: predictions of shape batch_size x timesteps
         """
+        #traceback.print_stack()
         if not use_metric:
             # if samples were already drawn directly take mean
             # todo: support classification
             if isinstance(self.loss, MultiLoss):
                 out = [Metric.to_prediction(loss, out["prediction"][idx]) for idx, loss in enumerate(self.loss)]
             else:
+                #logging.info(f"not use metrics:{out['prediction']}, loss:{self.loss}")
                 out = Metric.to_prediction(self.loss, out["prediction"])
         else:
             try:
+                #traceback.print_stack()
+                #logging.info(f"use metrics:{out['prediction']}, loss:{self.loss}, prediction_shape:{out['prediction'].shape}")
                 out = self.loss.to_prediction(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
                 out = self.loss.to_prediction(out["prediction"])
@@ -1384,12 +1391,12 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     for idx, loss in enumerate(self.loss)
                 ]
             else:
-                logging.info(f"quantiles:{kwargs.get('quantiles', self.loss.quantiles)}")
-                logging.info(f"prediction:{prediction}")
+                #logging.info(f"quantiles:{kwargs.get('quantiles', self.loss.quantiles)}")
+                #logging.info(f"prediction:{prediction}")
                 out = Metric.to_quantiles(
                     self.loss, out["prediction"], quantiles=kwargs.get("quantiles", self.loss.quantiles)
                 )
-                logging.info(f"out:{out}")
+                #logging.info(f"out:{out}")
         else:
             try:
                 out = self.loss.to_quantiles(out["prediction"], **kwargs)
@@ -1760,7 +1767,7 @@ class BaseModelWithCovariates(BaseModel):
             x_cont = torch.cat([x["encoder_cont"], x["decoder_cont"]], dim=1)  # concatenate in time dimension
         else:
             raise ValueError(f"Unknown type: {type}")
-
+        #logging.info(f"period:{period}, x_cont:{x_cont}")
         # create dictionary of encoded vectors
         input_vectors = embeddings(x_cat)
         input_vectors.update(
@@ -1911,7 +1918,7 @@ class BaseModelWithCovariates(BaseModel):
         Returns:
             Union[Dict[str, plt.Figure], plt.Figure]: matplotlib figure
         """
-        logging.info(f"self.plot_prediction_actual_by_variable, {data}, {name}")
+        #logging.info(f"self.plot_prediction_actual_by_variable, {data}, {name}")
         if name is None:  # run recursion for figures
             figs = {name: self.plot_prediction_actual_by_variable(data, name) for name in data["support"].keys()}
             return figs

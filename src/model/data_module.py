@@ -171,8 +171,10 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             min_prediction_length=config['prediction_length'],
             max_prediction_length=config['prediction_length'],
             allow_missing_timesteps=True,
-            time_varying_known_reals=["time_idx", "hour_of_day", "day_of_week", "day_of_month"],
-            time_varying_unknown_reals=["close_back_cumsum", "volume_back"],
+            target_normalizer=None,
+            #time_varying_known_reals=["time_idx", "hour_of_day", "day_of_week", "day_of_month"],
+            #time_varying_known_reals=[],
+            time_varying_unknown_reals=["close_back_cumsum"],
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
         )
         logging.info(f"train_data:{self.train_data.describe()}")
