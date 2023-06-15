@@ -11,6 +11,7 @@ from pipelines import (
 )
 import pytz
 import ray
+import wandb
 from ray.util.dask import enable_dask_on_ray
 from utils import count_parameters
 from util import config_utils
@@ -19,6 +20,7 @@ from util import logging_utils
 RESULTS_PATH = Path("results")
 
 if __name__ == "__main__":
+    wandb.init(project="ats")
     pd.set_option('display.max_columns', None)
     datasets = ["stock_returns"]
     pipelines = [
@@ -32,6 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--checkpoint", type=str)
+    parser.add_argument("--study_name", type=str)
     parser.add_argument(
         "--start_date",
         type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").replace(tzinfo=pytz.UTC).date(),
@@ -55,6 +58,8 @@ if __name__ == "__main__":
     device = args.device
     logging.info(f"start_date:{args.start_date}")
     logging.info(f"end_date:{args.end_date}")
+    context_length = 13*7*5*6
+    prediction_length = 13*3
     config = {
         'model_tickers': ['ES','NQ','CL','RTY','HG'],
         'raw_dir': '.',
@@ -63,16 +68,16 @@ if __name__ == "__main__":
         'workers': args.workers,
         'start_date': args.start_date,
         'end_date': args.end_date,
-        'max_encoder_length' : 13*7,
-        'max_prediction_length' : 13,
-        'min_encoder_length' : 13*7,
-        'min_prediction_length' : 13,
-        'context_length' : 13*7,
-        'prediction_length' : 13,
+        'max_encoder_length' : context_length,
+        'max_prediction_length' : prediction_length,
+        'min_encoder_length' : prediction_length,
+        'min_prediction_length' : prediction_length,
+        'context_length' : context_length,
+        'prediction_length' : prediction_length,
         'max_epochs' : args.max_epochs,
         'n_trials' : args.n_trials,
         'model_path' : 'checkpoint'}
-    
+    wandb.config = config
     pipe = TimeSeriesPipeline(dataset="FUT", device=args.device, config=config)
     pipe.create_model()
     pipe.create_trainer()
@@ -80,7 +85,7 @@ if __name__ == "__main__":
     if args.mode == "train":
         pipe.train_model()
     elif args.mode == "tune":
-        pipe.tune_model()
+        pipe.tune_model(config, args.study_name)
     ray.shutdown()
 
     

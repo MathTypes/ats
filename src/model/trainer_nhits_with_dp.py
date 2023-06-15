@@ -22,7 +22,7 @@ import torch
 #import lightning.pytorch as pl
 #from import lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-from lightning.pytorch.loggers import TensorBoardLogger
+#from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.tuner import Tuner
 #import pytorch_lightning as pl
 import lightning.pytorch as pl
@@ -89,7 +89,7 @@ def get_trainer(config, data_module):
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
-    wandb_logger = WandbLogger(project='ATS', log_model=True)
+    wandb_logger = WandbLogger(project='ATS', log_model="all")
     #logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
     metrics_logger = WandbMetricsLogger(log_freq=10)
     trainer = pl.Trainer(
@@ -111,12 +111,8 @@ def get_trainer(config, data_module):
     return trainer
 
 
-def run_tune(config, net, trainer, data_module):
-    study = nhits_tuner.optimize_hyperparameters(
-        data_module.train_dataloader, data_module.val_dataloader,
-        config['model_path'],
-        config['max_epochs'],
-        config['n_trials'])
+def run_tune(study_name, config):
+    study = nhits_tuner.optimize_hyperparameters(study_name, config)
     print(f"study:{study}")
 
 
