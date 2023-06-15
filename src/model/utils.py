@@ -100,9 +100,7 @@ class Pipeline:
     def create_model(self):
         pass
 
-
-    def train_model(self):
-        logging.info(f"MODELS_DIR:{MODELS_DIR}")
+    def create_trainer(self):
         checkpoint_callback = ModelCheckpoint(
             dirpath=MODELS_DIR,
             monitor="val_loss",
@@ -132,7 +130,7 @@ class Pipeline:
         wandb_logger = WandbLogger(project='ATS', log_model=True)
         logging.info(f"data_module:{self.data_module}")
         prediction_logger = WandbClfEvalCallback(self.data_module)
-        trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
+        self.trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor,
                                         #log_predictions_callback,
                                         prediction_logger,
@@ -155,9 +153,15 @@ class Pipeline:
                              #precision='16-mixed',
                              # train in half precision
                              deterministic=False, strategy='auto')
-        self.history = trainer.fit(self.model, self.data_module)
+        
+    def tune_model(self):
+        pass
+
+    def train_model(self):
+        logging.info(f"MODELS_DIR:{MODELS_DIR}")
+        self.history = self.trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
-        trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
+        self.trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
 
 
 def count_parameters(model):

@@ -232,20 +232,22 @@ if __name__ == "__main__":
     ray.init()
     enable_dask_on_ray()
     device = args.device
+    context_length = 13*7*5*6
+    prediction_length = 13
     config = {
-        'model_tickers': ['ES'],
+        'model_tickers': ['ES', 'NQ', 'RTY', 'CL', 'HG'],
         'raw_dir': '.',
         'num_workers': 8,
         'device' : args.device,
         'workers': args.workers,
         'start_date': args.start_date,
         'end_date': args.end_date,
-        'max_encoder_length' : 13*7,
-        'max_prediction_length' : 13,
-        'min_encoder_length' : 13*7,
-        'min_prediction_length' : 13,
-        'context_length' : 13*7,
-        'prediction_length' : 13,
+        'max_encoder_length' : context_length,
+        'max_prediction_length' : prediction_length,
+        'min_encoder_length' : context_length,
+        'min_prediction_length' : prediction_length,
+        'context_length' : context_length,
+        'prediction_length' : prediction_length,
         'max_epochs' : args.max_epochs,
         'n_trials' : args.n_trials,
         'model_path' : 'checkpoint'}
