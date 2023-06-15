@@ -233,7 +233,7 @@ if __name__ == "__main__":
     enable_dask_on_ray()
     device = args.device
     context_length = 13*7*5*6
-    prediction_length = 13
+    prediction_length = 13*7*4
     config = {
         'model_tickers': ['ES', 'NQ', 'RTY', 'CL', 'HG'],
         'raw_dir': '.',
@@ -251,6 +251,7 @@ if __name__ == "__main__":
         'max_epochs' : args.max_epochs,
         'n_trials' : args.n_trials,
         'model_path' : 'checkpoint'}
+    logging.info(f"config:{config}")
     data_module = get_data_module(config)
     net = get_model(config, data_module)
     trainer = get_trainer(config, data_module)

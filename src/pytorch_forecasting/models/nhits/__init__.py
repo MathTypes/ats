@@ -173,7 +173,7 @@ class NHiTS(BaseModelWithCovariates):
 
         self.save_hyperparameters()
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
-        logging.info(f"self.hparams.output_size:{self.hparams.output_size}")
+        #logging.info(f"self.hparams.output_size:{self.hparams.output_size}")
 
         self.embeddings = MultiEmbedding(
             embedding_sizes=self.hparams.embedding_sizes,
@@ -542,7 +542,8 @@ class NHiTS(BaseModelWithCovariates):
             fig.add_trace(
                 go.Scatter(x=torch.arange(-self.hparams.context_length, 0),
                            y=block_backcast[idx][..., 0].detach().cpu(),
-                           line=dict(color=color)), name=f"Pooling size: {pooling_size}",
+                           line=dict(color=color),
+                           name=f"Pooling size: {pooling_size}"),
                            row=1, col=1)
             fig.add_trace(
                 go.Scatter(x=torch.arange(self.hparams.prediction_length),

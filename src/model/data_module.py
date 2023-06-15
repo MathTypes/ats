@@ -196,7 +196,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         pass
         
     def train_dataloader(self):
-        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size, num_workers=4, pin_memory=True, drop_last=False)
+        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size, num_workers=10, pin_memory=True, drop_last=False)
         return train_dataloader
     
     def val_dataloader(self):
