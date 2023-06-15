@@ -79,10 +79,10 @@ if __name__ == "__main__":
         'model_path' : 'checkpoint'}
     wandb.config = config
     pipe = TimeSeriesPipeline(dataset="FUT", device=args.device, config=config)
-    pipe.create_model()
-    pipe.create_trainer()
-    logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
     if args.mode == "train":
+        pipe.create_model()
+        pipe.create_trainer()
+        logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
         pipe.train_model()
     elif args.mode == "tune":
         pipe.tune_model(config, args.study_name)

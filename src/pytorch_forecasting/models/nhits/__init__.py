@@ -162,7 +162,7 @@ class NHiTS(BaseModelWithCovariates):
             pooling_sizes = [int(x) for x in pooling_sizes[::-1]]
         if downsample_frequencies is None:
             downsample_frequencies = [min(prediction_length, int(np.power(x, 1.5))) for x in pooling_sizes]
-
+        logging.info(f"hidden_size:{hidden_size}")
         # set static hidden size
         if static_hidden_size is None:
             static_hidden_size = hidden_size

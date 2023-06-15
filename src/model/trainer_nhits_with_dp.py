@@ -63,7 +63,6 @@ def get_model(config, data_module):
     pl.seed_everything(42)
     net = NHiTS.from_dataset(
         training,
-        learning_rate=3e-2,
         weight_decay=1e-2,
         #loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
         #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
@@ -74,7 +73,10 @@ def get_model(config, data_module):
                                 #, 0.0, 0.0
         #               ]),
         backcast_loss_ratio=0.0,
-        hidden_size=8,
+        hidden_size=config["hidden_size"],
+        prediction_length=config["prediction_length"],
+        context_length=config["context_length"],
+        learning_rate=config["learning_rate"],
         optimizer="AdamW",
         log_interval=0.25,
         #log_val_interval=10000
@@ -89,7 +91,7 @@ def get_trainer(config, data_module):
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
-    wandb_logger = WandbLogger(project='ATS', log_model="all")
+    wandb_logger = WandbLogger(project='ATS', log_model=config["log_mode"])
     #logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
     metrics_logger = WandbMetricsLogger(log_freq=10)
     trainer = pl.Trainer(

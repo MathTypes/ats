@@ -11,6 +11,7 @@ from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.tuner import Tuner
 import numpy as np
+import random
 import optuna
 from optuna.integration import PyTorchLightningPruningCallback
 from optuna.integration.wandb import WeightsAndBiasesCallback
@@ -41,7 +42,7 @@ def optimize_hyperparameters(
         context_length_range: Tuple[int, int] = (8, 256),
         prediction_length_range: Tuple[int, int] = (4, 48),
         static_hidden_size_range: Tuple[int, int] = (8, 64),
-        hidden_size_range: Tuple[int, int] = (8, 16, 265),
+        hidden_size_range: Tuple[int, int] = (16, 265),
         dropout_range: Tuple[float, float] = (0.1, 0.3),
         learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
         use_learning_rate_finder: bool = True,
@@ -144,9 +145,12 @@ def optimize_hyperparameters(
         kwargs["loss"] = copy.deepcopy(loss)
         trial_config = config
         trial_config.update(dict(trial.params))
+        trial_config["learning_rate"] = 0.02
         trial_config["trial.number"] = trial.number
         #trial_config["dropout"]=trial.suggest_uniform("dropout", *dropout_range)
         trial_config["hidden_size"] = trial.suggest_int("hidden_size", *hidden_size_range, log=False)
+        trial_config["log_mode"] = True
+        logging.info(f"trial_config:{trial_config}")
         #trial_config["context_length"] = trial.suggest_int("context_length", *context_length_range, log=True)
         #trial_config["prediction_length"] = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
         #trial_config["min_encoder_length"] = trial_config["context_length"]
@@ -157,6 +161,7 @@ def optimize_hyperparameters(
         #trial_config["gradient_clip_val"] = gradient_clip_val
         data_module = nhits.get_data_module(trial_config)
         model = nhits.get_model(trial_config, data_module)
+        #return random.random()
         #model = NHiTS.from_dataset(
         #    train_dataloaders.dataset,
         #    context_length=context_length,
@@ -213,14 +218,16 @@ def optimize_hyperparameters(
             model.hparams.learning_rate = trial.suggest_uniform("learning_rate", optimal_lr, optimal_lr)
         else:
             model.hparams.learning_rate = trial.suggest_loguniform("learning_rate", *learning_rate_range)
-
-        trial_config.update(dict(model.hparams))
+        trial_config["learning_rate"] = model.hparams.learning_rate
+        #logging.info(f"trial_config_before_model:{trial_config}")
+        #trial_config.update(dict(model.hparams))
         wandb.init(project="ats", config=trial_config, group=study_name, reinit=True)
         # fit
         #trainer = pl.Trainer(
         #    **default_trainer_kwargs,
         #)
-        logging.info(f"config:{config}")
+        logging.info(f"trial_config:{trial_config}")
+        logging.info(f"model_hparams:{model.hparams}")
         trainer = nhits.get_trainer(trial_config, data_module)
         trainer.fit(model, train_dataloaders=data_module.train_dataloader(), val_dataloaders=data_module.val_dataloader())
         optuna_logger.info(f"Trainer: {trainer}")
@@ -231,7 +238,11 @@ def optimize_hyperparameters(
 
     # setup optuna and run
     if study is None:
-        study = optuna.create_study(direction="minimize", pruner=pruner)
+        sampler = optuna.samplers.TPESampler()
+        pruner = optuna.pruners.MedianPruner(
+            n_startup_trials=2, n_warmup_steps=5, interval_steps=3
+        )
+        study = optuna.create_study(direction="minimize", pruner=pruner, study_name=study_name)
     study.optimize(objective, n_trials=n_trials, timeout=timeout)
     print("Number of finished trials: ", len(study.trials))
 
