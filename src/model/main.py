@@ -1,7 +1,9 @@
 import argparse
 import datetime
+import hydra
 import logging
 import numpy as np
+from omegaconf import DictConfig
 import pandas as pd
 from pathlib import Path
 from pipelines import (
@@ -19,7 +21,8 @@ from util import logging_utils
 
 RESULTS_PATH = Path("results")
 
-if __name__ == "__main__":
+@hydra.main(config_path="conf", config_name="config")
+def my_app(cfg: DictConfig) -> None:
     wandb.init(project="ats")
     pd.set_option('display.max_columns', None)
     datasets = ["stock_returns"]
@@ -28,57 +31,35 @@ if __name__ == "__main__":
         AttentionEmbeddingLSTMPipeline,
         TimeSeriesPipeline
     ]
-    parser = config_utils.get_arg_parser("Preprocess tweet")
-    parser.add_argument("--mode", type=str)
-    parser.add_argument("--ray_url", type=str, default="ray://8.tcp.ngrok.io:10243")
-    parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--workers", type=int, default=4)
-    parser.add_argument("--checkpoint", type=str)
-    parser.add_argument("--study_name", type=str)
-    parser.add_argument(
-        "--start_date",
-        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").replace(tzinfo=pytz.UTC).date(),
-        required=False,
-        help="Set a start date",
-    )
-    parser.add_argument(
-        "--end_date",
-        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").replace(tzinfo=pytz.UTC).date(),
-        required=False,
-        help="Set a end date",
-    )
-    parser.add_argument("--lr", type=float, default=4.4668359215096314e-05)
-    parser.add_argument("--n_trials", type=int, default=100)
-    parser.add_argument("--max_epochs", type=int, default=10)
-    args = parser.parse_args()
-    config_utils.set_args(args)
+    #config_utils.set_args(args)
     logging_utils.init_logging()
+    logging.info(f"cfg:{cfg}, dir(cfg)")
     ray.init()
     enable_dask_on_ray()
-    device = args.device
-    logging.info(f"start_date:{args.start_date}")
-    logging.info(f"end_date:{args.end_date}")
+    device = cfg.job.device
+    logging.info(f"start_date:{cfg.job.start_date}")
+    logging.info(f"end_date:{cfg.job.end_date}")
     context_length = 13*7*5*6
     prediction_length = 13*3
     config = {
         'model_tickers': ['ES','NQ','CL','RTY','HG'],
         'raw_dir': '.',
         'num_workers': 8,
-        'device' : args.device,
-        'workers': args.workers,
-        'start_date': args.start_date,
-        'end_date': args.end_date,
+        'device' : cfg.job.device,
+        'workers': cfg.job.workers,
+        'start_date': cfg.job.start_date,
+        'end_date': cfg.job.end_date,
         'max_encoder_length' : context_length,
         'max_prediction_length' : prediction_length,
         'min_encoder_length' : prediction_length,
         'min_prediction_length' : prediction_length,
         'context_length' : context_length,
         'prediction_length' : prediction_length,
-        'max_epochs' : args.max_epochs,
-        'n_trials' : args.n_trials,
+        'max_epochs' : cfg.job.max_epochs,
+        'n_trials' : cfg.job.n_trials,
         'model_path' : 'checkpoint'}
     wandb.config = config
-    pipe = TimeSeriesPipeline(dataset="FUT", device=args.device, config=config)
+    pipe = TimeSeriesPipeline(dataset="FUT", device=device, config=config)
     if args.mode == "train":
         pipe.create_model()
         pipe.create_trainer()
@@ -86,6 +67,13 @@ if __name__ == "__main__":
         pipe.train_model()
     elif args.mode == "tune":
         pipe.tune_model(config, args.study_name)
+    elif args.mode == "eval":
+        pipe.create_model()
+        config["checkpoint_path"] = args.checkpoint
+        pipe.create_trainer()
+        pipe.eval_model(config)
     ray.shutdown()
 
     
+if __name__ == "__main__":
+  my_app()
