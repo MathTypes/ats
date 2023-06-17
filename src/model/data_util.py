@@ -35,7 +35,7 @@ def get_tick_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -
     return ds
 
 def get_input_dirs(config, ticker, asset_type):
-    base_dir = f"data/{asset_type}/30min/{ticker}"
+    base_dir = f"{config['base_dir']}/{ticker}"
     input_dirs = []
     start_date = config["start_date"] + datetime.timedelta(days=-60)
     start_date = start_date.replace(day=1)

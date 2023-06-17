@@ -3,3 +3,6 @@ mode: train
 start_date: 2008-06-01
 end_date: 2023-01-01
 workers: 8
+max_epochs: 10
+n_trials: 40
+study_name: test

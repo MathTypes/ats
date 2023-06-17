@@ -44,11 +44,12 @@ def my_app(cfg: DictConfig) -> None:
     config = {
         'model_tickers': ['ES','NQ','CL','RTY','HG'],
         'raw_dir': '.',
+        'base_dir':cfg['dataset']['base_dir'],
         'num_workers': 8,
         'device' : cfg.job.device,
         'workers': cfg.job.workers,
-        'start_date': cfg.job.start_date,
-        'end_date': cfg.job.end_date,
+        'start_date': datetime.datetime.strptime(cfg.job.start_date, "%Y-%m-%d"),
+        'end_date': datetime.datetime.strptime(cfg.job.end_date, "%Y-%m-%d"),
         'max_encoder_length' : context_length,
         'max_prediction_length' : prediction_length,
         'min_encoder_length' : prediction_length,
@@ -60,16 +61,16 @@ def my_app(cfg: DictConfig) -> None:
         'model_path' : 'checkpoint'}
     wandb.config = config
     pipe = TimeSeriesPipeline(dataset="FUT", device=device, config=config)
-    if args.mode == "train":
+    if cfg.job.mode == "train":
         pipe.create_model()
         pipe.create_trainer()
         logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
         pipe.train_model()
-    elif args.mode == "tune":
-        pipe.tune_model(config, args.study_name)
-    elif args.mode == "eval":
+    elif cfg.job.mode == "tune":
+        pipe.tune_model(config, cfg.job.study_name)
+    elif cfg.job.mode == "eval":
         pipe.create_model()
-        config["checkpoint_path"] = args.checkpoint
+        config["checkpoint_path"] = cfg.job.checkpoint
         pipe.create_trainer()
         pipe.eval_model(config)
     ray.shutdown()
