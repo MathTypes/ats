@@ -221,7 +221,7 @@ def optimize_hyperparameters(
         trial_config["learning_rate"] = model.hparams.learning_rate
         #logging.info(f"trial_config_before_model:{trial_config}")
         #trial_config.update(dict(model.hparams))
-        wandb.init(project="ats", config=trial_config, group=study_name, reinit=True)
+        wandb.init(project="ats-optuna", enitity="johnnychen7622", config=trial_config, group=study_name, reinit=True)
         # fit
         #trainer = pl.Trainer(
         #    **default_trainer_kwargs,
@@ -232,18 +232,31 @@ def optimize_hyperparameters(
         trainer.fit(model, train_dataloaders=data_module.train_dataloader(), val_dataloaders=data_module.val_dataloader())
         optuna_logger.info(f"Trainer: {trainer}")
         optuna_logger.info(f"Trainer metrics {trainer.callback_metrics}")
+        #wandb.log(data={"validation loss":trainer.callback_metrics["val_loss"].item()})
         wandb.finish()
         # report result
         return trainer.callback_metrics["val_loss"].item()
 
     # setup optuna and run
+    sampler = optuna.samplers.TPESampler()
+    pruner = optuna.pruners.MedianPruner(
+        n_startup_trials=2, n_warmup_steps=5, interval_steps=3
+    )
     if study is None:
-        sampler = optuna.samplers.TPESampler()
-        pruner = optuna.pruners.MedianPruner(
-            n_startup_trials=2, n_warmup_steps=5, interval_steps=3
-        )
         study = optuna.create_study(direction="minimize", pruner=pruner, study_name=study_name)
-    study.optimize(objective, n_trials=n_trials, timeout=timeout)
+    wandb_kwargs = {
+        "project": "ats-optuna",
+        "entity": "johnnychen7622",
+        "config": {"sampler": sampler.__name__},
+        "reinit": True,
+    }
+    wandbc = WeightsAndBiasesCallback(
+        metric_name="val_loss", wandb_kwargs=wandb_kwargs
+    )
+
+    study = optuna.create_study(direction="maximize", sampler=sampler())
+    study.optimize(objective, n_trials=n_trials, callbacks=[wandbc])
+    #study.optimize(objective, n_trials=n_trials, timeout=timeout)
     print("Number of finished trials: ", len(study.trials))
 
     print("Best trial:")
