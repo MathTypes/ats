@@ -45,6 +45,8 @@ def my_app(cfg: DictConfig) -> None:
         'model_tickers': ['ES','NQ','CL','RTY','HG'],
         'raw_dir': '.',
         'base_dir':cfg['dataset']['base_dir'],
+        'hidden_size':cfg['model']['hidden_size'],
+        'learning_rate':cfg['optimizer']['lr'],
         'num_workers': 8,
         'device' : cfg.job.device,
         'workers': cfg.job.workers,
