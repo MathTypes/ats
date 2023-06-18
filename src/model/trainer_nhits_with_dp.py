@@ -148,9 +148,14 @@ def get_data_module(config):
         ticker_train_data["new_idx"] = ticker_train_data.apply(lambda x : x.ticker + "_" + str(x.series_idx), axis=1)
         ticker_train_data = ticker_train_data.set_index("new_idx")
         train_data_vec.append(ticker_train_data)
-    train_data = pd.concat(train_data_vec)
+    raw_data = pd.concat(train_data_vec)
+    logging.info(f"raw_data:{raw_data}")
+    train_data = raw_data[raw_data.year<=2020]
+    eval_data = raw_data[raw_data.year>2020]
     train_data = train_data.sort_values(["ticker", "time"])
+    eval_data = eval_data.sort_values(["ticker", "time"])
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
+    eval_data.insert(0, 'time_idx', range(0, len(eval_data)))
     data_loading_time = time.time() - start
     logging.info(f"Data loading time: {data_loading_time:.2f} seconds")
 
@@ -169,7 +174,7 @@ def get_data_module(config):
         "beer_capital",
         "music_fest",
     ]
-    data_module = TimeSeriesDataModule(config, train_data)
+    data_module = TimeSeriesDataModule(config, train_data, eval_data)
     return data_module
 
 

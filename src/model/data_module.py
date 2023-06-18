@@ -157,10 +157,11 @@ class LSTMDataModule(pl.LightningDataModule):
 
 
 class TimeSeriesDataModule(pl.LightningDataModule):
-    def __init__(self, config, train_data):
+    def __init__(self, config, train_data, eval_data):
         super().__init__()
         self.train_data = train_data
-        logging.info(f"train_data:{self.train_data}")
+        self.eval_data = eval_data
+        logging.info(f"eval_data:{self.eval_data}")
         self.training = TimeSeriesDataSet(
             self.train_data,
             time_idx="time_idx",
@@ -182,9 +183,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         # for each series
         #logging.info(f"val_idx:{val_idx}, tst_idx:{tst_idx}")
         #self.validation = TimeSeriesDataSet.from_dataset(self.training, self.train_data[val_idx:tst_idx])
-        self.validation = self.training
+        self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
         #self.test = TimeSeriesDataSet.from_dataset(self.training, self.train_data[tst_idx:])
-        self.test = self.training
+        self.test = self.validation
         # create dataloaders for model
         self.batch_size = 128*100  # set this between 32 to 128
         
