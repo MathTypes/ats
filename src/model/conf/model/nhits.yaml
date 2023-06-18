@@ -1,1 +1,3 @@
-hidden_size: 16
+hidden_size: 8
+prediction_length: 46
+context_length: 460
