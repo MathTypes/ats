@@ -255,6 +255,17 @@ class MASE(MultiHorizonMetric):
 
 
 class MAPCSE(MultiHorizonMetric):
+    def __init__(self, reduction="mean", width: float = 46, **kwargs):
+        """
+        Args:
+            p (float, optional): tweedie variance power which is greater equal
+                1.0 and smaller 2.0. Close to ``2`` shifts to
+                Gamma distribution and close to ``1`` shifts to Poisson distribution.
+                Defaults to 1.5.
+            reduction (str, optional): How to reduce the loss. Defaults to "mean".
+        """
+        super().__init__(reduction=reduction, **kwargs)
+        self.width = width
     """
     Mean absolute scaled cum error
 
@@ -265,9 +276,7 @@ class MAPCSE(MultiHorizonMetric):
     def update(
         self,
         y_pred,
-        target,
-        encoder_target,
-        encoder_lengths=None,
+        target
     ) -> torch.Tensor:
         """
         Update metric that handles masking of values.
@@ -295,15 +304,6 @@ class MAPCSE(MultiHorizonMetric):
         else:
             lengths = torch.full((target.size(0),), fill_value=target.size(1), dtype=torch.long, device=target.device)
 
-        # determine lengths for encoder
-        if encoder_lengths is None:
-            encoder_target, encoder_lengths = unpack_sequence(target)
-        else:
-            assert isinstance(encoder_target, torch.Tensor)
-        assert not target.requires_grad
-
-        # calculate loss with "none" reduction
-        scaling = self.calculate_scaling(target, lengths, encoder_target, encoder_lengths)
         #logging.info(f"orig_y_pred:{y_pred}")
         #logging.info(f"orig_target:{target}")
         #y_pred = torch.cumsum(y_pred)
@@ -311,10 +311,10 @@ class MAPCSE(MultiHorizonMetric):
         #logging.info(f"y_pred:{y_pred}")
         #logging.info(f"target:{target}")
 
-        high_idx_pred, _ = find_peaks(y_pred, width=4)
-        high_idx_target, _ = find_peaks(target, width=4)
-        low_idx_pred, _ = find_peaks(np.negative(pred), width=4)
-        low_idx_target, _ = find_peaks(np.negative(target), width=4)
+        high_idx_pred, _ = find_peaks(y_pred, width=self.width)
+        high_idx_target, _ = find_peaks(target, width=self.width)
+        low_idx_pred, _ = find_peaks(np.negative(pred), width=self.width)
+        low_idx_target, _ = find_peaks(np.negative(target), width=self.width)
         idx = high_idx_pred + high_idx_target + low_idx_pred + low_idx_target
 
         #logging.info(f"scaling:{scaling}")
@@ -328,7 +328,7 @@ class MAPCSE(MultiHorizonMetric):
         #logging.info(f"peak_y_pred:{y_pred}")
         #logging.info(f"peak_target:{target}")
         
-        losses = self.loss(pred, target, scaling)
+        losses = self.loss(pred, target)
 
         # weight samples
         if weight is not None:
@@ -336,48 +336,9 @@ class MAPCSE(MultiHorizonMetric):
 
         self._update_losses_and_lengths(losses, lengths)
 
-    def loss(self, y_pred, target, scaling):
-        
-        return (self.to_prediction(y_pred) - target).abs() / scaling.unsqueeze(-1)
-
-    def calculate_scaling(self, target, lengths, encoder_target, encoder_lengths):
-        # calcualte mean(abs(diff(targets)))
-        eps = 1e-6
-        batch_size = target.size(0)
-        total_lengths = lengths + encoder_lengths
-        assert (total_lengths > 1).all(), "Need at least 2 target values to be able to calculate MASE"
-        max_length = target.size(1) + encoder_target.size(1)
-        if (total_lengths != max_length).any():  # if decoder or encoder targets have sequences of different lengths
-            targets = torch.cat(
-                [
-                    encoder_target,
-                    torch.zeros(batch_size, target.size(1), device=target.device, dtype=encoder_target.dtype),
-                ],
-                dim=1,
-            )
-            target_index = torch.arange(target.size(1), device=target.device, dtype=torch.long).unsqueeze(0).expand(
-                batch_size, -1
-            ) + encoder_lengths.unsqueeze(-1)
-            targets.scatter_(dim=1, src=target, index=target_index)
-        else:
-            targets = torch.cat([encoder_target, target], dim=1)
-
-        # take absolute difference
-        diffs = (targets[:, :-1] - targets[:, 1:]).abs()
-
-        # set last difference to 0
-        not_maximum_length = total_lengths != max_length
-        zero_correction_indices = total_lengths[not_maximum_length] - 1
-        if len(zero_correction_indices) > 0:
-            diffs[
-                torch.arange(batch_size, dtype=torch.long, device=diffs.device)[not_maximum_length],
-                zero_correction_indices,
-            ] = 0.0
-
-        # calculate mean over differences
-        scaling = diffs.sum(1) / total_lengths + eps
-
-        return scaling
+    def loss(self, y_pred, target):
+        loss = torch.pow(self.to_prediction(y_pred) - target, 2)
+        return loss
 
 
 class TweedieLoss(MultiHorizonMetric):

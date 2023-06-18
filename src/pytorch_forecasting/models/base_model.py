@@ -48,6 +48,7 @@ from pytorch_forecasting.metrics import (
     MAE,
     MASE,
     SMAPE,
+    MAPCSE,
     DistributionLoss,
     MultiHorizonMetric,
     MultiLoss,

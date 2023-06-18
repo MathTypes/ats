@@ -17,7 +17,7 @@ import plotly.graph_objects as go
 
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
-from pytorch_forecasting.metrics import MAE, MAPE, MASE, RMSE, SMAPE, MultiHorizonMetric, MultiLoss
+from pytorch_forecasting.metrics import MAE, MAPE, MASE, RMSE, SMAPE, MAPCSE, MultiHorizonMetric, MultiLoss
 from pytorch_forecasting.models.base_model import BaseModelWithCovariates
 from pytorch_forecasting.models.nhits.sub_modules import NHiTSModule
 from pytorch_forecasting.models.nn.embeddings import MultiEmbedding
@@ -148,7 +148,7 @@ class NHiTS(BaseModelWithCovariates):
         """
         #logging.info(f"self.hparams:{self.hparams}")
         if logging_metrics is None:
-            logging_metrics = nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE(), MASE()])
+            logging_metrics = nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE(), MASE(), MAPCSE(46)])
         if loss is None:
             loss = MASE()
 
