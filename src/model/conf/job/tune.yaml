@@ -5,4 +5,5 @@ end_date: 2023-01-01
 workers: 8
 max_epochs: 20
 n_trials: 100
-study_name: test
+study_name: 
+log_mode: True
