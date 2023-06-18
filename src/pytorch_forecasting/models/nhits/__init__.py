@@ -342,6 +342,8 @@ class NHiTS(BaseModelWithCovariates):
             ),  # (n_outputs x) n_samples x n_timesteps x 1
             block_backcasts=block_backcasts,  # n_blocks x (n_outputs x) n_samples x n_timesteps x 1
             block_forecasts=block_forecasts,  # n_blocks x (n_outputs x) n_samples x n_timesteps x output_size
+            encoder_x_t = encoder_x_t,
+            decoder_x_t = decoder_x_t
         )
 
     @classmethod
