@@ -221,7 +221,7 @@ def optimize_hyperparameters(
         trial_config["learning_rate"] = model.hparams.learning_rate
         #logging.info(f"trial_config_before_model:{trial_config}")
         #trial_config.update(dict(model.hparams))
-        wandb.init(project="ats-optuna", enitity="johnnychen7622", config=trial_config, group=study_name, reinit=True)
+        wandb.init(project="ats-optuna", entity="johnnychen7622", config=trial_config, group=study_name, reinit=True)
         # fit
         #trainer = pl.Trainer(
         #    **default_trainer_kwargs,
