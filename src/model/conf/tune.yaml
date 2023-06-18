@@ -1,0 +1,5 @@
+defaults:
+ - dataset: future
+ - optimizer: adam
+ - model: nhits
+ - job: tune

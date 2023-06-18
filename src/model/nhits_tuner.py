@@ -42,7 +42,7 @@ def optimize_hyperparameters(
         context_length_range: Tuple[int, int] = (8, 256),
         prediction_length_range: Tuple[int, int] = (4, 48),
         static_hidden_size_range: Tuple[int, int] = (8, 64),
-        hidden_size_range: Tuple[int, int] = (16, 265),
+        hidden_size_range: Tuple[int, int] = (4, 64),
         dropout_range: Tuple[float, float] = (0.1, 0.3),
         learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
         use_learning_rate_finder: bool = True,
@@ -247,14 +247,13 @@ def optimize_hyperparameters(
     wandb_kwargs = {
         "project": "ats-optuna",
         "entity": "johnnychen7622",
-        "config": {"sampler": sampler.__name__},
         "reinit": True,
     }
     wandbc = WeightsAndBiasesCallback(
         metric_name="val_loss", wandb_kwargs=wandb_kwargs
     )
 
-    study = optuna.create_study(direction="maximize", sampler=sampler())
+    study = optuna.create_study(direction="maximize", sampler=sampler)
     study.optimize(objective, n_trials=n_trials, callbacks=[wandbc])
     #study.optimize(objective, n_trials=n_trials, timeout=timeout)
     print("Number of finished trials: ", len(study.trials))
