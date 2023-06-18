@@ -708,9 +708,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         self.log_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
         #logging.info(f"self.log_interval:{self.log_interval}")
         if self.log_interval > 0:
-            self.log_prediction(
-                x, out, batch_idx, prediction_kwargs=prediction_kwargs, quantiles_kwargs=quantiles_kwargs
-            )
+            #self.log_prediction(
+            #    x, out, batch_idx, prediction_kwargs=prediction_kwargs, quantiles_kwargs=quantiles_kwargs
+            #)
+            pass
         return {}
 
     def step(

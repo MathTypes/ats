@@ -437,7 +437,8 @@ class NHiTS(BaseModelWithCovariates):
 
         if not "nolog" in kwargs:
           # log interpretation
-          self.log_interpretation(x, out, batch_idx=batch_idx)
+          #self.log_interpretation(x, out, batch_idx=batch_idx)
+          pass
         return log, out
 
     def plot_interpretation(
