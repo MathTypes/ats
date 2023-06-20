@@ -39,8 +39,8 @@ def optimize_hyperparameters(
         config: Dict[str, Any] = {},
         timeout: float = 3600 * 8.0,  # 8 hours
         gradient_clip_val_range: Tuple[float, float] = (0.01, 100.0),
-        context_length_range: Tuple[int, int] = (8, 256),
-        prediction_length_range: Tuple[int, int] = (4, 48),
+        context_length_ratio_range: Tuple[int, int] = (1, 30),
+        prediction_length_range: Tuple[int, int] = (4, 48*3),
         static_hidden_size_range: Tuple[int, int] = (8, 64),
         hidden_size_range: Tuple[int, int] = (4, 64),
         dropout_range: Tuple[float, float] = (0.1, 0.3),
@@ -148,44 +148,23 @@ def optimize_hyperparameters(
         trial_config["learning_rate"] = 0.02
         trial_config["trial.number"] = trial.number
         #trial_config["dropout"]=trial.suggest_uniform("dropout", *dropout_range)
-        trial_config["hidden_size"] = trial.suggest_int("hidden_size", *hidden_size_range, log=False)
+        #trial_config["hidden_size"] = trial.suggest_int("hidden_size", *hidden_size_range, log=False)
         trial_config["log_mode"] = True
         logging.info(f"trial_config:{trial_config}")
-        #trial_config["context_length"] = trial.suggest_int("context_length", *context_length_range, log=True)
         #trial_config["prediction_length"] = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
-        #trial_config["min_encoder_length"] = trial_config["context_length"]
-        #trial_config["max_encoder_length"] = trial_config["context_length"]
-        #trial_config["min_prediction_length"] = trial_config["prediction_length"]
-        #trial_config["max_prediction_length"] = trial_config["prediction_length"]
+        context_length_ratio = trial.suggest_int("context_length_ratio", *context_length_ratio_range, log=True)
+        trial_config["context_length"] = trial_config["prediction_length"]*context_length_ratio
+        #trial_config["loss_name"] = trial.suggest_categorical("loss", ["MASE", "SMAPE", "MAE", "RMSE", "MAPE", "MQF2DistributionLoss"])
+        trial_config["min_encoder_length"] = trial_config["context_length"]
+        trial_config["max_encoder_length"] = trial_config["context_length"]
+        trial_config["min_prediction_length"] = trial_config["prediction_length"]
+        trial_config["max_prediction_length"] = trial_config["prediction_length"]
         #gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
         #trial_config["gradient_clip_val"] = gradient_clip_val
         data_module = nhits.get_data_module(trial_config)
         model = nhits.get_model(trial_config, data_module)
-        #return random.random()
-        #model = NHiTS.from_dataset(
-        #    train_dataloaders.dataset,
-        #    context_length=context_length,
-        #    prediction_length=prediction_length,
-        #    dropout=trial.suggest_uniform("dropout", *dropout_range),
-        #    hidden_size=hidden_size,
-            #static_hidden_size=trial.suggest_int(
-            #    "static_hidden_size",
-            #    static_hidden_size_range[0],
-            #    min(static_hidden_size_range[1], hidden_size),
-            #    log=True,
-            #),
-            #log_interval=-1,
-            #**kwargs,
-        #)
         # find good learning rate
         if use_learning_rate_finder:
-            #lr_trainer = pl.Trainer(
-            #    gradient_clip_val=gradient_clip_val,
-            #    accelerator="auto",
-            #    logger=False,
-            #    enable_progress_bar=False,
-            #    enable_model_summary=False,
-            #)
             lr_trainer = nhits.get_trainer(trial_config, data_module)
             tuner = Tuner(lr_trainer)
             res = tuner.lr_find(
@@ -198,9 +177,6 @@ def optimize_hyperparameters(
                 max_lr=learning_rate_range[1],
             )
 
-            #print(f"suggested learning rate: {res.suggestion()}")
-            #fig = res.plot(show=True, suggest=True)
-            #fig.show()
             loss_finite = np.isfinite(res.results["loss"])
             if loss_finite.sum() > 3:  # at least 3 valid values required for learning rate finder
                 lr_smoothed, loss_smoothed = sm.nonparametric.lowess(
@@ -232,7 +208,7 @@ def optimize_hyperparameters(
         trainer.fit(model, train_dataloaders=data_module.train_dataloader(), val_dataloaders=data_module.val_dataloader())
         optuna_logger.info(f"Trainer: {trainer}")
         optuna_logger.info(f"Trainer metrics {trainer.callback_metrics}")
-        #wandb.log(data={"validation loss":trainer.callback_metrics["val_loss"].item()})
+        wandb.log(data={"validation loss":trainer.callback_metrics["val_loss"].item()})
         wandb.finish()
         # report result
         return trainer.callback_metrics["val_loss"].item()
@@ -255,7 +231,6 @@ def optimize_hyperparameters(
 
     study = optuna.create_study(direction="maximize", sampler=sampler)
     study.optimize(objective, n_trials=n_trials, callbacks=[wandbc])
-    #study.optimize(objective, n_trials=n_trials, timeout=timeout)
     print("Number of finished trials: ", len(study.trials))
 
     print("Best trial:")
