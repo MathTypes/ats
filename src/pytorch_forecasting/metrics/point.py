@@ -81,7 +81,7 @@ class MAPE(MultiHorizonMetric):
 
     def loss(self, y_pred, target):
         loss = (self.to_prediction(y_pred) - target).abs() / (target.abs() + 1e-8)
-        logging.info(f"mape loss:{loss}, shape:{loss.shape}")
+        #logging.info(f"mape loss:{loss}, shape:{loss.shape}")
         return loss
 
 
@@ -94,7 +94,7 @@ class MAE(MultiHorizonMetric):
 
     def loss(self, y_pred, target):
         loss = (self.to_prediction(y_pred) - target).abs()
-        logging.info(f"mae loss:{loss}, shape:{loss.shape}")
+        #logging.info(f"mae loss:{loss}, shape:{loss.shape}")
         return loss
 
 
@@ -350,7 +350,8 @@ class MAPCSE(MultiHorizonMetric):
         self._update_losses_and_lengths(losses, lengths)
 
     def loss(self, y_pred, target):
-        loss = torch.pow(self.to_prediction(y_pred) - target, 2)
+        #loss = torch.pow(self.to_prediction(y_pred) - target, 2)
+        loss = (self.to_prediction(y_pred) - target).abs()
         return loss
 
 
