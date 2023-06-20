@@ -81,6 +81,7 @@ class MAPE(MultiHorizonMetric):
 
     def loss(self, y_pred, target):
         loss = (self.to_prediction(y_pred) - target).abs() / (target.abs() + 1e-8)
+        logging.info(f"mape loss:{loss}, shape:{loss.shape}")
         return loss
 
 
@@ -93,6 +94,7 @@ class MAE(MultiHorizonMetric):
 
     def loss(self, y_pred, target):
         loss = (self.to_prediction(y_pred) - target).abs()
+        logging.info(f"mae loss:{loss}, shape:{loss.shape}")
         return loss
 
 
@@ -255,7 +257,7 @@ class MASE(MultiHorizonMetric):
 
 
 class MAPCSE(MultiHorizonMetric):
-    def __init__(self, reduction="mean", width: float = 46, **kwargs):
+    def __init__(self, width: float = 46, **kwargs):
         """
         Args:
             p (float, optional): tweedie variance power which is greater equal
@@ -264,7 +266,7 @@ class MAPCSE(MultiHorizonMetric):
                 Defaults to 1.5.
             reduction (str, optional): How to reduce the loss. Defaults to "mean".
         """
-        super().__init__(reduction=reduction, **kwargs)
+        super().__init__(**kwargs)
         self.width = width
     """
     Mean absolute scaled cum error
@@ -303,19 +305,29 @@ class MAPCSE(MultiHorizonMetric):
             target, lengths = unpack_sequence(target)
         else:
             lengths = torch.full((target.size(0),), fill_value=target.size(1), dtype=torch.long, device=target.device)
-
-        #logging.info(f"orig_y_pred:{y_pred}")
-        #logging.info(f"orig_target:{target}")
-        #y_pred = torch.cumsum(y_pred)
-        #target = torch.cumsum(target)
-        #logging.info(f"y_pred:{y_pred}")
-        #logging.info(f"target:{target}")
-
-        high_idx_pred, _ = find_peaks(y_pred, width=self.width)
-        high_idx_target, _ = find_peaks(target, width=self.width)
-        low_idx_pred, _ = find_peaks(np.negative(pred), width=self.width)
-        low_idx_target, _ = find_peaks(np.negative(target), width=self.width)
-        idx = high_idx_pred + high_idx_target + low_idx_pred + low_idx_target
+        #logging.info(f"y_pred:{y_pred.shape}")
+        y_pred = y_pred
+        target = target
+        y_pred_max = torch.nn.functional.max_pool1d_with_indices(y_pred, self.width, 1,
+                                                                 padding=self.width//2)[0]
+        target_max = torch.nn.functional.max_pool1d_with_indices(target, self.width, 1,
+                                                                 padding=self.width//2)[0]
+        y_pred_min = -torch.nn.functional.max_pool1d_with_indices(-y_pred, self.width, 1,
+                                                                  padding=self.width//2)[0]
+        target_min = -torch.nn.functional.max_pool1d_with_indices(-target, self.width, 1,
+                                                                  padding=self.width//2)[0]
+        # TODO: not sure why we have 1 extra length for last dimension
+        y_pred_peak = torch.stack([y_pred_max, y_pred_min], dim=1)
+        target_peak = torch.stack([target_max, target_min], dim=1)
+        #logging.info(f"y_pred_peak:{y_pred_peak}, shape:{y_pred_peak.shape}")
+        #logging.info(f"target_peak:{target_peak}, shape:{target_peak.shape}")
+        #candidates = window_maxima.unique()
+        #nice_peaks = candidates[(window_maxima[candidates]==candidates).nonzero()]
+        #high_idx_pred, _ = find_peaks(y_pred.cpu(), width=self.width)
+        #high_idx_target, _ = find_peaks(target.cpu(), width=self.width)
+        #low_idx_pred, _ = find_peaks(np.negative(y_pred.cpu()), width=self.width)
+        #low_idx_target, _ = find_peaks(np.negative(target.cpu()), width=self.width)
+        #idx = high_idx_pred + high_idx_target + low_idx_pred + low_idx_target
 
         #logging.info(f"scaling:{scaling}")
         #logging.info(f"high_idx_pred:{high_idx_pred}")
@@ -323,13 +335,14 @@ class MAPCSE(MultiHorizonMetric):
         #logging.info(f"high_idx_target:{high_idx_target}")
         #logging.info(f"low_idx_target:{low_idx_target}")
 
-        y_pred = y_pred.iloc[idx]
-        target = target.iloc[idx]
+        #y_pred = y_pred.iloc[idx]
+        #target = target.iloc[idx]
         #logging.info(f"peak_y_pred:{y_pred}")
         #logging.info(f"peak_target:{target}")
         
-        losses = self.loss(pred, target)
-
+        losses = self.loss(y_pred, target)
+        #losses = torch.sum(losses, -1)
+        #logging.info(f"mapce:{losses}, {losses.shape}")
         # weight samples
         if weight is not None:
             losses = losses * weight.unsqueeze(-1)
