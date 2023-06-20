@@ -63,7 +63,6 @@ def my_app(cfg: DictConfig) -> None:
         'context_length' : context_length,
         'prediction_length' : prediction_length,
         'max_epochs' : cfg.job.max_epochs,
-        'n_trials' : cfg.job.n_trials,
         'model_path' : 'checkpoint'}
     wandb.config = config
     pipe = TimeSeriesPipeline(dataset="FUT", device=device, config=config)
@@ -73,6 +72,7 @@ def my_app(cfg: DictConfig) -> None:
         logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
         pipe.train_model()
     elif cfg.job.mode == "tune":
+        config['n_trials'] = cfg.job.n_trials
         pipe.tune_model(config, cfg.job.study_name)
     elif cfg.job.mode == "eval":
         pipe.create_model()

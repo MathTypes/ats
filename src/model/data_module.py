@@ -95,7 +95,7 @@ class TransformerDataModule(pl.LightningDataModule):
             target_seq_len=self.output_sequence_length
             )
         return DataLoader(val_wrapper, batch_size=self.batch_size, pin_memory=True,
-                          num_workers=8)
+                          num_workers=8, shuffle=True)
     
     def test_dataloader(self):
         self.test_indices = timeseries_utils.get_indices_entire_sequence(
