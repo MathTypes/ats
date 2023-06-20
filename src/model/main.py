@@ -39,8 +39,10 @@ def my_app(cfg: DictConfig) -> None:
     device = cfg.job.device
     logging.info(f"start_date:{cfg.job.start_date}")
     logging.info(f"end_date:{cfg.job.end_date}")
-    context_length = 13*7*5*6
-    prediction_length = 13*3
+    #context_length = 13*7*5*6
+    #prediction_length = 13*3
+    prediction_length = cfg['model']['prediction_length']
+    context_length = cfg['model']['context_length']
     config = {
         'model_tickers': ['ES','NQ','CL','RTY','HG'],
         'raw_dir': '.',
@@ -48,6 +50,8 @@ def my_app(cfg: DictConfig) -> None:
         'hidden_size':cfg['model']['hidden_size'],
         'learning_rate':cfg['optimizer']['lr'],
         'num_workers': 8,
+        'log_mode': cfg['job']['log_mode'],
+        'loss_name': cfg['model']['loss_name'],
         'device' : cfg.job.device,
         'workers': cfg.job.workers,
         'start_date': datetime.datetime.strptime(cfg.job.start_date, "%Y-%m-%d"),

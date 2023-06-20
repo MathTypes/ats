@@ -30,7 +30,7 @@ import lightning.pytorch as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
-from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss
+from pytorch_forecasting.metrics import MAE, MAPE, MASE, MAPCSE, RMSE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss
 
 from ray.util.dask import enable_dask_on_ray
 from ray_lightning import RayStrategy
@@ -61,9 +61,26 @@ def get_model(config, data_module):
     # configure network and trainer
     #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
+    loss_name = config["loss_name"]
+    loss = None
+    if loss_name == "MASE":
+        loss = MASE()
+    if loss_name == "SMAPE":
+        loss = SMAPE()
+    if loss_name == "MAE":
+        loss = MAE()
+    if loss_name == "RMSE":
+        loss = RMSE()
+    if loss_name == "MAPE":
+        loss = MAPE()
+    if loss_name == "MAPCSE":
+        loss = MAPCSE()
+    if loss_name == "MQF2DistributionLoss":
+        loss = MQF2DistributionLoss(prediction_length=max_prediction_length)
     net = NHiTS.from_dataset(
         training,
         weight_decay=1e-2,
+        loss = loss,
         #loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
         #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
                                 #MQF2DistributionLoss(prediction_length=max_prediction_length),
