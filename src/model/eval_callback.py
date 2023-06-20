@@ -34,7 +34,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.every_n_epochs = every_n_epochs
 
     def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
-        super().on_train_end(trainer, pl_module)
+        #super().on_train_end(trainer, pl_module)
         super().on_train_end(logs=None)
 
     def on_train_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
