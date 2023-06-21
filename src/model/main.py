@@ -32,7 +32,6 @@ def my_app(cfg: DictConfig) -> None:
         TimeSeriesPipeline
     ]
     #config_utils.set_args(args)
-    logging_utils.init_logging()
     logging.info(f"cfg:{cfg}, dir(cfg)")
     ray.init()
     enable_dask_on_ray()
@@ -83,4 +82,5 @@ def my_app(cfg: DictConfig) -> None:
 
     
 if __name__ == "__main__":
+  logging_utils.init_logging()
   my_app()
