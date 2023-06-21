@@ -183,7 +183,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         #exit(0)
         #logging.info(f"y_quantiles:{y_quantiles.shape}")
         for idx in range(len(y_hats)):
-          prediction_date_time = str(self.data_table_ref.data[idx][5]) + "-" + str(self.data_table_ref.data[idx][6]) + "-" + str(self.data_table_ref.data[idx][7]) + " " + str(self.data_table_ref.data[idx][4])
+          prediction_date_time = str(self.data_table_ref.data[idx][5]) + "-" + str(self.data_table_ref.data[idx][6]) + "-" + str(self.data_table_ref.data[idx][7]) + " " + str(self.data_table_ref.data[idx][3]) + " " + str(self.data_table_ref.data[idx][4])
           fig = self.pl_module.plot_prediction(x, out, idx=idx, add_loss_to_title=True)
           fig.update_layout(title=prediction_date_time)
           img_bytes = fig.to_image(format="png") # kaleido library
