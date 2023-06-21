@@ -9,6 +9,7 @@ from datasets import (
     generate_stock_returns,
     tabular_to_sliding_dataset
 )
+from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
 import timeseries_dataset
 import timeseries_utils
 from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
@@ -22,9 +23,11 @@ class TransformerDataModule(pl.LightningDataModule):
                  enc_seq_len = 153,
                  output_sequence_length = 24,
                  step_size: int = 1,
-                 batch_size = 1024):
+                 batch_size = 1024,
+                 eval_batch_size = 10):
         super().__init__()
         self.batch_size = batch_size
+        self.eval_batch_size = eval_batch_size
         self.dataset = dataset
         self.dec_seq_len = dec_seq_len
         self.enc_seq_len = enc_seq_len
@@ -94,7 +97,7 @@ class TransformerDataModule(pl.LightningDataModule):
             dec_seq_len=self.dec_seq_len,
             target_seq_len=self.output_sequence_length
             )
-        return DataLoader(val_wrapper, batch_size=self.batch_size, pin_memory=True,
+        return DataLoader(val_wrapper, batch_size=self.eval_batch_size, pin_memory=True,
                           num_workers=8, shuffle=True)
     
     def test_dataloader(self):
@@ -109,7 +112,7 @@ class TransformerDataModule(pl.LightningDataModule):
             dec_seq_len=self.dec_seq_len,
             target_seq_len=self.output_sequence_length
             )
-        return DataLoader(test_wrapper, batch_size=self.batch_size, pin_memory=True,
+        return DataLoader(test_wrapper, batch_size=self.eval_batch_size, pin_memory=True,
                           num_workers=8)
 
 class LSTMDataModule(pl.LightningDataModule):
@@ -179,6 +182,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
         )
         logging.info(f"train_data:{self.train_data.describe()}")
+        logging.info(f"eval_data:{self.eval_data.describe()}")
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
         #logging.info(f"val_idx:{val_idx}, tst_idx:{tst_idx}")
@@ -188,7 +192,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.test = self.validation
         # create dataloaders for model
         self.batch_size = 128*100  # set this between 32 to 128
-        
+        self.eval_batch_size = 10
 
     def prepare_data(self):
         pass
@@ -201,16 +205,16 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         return train_dataloader
     
     def val_dataloader(self):
-        logging.info(f"val_dataloader_batch:{self.batch_size * 10}")
+        logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
         # train = True is the hack to randomly sample from time series from different ticker. 
         val_dataloader = self.validation.to_dataloader(train=True,
-                                                       batch_size=self.batch_size, num_workers=4,
+                                                       batch_size=self.eval_batch_size, num_workers=4,
                                                        batch_sampler=None,
                                                        pin_memory=True, drop_last=False)
         return val_dataloader
 
     
     def test_dataloader(self):
-        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.batch_size * 10, num_workers=0,
+        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.eval_batch_size, num_workers=0,
                                                   batch_sampler=None, pin_memory=True, drop_last=False)
         return test_dataloader

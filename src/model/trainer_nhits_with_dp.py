@@ -12,6 +12,7 @@ from pathlib import Path
 import warnings
 import pyarrow.dataset as pds
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
+from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
 #import lightning.pytorch as pl
 import numpy as np
 import pandas as pd
@@ -96,6 +97,9 @@ def get_model(config, data_module):
         learning_rate=config["learning_rate"],
         optimizer="AdamW",
         log_interval=0.25,
+        #n_blocks=[1,1,1],
+        #downsample_frequencies=[1,23,46],
+        #n_layers=2,
         #log_val_interval=10000
     )
     return net
@@ -156,6 +160,21 @@ def get_input_for_ticker(config, ticker):
     train_data = train_data.drop(columns=["time_idx"])
     return train_data
 
+def add_highs(df, width):
+    df_cumsum = df.cumsum()
+    high_idx, _ = find_peaks(df_cumsum, width=width)
+    high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
+    df_high = df_cumsum.to_frame(name="close_cumsum").join(high)
+    df_high = df_high.bfill()
+    return df_high["close_cumsum_high"]
+
+def add_lows(df, width):
+    df_cumsum = df.cumsum()
+    low_idx, _ = find_peaks(np.negative(df_cumsum), width=width)
+    low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
+    df_low = df_cumsum.to_frame(name="close_cumsum").join(low)
+    df_low = df_low.bfill()
+    return df_low["close_cumsum_low"]
 
 def get_data_module(config):
     start = time.time()
@@ -166,6 +185,13 @@ def get_data_module(config):
         ticker_train_data = ticker_train_data.set_index("new_idx")
         train_data_vec.append(ticker_train_data)
     raw_data = pd.concat(train_data_vec)
+    g = raw_data.groupby(["ticker"], observed=True)
+    raw_data["close_high_21"] = g['close_back'].transform(add_highs, width=21)
+    raw_data["close_low_21"] = g['close_back'].transform(add_lows, width=21)
+    raw_data["close_high_51"] = g['close_back'].transform(add_highs, width=51)
+    raw_data["close_low_51"] = g['close_back'].transform(add_lows, width=51)
+    raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
+    raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
     logging.info(f"raw_data:{raw_data}")
     train_data = raw_data[raw_data.year<=2020]
     eval_data = raw_data[raw_data.year>2020]
