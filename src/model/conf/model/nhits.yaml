@@ -1,4 +1,5 @@
 hidden_size: 8
-prediction_length: 230
+prediction_length: 26
 context_length: 2300
-loss_name: MAPCSE
+#loss_name: MAPCSE
+loss_name: MASE
