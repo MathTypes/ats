@@ -176,10 +176,11 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             max_prediction_length=config['prediction_length'],
             allow_missing_timesteps=True,
             target_normalizer=None,
-            #time_varying_known_reals=["time_idx", "hour_of_day", "day_of_week", "day_of_month"],
-            #time_varying_known_reals=[],
+            #time_varying_known_reals=["relative_time_idx", "hour_of_day", "day_of_week", "day_of_month"],
+            time_varying_known_reals=["hour_of_day", "day_of_week", "day_of_month"],
             time_varying_unknown_reals=["close_back_cumsum"],
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
+            add_relative_time_idx = True
         )
         logging.info(f"train_data:{self.train_data.describe()}")
         logging.info(f"eval_data:{self.eval_data.describe()}")
@@ -205,7 +206,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         return train_dataloader
     
     def val_dataloader(self):
-        logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
+        #logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
         # train = True is the hack to randomly sample from time series from different ticker. 
         val_dataloader = self.validation.to_dataloader(train=True,
                                                        batch_size=self.eval_batch_size, num_workers=4,
