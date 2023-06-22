@@ -23,7 +23,7 @@ from pathlib import Path
 #from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 import data_module
-from similarity_logger import SimilarityLogger
+#from similarity_logger import SimilarityLogger
 
 torch.manual_seed(0)
 np.random.seed(0)
