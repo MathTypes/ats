@@ -305,8 +305,21 @@ class MAPCSE(MultiHorizonMetric):
             target, lengths = unpack_sequence(target)
         else:
             lengths = torch.full((target.size(0),), fill_value=target.size(1), dtype=torch.long, device=target.device)
+        
+        losses = self.loss(y_pred, target)
+        #losses = torch.sum(losses, -1)
+        #logging.info(f"mapce:{losses}, {losses.shape}")
+        # weight samples
+        if weight is not None:
+            losses = losses * weight.unsqueeze(-1)
+
+        self._update_losses_and_lengths(losses, lengths)
+
+    def loss(self, y_pred, target):
+        #loss = torch.pow(self.to_prediction(y_pred) - target, 2)
         #logging.info(f"y_pred:{y_pred.shape}")
-        y_pred = y_pred
+        y_pred = self.to_prediction(y_pred)
+        #y_pred = y_pred
         target = target
         y_pred_max = torch.nn.functional.max_pool1d_with_indices(y_pred, self.width, 1,
                                                                  padding=self.width//2)[0]
@@ -317,8 +330,8 @@ class MAPCSE(MultiHorizonMetric):
         target_min = -torch.nn.functional.max_pool1d_with_indices(-target, self.width, 1,
                                                                   padding=self.width//2)[0]
         # TODO: not sure why we have 1 extra length for last dimension
-        y_pred_peak = torch.stack([y_pred_max, y_pred_min], dim=1)
-        target_peak = torch.stack([target_max, target_min], dim=1)
+        y_pred_peak = torch.cat([y_pred_max, y_pred_min], dim=-1)
+        target_peak = torch.cat([target_max, target_min], dim=-1)
         #logging.info(f"y_pred_peak:{y_pred_peak}, shape:{y_pred_peak.shape}")
         #logging.info(f"target_peak:{target_peak}, shape:{target_peak.shape}")
         #candidates = window_maxima.unique()
@@ -339,19 +352,9 @@ class MAPCSE(MultiHorizonMetric):
         #target = target.iloc[idx]
         #logging.info(f"peak_y_pred:{y_pred}")
         #logging.info(f"peak_target:{target}")
-        
-        losses = self.loss(y_pred, target)
-        #losses = torch.sum(losses, -1)
-        #logging.info(f"mapce:{losses}, {losses.shape}")
-        # weight samples
-        if weight is not None:
-            losses = losses * weight.unsqueeze(-1)
-
-        self._update_losses_and_lengths(losses, lengths)
-
-    def loss(self, y_pred, target):
-        #loss = torch.pow(self.to_prediction(y_pred) - target, 2)
-        loss = (self.to_prediction(y_pred) - target).abs()
+        loss = (y_pred_peak - target_peak).abs()
+        #logging.info(f"loss:{loss}")
+        #exit(0)
         return loss
 
 
