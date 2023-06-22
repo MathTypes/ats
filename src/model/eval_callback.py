@@ -13,13 +13,13 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
-            self, data_module, num_samples=100, every_n_epochs=5
+            self, data_module, num_samples=10, every_n_epochs=5
     ):
         super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum"],
                          ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum",
-                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "img_interp"])
+                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "img_interp", "rmse", "mapcse", "mae"])
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
@@ -154,6 +154,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 pred[1] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][8], # error_max
                 pred[2] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][9], # error_min
                 pred[4], # img_interp
+                pred[5], # rmse
+                pred[6], # mapcse
+                pred[7], # mae
             )
 
     def _inference(self):
@@ -170,9 +173,16 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         kwargs={'nolog': True}
         #logging.info(f"pl_module:{self.pl_module}, {dir(self.pl_module)}")
         log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
+        #log, out = self.pl_module.predict_step((x,y), batch_idx=0)
+        prediction_kwargs = {'reduction':None}
+        result = self.pl_module.compute_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
+        #logging.info(f"result:{result}")
         #logging.info(f"log:{log}")
         #logging.info(f"out:{out}")
-
+        #exit(0)
+        rmse = result["train_RMSE"].cpu().detach().numpy()
+        mapcse = result["train_MAPCSE"].cpu().detach().numpy()
+        mae = result["train_MAE"].cpu().detach().numpy()
         y_raws = to_list(out["prediction"])[0]  # raw predictions - used for calculating loss
         prediction_kwargs = {}
         quantiles_kwargs = {}
@@ -204,7 +214,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           im_interp = PIL.Image.open(BytesIO(img_bytes_interp))
           img_interp = wandb.Image(im_interp)
 
-          preds.append([decoder_time_idx, torch.max(y_hat), torch.min(y_hat), img, img_interp])
+          preds.append([decoder_time_idx, torch.max(y_hat), torch.min(y_hat), img, img_interp, rmse[idx], mapcse[idx], mae[idx]])
       #logging.info(f"preds:{len(preds)}")
       return preds
      

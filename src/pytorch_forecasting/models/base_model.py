@@ -22,7 +22,7 @@ from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks import BasePredictionWriter, LearningRateFinder
 from lightning.pytorch.trainer.states import RunningStage
 from lightning.pytorch.utilities.parsing import AttributeDict, get_init_args
-
+from pytorch_forecasting.utils import create_mask, unpack_sequence, unsqueeze_like
 #from pytorch_lightning import LightningModule, Trainer
 #from pytorch_lightning.callbacks import BasePredictionWriter, LearningRateFinder
 #from pytorch_lightning.trainer.states import RunningStage
@@ -642,10 +642,15 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
 
     def predict_step(self, batch, batch_idx):
-        predict_callback = [c for c in self.trainer.callbacks if isinstance(c, PredictCallback)][0]
+        predict_kwargs = {}
+        predict_callbacks = [c for c in self.trainer.callbacks if isinstance(c, PredictCallback)]
+        if predict_callbacks:
+          predict_callback = predict_callbacks[0]
+          predict_kwargs = predict_callback.predict_kwargs
         x, y = batch
-        _, out = self.step(x, y, batch_idx, **predict_callback.predict_kwargs)
-        return out  # need to return output to be able to use predict callback
+        log, out = self.step(x, y, batch_idx, **predict_kwargs)
+        # return out
+        return log, out  # need to return output to be able to use predict callback
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -831,6 +836,63 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         log = {"loss": loss, "n_samples": x["decoder_lengths"].size(0)}
         return log, out
 
+    def compute_metrics(
+        self,
+        x: Dict[str, torch.Tensor],
+        y: torch.Tensor,
+        out: Dict[str, torch.Tensor],
+        prediction_kwargs: Dict[str, Any] = None,
+    ) -> Dict[str, Any]:
+        """
+        Compute metrics every training/validation step.
+
+        Args:
+            x (Dict[str, torch.Tensor]): x as passed to the network by the dataloader
+            y (torch.Tensor): y as passed to the loss function by the dataloader
+            out (Dict[str, torch.Tensor]): output of the network
+            prediction_kwargs (Dict[str, Any]): parameters for ``to_prediction()`` of the loss metric.
+        """
+        # logging losses - for each target
+        if prediction_kwargs is None:
+            prediction_kwargs = {}
+        y_hat_point = self.to_prediction(out, **prediction_kwargs)
+        if isinstance(self.loss, MultiLoss):
+            y_hat_point_detached = [p.detach() for p in y_hat_point]
+        else:
+            y_hat_point_detached = [y_hat_point.detach()]
+        result = {}
+        for metric in self.logging_metrics:
+            for idx, y_point, y_part, encoder_target in zip(
+                list(range(len(y_hat_point_detached))),
+                y_hat_point_detached,
+                to_list(y[0]),
+                to_list(x["encoder_target"]),
+            ):
+                y_true = (y_part, y[1])
+                #logging.info(f"y_part:{y_part.shape}, y_point:{y_point.shape}")
+                if "reduction" in prediction_kwargs:
+                    if isinstance(metric, MASE):
+                        lengths = torch.full((y_part.size(0),), fill_value=y_part.size(1), dtype=torch.long, device=y_part.device)
+                        encoder_lengths=x["encoder_lengths"]
+                        scaling = metric.calculate_scaling(y_part, lengths, encoder_target, encoder_lengths)
+                        loss_value = torch.mean(metric.loss(y_point, y_part, scaling), dim=-1)
+                    else:
+                        loss_value = torch.mean(metric.loss(y_point, y_part), dim=-1)
+                else:
+                    if isinstance(metric, MASE):
+                        loss_value = metric(
+                            y_point, y_true, encoder_target=encoder_target, encoder_lengths=x["encoder_lengths"]
+                        )
+                    else:
+                        loss_value = metric(y_point, y_true)
+                #logging.info(f"loss_value:{loss_value}, metrics:{metric}, y_true:{y_true}, idx:{idx}")
+                if len(y_hat_point_detached) > 1:
+                    target_tag = self.target_names[idx] + " "
+                else:
+                    target_tag = ""
+                result[f"{target_tag}{self.current_stage}_{metric.name}"] = loss_value
+        return result
+
     def log_metrics(
         self,
         x: Dict[str, torch.Tensor],
@@ -848,39 +910,16 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             prediction_kwargs (Dict[str, Any]): parameters for ``to_prediction()`` of the loss metric.
         """
         # logging losses - for each target
-        if prediction_kwargs is None:
-            prediction_kwargs = {}
-        y_hat_point = self.to_prediction(out, **prediction_kwargs)
-        if isinstance(self.loss, MultiLoss):
-            y_hat_point_detached = [p.detach() for p in y_hat_point]
-        else:
-            y_hat_point_detached = [y_hat_point.detach()]
+        result = self.compute_metrics(x, y, out, prediction_kwargs)
+        for name, loss_value in result.items():
+            self.log(
+                name,
+                loss_value,
+                on_step=self.training,
+                on_epoch=True,
+                batch_size=len(x["decoder_target"]),
+            )
 
-        for metric in self.logging_metrics:
-            for idx, y_point, y_part, encoder_target in zip(
-                list(range(len(y_hat_point_detached))),
-                y_hat_point_detached,
-                to_list(y[0]),
-                to_list(x["encoder_target"]),
-            ):
-                y_true = (y_part, y[1])
-                if isinstance(metric, MASE):
-                    loss_value = metric(
-                        y_point, y_true, encoder_target=encoder_target, encoder_lengths=x["encoder_lengths"]
-                    )
-                else:
-                    loss_value = metric(y_point, y_true)
-                if len(y_hat_point_detached) > 1:
-                    target_tag = self.target_names[idx] + " "
-                else:
-                    target_tag = ""
-                self.log(
-                    f"{target_tag}{self.current_stage}_{metric.name}",
-                    loss_value,
-                    on_step=self.training,
-                    on_epoch=True,
-                    batch_size=len(x["decoder_target"]),
-                )
 
     def forward(
         self, x: Dict[str, Union[torch.Tensor, List[torch.Tensor]]]

@@ -130,8 +130,10 @@ class NHiTSBlock(nn.Module):
         logging.info(f"self.output_size:{self.output_size}")
         logging.info(f"self.context_length_pooled:{self.context_length_pooled}")
         logging.info(f"self.context_length:{self.context_length}")
+        logging.info(f"self.prediction_length:{self.prediction_length}")
         logging.info(f"self.encoder_covariate_size:{self.encoder_covariate_size}")
         logging.info(f"self.decoder_covariate_size:{self.decoder_covariate_size}")
+        logging.info(f"before hidden_size:{hidden_size}")
         self.hidden_size = [
             self.context_length_pooled * len(self.output_size)
             + self.context_length * self.encoder_covariate_size + self.prediction_length * self.decoder_covariate_size
@@ -147,7 +149,9 @@ class NHiTSBlock(nn.Module):
             self.pooling_layer = nn.AvgPool1d(kernel_size=self.pooling_sizes, stride=self.pooling_sizes, ceil_mode=True)
 
         hidden_layers = []
+        logging.info(f"hidden_size:{self.hidden_size}")
         for i in range(n_layers):
+            logging.info(f"i:{i}")
             hidden_layers.append(nn.Linear(in_features=self.hidden_size[i], out_features=self.hidden_size[i + 1]))
             hidden_layers.append(activ)
 

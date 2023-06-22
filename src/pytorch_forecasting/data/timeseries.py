@@ -1534,6 +1534,7 @@ class TimeSeriesDataSet(Dataset):
         data_cont = self.data["reals"][index.index_start : index.index_end + 1].clone()
         data_cat = self.data["categoricals"][index.index_start : index.index_end + 1].clone()
         time = self.data["time"][index.index_start : index.index_end + 1].clone()
+        #logging.info(f"time:{time}")
         target = [d[index.index_start : index.index_end + 1].clone() for d in self.data["target"]]
         groups = self.data["groups"][index.index_start].clone()
         if self.data["weight"] is None:
@@ -1566,6 +1567,7 @@ class TimeSeriesDataSet(Dataset):
                 data_cont[:, time_idx] = torch.linspace(
                     data_cont[0, time_idx], data_cont[-1, time_idx], len(target[0]), dtype=data_cont.dtype
                 )
+                logging.info(f"data_cont[time_idx]:{data_cont[:, time_idx]}")
 
             # make replacements to fill in categories
             for name, value in self.encoded_constant_fill_strategy.items():
@@ -1627,8 +1629,11 @@ class TimeSeriesDataSet(Dataset):
 
         if self.add_relative_time_idx:
             data_cont[:, self.reals.index("relative_time_idx")] = (
-                torch.arange(-encoder_length, decoder_length, dtype=data_cont.dtype) / self.max_encoder_length
+                #torch.arange(-encoder_length, decoder_length, dtype=data_cont.dtype) / self.max_encoder_length
+                torch.arange(-encoder_length, decoder_length, dtype=data_cont.dtype)
             )
+            #logging.info(f"data_cont[real_time_idx]:{data_cont[:, self.reals.index('relative_time_idx')]}")
+            #exit(0)
 
         if self.add_encoder_length:
             data_cont[:, self.reals.index("encoder_length")] = (
@@ -1716,7 +1721,6 @@ class TimeSeriesDataSet(Dataset):
             target = target[0][encoder_length:]
             target_scale = target_scale[0]
             base = encoder_target[0]
-            
             encoder_target = encoder_target - base
             target = target - base
             target_name = self.target_names[0]

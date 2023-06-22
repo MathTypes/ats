@@ -193,7 +193,8 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.test = self.validation
         # create dataloaders for model
         self.batch_size = 128*100  # set this between 32 to 128
-        self.eval_batch_size = 10
+        # Need batch_size 1 to get example level metrics
+        self.eval_batch_size = 100
 
     def prepare_data(self):
         pass

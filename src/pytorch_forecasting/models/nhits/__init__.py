@@ -371,7 +371,9 @@ class NHiTS(BaseModelWithCovariates):
         ), "only fixed prediction length is allowed, but max_prediction_length != min_prediction_length"
 
         assert dataset.randomize_length is None, "length has to be fixed, but randomize_length is not None"
-        assert not dataset.add_relative_time_idx, "add_relative_time_idx has to be False"
+        # Looks like relative_time_idx normalize the time_idx to -1 to 1. This messes up with
+        # sampling long term frequency.
+        #assert not dataset.add_relative_time_idx, "add_relative_time_idx has to be False"
 
         new_kwargs = copy(kwargs)
         new_kwargs.update(
