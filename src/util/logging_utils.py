@@ -10,11 +10,11 @@ def init_logging():
     )
 
     root = logging.getLogger()
-    root.setLevel(logging.INFO)
+    root.setLevel(logging.ERROR)
 
-    #ch = logging.StreamHandler(sys.stdout)
-    #ch.setLevel(logging.INFO)
-    #FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    #formatter = logging.Formatter(FORMAT)
-    #ch.setFormatter(formatter)
-    #root.addHandler(ch)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.INFO)
+    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+    formatter = logging.Formatter(FORMAT)
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
