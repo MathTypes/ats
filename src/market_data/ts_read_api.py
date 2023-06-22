@@ -8,7 +8,7 @@ import time
 import traceback
 
 import pandas as pd
-
+import ray
 from util import config_utils
 from util import logging_utils
 
