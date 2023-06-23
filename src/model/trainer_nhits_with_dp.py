@@ -27,6 +27,10 @@ from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.tuner import Tuner
 #import pytorch_lightning as pl
 import lightning.pytorch as pl
+from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
+from pytorch_forecasting.data import GroupNormalizer
+from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
+from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
 
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
@@ -55,13 +59,7 @@ from util import config_utils
 from util import time_util
 
 
-def get_model(config, data_module):
-    device = config['device']
-    training = data_module.training
-    max_prediction_length = config['max_prediction_length']
-    # configure network and trainer
-    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    pl.seed_everything(42)
+def get_loss(config):
     loss_name = config["loss_name"]
     loss = None
     if loss_name == "MASE":
@@ -78,6 +76,16 @@ def get_model(config, data_module):
         loss = MAPCSE()
     if loss_name == "MQF2DistributionLoss":
         loss = MQF2DistributionLoss(prediction_length=max_prediction_length)
+    return loss
+
+def get_model(config, data_module):
+    device = config['device']
+    training = data_module.training
+    max_prediction_length = config['max_prediction_length']
+    # configure network and trainer
+    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    pl.seed_everything(42)
+    loss = get_loss(config)
     net = NHiTS.from_dataset(
         training,
         weight_decay=1e-2,
@@ -104,6 +112,29 @@ def get_model(config, data_module):
     )
     return net
 
+def get_tft_model(config, data_module):
+    device = config['device']
+    training = data_module.training
+    max_prediction_length = config['max_prediction_length']
+    # configure network and trainer
+    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    pl.seed_everything(42)
+    loss = get_loss(config)
+    net = TemporalFusionTransformer.from_dataset(
+        training,
+        # not meaningful for finding the learning rate but otherwise very important
+        learning_rate=0.03,
+        hidden_size=8,  # most important hyperparameter apart from learning rate
+        # number of attention heads. Set to up to 4 for large datasets
+        attention_head_size=1,
+        dropout=0.1,  # between 0.1 and 0.3 are good values
+        hidden_continuous_size=8,  # set to <= hidden_size
+        loss=QuantileLoss(),
+        optimizer="Ranger"
+        # reduce learning rate if no improvement in validation loss after x epochs
+        # reduce_on_plateau_patience=1000,
+    )
+    return net
 
 def get_trainer(config, data_module):
     device = config['device']

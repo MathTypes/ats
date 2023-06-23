@@ -9,7 +9,8 @@ from pathlib import Path
 from pipelines import (
     TFTPipeline,
     AttentionEmbeddingLSTMPipeline,
-    TimeSeriesPipeline
+    TimeSeriesPipeline,
+    TemporalFusionTransformerPipeline
 )
 import pytz
 import ray
@@ -64,7 +65,8 @@ def my_app(cfg: DictConfig) -> None:
         'max_epochs' : cfg.job.max_epochs,
         'model_path' : 'checkpoint'}
     wandb.config = config
-    pipe = TimeSeriesPipeline(dataset="FUT", device=device, config=config)
+    #pipe = TimeSeriesPipeline(dataset="FUT", device=device, config=config)
+    pipe = TemporalFusionTransformerPipeline(dataset="FUT", device=device, config=config)
     if cfg.job.mode == "train":
         pipe.create_model()
         pipe.create_trainer()
