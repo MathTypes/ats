@@ -661,8 +661,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         return log
 
     def on_validation_epoch_end(self):
-        #self.on_epoch_end(self.validation_step_outputs)
-        self.on_epoch_end()
+        self.on_epoch_end(self.validation_step_outputs)
+        #self.on_epoch_end()
         self.validation_step_outputs.clear()
 
     def test_step(self, batch, batch_idx):
@@ -673,8 +673,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         return log
 
     def on_test_epoch_end(self):
-        #self.on_epoch_end(self.testing_step_outputs)
-        self.on_epoch_end()
+        self.on_epoch_end(self.testing_step_outputs)
+        #self.on_epoch_end()
         self.testing_step_outputs.clear()
 
     def create_log(
