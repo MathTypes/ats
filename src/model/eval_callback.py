@@ -19,7 +19,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum"],
                          ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum",
-                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "img_interp", "rmse", "mapcse", "mae"])
+                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "img_interp", "rmse", "mae"])
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
@@ -155,8 +155,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 pred[2] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][9], # error_min
                 pred[4], # img_interp
                 pred[5], # rmse
-                pred[6], # mapcse
-                pred[7], # mae
+                pred[6], # mae
             )
 
     def _inference(self):
@@ -181,7 +180,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         #logging.info(f"out:{out}")
         #exit(0)
         rmse = result["train_RMSE"].cpu().detach().numpy()
-        mapcse = result["train_MAPCSE"].cpu().detach().numpy()
+        #mapcse = result["train_MAPCSE"].cpu().detach().numpy()
         mae = result["train_MAE"].cpu().detach().numpy()
         y_raws = to_list(out["prediction"])[0]  # raw predictions - used for calculating loss
         prediction_kwargs = {}
@@ -214,7 +213,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           im_interp = PIL.Image.open(BytesIO(img_bytes_interp))
           img_interp = wandb.Image(im_interp)
 
-          preds.append([decoder_time_idx, torch.max(y_hat), torch.min(y_hat), img, img_interp, rmse[idx], mapcse[idx], mae[idx]])
+          preds.append([decoder_time_idx, torch.max(y_hat), torch.min(y_hat), img, img_interp, rmse[idx], mae[idx]])
       #logging.info(f"preds:{len(preds)}")
       return preds
      
