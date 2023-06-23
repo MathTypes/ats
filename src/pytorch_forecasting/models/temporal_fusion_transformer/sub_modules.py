@@ -388,7 +388,8 @@ class ScaledDotProductAttention(nn.Module):
             attn = attn / dimension
 
         if mask is not None:
-            attn = attn.masked_fill(mask, -1e9)
+            _MASKING_VALUE = -1e+9 if attn.dtype == torch.float32 else -1e+4
+            attn = attn.masked_fill(mask, _MASKING_VALUE)
         attn = self.softmax(attn)
 
         if self.dropout is not None:
