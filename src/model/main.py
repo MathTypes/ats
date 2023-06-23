@@ -62,6 +62,7 @@ def my_app(cfg: DictConfig) -> None:
         'min_prediction_length' : prediction_length,
         'context_length' : context_length,
         'prediction_length' : prediction_length,
+        'eval_cut_off' : cfg.job.eval_cut_off,
         'max_epochs' : cfg.job.max_epochs,
         'model_path' : 'checkpoint'}
     wandb.config = config

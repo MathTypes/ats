@@ -5,4 +5,5 @@ end_date: 2023-01-01
 workers: 8
 max_epochs: 10
 log_mode: All
+eval_cut_off: 2022
 
