@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from torch import nn
 from torchmetrics import Metric as LightningMetric
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
@@ -722,17 +724,24 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         if plot_attention:
             interpretation = self.interpret_output(out.iget(slice(idx, idx + 1)))
             for f in to_list(fig):
-                ax = f.axes[0]
-                ax2 = ax.twinx()
-                ax2.set_ylabel("Attention")
                 encoder_length = x["encoder_lengths"][0]
-                ax2.plot(
-                    torch.arange(-encoder_length, 0),
-                    interpretation["attention"][0, -encoder_length:].detach().cpu(),
-                    alpha=0.2,
-                    color="k",
+                f.add_trace(go.Scatter(x=torch.arange(-encoder_length, 0),
+                                       y=interpretation["attention"][0, -encoder_length:].detach().cpu(), name="Attention", yaxis="y2", line=dict(color="k")))
+                f.update_layout(
+                    yaxis2=dict(title="Attention",
+                                overlaying="y",
+                                side="right",),
                 )
-                f.tight_layout()
+                #ax = f.axes[0]
+                #ax2 = ax.twinx()
+                #ax2.set_ylabel("Attention")
+                #ax2.plot(
+                #    torch.arange(-encoder_length, 0),
+                #    interpretation["attention"][0, -encoder_length:].detach().cpu(),
+                #    alpha=0.2,
+                #    color="k",
+                #)
+                #f.tight_layout()
         return fig
 
     def plot_interpretation(self, interpretation: Dict[str, torch.Tensor]) -> Dict[str, plt.Figure]:
@@ -751,26 +760,51 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         figs = {}
 
         # attention
-        fig, ax = plt.subplots()
+        fig = make_subplots(1, 1)
+        #fig, ax = plt.subplots()
         attention = interpretation["attention"].detach().cpu()
         attention = attention / attention.sum(-1).unsqueeze(-1)
-        ax.plot(
-            np.arange(-self.hparams.max_encoder_length, attention.size(0) - self.hparams.max_encoder_length), attention
+        fig.add_trace(
+            go.Scatter(x=np.arange(-self.hparams.max_encoder_length, attention.size(0) - self.hparams.max_encoder_length),
+                       y=attention), row=1, col=1)
+        fig.update_layout(
+            xaxis=dict(
+                title="Time index"
+            ),
+            yaxis=dict(
+                title="Attention"
+            )
         )
-        ax.set_xlabel("Time index")
-        ax.set_ylabel("Attention")
-        ax.set_title("Attention")
+        #ax.plot(
+        #    np.arange(-self.hparams.max_encoder_length, attention.size(0) - self.hparams.max_encoder_length), attention
+                       #)
+        #ax.set_xlabel("Time index")
+        #ax.set_ylabel("Attention")
+        #ax.set_title("Attention")
         figs["attention"] = fig
 
         # variable selection
         def make_selection_plot(title, values, labels):
-            fig, ax = plt.subplots(figsize=(7, len(values) * 0.25 + 2))
+            #fig, ax = plt.subplots(figsize=(7, len(values) * 0.25 + 2))
+            fig = make_subplots(1, 1)
+            fig.update_layout(
+                autosize=False,
+                width=7,
+                xaxis=dict(
+                    title="Importance in %",
+                ),
+                height=len(values) * 0.25 + 2,)
             order = np.argsort(values)
             values = values / values.sum(-1).unsqueeze(-1)
-            ax.barh(np.arange(len(values)), values[order] * 100, tick_label=np.asarray(labels)[order])
-            ax.set_title(title)
-            ax.set_xlabel("Importance in %")
-            plt.tight_layout()
+            fig.add_trace(
+                go.Bar(
+                    x=np.asarray(labels)[order],
+                    y=values[order] * 100,
+                    orientation='h'))
+            #ax.barh(np.arange(len(values)), values[order] * 100, tick_label=np.asarray(labels)[order])
+            #ax.set_title(title)
+            #ax.set_xlabel("Importance in %")
+            #plt.tight_layout()
             return fig
 
         figs["static_variables"] = make_selection_plot(
@@ -823,7 +857,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
 
         # log lengths of encoder/decoder
         for type in ["encoder", "decoder"]:
-            fig, ax = plt.subplots()
+            #fig, ax = plt.subplots()
+            fig = make_subplots(1, 1)
             lengths = (
                 padded_stack([out["interpretation"][f"{type}_length_histogram"] for out in outputs])
                 .sum(0)
@@ -834,10 +869,16 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
                 start = 1
             else:
                 start = 0
-            ax.plot(torch.arange(start, start + len(lengths)), lengths)
-            ax.set_xlabel(f"{type.capitalize()} length")
-            ax.set_ylabel("Number of samples")
-            ax.set_title(f"{type.capitalize()} length distribution in {label} epoch")
+            #ax.plot(torch.arange(start, start + len(lengths)), lengths)
+            fig.add_trace(
+                go.Scatter(x=torch.arange(start, start + len(lengths)), y=lengths))
+            fig.update_layout(
+                xaxis=dict(title=f"{type.capitalize()} length"),
+                yaxis=dict(title="Number of samples"),
+                title_text=f"{type.capitalize()} length distribution in {label} epoch")
+            #ax.set_xlabel(f"{type.capitalize()} length")
+            #ax.set_ylabel("Number of samples")
+            #ax.set_title(f"{type.capitalize()} length distribution in {label} epoch")
 
             self.logger.experiment.add_figure(
                 f"{label.capitalize()} {type} length distribution", fig, global_step=self.global_step
