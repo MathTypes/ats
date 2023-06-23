@@ -224,8 +224,10 @@ def get_data_module(config):
     raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
     raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
     logging.info(f"raw_data:{raw_data}")
-    train_data = raw_data[raw_data.year<=2020]
-    eval_data = raw_data[raw_data.year>2020]
+    eval_cut_off = config["eval_cut_off"]
+    logging.info(f"eval_cut_off:{eval_cut_off}")
+    train_data = raw_data[raw_data.year<=eval_cut_off]
+    eval_data = raw_data[raw_data.year>eval_cut_off]
     train_data = train_data.sort_values(["ticker", "time"])
     eval_data = eval_data.sort_values(["ticker", "time"])
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
