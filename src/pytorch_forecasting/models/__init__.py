@@ -16,6 +16,7 @@ from pytorch_forecasting.models.nn import GRU, LSTM, MultiEmbedding, get_rnn
 from pytorch_forecasting.models.rnn import RecurrentNetwork
 from pytorch_forecasting.models.temporal_fusion_transformer import TemporalFusionTransformer
 from pytorch_forecasting.models.patch_tst_ss import PatchTstTransformer
+from pytorch_forecasting.models.patch_tst_tft import PatchTstTftTransformer
 
 __all__ = [
     "NBeats",

@@ -296,7 +296,7 @@ class PretrainHead(nn.Module):
         return x
 
 
-class PatchTstTransformer(BaseModelWithCovariates):
+class PatchTstTftTransformer(BaseModelWithCovariates):
     def __init__(
             self,
             c_in:int, target_dim:int, patch_len:int, stride:int, num_patch:int,

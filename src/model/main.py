@@ -11,10 +11,12 @@ from pipelines import (
     AttentionEmbeddingLSTMPipeline,
     TimeSeriesPipeline,
     TemporalFusionTransformerPipeline,
-    PatchTstTransformerPipeline
+    PatchTstTransformerPipeline,
+    PatchTstTftPipeline
 )
 import pytz
 import ray
+import torch
 import wandb
 from ray.util.dask import enable_dask_on_ray
 from utils import count_parameters
@@ -33,6 +35,7 @@ def my_app(cfg: DictConfig) -> None:
         "attention":AttentionEmbeddingLSTMPipeline,
         "tft": TemporalFusionTransformerPipeline,
         "patch_tst": PatchTstTransformerPipeline,
+        "patch_tst_tft": PatchTstTftPipeline,
         "nhits": TimeSeriesPipeline
     }
     #config_utils.set_args(args)

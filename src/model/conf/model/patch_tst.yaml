@@ -6,3 +6,5 @@ stride: 16
 #loss_name: MAPCSE
 loss_name: RMSE
 name: patch_tst
+time_varying_known_reals: []
+time_varying_unknown_reals: ["close_back_cumsum"]

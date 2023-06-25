@@ -487,7 +487,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             try:
                 yaml.dump(v)
             except:  # noqa
-                hparams_to_delete.append(k)
+                logging.info(f"delete {k}")
+                #hparams_to_delete.append(k)
                 if not hasattr(self, k):
                     setattr(self, k, v)
 
@@ -1336,6 +1337,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         if "output_transformer" not in kwargs:
             kwargs["output_transformer"] = dataset.target_normalizer
+        logging.info(f"creating net with {kwargs}")
         net = cls(**kwargs)
         net.dataset_parameters = dataset.get_parameters()
         if dataset.multi_target:
@@ -1776,7 +1778,9 @@ class BaseModelWithCovariates(BaseModel):
             embedding_paddings=embedding_paddings,
             categorical_groups=dataset.variable_groups,
         )
+        logging.info(f'before new_kwargs:{new_kwargs}')
         new_kwargs.update(kwargs)
+        logging.info(f'after new_kwargs:{new_kwargs}')
         return super().from_dataset(dataset, **new_kwargs)
 
     def extract_features(

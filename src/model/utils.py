@@ -328,7 +328,7 @@ class Pipeline:
         logging.info(f"MODELS_DIR:{MODELS_DIR}")
         self.history = self.trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
-        self.trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
+        #self.trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
 
 
 def count_parameters(model):
