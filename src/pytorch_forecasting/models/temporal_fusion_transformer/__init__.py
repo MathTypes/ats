@@ -3,7 +3,7 @@ The temporal fusion transformer is a powerful predictive model for forecasting t
 """
 from copy import copy
 from typing import Dict, List, Tuple, Union
-
+import logging
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
@@ -405,6 +405,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         decoder_lengths = x["decoder_lengths"]
         x_cat = torch.cat([x["encoder_cat"], x["decoder_cat"]], dim=1)  # concatenate in time dimension
         x_cont = torch.cat([x["encoder_cont"], x["decoder_cont"]], dim=1)  # concatenate in time dimension
+        logging.info(f"x_cat.shape:{x_cat.shape}")
+        logging.info(f"x_cont.shape:{x_cont.shape}")
         timesteps = x_cont.size(1)  # encode + decode length
         max_encoder_length = int(encoder_lengths.max())
         input_vectors = self.input_embeddings(x_cat)
@@ -426,10 +428,11 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
                 (x_cont.size(0), self.hparams.hidden_size), dtype=self.dtype, device=self.device
             )
             static_variable_selection = torch.zeros((x_cont.size(0), 0), dtype=self.dtype, device=self.device)
-
+        logging.info(f"static_embedding.shape:{static_embedding.shape}, static_variable_selection:{static_variable_selection.shape}")
         static_context_variable_selection = self.expand_static_context(
             self.static_context_variable_selection(static_embedding), timesteps
         )
+        logging.info(f"static_context_variable_selection.shape:{static_context_variable_selection.shape}")
 
         embeddings_varying_encoder = {
             name: input_vectors[name][:, :max_encoder_length] for name in self.encoder_variables
@@ -489,7 +492,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             v=attn_input,
             mask=self.get_attention_mask(encoder_lengths=encoder_lengths, decoder_lengths=decoder_lengths),
         )
-
+        logging.info(f"attn_input:{attn_input}")
+        logging.info(f"attn_output:{attn_output}")
         # skip connection over attention
         attn_output = self.post_attn_gate_norm(attn_output, attn_input[:, max_encoder_length:])
 
@@ -726,7 +730,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             for f in to_list(fig):
                 encoder_length = x["encoder_lengths"][0]
                 f.add_trace(go.Scatter(x=torch.arange(-encoder_length, 0),
-                                       y=interpretation["attention"][0, -encoder_length:].detach().cpu(), name="Attention", yaxis="y2", line=dict(color="k")))
+                                       y=interpretation["attention"][0, -encoder_length:].detach().cpu(), name="Attention", yaxis="y2"))
                 f.update_layout(
                     yaxis2=dict(title="Attention",
                                 overlaying="y",
@@ -744,7 +748,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
                 #f.tight_layout()
         return fig
 
-    def plot_interpretation(self, interpretation: Dict[str, torch.Tensor]) -> Dict[str, plt.Figure]:
+    def plot_interpretation(self, outputs, idx:int=0) -> Dict[str, plt.Figure]:
         """
         Make figures that interpret model.
 
@@ -758,6 +762,29 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             dictionary of matplotlib figures
         """
         figs = {}
+        logging.info(f"outputs:{outputs}")
+        interpretation = {
+            # use padded_stack because decoder length histogram can be of different length
+            name: padded_stack([x["interpretation"][name].detach() for x in outputs], side="right", value=0).sum(0)
+            for name in outputs[0]["interpretation"].keys()
+        }
+        # normalize attention with length histogram squared to account for: 1. zeros in attention and
+        # 2. higher attention due to less values
+        attention_occurances = interpretation["encoder_length_histogram"][1:].flip(0).float().cumsum(0)
+        attention_occurances = attention_occurances / attention_occurances.max()
+        attention_occurances = torch.cat(
+            [
+                attention_occurances,
+                torch.ones(
+                    interpretation["attention"].size(0) - attention_occurances.size(0),
+                    dtype=attention_occurances.dtype,
+                    device=attention_occurances.device,
+                ),
+            ],
+            dim=0,
+        )
+        interpretation["attention"] = interpretation["attention"] / attention_occurances.pow(2).clamp(1.0)
+        interpretation["attention"] = interpretation["attention"] / interpretation["attention"].sum()
 
         # attention
         fig = make_subplots(1, 1)
@@ -819,35 +846,12 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
 
         return figs
 
-    def log_interpretation(self, outputs):
+    def log_interpretation(self, x, outputs):
         """
         Log interpretation metrics to tensorboard.
         """
         # extract interpretations
-        interpretation = {
-            # use padded_stack because decoder length histogram can be of different length
-            name: padded_stack([x["interpretation"][name].detach() for x in outputs], side="right", value=0).sum(0)
-            for name in outputs[0]["interpretation"].keys()
-        }
-        # normalize attention with length histogram squared to account for: 1. zeros in attention and
-        # 2. higher attention due to less values
-        attention_occurances = interpretation["encoder_length_histogram"][1:].flip(0).float().cumsum(0)
-        attention_occurances = attention_occurances / attention_occurances.max()
-        attention_occurances = torch.cat(
-            [
-                attention_occurances,
-                torch.ones(
-                    interpretation["attention"].size(0) - attention_occurances.size(0),
-                    dtype=attention_occurances.dtype,
-                    device=attention_occurances.device,
-                ),
-            ],
-            dim=0,
-        )
-        interpretation["attention"] = interpretation["attention"] / attention_occurances.pow(2).clamp(1.0)
-        interpretation["attention"] = interpretation["attention"] / interpretation["attention"].sum()
-
-        figs = self.plot_interpretation(interpretation)  # make interpretation figures
+        figs = self.plot_interpretation(outputs)  # make interpretation figures
         label = self.current_stage
         # log to tensorboard
         for name, fig in figs.items():

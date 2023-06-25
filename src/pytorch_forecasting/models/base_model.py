@@ -636,8 +636,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         return log
 
     def on_train_epoch_end(self):
-        #self.on_epoch_end(self.training_step_outputs)
-        self.on_epoch_end()
+        self.on_epoch_end(self.training_step_outputs)
+        #self.on_epoch_end()
         self.training_step_outputs.clear()
 
 
@@ -968,7 +968,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         raise NotImplementedError()
 
-    def on_epoch_end(self):
+    def on_epoch_end(self, output):
         """
         Run at epoch end for training or validation. Can be overriden in models.
         """

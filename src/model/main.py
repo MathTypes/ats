@@ -10,7 +10,8 @@ from pipelines import (
     TFTPipeline,
     AttentionEmbeddingLSTMPipeline,
     TimeSeriesPipeline,
-    TemporalFusionTransformerPipeline
+    TemporalFusionTransformerPipeline,
+    PatchTstTransformerPipeline
 )
 import pytz
 import ray
@@ -27,11 +28,13 @@ def my_app(cfg: DictConfig) -> None:
     wandb.init(project="ats")
     pd.set_option('display.max_columns', None)
     datasets = ["stock_returns"]
-    pipelines = [
+    pipelines = {
         #TFTPipeline
-        AttentionEmbeddingLSTMPipeline,
-        TimeSeriesPipeline
-    ]
+        "attention":AttentionEmbeddingLSTMPipeline,
+        "tft": TemporalFusionTransformerPipeline,
+        "patch_tst": PatchTstTransformerPipeline,
+        "nhits": TimeSeriesPipeline
+    }
     #config_utils.set_args(args)
     logging.info(f"cfg:{cfg}, dir(cfg)")
     ray.init()
@@ -67,7 +70,8 @@ def my_app(cfg: DictConfig) -> None:
         'model_path' : 'checkpoint'}
     wandb.config = config
     #pipe = TimeSeriesPipeline(dataset="FUT", device=device, config=config)
-    pipe = TemporalFusionTransformerPipeline(dataset="FUT", device=device, config=config)
+    #pipe = TemporalFusionTransformerPipeline(dataset="FUT", device=device, config=config)
+    pipe = pipelines[cfg.model.name](dataset="FUT", device=device, config=cfg) 
     if cfg.job.mode == "train":
         pipe.create_model()
         pipe.create_trainer()
@@ -82,7 +86,7 @@ def my_app(cfg: DictConfig) -> None:
         pipe.create_trainer()
         pipe.eval_model(config)
     ray.shutdown()
-
+    torch.cuda.empty_cache()
     
 if __name__ == "__main__":
   logging_utils.init_logging()

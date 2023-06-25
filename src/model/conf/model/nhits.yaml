@@ -3,3 +3,4 @@ prediction_length: 46
 context_length: 2300
 #loss_name: MAPCSE
 loss_name: RMSE
+name: nhits

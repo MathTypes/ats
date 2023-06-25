@@ -44,6 +44,7 @@ from pytorch_forecasting.models import (
     RecurrentNetwork,
     TemporalFusionTransformer,
     get_rnn,
+    PatchTstTransformer
 )
 from pytorch_forecasting.utils import (
     apply_to_list,

@@ -27,7 +27,7 @@ from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.tuner import Tuner
 #import pytorch_lightning as pl
 import lightning.pytorch as pl
-from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
+from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer
 from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
@@ -60,7 +60,7 @@ from util import time_util
 
 
 def get_loss(config):
-    loss_name = config["loss_name"]
+    loss_name = config.model.loss_name
     loss = None
     if loss_name == "MASE":
         loss = MASE()
@@ -113,9 +113,9 @@ def get_model(config, data_module):
     return net
 
 def get_tft_model(config, data_module):
-    device = config['device']
+    device = config.job.device
     training = data_module.training
-    max_prediction_length = config['max_prediction_length']
+    max_prediction_length = config.model.prediction_length
     # configure network and trainer
     #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
@@ -129,6 +129,38 @@ def get_tft_model(config, data_module):
         attention_head_size=1,
         dropout=0.1,  # between 0.1 and 0.3 are good values
         hidden_continuous_size=8,  # set to <= hidden_size
+        loss=QuantileLoss(),
+        optimizer="Ranger"
+        # reduce learning rate if no improvement in validation loss after x epochs
+        # reduce_on_plateau_patience=1000,
+    )
+    return net
+
+def get_patch_tst_model(config, data_module):
+    device = config.job.device
+    training = data_module.training
+    #max_prediction_length = config['max_prediction_length']
+    prediction_length = config.model.prediction_length
+    context_length = config.model.context_length
+    patch_len = config.model.patch_len
+    stride = config.model.stride
+    # configure network and trainer
+    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    pl.seed_everything(42)
+    loss = get_loss(config)
+    num_patch = (max(context_length, patch_len)-patch_len) // stride + 1  
+    net = PatchTstTransformer.from_dataset(
+        training,
+        patch_len=10,
+        stride=stride,
+        num_patch=num_patch,
+        # not meaningful for finding the learning rate but otherwise very important
+        learning_rate=0.03,
+        d_model=8,  # most important hyperparameter apart from learning rate
+        # number of attention heads. Set to up to 4 for large datasets
+        n_heads=1,
+        attn_dropout=0.1,  # between 0.1 and 0.3 are good values
+        #hidden_continuous_size=8,  # set to <= hidden_size
         loss=QuantileLoss(),
         optimizer="Ranger"
         # reduce learning rate if no improvement in validation loss after x epochs
@@ -183,8 +215,8 @@ def get_input_dirs(config):
 
 
 def get_input_for_ticker(config, ticker):
-    since  = config["start_date"]
-    until = config["end_date"]
+    since  = config.job.start_date
+    until = config.job.end_date
     train_data = data_util.get_processed_data(config, ticker, "FUT")
     train_data = train_data.replace([np.inf, -np.inf], np.nan)
     train_data = train_data.dropna()
@@ -210,7 +242,7 @@ def add_lows(df, width):
 def get_data_module(config):
     start = time.time()
     train_data_vec = []
-    for ticker in config["model_tickers"]:
+    for ticker in config.dataset.model_tickers:
         ticker_train_data = get_input_for_ticker(config, ticker)
         ticker_train_data["new_idx"] = ticker_train_data.apply(lambda x : x.ticker + "_" + str(x.series_idx), axis=1)
         ticker_train_data = ticker_train_data.set_index("new_idx")
@@ -224,7 +256,7 @@ def get_data_module(config):
     raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
     raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
     logging.info(f"raw_data:{raw_data}")
-    eval_cut_off = config["eval_cut_off"]
+    eval_cut_off = config.job.eval_cut_off
     logging.info(f"eval_cut_off:{eval_cut_off}")
     train_data = raw_data[raw_data.year<=eval_cut_off]
     eval_data = raw_data[raw_data.year>eval_cut_off]

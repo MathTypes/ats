@@ -165,15 +165,17 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.train_data = train_data
         self.eval_data = eval_data
         logging.info(f"eval_data:{self.eval_data}")
+        context_length = config.model.context_length
+        prediction_length = config.model.prediction_length
         self.training = TimeSeriesDataSet(
             self.train_data,
             time_idx="time_idx",
             target="close_back_cumsum",
             group_ids=["ticker"],
-            min_encoder_length=config['context_length'],  # keep encoder length long (as it is in the validation set)
-            max_encoder_length=config['context_length'],
-            min_prediction_length=config['prediction_length'],
-            max_prediction_length=config['prediction_length'],
+            min_encoder_length=context_length,  # keep encoder length long (as it is in the validation set)
+            max_encoder_length=context_length,
+            min_prediction_length=prediction_length,
+            max_prediction_length=prediction_length,
             allow_missing_timesteps=True,
             target_normalizer=None,
             #time_varying_known_reals=["relative_time_idx", "hour_of_day", "day_of_week", "day_of_month"],

@@ -15,7 +15,7 @@ from pytorch_forecasting.data.encoders import NaNLabelEncoder
 from pytorch_forecasting.metrics import MAE, MAPE, MASE, RMSE, SMAPE, MultiHorizonMetric, MultiLoss, QuantileLoss
 from pytorch_forecasting.models.base_model import BaseModelWithCovariates
 from pytorch_forecasting.models.nn import LSTM, MultiEmbedding
-from pytorch_forecasting.models.patch_tst_ss.sub_modules import (
+from pytorch_forecasting.models.temporal_fusion_transformer.sub_modules import (
     AddNorm,
     GateAddNorm,
     GatedLinearUnit,
@@ -24,47 +24,49 @@ from pytorch_forecasting.models.patch_tst_ss.sub_modules import (
     VariableSelectionNetwork,
 )
 from pytorch_forecasting.utils import create_mask, detach, integer_histogram, masked_op, padded_stack, to_list
-from ..models.layers.pos_encoding import *
-from ..models.layers.basics import *
-from ..models.layers.attention import *
+from ..patch_tst_ss.models.layers.pos_encoding import *
+from ..patch_tst_ss.models.layers.basics import *
+from ..patch_tst_ss.models.layers.attention import *
 
 class PatchTstTransformer(BaseModelWithCovariates):
     def __init__(
-        self,
-        hidden_size: int = 16,
-        lstm_layers: int = 1,
-        dropout: float = 0.1,
-        output_size: Union[int, List[int]] = 7,
-        loss: MultiHorizonMetric = None,
-        attention_head_size: int = 4,
-        max_encoder_length: int = 10,
-        static_categoricals: List[str] = [],
-        static_reals: List[str] = [],
-        time_varying_categoricals_encoder: List[str] = [],
-        time_varying_categoricals_decoder: List[str] = [],
-        categorical_groups: Dict[str, List[str]] = {},
-        time_varying_reals_encoder: List[str] = [],
-        time_varying_reals_decoder: List[str] = [],
-        x_reals: List[str] = [],
-        x_categoricals: List[str] = [],
-        hidden_continuous_size: int = 8,
-        hidden_continuous_sizes: Dict[str, int] = {},
-        embedding_sizes: Dict[str, Tuple[int, int]] = {},
-        embedding_paddings: List[str] = [],
-        embedding_labels: Dict[str, np.ndarray] = {},
-        learning_rate: float = 1e-3,
-        log_interval: Union[int, float] = -1,
-        log_val_interval: Union[int, float] = None,
-        log_gradient_flow: bool = False,
-        reduce_on_plateau_patience: int = 1000,
-        monotone_constaints: Dict[str, int] = {},
-        share_single_variable_networks: bool = False,
-        causal_attention: bool = True,
-        logging_metrics: nn.ModuleList = None,
-        **kwargs,
+            self,
+            c_in:int, target_dim:int, patch_len:int, stride:int, num_patch:int,
+            n_layers:int=3, d_model=128, n_heads=16, shared_embedding=True, d_ff:int=256,
+            norm:str='BatchNorm', attn_dropout:float=0., dropout:float=0., act:str="gelu",
+            res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
+            pe:str='zeros', learn_pe:bool=True, head_dropout = 0,
+            head_type = "prediction", individual = False,
+            y_range:Optional[tuple]=None, verbose:bool=False,
+            output_size: Union[int, List[int]] = 7,
+            loss: MultiHorizonMetric = None,
+            static_categoricals: List[str] = [],
+            static_reals: List[str] = [],
+            time_varying_categoricals_encoder: List[str] = [],
+            time_varying_categoricals_decoder: List[str] = [],
+            categorical_groups: Dict[str, List[str]] = {},
+            time_varying_reals_encoder: List[str] = [],
+            time_varying_reals_decoder: List[str] = [],
+            x_reals: List[str] = [],
+            x_categoricals: List[str] = [],
+            hidden_continuous_size: int = 8,
+            hidden_continuous_sizes: Dict[str, int] = {},
+            embedding_sizes: Dict[str, Tuple[int, int]] = {},
+            embedding_paddings: List[str] = [],
+            embedding_labels: Dict[str, np.ndarray] = {},
+            learning_rate: float = 1e-3,
+            log_interval: Union[int, float] = -1,
+            log_val_interval: Union[int, float] = None,
+            log_gradient_flow: bool = False,
+            reduce_on_plateau_patience: int = 1000,
+            monotone_constaints: Dict[str, int] = {},
+            share_single_variable_networks: bool = False,
+            causal_attention: bool = True,
+            logging_metrics: nn.ModuleList = None,
+            **kwargs,
     ):
         """
-        Temporal Fusion Transformer for forecasting timeseries - use its :py:meth:`~from_dataset` method if possible.
+        PatchTST for forecasting timeseries - use its :py:meth:`~from_dataset` method if possible.
 
         Implementation of the article
         `Temporal Fusion Transformers for Interpretable Multi-horizon Time Series
@@ -88,9 +90,6 @@ class PatchTstTransformer(BaseModelWithCovariates):
 
         Args:
 
-            hidden_size: hidden size of network which is its main hyperparameter and can range from 8 to 512
-            lstm_layers: number of LSTM layers (2 is mostly optimal)
-            dropout: dropout rate
             output_size: number of outputs (e.g. number of quantiles for QuantileLoss and one target or list
                 of output sizes).
             loss: loss function taking prediction and targets
@@ -309,6 +308,27 @@ class PatchTstTransformer(BaseModelWithCovariates):
             context_size=self.hparams.hidden_size,
         )
 
+        assert head_type in ['pretrain', 'prediction', 'regression', 'classification'], 'head type should be either pretrain, prediction, or regression'
+        # Backbone
+        self.backbone = PatchTSTEncoder(c_in, num_patch=num_patch, patch_len=patch_len,
+                                        n_layers=n_layers, d_model=d_model, n_heads=n_heads,
+                                        shared_embedding=shared_embedding, d_ff=d_ff,
+                                        attn_dropout=attn_dropout, dropout=dropout, act=act,
+                                        res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
+                                        pe=pe, learn_pe=learn_pe, verbose=verbose, **kwargs)
+
+        # Head
+        self.n_vars = c_in
+        self.head_type = head_type
+
+        if head_type == "pretrain":
+            self.head = PretrainHead(d_model, patch_len, head_dropout) # custom head passed as a partial func with all its kwargs
+        elif head_type == "prediction":
+            self.head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
+        elif head_type == "regression":
+            self.head = RegressionHead(self.n_vars, d_model, target_dim, head_dropout, y_range)
+        elif head_type == "classification":
+            self.head = ClassificationHead(self.n_vars, d_model, target_dim, head_dropout)
         # attention for long-range processing
         self.multihead_attn = InterpretableMultiHeadAttention(
             d_model=self.hparams.hidden_size, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
@@ -351,7 +371,8 @@ class PatchTstTransformer(BaseModelWithCovariates):
         # add maximum encoder length
         # update defaults
         new_kwargs = copy(kwargs)
-        new_kwargs["max_encoder_length"] = dataset.max_encoder_length
+        new_kwargs["c_in"] = len(dataset.reals)
+        new_kwargs["target_dim"] = dataset.max_prediction_length
         new_kwargs.update(cls.deduce_default_output_parameters(dataset, kwargs, QuantileLoss()))
 
         # create class and return
