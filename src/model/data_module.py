@@ -182,7 +182,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             time_varying_known_reals=config.model.time_varying_known_reals,
             time_varying_unknown_reals=config.model.time_varying_unknown_reals,
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
-            add_relative_time_idx = False
+            add_relative_time_idx = True
         )
         logging.info(f"train_data:{self.train_data.describe()}")
         logging.info(f"eval_data:{self.eval_data.describe()}")
