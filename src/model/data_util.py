@@ -35,11 +35,11 @@ def get_tick_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -
     return ds
 
 def get_input_dirs(config, ticker, asset_type):
-    base_dir = f"{config['base_dir']}/{ticker}"
+    base_dir = f"{config.dataset.base_dir}/{ticker}"
     input_dirs = []
-    start_date = config["start_date"] + datetime.timedelta(days=-60)
+    start_date = datetime.datetime.strptime(config.job.start_date,"%Y-%m-%d") + datetime.timedelta(days=-60)
     start_date = start_date.replace(day=1)
-    end_date = config["end_date"]
+    end_date = datetime.datetime.strptime(config.job.end_date,"%Y-%m-%d")
     for cur_date in time_util.monthlist(start_date, end_date):
         for_date = cur_date[0]
         date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))

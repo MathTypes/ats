@@ -19,7 +19,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum"],
                          ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum",
-                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "img_interp", "rmse", "mae"])
+                          "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "rmse", "mae"])
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
@@ -153,9 +153,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 pred[3], # img
                 pred[1] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][8], # error_max
                 pred[2] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][9], # error_min
-                pred[4], # img_interp
-                pred[5], # rmse
-                pred[6], # mae
+                #pred[4], # img_interp
+                pred[4], # rmse
+                pred[5], # mae
             )
 
     def _inference(self):
@@ -207,13 +207,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           #y_raw_cum_sum = torch.cumsum(y_raw, dim=-1)
           img = wandb.Image(im)
 
-          fig_interp = self.pl_module.plot_interpretation(x, out, idx=idx)
-          fig.update_layout(title=prediction_date_time)
-          img_bytes_interp = fig_interp.to_image(format="png") # kaleido library
-          im_interp = PIL.Image.open(BytesIO(img_bytes_interp))
-          img_interp = wandb.Image(im_interp)
+          #fig_interp = self.pl_module.plot_interpretation(x, out, idx=idx)
+          #fig_interp = self.pl_module.plot_interpretation(out, idx=idx)
+          #fig.update_layout(title=prediction_date_time)
+          #img_bytes_interp = fig_interp.to_image(format="png") # kaleido library
+          #im_interp = PIL.Image.open(BytesIO(img_bytes_interp))
+          #img_interp = wandb.Image(im_interp)
 
-          preds.append([decoder_time_idx, torch.max(y_hat), torch.min(y_hat), img, img_interp, rmse[idx], mae[idx]])
+          preds.append([decoder_time_idx, torch.max(y_hat), torch.min(y_hat), img, rmse[idx], mae[idx]])
       #logging.info(f"preds:{len(preds)}")
       return preds
      
