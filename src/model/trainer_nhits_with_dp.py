@@ -132,18 +132,19 @@ def get_tft_model(config, data_module):
     loss = get_loss(config)
     net = TemporalFusionTransformer.from_dataset(
         training,
+        weight_decay=1e-2,
         # not meaningful for finding the learning rate but otherwise very important
         learning_rate=0.03,
         hidden_size=8,  # most important hyperparameter apart from learning rate
         # number of attention heads. Set to up to 4 for large datasets
-        attention_head_size=1,
+        attention_head_size=4,
         dropout=0.1,  # between 0.1 and 0.3 are good values
         hidden_continuous_size=8,  # set to <= hidden_size
         loss=loss,
         optimizer="Ranger",
         log_interval=0.25,
         # reduce learning rate if no improvement in validation loss after x epochs
-        # reduce_on_plateau_patience=1000,
+        reduce_on_plateau_patience=10,
     )
     return net
 

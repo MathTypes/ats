@@ -521,7 +521,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
 
     def on_fit_end(self):
         if self.log_interval > 0:
-            self.log_embeddings()
+            #self.log_embeddings()
+            pass
 
     def create_log(self, x, y, out, batch_idx, **kwargs):
         log = super().create_log(x, y, out, batch_idx, **kwargs)
@@ -817,16 +818,17 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             fig = make_subplots(1, 1)
             fig.update_layout(
                 autosize=False,
-                width=7,
+                width=10,
                 xaxis=dict(
                     title="Importance in %",
                 ),
-                height=len(values) * 0.25 + 2,)
+                height=len(values) * 0.25 + 10,)
             order = np.argsort(values)
             values = values / values.sum(-1).unsqueeze(-1)
             fig.add_trace(
                 go.Bar(
-                    x=np.asarray(labels)[order],
+                    x=np.arange(len(values)),
+                    #ids=np.asarray(labels)[order],
                     y=values[order] * 100,
                     orientation='h'))
             #ax.barh(np.arange(len(values)), values[order] * 100, tick_label=np.asarray(labels)[order])
@@ -847,7 +849,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
 
         return figs
 
-    def log_interpretation(self, x, outputs):
+    def log_interpretation(self, outputs):
         """
         Log interpretation metrics to tensorboard.
         """
@@ -856,8 +858,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         label = self.current_stage
         # log to tensorboard
         for name, fig in figs.items():
-            self.logger.experiment.add_figure(
-                f"{label.capitalize()} {name} importance", fig, global_step=self.global_step
+            self.logger.experiment.log(
+                {f"{label.capitalize()} {name} importance": fig}
             )
 
         # log lengths of encoder/decoder
@@ -885,8 +887,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             #ax.set_ylabel("Number of samples")
             #ax.set_title(f"{type.capitalize()} length distribution in {label} epoch")
 
-            self.logger.experiment.add_figure(
-                f"{label.capitalize()} {type} length distribution", fig, global_step=self.global_step
+            self.logger.experiment.log(
+                {f"{label.capitalize()} {type} length distribution": fig}
             )
 
     def log_embeddings(self):
