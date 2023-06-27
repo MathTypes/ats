@@ -418,7 +418,10 @@ class TimeSeriesDataSet(Dataset):
         #df_index_low_91 = g['close_back'].transform(add_lows, width=13*7)
         #df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
         #df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
-        data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
+        # reduce return to bring down loss
+        data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()/100
+        # 1000 is required to bring down loss to avoid nan
+        data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()/1000
         #logging.info(f"df_index_low_13:{df_index_low_13}")
         #data["high_13"] = df_index_high_13
         #data["low_13"] = df_index_low_13
@@ -428,6 +431,7 @@ class TimeSeriesDataSet(Dataset):
         #data["low_91"] = df_index_low_91
         data = data.dropna()
         #logging.info(f"enhanced_data:{data}")
+        logging.info(f"data:{data.describe()}")
         
         # target normalizer
         # JJ: disable target normalizer
@@ -622,6 +626,8 @@ class TimeSeriesDataSet(Dataset):
                         normalizers.append(EncoderNormalizer(transformation=transformer))
                     else:
                         normalizers.append(GroupNormalizer(transformation=transformer))
+            logging.info(f"normailizer:{normalizers}")
+            exit(0)
             if self.multi_target:
                 self.target_normalizer = MultiNormalizer(normalizers)
             else:
@@ -778,7 +784,9 @@ class TimeSeriesDataSet(Dataset):
         # save special variables
         assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
         data["__time_idx__"] = data[self.time_idx]  # save unscaled
+        logging.info(f"target_names:type{self.target_names}")
         for target in self.target_names:
+            #logging.info(f"target:{target}")
             assert (
                 f"__target__{target}" not in data.columns
             ), f"__target__{target} is a protected column and must not be present in data"
@@ -1715,7 +1723,7 @@ class TimeSeriesDataSet(Dataset):
         if self.multi_target:
             encoder_target = [t[:encoder_length] for t in target]
             target = [t[encoder_length:] for t in target]
-            logging.info("multi_target")
+            #logging.info("multi_target")
         else:
             encoder_target = target[0][:encoder_length]
             target = target[0][encoder_length:]
@@ -1816,17 +1824,30 @@ class TimeSeriesDataSet(Dataset):
 
         # target and weight
         if isinstance(batches[0][1][0], (tuple, list)):
+            target_size = len(batches[0][1][0])
             target = [
                 rnn.pad_sequence([batch[1][0][idx] for batch in batches], batch_first=True)
-                for idx in range(len(batches[0][1][0]))
+                for idx in range(target_size)
             ]
+            #logging.info(f"target_size:{target_size}, target:{target}")
             encoder_target = [
                 rnn.pad_sequence([batch[0]["encoder_target"][idx] for batch in batches], batch_first=True)
-                for idx in range(len(batches[0][1][0]))
+                for idx in range(target_size)
             ]
+            #logging.info(f"encoder_target:{encoder_target}")
+            base = [torch.unsqueeze(encoder_target[idx][:,0], 1)
+                    for idx in range(target_size)
+            ]
+            encoder_target = [encoder_target[idx] - base[idx] for idx in range(target_size)]
+            #logging.info(f"encoder_target:{encoder_target}")
+            target = [target[idx] - base[idx] for idx in range(target_size)]
+            #logging.info(f"target:{target}")
         else:
             target = rnn.pad_sequence([batch[1][0] for batch in batches], batch_first=True)
             encoder_target = rnn.pad_sequence([batch[0]["encoder_target"] for batch in batches], batch_first=True)
+            base = torch.unsqueeze(encoder_target[:,0], 1)
+            encoder_target = encoder_target - base
+            target = target - base
 
         if batches[0][1][1] is not None:
             weight = rnn.pad_sequence([batch[1][1] for batch in batches], batch_first=True)
@@ -1840,11 +1861,6 @@ class TimeSeriesDataSet(Dataset):
         #logging.info(f"decoder_cat:{decoder_cat.shape}, {decoder_cat}")
         #logging.info(f"decoder_cont:{decoder_cont.shape}, {decoder_cont}")
         #logging.info(f"target_scale:{target_scale.shape}, {target_scale}")
-        base = torch.unsqueeze(encoder_target[:,0], 1)
-        #logging.info(f"base:{base.shape}")
-        #exit(0)
-        encoder_target = encoder_target - base
-        target = target - base
         return (
             dict(
                 encoder_cat=encoder_cat,

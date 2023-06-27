@@ -91,10 +91,18 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             val_x = self.val_x_batch[batch_idx]
             val_y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
+            #logging.info(f"val_y:{val_y}")
             y_close_cum_sum = val_y[0]
+            # TODO: fix following hack to deal with multiple targets
+            #logging.info(f"y_close_cum_sum:{type(y_close_cum_sum)}")
+            if isinstance(y_close_cum_sum, list):
+                #logging.info("y_close_cum_sum is list")
+                y_close_cum_sum = y_close_cum_sum[0]
+            #logging.info(f'y_close_cum_sum:{y_close_cum_sum.shape}, len:{len(y_close_cum_sum)}')
             #logging.info(f"y_close_cum_sum:{y_close_cum_sum}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")
             for idx in range(len(y_close_cum_sum)):
-              base = val_x['encoder_target'][idx][-1]
+              # TODO: fix [0] hack to deal with multiple target
+              base = val_x['encoder_target'][0][idx][-1]
               #logging.info(f"idx:{idx}, y_close_cum_sum:{y_close_cum_sum}")
               #logging.info(f"encoder_x:{self.val_x['encoder_x'][idx]}")
               #logging.info(f"encoder_target:{self.val_x['encoder_target'][idx]}")
@@ -167,8 +175,8 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
       
         #logging.info(f"x:{x}")
         #logging.info(f"inference val_y:{y}")
-        x = {key:val.to(device) for key, val in x.items()}
-        y = [val.to(device) if val is not None else None for val in y]
+        x = {key:[v.to(device) for v in val] if isinstance(val, list) else val.to(device) for key, val in x.items()}
+        y = [[v.to(device) for v in val] if isinstance(val, list) else val.to(device) if val is not None else None for val in y]
         kwargs={'nolog': True}
         #logging.info(f"pl_module:{self.pl_module}, {dir(self.pl_module)}")
         log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
@@ -188,12 +196,16 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         y_hats = to_list(self.pl_module.to_prediction(out, **prediction_kwargs))[0]
         y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[0]
         #logging.info(f"y_raws:{y_raws.shape}")
-        #logging.info(f"y_hats:{y_hats}")
+        #logging.info(f"y_hats:{y_hats.shape}")
         #exit(0)
         #logging.info(f"y_quantiles:{y_quantiles.shape}")
         for idx in range(len(y_hats)):
+          #logging.info(f"self.data_table_ref.data[idx]:{self.data_table_ref.data[idx]}")
           prediction_date_time = str(self.data_table_ref.data[idx][5]) + "-" + str(self.data_table_ref.data[idx][6]) + "-" + str(self.data_table_ref.data[idx][7]) + " " + str(self.data_table_ref.data[idx][3]) + " " + str(self.data_table_ref.data[idx][4])
           fig = self.pl_module.plot_prediction(x, out, idx=idx, add_loss_to_title=True)
+          # TODO: fix this so that we can get additional fig
+          if isinstance(fig, (list, tuple)):
+              fig = fig[0]
           fig.update_layout(title=prediction_date_time)
           img_bytes = fig.to_image(format="png") # kaleido library
           im = PIL.Image.open(BytesIO(img_bytes))

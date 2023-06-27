@@ -149,6 +149,9 @@ class RMSE(MultiHorizonMetric):
         super().__init__(reduction=reduction, **kwargs)
 
     def loss(self, y_pred: Dict[str, torch.Tensor], target):
+        #logging.info(f"y_pred:{y_pred}")
+        #logging.info(f"target:{target}")
+        #logging.info(f"to_pred_y_pred:{self.to_prediction(y_pred)}")
         loss = torch.pow(self.to_prediction(y_pred) - target, 2)
         return loss
 

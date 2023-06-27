@@ -9,9 +9,17 @@ from datasets import (
     generate_stock_returns,
     tabular_to_sliding_dataset
 )
+from omegaconf import OmegaConf
 from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
 import timeseries_dataset
 import timeseries_utils
+from pytorch_forecasting.data.encoders import (
+    EncoderNormalizer,
+    GroupNormalizer,
+    MultiNormalizer,
+    NaNLabelEncoder,
+    TorchNormalizer,
+)
 from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
 
@@ -167,22 +175,39 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         logging.info(f"eval_data:{self.eval_data}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
+        target = config.model.target
+        target_normalizer = None
+        #target_normalizer ="auto"
+        if OmegaConf.is_list(config.model.target):
+            target = OmegaConf.to_object(config.model.target)
+            normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
+            target_normalizer=MultiNormalizer(normalizer_list)
+        time_varying_known_reals = config.model.time_varying_known_reals
+        if OmegaConf.is_list(time_varying_known_reals):
+            time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)
+        time_varying_unknown_reals = config.model.time_varying_unknown_reals
+        if OmegaConf.is_list(time_varying_unknown_reals):
+            time_varying_unknown_reals =  OmegaConf.to_object(time_varying_unknown_reals)
+        logging.info(f"config.model.target:{target}")
+        logging.info(f"config.model.time_varying_known_reals:{(time_varying_known_reals)}")
+        logging.info(f"config.model.time_varying_unknown_reals:{(time_varying_unknown_reals)}")
         self.training = TimeSeriesDataSet(
             self.train_data,
             time_idx="time_idx",
-            target="close_back_cumsum",
+            target=target,
             group_ids=["ticker"],
             min_encoder_length=context_length,  # keep encoder length long (as it is in the validation set)
             max_encoder_length=context_length,
             min_prediction_length=prediction_length,
             max_prediction_length=prediction_length,
             allow_missing_timesteps=True,
-            target_normalizer=None,
+            #target_normalizer=None,
+            target_normalizer=target_normalizer,
             #time_varying_known_reals=["relative_time_idx", "hour_of_day", "day_of_week", "day_of_month"],
-            time_varying_known_reals=config.model.time_varying_known_reals,
-            time_varying_unknown_reals=config.model.time_varying_unknown_reals,
+            time_varying_known_reals=time_varying_known_reals,
+            time_varying_unknown_reals=time_varying_unknown_reals,
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
-            add_relative_time_idx = True
+            add_relative_time_idx = config.model.add_relative_time_idx
         )
         logging.info(f"train_data:{self.train_data.describe()}")
         logging.info(f"eval_data:{self.eval_data.describe()}")
@@ -194,7 +219,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         #self.test = TimeSeriesDataSet.from_dataset(self.training, self.train_data[tst_idx:])
         self.test = self.validation
         # create dataloaders for model
-        self.batch_size = 128*10  # set this between 32 to 128
+        self.batch_size = 128*1  # set this between 32 to 128
         # Need batch_size 1 to get example level metrics
         self.eval_batch_size = 100
 

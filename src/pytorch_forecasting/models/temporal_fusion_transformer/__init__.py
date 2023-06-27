@@ -405,8 +405,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         decoder_lengths = x["decoder_lengths"]
         x_cat = torch.cat([x["encoder_cat"], x["decoder_cat"]], dim=1)  # concatenate in time dimension
         x_cont = torch.cat([x["encoder_cont"], x["decoder_cont"]], dim=1)  # concatenate in time dimension
-        logging.info(f"x_cat.shape:{x_cat.shape}")
-        logging.info(f"x_cont.shape:{x_cont.shape}")
+        #logging.info(f"x_cat.shape:{x_cat.shape}")
+        #logging.info(f"x_cont:{x_cont}")
         timesteps = x_cont.size(1)  # encode + decode length
         max_encoder_length = int(encoder_lengths.max())
         input_vectors = self.input_embeddings(x_cat)
@@ -428,11 +428,11 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
                 (x_cont.size(0), self.hparams.hidden_size), dtype=self.dtype, device=self.device
             )
             static_variable_selection = torch.zeros((x_cont.size(0), 0), dtype=self.dtype, device=self.device)
-        logging.info(f"static_embedding.shape:{static_embedding.shape}, static_variable_selection:{static_variable_selection.shape}")
+        #logging.info(f"static_embedding.shape:{static_embedding.shape}, static_variable_selection:{static_variable_selection.shape}")
         static_context_variable_selection = self.expand_static_context(
             self.static_context_variable_selection(static_embedding), timesteps
         )
-        logging.info(f"static_context_variable_selection.shape:{static_context_variable_selection.shape}")
+        #logging.info(f"static_context_variable_selection.shape:{static_context_variable_selection.shape}")
 
         embeddings_varying_encoder = {
             name: input_vectors[name][:, :max_encoder_length] for name in self.encoder_variables
@@ -492,8 +492,8 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             v=attn_input,
             mask=self.get_attention_mask(encoder_lengths=encoder_lengths, decoder_lengths=decoder_lengths),
         )
-        logging.info(f"attn_input:{attn_input}")
-        logging.info(f"attn_output:{attn_output}")
+        #logging.info(f"attn_input:{attn_input}")
+        #logging.info(f"attn_output:{attn_output}")
         # skip connection over attention
         attn_output = self.post_attn_gate_norm(attn_output, attn_input[:, max_encoder_length:])
 
@@ -501,12 +501,13 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
 
         # skip connection over temporal fusion decoder (not LSTM decoder despite the LSTM output contains
         # a skip from the variable selection network)
-        output = self.pre_output_gate_norm(output, lstm_output[:, max_encoder_length:])
+        #output = self.pre_output_gate_norm(output, lstm_output[:, max_encoder_length:])
+        #logging.info(f"output:{output.shape}")
         if self.n_targets > 1:  # if to use multi-target architecture
             output = [output_layer(output) for output_layer in self.output_layer]
         else:
             output = self.output_layer(output)
-
+        #logging.info(f"final output:{output}")
         return self.to_network_output(
             prediction=self.transform_output(output, target_scale=x["target_scale"]),
             encoder_attention=attn_output_weights[..., :max_encoder_length],
@@ -762,7 +763,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             dictionary of matplotlib figures
         """
         figs = {}
-        logging.info(f"outputs:{outputs}")
+        #logging.info(f"outputs:{outputs}")
         interpretation = {
             # use padded_stack because decoder length histogram can be of different length
             name: padded_stack([x["interpretation"][name].detach() for x in outputs], side="right", value=0).sum(0)

@@ -19,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import torch
+from omegaconf import OmegaConf
 
 #import lightning.pytorch as pl
 #from import lightning.pytorch.loggers import WandbLogger
@@ -58,8 +59,13 @@ from util import logging_utils
 from util import config_utils
 from util import time_util
 
-
 def get_loss(config):
+    target_size = 1
+    is_multi_target = False
+    if OmegaConf.is_list(config.model.target):
+        target = OmegaConf.to_object(config.model.target)
+        target_size = len(target)
+        is_multi_target = True
     loss_name = config.model.loss_name
     loss = None
     if loss_name == "MASE":
@@ -76,7 +82,11 @@ def get_loss(config):
         loss = MAPCSE()
     if loss_name == "MQF2DistributionLoss":
         loss = MQF2DistributionLoss(prediction_length=max_prediction_length)
-    return loss
+    logging.info(f"target_size:{target_size}")
+    if is_multi_target:
+        return MultiLoss(metrics=[loss] * target_size)
+    else:
+        return loss
 
 def get_model(config, data_module):
     device = config['device']
@@ -129,8 +139,9 @@ def get_tft_model(config, data_module):
         attention_head_size=1,
         dropout=0.1,  # between 0.1 and 0.3 are good values
         hidden_continuous_size=8,  # set to <= hidden_size
-        loss=QuantileLoss(),
-        optimizer="Ranger"
+        loss=loss,
+        optimizer="Ranger",
+        log_interval=0.25,
         # reduce learning rate if no improvement in validation loss after x epochs
         # reduce_on_plateau_patience=1000,
     )
@@ -148,10 +159,11 @@ def get_patch_tst_model(config, data_module):
     #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
     loss = get_loss(config)
-    num_patch = (max(context_length, patch_len)-patch_len) // stride + 1  
+    num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
+    logging.info(f"context_length:{context_length}, patch_len:{patch_len}, stride:{stride}, num_patch:{num_patch}")
     net = PatchTstTransformer.from_dataset(
         training,
-        patch_len=10,
+        patch_len=config.model.patch_len,
         stride=stride,
         num_patch=num_patch,
         # not meaningful for finding the learning rate but otherwise very important
@@ -162,7 +174,7 @@ def get_patch_tst_model(config, data_module):
         n_heads=1,
         attn_dropout=0.1,  # between 0.1 and 0.3 are good values
         #hidden_continuous_size=8,  # set to <= hidden_size
-        loss=QuantileLoss(),
+        loss=loss,
         optimizer="Ranger"
         # reduce learning rate if no improvement in validation loss after x epochs
         # reduce_on_plateau_patience=1000,
@@ -225,7 +237,9 @@ def get_trainer(config, data_module):
                    #metrics_logger,
                    #prediction_logger
         ],
-        strategy = "auto",
+        strategy = "ddp",
+        devices=1,
+        precision=16,
         logger=wandb_logger,
     )
     return trainer
