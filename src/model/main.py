@@ -22,6 +22,7 @@ from ray.util.dask import enable_dask_on_ray
 from utils import count_parameters
 from util import config_utils
 from util import logging_utils
+import sys
 
 RESULTS_PATH = Path("results")
 
@@ -38,15 +39,13 @@ def my_app(cfg: DictConfig) -> None:
         "patch_tst_tft": PatchTstTftPipeline,
         "nhits": TimeSeriesPipeline
     }
-    #config_utils.set_args(args)
+    logging_utils.init_logging()
     logging.info(f"cfg:{cfg}, dir(cfg)")
     ray.init()
     enable_dask_on_ray()
     device = cfg.job.device
     logging.info(f"start_date:{cfg.job.start_date}")
     logging.info(f"end_date:{cfg.job.end_date}")
-    #context_length = 13*7*5*6
-    #prediction_length = 13*3
     prediction_length = cfg['model']['prediction_length']
     context_length = cfg['model']['context_length']
     config = {
@@ -72,8 +71,6 @@ def my_app(cfg: DictConfig) -> None:
         'max_epochs' : cfg.job.max_epochs,
         'model_path' : 'checkpoint'}
     wandb.config = config
-    #pipe = TimeSeriesPipeline(dataset="FUT", device=device, config=config)
-    #pipe = TemporalFusionTransformerPipeline(dataset="FUT", device=device, config=config)
     pipe = pipelines[cfg.model.name](dataset="FUT", device=device, config=cfg) 
     if cfg.job.mode == "train":
         pipe.create_model()
@@ -92,5 +89,4 @@ def my_app(cfg: DictConfig) -> None:
     torch.cuda.empty_cache()
     
 if __name__ == "__main__":
-  logging_utils.init_logging()
-  my_app()
+    my_app()

@@ -2,11 +2,13 @@ hidden_size: 8
 prediction_length: 46
 context_length: 460
 #loss_name: MAPCSE
-loss_name: RMSE
+#loss_name: RMSE
+loss_name: MQF2DistributionLoss
 name: tft
 time_varying_known_reals: []
 #target: ["close_back_cumsum"]
-target: ["close_back_cumsum", "volume_back_cumsum"]
+#target: ["close_back_cumsum", "volume_back_cumsum"]
+target: "close_back_cumsum"
 time_varying_unknown_reals: ["close_back_cumsum", "volume_back_cumsum"]
 #time_varying_unknown_reals: ["close_back_cumsum"]
 add_relative_time_idx: True

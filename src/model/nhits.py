@@ -17,6 +17,9 @@ from pytorch_forecasting import Baseline, NHiTS, TimeSeriesDataSet
 from pytorch_forecasting.data import NaNLabelEncoder
 from pytorch_forecasting.data.examples import generate_ar_data
 from pytorch_forecasting.metrics import MAE, SMAPE, MQF2DistributionLoss, QuantileLoss
+from util import logging_utils
+
+logging_utils.init_logging()
 
 data = generate_ar_data(seasonality=10.0, timesteps=400, n_series=100, seed=42)
 data["static"] = 2

@@ -1,6 +1,7 @@
 from io import BytesIO
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import logging
+from omegaconf import OmegaConf
 import PIL
 import pandas as pd
 from typing import Any, Dict, Optional, Set
@@ -13,7 +14,7 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
-            self, data_module, num_samples=10, every_n_epochs=5
+            self, data_module, config, num_samples=10, every_n_epochs=5
     ):
         super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum"],
@@ -23,6 +24,11 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
+        self.config = config
+        self.target_size = 1
+        if OmegaConf.is_list(config.model.target):
+            target = OmegaConf.to_object(config.model.target)
+            target_size = len(target)
         for batch in range(num_samples):
             val_x, val_y = next(iter(data_module.val_dataloader()))
             #logging.info(f"self.val_x:{val_x}")
@@ -102,7 +108,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             #logging.info(f"y_close_cum_sum:{y_close_cum_sum}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")
             for idx in range(len(y_close_cum_sum)):
               # TODO: fix [0] hack to deal with multiple target
-              base = val_x['encoder_target'][0][idx][-1]
+              if self.target_size > 1:
+                  base = val_x['encoder_target'][0][idx][-1]
+              else:
+                  base = val_x['encoder_target'][idx][-1]
               #logging.info(f"idx:{idx}, y_close_cum_sum:{y_close_cum_sum}")
               #logging.info(f"encoder_x:{self.val_x['encoder_x'][idx]}")
               #logging.info(f"encoder_target:{self.val_x['encoder_target'][idx]}")

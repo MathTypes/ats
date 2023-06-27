@@ -51,7 +51,7 @@ from wandb.keras import WandbMetricsLogger
 
 
 import data_util
-from eval_callback import WandbClfEvalCallback
+#from eval_callback import WandbClfEvalCallback
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
 from math import ceil
 import nhits_tuner
@@ -81,12 +81,14 @@ def get_loss(config):
     if loss_name == "MAPCSE":
         loss = MAPCSE()
     if loss_name == "MQF2DistributionLoss":
-        loss = MQF2DistributionLoss(prediction_length=max_prediction_length)
-    logging.info(f"target_size:{target_size}")
-    if is_multi_target:
-        return MultiLoss(metrics=[loss] * target_size)
-    else:
-        return loss
+        loss = MQF2DistributionLoss(prediction_length=config.model.prediction_length)
+    logging.error(f"loss:{loss}")
+    loss = loss.to(config.job.device)
+    return loss
+    #if is_multi_target:
+    #    return MultiLoss(metrics=[loss] * target_size)
+    #else:
+    #    return loss
 
 def get_model(config, data_module):
     device = config['device']
@@ -130,6 +132,7 @@ def get_tft_model(config, data_module):
     #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
     loss = get_loss(config)
+    logging.error(f"loss:{loss}")
     net = TemporalFusionTransformer.from_dataset(
         training,
         weight_decay=1e-2,
@@ -137,7 +140,7 @@ def get_tft_model(config, data_module):
         learning_rate=0.03,
         hidden_size=8,  # most important hyperparameter apart from learning rate
         # number of attention heads. Set to up to 4 for large datasets
-        attention_head_size=4,
+        attention_head_size=1,
         dropout=0.1,  # between 0.1 and 0.3 are good values
         hidden_continuous_size=8,  # set to <= hidden_size
         loss=loss,
@@ -151,7 +154,6 @@ def get_tft_model(config, data_module):
 def get_patch_tst_model(config, data_module):
     device = config.job.device
     training = data_module.training
-    #max_prediction_length = config['max_prediction_length']
     prediction_length = config.model.prediction_length
     context_length = config.model.context_length
     patch_len = config.model.patch_len
@@ -161,7 +163,7 @@ def get_patch_tst_model(config, data_module):
     pl.seed_everything(42)
     loss = get_loss(config)
     num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
-    logging.info(f"context_length:{context_length}, patch_len:{patch_len}, stride:{stride}, num_patch:{num_patch}")
+    logging.getLogger().info(f"context_length:{context_length}, patch_len:{patch_len}, stride:{stride}, num_patch:{num_patch}")
     net = PatchTstTransformer.from_dataset(
         training,
         patch_len=config.model.patch_len,
@@ -218,7 +220,7 @@ def get_patch_tst_tft_model(config, data_module):
 def get_trainer(config, data_module):
     device = config['device']
     use_gpu = device == "cuda"
-    logging.info(f"device:{device}, use_gpu:{use_gpu}")
+    logging.getLogger().info(f"device:{device}, use_gpu:{use_gpu}")
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
@@ -304,9 +306,9 @@ def get_data_module(config):
     raw_data["close_low_51"] = g['close_back'].transform(add_lows, width=51)
     raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
     raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
-    logging.info(f"raw_data:{raw_data}")
+    #logging.info(f"raw_data:{raw_data}")
     eval_cut_off = config.job.eval_cut_off
-    logging.info(f"eval_cut_off:{eval_cut_off}")
+    #logging.info(f"eval_cut_off:{eval_cut_off}")
     train_data = raw_data[raw_data.year<=eval_cut_off]
     eval_data = raw_data[raw_data.year>eval_cut_off]
     train_data = train_data.sort_values(["ticker", "time"])
@@ -359,68 +361,3 @@ def week_of_month(dt):
     adjusted_dom = dom + first_day.weekday()
     return int(ceil(adjusted_dom/7.0))
 
-
-if __name__ == "__main__":
-    logging_utils.init_logging()
-    pd.set_option('display.max_columns', None)
-    pd.set_option('use_inf_as_na',True) 
-    parser = config_utils.get_arg_parser("Trainer")
-    parser.add_argument("--mode", type=str)
-    parser.add_argument("--ray_url", type=str, default="ray://8.tcp.ngrok.io:10243")
-    parser.add_argument("--device", type=str, default="cpu")
-    parser.add_argument("--workers", type=int, default=4)
-    parser.add_argument("--checkpoint", type=str)
-    parser.add_argument(
-        "--start_date",
-        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
-        required=False,
-        help="Set a start date",
-    )
-    parser.add_argument(
-        "--end_date",
-        type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
-        required=False,
-        help="Set a end date",
-    )
-    parser.add_argument("--lr", type=float, default=4.4668359215096314e-05)
-    parser.add_argument("--n_trials", type=int, default=100)
-    parser.add_argument("--max_epochs", type=int, default=10)
-    logging_utils.init_logging()
-    args = parser.parse_args()
-    logging.info(f"init from {args.ray_url}")
-    #ray.init(args.ray_url)
-    ray.init()
-    enable_dask_on_ray()
-    device = args.device
-    context_length = 13*7*5*6
-    prediction_length = 13*7*4
-    config = {
-        'model_tickers': ['ES', 'NQ', 'RTY', 'CL', 'HG'],
-        'raw_dir': '.',
-        'num_workers': 8,
-        'device' : args.device,
-        'workers': args.workers,
-        'start_date': args.start_date,
-        'end_date': args.end_date,
-        'max_encoder_length' : context_length,
-        'max_prediction_length' : prediction_length,
-        'min_encoder_length' : context_length,
-        'min_prediction_length' : prediction_length,
-        'context_length' : context_length,
-        'prediction_length' : prediction_length,
-        'max_epochs' : args.max_epochs,
-        'n_trials' : args.n_trials,
-        'model_path' : 'checkpoint'}
-    logging.info(f"config:{config}")
-    data_module = get_data_module(config)
-    net = get_model(config, data_module)
-    trainer = get_trainer(config, data_module)
-    if args.mode == "tune":
-        run_tune(config, net, trainer, data_module)
-    elif args.mode == "train":
-        run_train(config, net, trainer, data_module)
-    elif args.mode == "eval":
-        run_eval(config, net, data_module)
-
-    time.sleep(10)
-    ray.shutdown()
