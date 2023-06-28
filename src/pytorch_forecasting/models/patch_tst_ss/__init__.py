@@ -576,6 +576,7 @@ class PatchTstTransformer(BaseModelWithCovariates):
             interpretations that can be plotted with ``plot_interpretation()``
         """
         # take attention and concatenate if a list to proper attention object
+        logging.info(f"out:{out}")
         batch_size = len(out["decoder_attention"])
         if isinstance(out["decoder_attention"], (list, tuple)):
             # start with decoder attention
@@ -737,21 +738,6 @@ class PatchTstTransformer(BaseModelWithCovariates):
             **kwargs,
         )
 
-        # add attention on secondary axis
-        if plot_attention:
-            interpretation = self.interpret_output(out.iget(slice(idx, idx + 1)))
-            for f in to_list(fig):
-                ax = f.axes[0]
-                ax2 = ax.twinx()
-                ax2.set_ylabel("Attention")
-                encoder_length = x["encoder_lengths"][0]
-                ax2.plot(
-                    torch.arange(-encoder_length, 0),
-                    interpretation["attention"][0, -encoder_length:].detach().cpu(),
-                    alpha=0.2,
-                    color="k",
-                )
-                f.tight_layout()
         return fig
 
     def plot_interpretation(self, interpretation: Dict[str, torch.Tensor]) -> Dict[str, plt.Figure]:
