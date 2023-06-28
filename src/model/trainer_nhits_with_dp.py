@@ -175,9 +175,9 @@ def get_patch_tst_model(config, data_module):
         hidden_size=8,
         # number of attention heads. Set to up to 4 for large datasets
         n_heads=1,
+        loss=loss,
         attn_dropout=0.1,  # between 0.1 and 0.3 are good values
         #hidden_continuous_size=8,  # set to <= hidden_size
-        loss=loss,
         optimizer="Ranger"
         # reduce learning rate if no improvement in validation loss after x epochs
         # reduce_on_plateau_patience=1000,
@@ -187,13 +187,10 @@ def get_patch_tst_model(config, data_module):
 def get_patch_tst_tft_model(config, data_module):
     device = config.job.device
     training = data_module.training
-    #max_prediction_length = config['max_prediction_length']
     prediction_length = config.model.prediction_length
     context_length = config.model.context_length
     patch_len = config.model.patch_len
     stride = config.model.stride
-    # configure network and trainer
-    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
     loss = get_loss(config)
     num_patch = (max(context_length, patch_len)-patch_len) // stride + 1  

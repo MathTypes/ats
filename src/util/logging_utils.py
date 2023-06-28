@@ -15,7 +15,7 @@ def init_logging():
     )
 
     root = logging.getLogger()
-    root.setLevel(logging.ERROR)
+    root.setLevel(logging.INFO)
 
     #ch = logging.StreamHandler(sys.stdout)
     ch = logging.StreamHandler(sys.stdout)

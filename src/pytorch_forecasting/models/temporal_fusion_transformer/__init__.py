@@ -28,6 +28,7 @@ from pytorch_forecasting.models.temporal_fusion_transformer.sub_modules import (
 from pytorch_forecasting.utils import create_mask, detach, integer_histogram, masked_op, padded_stack, to_list
 
 
+logger = logging.getLogger("ats")
 class TemporalFusionTransformer(BaseModelWithCovariates):
     def __init__(
         self,
@@ -353,7 +354,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         new_kwargs = copy(kwargs)
         new_kwargs["max_encoder_length"] = dataset.max_encoder_length
         new_kwargs.update(cls.deduce_default_output_parameters(dataset, kwargs, QuantileLoss()))
-
+        logger.error(f"new_kwargs:{new_kwargs}")
         # create class and return
         return super().from_dataset(
             dataset, allowed_encoder_known_variable_names=allowed_encoder_known_variable_names, **new_kwargs

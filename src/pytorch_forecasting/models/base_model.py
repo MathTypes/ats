@@ -71,6 +71,7 @@ from pytorch_forecasting.utils import (
 
 # todo: compile models
 
+logger = logging.getLogger("ats")
 
 def _torch_cat_na(x: List[torch.Tensor]) -> torch.Tensor:
     """
@@ -586,6 +587,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
         # infer output size
         def get_output_size(normalizer, loss):
+            logging.error(f"loss:{loss}")
             if isinstance(loss, QuantileLoss):
                 #logging.info(f"QuantileLoss:{len(loss.quantiles)}")
                 return len(loss.quantiles)
@@ -593,7 +595,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"normalizer.classes_:{len(normalizer.classes_)}")
                 return len(normalizer.classes_)
             elif isinstance(loss, DistributionLoss):
-                #logging.info(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
+                logging.error(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
                 return len(loss.distribution_arguments)
             else:
                 return 1  # default to 1
@@ -617,7 +619,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"multiloss:{new_kwargs}")
         elif "output_size" not in kwargs:
             new_kwargs["output_size"] = get_output_size(dataset.target_normalizer, loss)
-            #logging.info(f"n_targets:{new_kwargs}")
+            logging.info(f"n_targets:{new_kwargs}")
         return new_kwargs
 
     def size(self) -> int:
@@ -740,8 +742,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 ``on_epoch_end`` hook and the second entry is the model's output.
         """
         # pack y sequence if different encoder lengths exist
-        #logging.info(f"kwargs:{kwargs}, batch_idx:{batch_idx}")
-        #logging.info(f"y:{y}")
+        #logger.info(f"kwargs:{kwargs}, batch_idx:{batch_idx}")
+        #logger.info(f"y:{y}")
         if (x["decoder_lengths"] < x["decoder_lengths"].max()).any():
             if isinstance(y[0], (list, tuple)):
                 y = (
@@ -770,7 +772,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             )
             out = self(x, **kwargs)
             prediction = out["prediction"]
-            logging.info(f"x:{x}, out:{out}")
+            logger.info(f"x:{x}, out:{out}")
             # handle multiple targets
             prediction_list = to_list(prediction)
             gradient = 0
@@ -818,7 +820,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             # calculate loss
             prediction = out["prediction"]
             if not self.predicting:
-                if isinstance(self.loss, (MASE, MultiLoss)):
+                #logger.info(f"self.loss:{self.loss}")
+                #if isinstance(self.loss, (MASE, MultiLoss)):
+                # TODO: figure out how we can pass encoder_target to losses under
+                # MultiLoss.
+                if isinstance(self.loss, (MASE)):
                     mase_kwargs = dict(encoder_target=x["encoder_target"], encoder_lengths=x["encoder_lengths"])
                     loss = self.loss(prediction, y, **mase_kwargs)
                 else:
@@ -1337,7 +1343,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         if "output_transformer" not in kwargs:
             kwargs["output_transformer"] = dataset.target_normalizer
-        logging.info(f"creating net with {kwargs}")
+        #logging.info(f"creating net with {kwargs}")
         net = cls(**kwargs)
         net.dataset_parameters = dataset.get_parameters()
         if dataset.multi_target:
@@ -1778,9 +1784,9 @@ class BaseModelWithCovariates(BaseModel):
             embedding_paddings=embedding_paddings,
             categorical_groups=dataset.variable_groups,
         )
-        logging.info(f'before new_kwargs:{new_kwargs}')
+        #logging.info(f'before new_kwargs:{new_kwargs}')
         new_kwargs.update(kwargs)
-        logging.info(f'after new_kwargs:{new_kwargs}')
+        #logging.info(f'after new_kwargs:{new_kwargs}')
         return super().from_dataset(dataset, **new_kwargs)
 
     def extract_features(

@@ -2,6 +2,8 @@
 Base classes for metrics - only for inheritance.
 """
 import inspect
+import logging
+import traceback
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 import warnings
 
@@ -13,6 +15,7 @@ from torchmetrics import Metric as LightningMetric
 
 from pytorch_forecasting.utils import create_mask, unpack_sequence, unsqueeze_like
 
+logger = logging.getLogger("ats")
 
 class Metric(LightningMetric):
     """
@@ -337,8 +340,14 @@ class MultiLoss(LightningMetric):
             torch.Tensor: metric value on which backpropagation can be applied
         """
         results = []
+        traceback.print_stack()
         for idx, metric in enumerate(self.metrics):
             try:
+                #logger.info(f"id:{idx}, y_pred:{y_pred[idx].shape}")
+                #logger.info(f"y_actual[0][idx]:{y_actual[0][idx].shape}")
+                #logger.info(f"y_actual[1]:{y_actual[1]}")
+                #logger.info(f"kwargs:{kwargs}")
+                #logger.info(f"metric:{metric}")
                 res = metric(
                     y_pred[idx],
                     (y_actual[0][idx], y_actual[1]),
@@ -781,6 +790,9 @@ class MultiHorizonMetric(Metric):
         else:
             lengths = torch.full((target.size(0),), fill_value=target.size(1), dtype=torch.long, device=target.device)
 
+        #logger.info(f"y_pred:{y_pred.shape}")
+        #logger.info(f"target:{target.shape}")
+        #logger.info(f"loss:{self.loss}")
         losses = self.loss(y_pred, target)
         # weight samples
         if weight is not None:
