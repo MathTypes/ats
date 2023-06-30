@@ -189,7 +189,8 @@ class TunerDiversifiedSharpe(kt.tuners.RandomSearch):
         for callback in original_callbacks:
             if isinstance(callback, SharpeValidationLoss):
                 callback.set_weights_save_loc(
-                    self._get_checkpoint_fname(trial.trial_id, self._reported_step)
+                    #self._get_checkpoint_fname(trial.trial_id, self._reported_step)
+                    self._get_checkpoint_fname(trial.trial_id)                    
                 )
 
         # Run the training process multiple times.
@@ -203,7 +204,7 @@ class TunerDiversifiedSharpe(kt.tuners.RandomSearch):
             # callbacks.append(model_checkpoint)
             copied_fit_kwargs["callbacks"] = callbacks
 
-            history = self._build_and_fit_model(trial, args, copied_fit_kwargs)
+            history = self._build_and_fit_model(trial, *args, **copied_fit_kwargs)
             for metric, epoch_values in history.history.items():
                 if self.oracle.objective.direction == "min":
                     best_value = np.min(epoch_values)
@@ -216,7 +217,7 @@ class TunerDiversifiedSharpe(kt.tuners.RandomSearch):
         for metric, execution_values in metrics.items():
             averaged_metrics[metric] = np.mean(execution_values)
         self.oracle.update_trial(
-            trial.trial_id, metrics=averaged_metrics, step=self._reported_step
+            trial.trial_id, metrics=averaged_metrics, step=trial.best_step
         )
 
 
