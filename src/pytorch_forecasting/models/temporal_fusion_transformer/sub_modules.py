@@ -2,6 +2,7 @@
 Implementation of ``nn.Modules`` for temporal fusion transformer.
 """
 import math
+import logging
 from typing import Dict, List, Tuple, Union
 
 import torch
@@ -146,6 +147,10 @@ class AddNorm(nn.Module):
         if self.trainable_add:
             skip = skip * self.gate(self.mask) * 2.0
 
+        logging.info(f"x:{x.shape}, skip:{skip.shape}")
+        if skip.dim() == x.dim()-1:
+            skip = skip[..., None, :,:]
+            logging.info(f"x:{x.shape}, skip:{skip.shape}")
         output = self.norm(x + skip)
         return output
 
@@ -236,7 +241,11 @@ class GatedResidualNetwork(nn.Module):
 
         x = self.fc1(x)
         if context is not None:
+            logging.info(f"self.context:{self.context}, context:{context.shape}, x:{x.shape}")
             context = self.context(context)
+            if context.dim() == x.dim()-1:
+                context = context[..., None, :, :]
+            logging.info(f"context:{context.shape}, x:{x.shape}")
             x = x + context
         x = self.elu(x)
         x = self.fc2(x)
@@ -254,18 +263,19 @@ class VariableSelectionNetwork(nn.Module):
         context_size: int = None,
         single_variable_grns: Dict[str, GatedResidualNetwork] = {},
         prescalers: Dict[str, nn.Linear] = {},
+        reduce: bool = True
     ):
         """
         Calcualte weights for ``num_inputs`` variables  which are each of size ``input_size``
         """
         super().__init__()
-
+        self.reduce = reduce
         self.hidden_size = hidden_size
         self.input_sizes = input_sizes
         self.input_embedding_flags = input_embedding_flags
         self.dropout = dropout
         self.context_size = context_size
-
+        #logging.info(f"input_size_total:{self.input_size_total}")
         if self.num_inputs > 1:
             if self.context_size is not None:
                 self.flattened_grn = GatedResidualNetwork(
@@ -287,6 +297,7 @@ class VariableSelectionNetwork(nn.Module):
 
         self.single_variable_grns = nn.ModuleDict()
         self.prescalers = nn.ModuleDict()
+        #logging.info(f"self.input_embedding_flags:{self.input_embedding_flags}")
         for name, input_size in self.input_sizes.items():
             if name in single_variable_grns:
                 self.single_variable_grns[name] = single_variable_grns[name]
@@ -302,6 +313,7 @@ class VariableSelectionNetwork(nn.Module):
             if name in prescalers:  # reals need to be first scaled up
                 self.prescalers[name] = prescalers[name]
             elif not self.input_embedding_flags.get(name, False):
+                #logging.info(f"adding prescalers, {name}")
                 self.prescalers[name] = nn.Linear(1, input_size)
 
         self.softmax = nn.Softmax(dim=-1)
@@ -327,14 +339,19 @@ class VariableSelectionNetwork(nn.Module):
                 weight_inputs.append(variable_embedding)
                 var_outputs.append(self.single_variable_grns[name](variable_embedding))
             var_outputs = torch.stack(var_outputs, dim=-1)
-
+            logging.info(f"x:{x['relative_time_idx'].shape}")
+            logging.info(f"context:{context.shape}")
+            logging.info(f"var_outputs:{var_outputs.shape}")
             # calculate variable weights
             flat_embedding = torch.cat(weight_inputs, dim=-1)
             sparse_weights = self.flattened_grn(flat_embedding, context)
             sparse_weights = self.softmax(sparse_weights).unsqueeze(-2)
-
+            logging.info(f"sparse_weights:{sparse_weights.shape}")
             outputs = var_outputs * sparse_weights
-            outputs = outputs.sum(dim=-1)
+            logging.info(f"outputs before sum:{outputs.shape}")
+            if self.reduce:
+                outputs = outputs.sum(dim=-1)
+            logging.info(f"outputs after sum:{outputs.shape}")
         else:  # for one input, do not perform variable selection but just encoding
             name = next(iter(self.single_variable_grns.keys()))
             variable_embedding = x[name]

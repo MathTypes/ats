@@ -28,7 +28,7 @@ from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.tuner import Tuner
 #import pytorch_lightning as pl
 import lightning.pytorch as pl
-from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer
+from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTstTftSupervisedTransformer
 from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
@@ -59,9 +59,12 @@ from util import logging_utils
 from util import config_utils
 from util import time_util
 
-def get_loss(config):
+def get_loss(config, prediction_length=None, hidden_size=None):
     target_size = 1
     is_multi_target = False
+    if not prediction_length:
+        prediction_length = config.model.prediction_length
+    #logging.info(f"prediction_length:{prediction_length}")
     if OmegaConf.is_list(config.model.target):
         target = OmegaConf.to_object(config.model.target)
         target_size = len(target)
@@ -81,8 +84,8 @@ def get_loss(config):
     if loss_name == "MAPCSE":
         loss = MAPCSE()
     if loss_name == "MQF2DistributionLoss":
-        loss = MQF2DistributionLoss(prediction_length=config.model.prediction_length)
-    logging.error(f"loss:{loss}")
+        loss = MQF2DistributionLoss(prediction_length=prediction_length)
+    #logging.error(f"loss:{loss}")
     loss = loss.to(config.job.device)
     return loss
     #if is_multi_target:
@@ -132,7 +135,7 @@ def get_tft_model(config, data_module):
     #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
     loss = get_loss(config)
-    logging.error(f"loss:{loss}")
+    #logging.error(f"loss:{loss}")
     net = TemporalFusionTransformer.from_dataset(
         training,
         weight_decay=1e-2,
@@ -192,22 +195,64 @@ def get_patch_tst_tft_model(config, data_module):
     patch_len = config.model.patch_len
     stride = config.model.stride
     pl.seed_everything(42)
-    loss = get_loss(config)
-    num_patch = (max(context_length, patch_len)-patch_len) // stride + 1  
+    d_model = config.model.d_model
+    #patch_prediction_length = int(prediction_length/stride)-1
+    logging.info(f"prediction_length:{prediction_length}, patch_len:{patch_len}")
+    loss = get_loss(config, hidden_size=d_model)
+    num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
+    logging.info(f"patch_len:{patch_len}, num_patch:{num_patch}, context_length:{context_length}, stride:{stride}")
     net = PatchTstTftTransformer.from_dataset(
         training,
-        patch_len=10,
+        patch_len=patch_len,
         stride=stride,
         num_patch=num_patch,
+        loss=loss,
         # not meaningful for finding the learning rate but otherwise very important
         learning_rate=0.03,
-        d_model=8,  # most important hyperparameter apart from learning rate
+        d_model=d_model,  # most important hyperparameter apart from learning rate
         hidden_size=8,
         # number of attention heads. Set to up to 4 for large datasets
         n_heads=1,
         attn_dropout=0.1,  # between 0.1 and 0.3 are good values
         #hidden_continuous_size=8,  # set to <= hidden_size
-        loss=QuantileLoss(),
+        #loss=QuantileLoss(),
+        optimizer="Ranger"
+        # reduce learning rate if no improvement in validation loss after x epochs
+        # reduce_on_plateau_patience=1000,
+    )
+    return net
+
+def get_patch_tst_tft_supervised_model(config, data_module):
+    device = config.job.device
+    training = data_module.training
+    prediction_length = config.model.prediction_length
+    context_length = config.model.context_length
+    patch_len = config.model.patch_len
+    stride = config.model.stride
+    d_model = config.model.d_model
+    pl.seed_everything(42)
+    #patch_prediction_length = int(prediction_length/stride)-1
+    logging.info(f"prediction_length:{prediction_length}, patch_len:{patch_len}")
+    loss = get_loss(config)
+    num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
+    prediction_num_patch = (max(prediction_length, patch_len)-patch_len) // stride + 1
+    logging.info(f"patch_len:{patch_len}, num_patch:{num_patch}, context_length:{context_length}, stride:{stride}")
+    net = PatchTstTftSupervisedTransformer.from_dataset(
+        training,
+        patch_len=patch_len,
+        stride=stride,
+        num_patch=num_patch,
+        prediction_num_patch=prediction_num_patch,
+        loss=loss,
+        # not meaningful for finding the learning rate but otherwise very important
+        learning_rate=0.03,
+        d_model=d_model,  # most important hyperparameter apart from learning rate
+        hidden_size=8,
+        # number of attention heads. Set to up to 4 for large datasets
+        n_heads=1,
+        attn_dropout=0.1,  # between 0.1 and 0.3 are good values
+        #hidden_continuous_size=8,  # set to <= hidden_size
+        #loss=QuantileLoss(),
         optimizer="Ranger"
         # reduce learning rate if no improvement in validation loss after x epochs
         # reduce_on_plateau_patience=1000,

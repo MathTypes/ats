@@ -330,6 +330,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             )
         else:
             self.output_layer = nn.Linear(self.hparams.hidden_size, self.hparams.output_size)
+        logging.info(f"outut_layer:{self.output_layer}")
 
     @classmethod
     def from_dataset(
@@ -433,7 +434,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         static_context_variable_selection = self.expand_static_context(
             self.static_context_variable_selection(static_embedding), timesteps
         )
-        #logging.info(f"static_context_variable_selection.shape:{static_context_variable_selection.shape}")
+        logging.info(f"static_context_variable_selection.shape:{static_context_variable_selection.shape}")
 
         embeddings_varying_encoder = {
             name: input_vectors[name][:, :max_encoder_length] for name in self.encoder_variables
@@ -462,7 +463,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         encoder_output, (hidden, cell) = self.lstm_encoder(
             embeddings_varying_encoder, (input_hidden, input_cell), lengths=encoder_lengths, enforce_sorted=False
         )
-
+        logging.info(f"encoder_output:{encoder_output.shape}")
         # run local decoder
         decoder_output, _ = self.lstm_decoder(
             embeddings_varying_decoder,
@@ -479,12 +480,14 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         lstm_output_decoder = self.post_lstm_add_norm_decoder(lstm_output_decoder, embeddings_varying_decoder)
 
         lstm_output = torch.cat([lstm_output_encoder, lstm_output_decoder], dim=1)
+        logging.info(f"lstm_output:{lstm_output.shape}")
 
         # static enrichment
         static_context_enrichment = self.static_context_enrichment(static_embedding)
         attn_input = self.static_enrichment(
             lstm_output, self.expand_static_context(static_context_enrichment, timesteps)
         )
+        logging.info(f"attn_input:{attn_input.shape}")
 
         # Attention
         attn_output, attn_output_weights = self.multihead_attn(
@@ -493,22 +496,25 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             v=attn_input,
             mask=self.get_attention_mask(encoder_lengths=encoder_lengths, decoder_lengths=decoder_lengths),
         )
+        logging.info(f"attn_output:{attn_output.shape}")
+        exit(0)
         #logging.info(f"attn_input:{attn_input}")
         #logging.info(f"attn_output:{attn_output}")
         # skip connection over attention
         attn_output = self.post_attn_gate_norm(attn_output, attn_input[:, max_encoder_length:])
 
         output = self.pos_wise_ff(attn_output)
-
+        logging.info(f"pos_wise_ff_output:{output.shape}")
         # skip connection over temporal fusion decoder (not LSTM decoder despite the LSTM output contains
         # a skip from the variable selection network)
-        #output = self.pre_output_gate_norm(output, lstm_output[:, max_encoder_length:])
-        #logging.info(f"output:{output.shape}")
+        output = self.pre_output_gate_norm(output, lstm_output[:, max_encoder_length:])
+        logging.info(f"before output:{output.shape}")
+        exit(0)
         if self.n_targets > 1:  # if to use multi-target architecture
             output = [output_layer(output) for output_layer in self.output_layer]
         else:
             output = self.output_layer(output)
-        #logging.info(f"final output:{output}")
+        logging.info(f"final output:{output.shape}")
         return self.to_network_output(
             prediction=self.transform_output(output, target_scale=x["target_scale"]),
             encoder_attention=attn_output_weights[..., :max_encoder_length],

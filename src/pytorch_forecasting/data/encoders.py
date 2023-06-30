@@ -2,6 +2,7 @@
 Encoders for encoding categorical variables and scaling continuous data.
 """
 
+import logging
 from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
 import warnings
 
@@ -1061,6 +1062,7 @@ class MultiNormalizer(TorchNormalizer):
             y = y.to_numpy()
 
         for idx, normalizer in enumerate(self.normalizers):
+            logging.info(f"y:{y.shape}")
             if isinstance(normalizer, GroupNormalizer):
                 normalizer.fit(y[:, idx], X)
             else:

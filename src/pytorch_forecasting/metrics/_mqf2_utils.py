@@ -1,5 +1,7 @@
 """Classes and functions for the MQF2 metric."""
 from typing import List, Optional, Tuple
+import logging
+import traceback
 
 from cpflows.flows import DeepConvexFlow, SequentialFlow
 import torch
@@ -106,6 +108,8 @@ class SequentialNet(SequentialFlow):
     def forward(self, x: torch.Tensor, context: Optional[torch.Tensor] = None) -> torch.Tensor:
         for network in self.networks:
             if isinstance(network, DeepConvexNet):
+                #traceback.print_stack()
+                #logging.info(f"x:{x}, shape:{x.shape}")
                 x = network.forward(x, context=context)
             else:
                 x = network.forward(x)
@@ -300,7 +304,7 @@ class MQF2Distribution(Distribution):
             Unfolded time series with shape
             (batch_size * context_length, prediction_length)
         """
-
+        logging.info(f"z:{z.shape}, prediction_length:{self.prediction_length}")
         z = z.unfold(dimension=-1, size=self.prediction_length, step=1)
         z = z.reshape(-1, z.shape[-1])
 

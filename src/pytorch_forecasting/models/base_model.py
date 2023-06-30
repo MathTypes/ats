@@ -587,7 +587,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
         # infer output size
         def get_output_size(normalizer, loss):
-            logging.error(f"loss:{loss}")
+            #logging.error(f"loss:{loss}")
             if isinstance(loss, QuantileLoss):
                 #logging.info(f"QuantileLoss:{len(loss.quantiles)}")
                 return len(loss.quantiles)
@@ -619,7 +619,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"multiloss:{new_kwargs}")
         elif "output_size" not in kwargs:
             new_kwargs["output_size"] = get_output_size(dataset.target_normalizer, loss)
-            logging.info(f"n_targets:{new_kwargs}")
+        logging.info(f"n_targets:{new_kwargs}")
+        logging.info(f"loss:{loss}")
         return new_kwargs
 
     def size(self) -> int:

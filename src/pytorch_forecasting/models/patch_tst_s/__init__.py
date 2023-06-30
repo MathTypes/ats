@@ -3,7 +3,7 @@ The temporal fusion transformer is a powerful predictive model for forecasting t
 """
 from copy import copy
 import logging
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional, Callable
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -25,216 +25,9 @@ from pytorch_forecasting.models.temporal_fusion_transformer.sub_modules import (
     VariableSelectionNetwork,
 )
 from pytorch_forecasting.utils import create_mask, detach, integer_histogram, masked_op, padded_stack, to_list
-from ..patch_tst_ss.models.layers.pos_encoding import *
-from ..patch_tst_ss.models.layers.basics import *
-from ..patch_tst_ss.models.layers.attention import *
-
-class PatchTSTEncoder(nn.Module):
-    def __init__(self, c_in, num_patch, patch_len, 
-                 n_layers=3, d_model=128, n_heads=16, shared_embedding=True,
-                 d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
-                 res_attention=True, pre_norm=False,
-                 pe='zeros', learn_pe=True, verbose=False, **kwargs):
-
-        super().__init__()
-        self.n_vars = c_in
-        self.num_patch = num_patch
-        self.patch_len = patch_len
-        self.d_model = d_model * c_in
-        self.shared_embedding = shared_embedding        
-
-        # Input encoding: projection of feature vectors onto a d-dim vector space
-        if not shared_embedding: 
-            self.W_P = nn.ModuleList()
-            for _ in range(self.n_vars): self.W_P.append(nn.Linear(patch_len, d_model))
-        else:
-            self.W_P = nn.Linear(patch_len, d_model)      
-
-        # Positional encoding
-        self.W_pos = positional_encoding(pe, learn_pe, num_patch, d_model)
-
-        # Residual dropout
-        self.dropout = nn.Dropout(dropout)
-
-        # Encoder
-        self.encoder = TSTEncoder(d_model, n_heads, d_ff=d_ff, norm=norm,
-                                  attn_dropout=attn_dropout, dropout=dropout,
-                                  pre_norm=pre_norm, activation=act,
-                                  res_attention=res_attention, n_layers=n_layers,
-                                  store_attn=store_attn)
-
-    def forward(self, x) -> Tensor:          
-        """
-        x: tensor [bs x num_patch x nvars x patch_len]
-        """
-        bs, num_patch, n_vars, patch_len = x.shape
-        # Input encoding
-        if not self.shared_embedding:
-            x_out = []
-            for i in range(n_vars): 
-                z = self.W_P[i](x[:,:,i,:])
-                x_out.append(z)
-            x = torch.stack(x_out, dim=2)
-        else:
-            x = self.W_P(x)
-            # x: [bs x num_patch x nvars x d_model]
-        x = x.transpose(1,2)
-        # x: [bs x nvars x num_patch x d_model]        
-
-        u = torch.reshape(x, (bs*n_vars, num_patch, self.d_model) )
-        # u: [bs * nvars x num_patch x d_model]
-        u = self.dropout(u + self.W_pos)
-        # u: [bs * nvars x num_patch x d_model]
-
-        # Encoder
-        z = self.encoder(u)
-        # z: [bs * nvars x num_patch x d_model]
-        z = torch.reshape(z, (-1,n_vars, num_patch, self.d_model))
-        # z: [bs x nvars x num_patch x d_model]
-        z = z.permute(0,1,3,2)
-        #z = z.permute(0,1,3,2)
-        # z: [bs x nvars x d_model x num_patch]
-
-        return z
-    
-    
-# Cell
-class TSTEncoder(nn.Module):
-    def __init__(self, d_model, n_heads, d_ff=None,
-                 norm='BatchNorm', attn_dropout=0., dropout=0., activation='gelu',
-                 res_attention=False, n_layers=1, pre_norm=False, store_attn=False):
-        super().__init__()
-
-        self.layers = nn.ModuleList([
-            TSTEncoderLayer(d_model, n_heads=n_heads, d_ff=d_ff, norm=norm,
-                            attn_dropout=attn_dropout, dropout=dropout,
-                            activation=activation, res_attention=res_attention,
-                            pre_norm=pre_norm, store_attn=store_attn) for i in range(n_layers)])
-        self.res_attention = res_attention
-
-    def forward(self, src:Tensor):
-        """
-        src: tensor [bs x q_len x d_model]
-        """
-        output = src
-        scores = None
-        if self.res_attention:
-            for mod in self.layers: output, scores = mod(output, prev=scores)
-            return output
-        else:
-            for mod in self.layers: output = mod(output)
-            return output
-
-
-class TSTEncoderLayer(nn.Module):
-    def __init__(self, d_model, n_heads, d_ff=256, store_attn=False,
-                 norm='BatchNorm', attn_dropout=0, dropout=0., bias=True, 
-                activation="gelu", res_attention=False, pre_norm=False):
-        super().__init__()
-        assert not d_model%n_heads, f"d_model ({d_model}) must be divisible by n_heads ({n_heads})"
-        d_k = d_model // n_heads
-        d_v = d_model // n_heads
-
-        # Multi-Head attention
-        self.res_attention = res_attention
-        self.self_attn = MultiheadAttention(d_model, n_heads, d_k, d_v, attn_dropout=attn_dropout, proj_dropout=dropout, res_attention=res_attention)
-
-        # Add & Norm
-        self.dropout_attn = nn.Dropout(dropout)
-        if "batch" in norm.lower():
-            self.norm_attn = nn.Sequential(Transpose(1,2), nn.BatchNorm1d(d_model), Transpose(1,2))
-        else:
-            self.norm_attn = nn.LayerNorm(d_model)
-
-        # Position-wise Feed-Forward
-        self.ff = nn.Sequential(nn.Linear(d_model, d_ff, bias=bias),
-                                get_activation_fn(activation),
-                                nn.Dropout(dropout),
-                                nn.Linear(d_ff, d_model, bias=bias))
-
-        # Add & Norm
-        self.dropout_ffn = nn.Dropout(dropout)
-        if "batch" in norm.lower():
-            self.norm_ffn = nn.Sequential(Transpose(1,2), nn.BatchNorm1d(d_model), Transpose(1,2))
-        else:
-            self.norm_ffn = nn.LayerNorm(d_model)
-
-        self.pre_norm = pre_norm
-        self.store_attn = store_attn
-
-
-    def forward(self, src:Tensor, prev:Optional[Tensor]=None):
-        """
-        src: tensor [bs x q_len x d_model]
-        """
-        # Multi-Head attention sublayer
-        if self.pre_norm:
-            src = self.norm_attn(src)
-        ## Multi-Head attention
-        if self.res_attention:
-            src2, attn, scores = self.self_attn(src, src, src, prev)
-        else:
-            src2, attn = self.self_attn(src, src, src)
-        if self.store_attn:
-            self.attn = attn
-        ## Add & Norm
-        src = src + self.dropout_attn(src2) # Add: residual connection with residual dropout
-        if not self.pre_norm:
-            src = self.norm_attn(src)
-
-        # Feed-forward sublayer
-        if self.pre_norm:
-            src = self.norm_ffn(src)
-        ## Position-wise Feed-Forward
-        src2 = self.ff(src)
-        ## Add & Norm
-        src = src + self.dropout_ffn(src2) # Add: residual connection with residual dropout
-        if not self.pre_norm:
-            src = self.norm_ffn(src)
-
-        if self.res_attention:
-            return src, scores
-        else:
-            return src
-
-class RegressionHead(nn.Module):
-    def __init__(self, n_vars, d_model, output_dim, head_dropout, y_range=None):
-        super().__init__()
-        self.y_range = y_range
-        self.flatten = nn.Flatten(start_dim=1)
-        self.dropout = nn.Dropout(head_dropout)
-        self.linear = nn.Linear(n_vars*d_model, output_dim)
-
-    def forward(self, x):
-        """
-        x: [bs x nvars x d_model x num_patch]
-        output: [bs x output_dim]
-        """
-        x = x[:,:,:,-1]             # only consider the last item in the sequence, x: bs x nvars x d_model
-        x = self.flatten(x)         # x: bs x nvars * d_model
-        x = self.dropout(x)
-        y = self.linear(x)         # y: bs x output_dim
-        if self.y_range: y = SigmoidRange(*self.y_range)(y)        
-        return y
-
-
-class ClassificationHead(nn.Module):
-    def __init__(self, n_vars, d_model, n_classes, head_dropout):
-        super().__init__()
-        self.flatten = nn.Flatten(start_dim=1)
-        self.dropout = nn.Dropout(head_dropout)
-        self.linear = nn.Linear(n_vars*d_model, n_classes)
-
-    def forward(self, x):
-        """
-        x: [bs x nvars x d_model x num_patch]
-        output: [bs x n_classes]
-        """
-        x = x[:,:,:,-1]             # only consider the last item in the sequence, x: bs x nvars x d_model
-        x = self.flatten(x)         # x: bs x nvars * d_model
-        x = self.dropout(x)
-        y = self.linear(x)         # y: bs x n_classes
-        return y
+#from collections import OrderedDict
+from .layers.PatchTST_layers import *
+from .layers.RevIN import RevIN
 
 
 class PredictionHead(nn.Module):
@@ -329,67 +122,65 @@ class Patch(nn.Module):
         # Residual dropout
         self.dropout = nn.Dropout(dropout)
 
-
-    def forward(self, x) -> Tensor:          
+    def forward(self, x) -> torch.Tensor:          
         """
         x: [bs x seq_len x n_vars]
-        #x: tensor [bs x num_patch x nvars x patch_len]
         """
         x = x[:, self.s_begin:, :]
-        x = x.unfold(dimension=1, size=self.patch_len, step=self.stride)
-        # xb: [bs x num_patch x n_vars x patch_len]
-        bs, num_patch, n_vars, patch_len = x.shape
-        if x.size(2)==0:
-            #return torch.reshape(x, (bs*n_vars, num_patch, self.d_model) )
-            return torch.reshape(x, (bs, num_patch, self.d_model*n_vars) )
+        #logging.info(f"x_before_unfold:{x.shape}")
+        x = x.permute(0, 2, 1)
+        # x: [bs x n_vars x seq_len]
+        x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
+        #logging.info(f"x_unfold:{x.shape}")
+        # x: [bs x n_vars x patch_num x patch_len]
+        bs, n_vars, patch_num, patch_len = x.shape
+        #logging.info(f"x_permute:{x.shape}, bs:{bs}, n_vars:{n_vars}, patch_num:{patch_num}, patch_len:{patch_len}")
+        if x.size(1)==0:
+            return torch.reshape(x, (bs*n_vars, patch_num, self.d_model) )
         # Input encoding
+        #logging.info(f"x:{x.shape}")
         if not self.shared_embedding:
             x_out = []
             for i in range(n_vars): 
-                z = self.W_P[i](x[:,:,i,:])
+                z = self.W_P[i](x[:,i,:,:])
                 x_out.append(z)
-            x = torch.stack(x_out, dim=2)
+            x = torch.stack(x_out, dim=1)
         else:
             x = self.W_P(x)
-            # x: [bs x num_patch x nvars x d_model]
-        #x = x.transpose(1,2)
-        ## x: [bs x nvars x num_patch x d_model]
-
-
-        #u = torch.reshape(x, (bs*n_vars, num_patch, self.d_model) )
-        u = torch.reshape(x, (bs, num_patch, self.d_model * n_vars) )
-        logging.info(f"u.shape:{u.shape}")
-        # u: [bs * nvars x num_patch x d_model]
+        # x: [bs x n_vars x patch_num x d_model]
+        #u = torch.reshape(x, (bs*n_vars, patch_num, self.d_model) )
+        #logging.info(f"u.shape:{u.shape}")
+        # u: [bs x num_patch x n_vars x d_model]
         #u = self.dropout(u + self.W_pos)
-        # u: [bs * nvars x num_patch x d_model]
-        # u: [bs x num_patch x d_model * nvars]
-        return u
+        return x
 
 class Flatten_Head(nn.Module):
-    def __init__(self, individual, n_vars, nf, target_window, head_dropout=0):
+    def __init__(self, individual, n_vars, num_patch, nf, target_window, head_dropout=0):
         super().__init__()
 
         self.individual = individual
         self.n_vars = n_vars
+        self.num_patch = num_patch
         if self.individual:
             self.linears = nn.ModuleList()
             self.dropouts = nn.ModuleList()
             self.flattens = nn.ModuleList()
             for i in range(self.n_vars):
                 self.flattens.append(nn.Flatten(start_dim=-2))
-                self.linears.append(nn.Linear(nf, target_window))
+                self.linears.append(nn.Linear(num_patch, target_window))
                 self.dropouts.append(nn.Dropout(head_dropout))
         else:
             self.flatten = nn.Flatten(start_dim=-2)
-            self.linear = nn.Linear(nf, target_window)
+            self.linear = nn.Linear(num_patch, target_window)
             self.dropout = nn.Dropout(head_dropout)
 
     def forward(self, x):
-        # x: [bs x nvars x d_model x patch_num]
+        # x: [bs x nvars x d_model]
+        #logging.info(f"flatten_head: x.shape:{x.shape}")
         if self.individual:
             x_out = []
             for i in range(self.n_vars):
-                z = self.flattens[i](x[:,i,:,:])
+                z = self.flattens[i](x[:,i,:])
                 # z: [bs x d_model * patch_num]
                 z = self.linears[i](z)
                 # z: [bs x target_window]
@@ -398,15 +189,24 @@ class Flatten_Head(nn.Module):
                 x = torch.stack(x_out, dim=1)
                 # x: [bs x nvars x target_window]
         else:
-            x = self.flatten(x)
+            # [x : bs x num_patch x d_model]
+            x = x.permute(0, 2, 1)
+            # [x: bs x d_model x num_patch]
+            #x = self.flatten(x)
+            #logging.info(f"flatten_head after flatten: x.shape:{x.shape}")
             x = self.linear(x)
+            # [x: bs x d_model x target_window
+            x = x.permute(0, 2, 1)
+            # [x: bs x target_window x d_model]
+            #logging.info(f"flatten_head after lineage: x.shape:{x.shape}")
             x = self.dropout(x)
         return x
 
-class PatchTstTftTransformer(BaseModelWithCovariates):
+class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
     def __init__(
             self,
             c_in:int, target_dim:int, patch_len:int, stride:int, num_patch:int,
+            prediction_num_patch:int,
             n_layers:int=3, d_model=128, n_heads=16, shared_embedding=True, d_ff:int=256,
             norm:str='BatchNorm', attn_dropout:float=0., dropout:float=0., act:str="gelu",
             res_attention:bool=True, pre_norm:bool=False, store_attn:bool=False,
@@ -523,8 +323,8 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
         assert isinstance(loss, LightningMetric), "Loss has to be a PyTorch Lightning `Metric`"
         logging.info(f"kwargs:{kwargs}")
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
-        #logging.info(f"after hparams:{self.hparams}")
-
+        logging.info(f"after hparams:{self.hparams}")
+        self.d_model = d_model
         # processing inputs
         # embeddings
         self.input_embeddings = MultiEmbedding(
@@ -561,27 +361,31 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             dropout=self.hparams.dropout,
             prescalers=self.prescalers,
         )
-
+        self.prediction_num_patch = prediction_num_patch
         # variable selection for encoder and decoder
+        variable_hidden_size = d_model 
         encoder_input_sizes = {
             name: self.input_embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_encoder
         }
         encoder_input_sizes.update(
             {
-                name: self.hparams.hidden_continuous_sizes.get(name, self.hparams.hidden_continuous_size)
+                #name: self.hparams.hidden_continuous_sizes.get(name, self.hparams.hidden_continuous_size)
+                name: self.hparams.hidden_continuous_sizes.get(name, d_model)
                 for name in self.hparams.time_varying_reals_encoder
             }
         )
-
+        #logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
         decoder_input_sizes = {
             name: self.input_embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_decoder
         }
         decoder_input_sizes.update(
             {
-                name: self.hparams.hidden_continuous_sizes.get(name, self.hparams.hidden_continuous_size)
+                #name: self.hparams.hidden_continuous_sizes.get(name, self.hparams.hidden_continuous_size)
+                name: self.hparams.hidden_continuous_sizes.get(name, d_model)
                 for name in self.hparams.time_varying_reals_decoder
             }
         )
+        #logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
 
         # create single variable grns that are shared across decoder and encoder
         if self.hparams.share_single_variable_networks:
@@ -589,112 +393,124 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             for name, input_size in encoder_input_sizes.items():
                 self.shared_single_variable_grns[name] = GatedResidualNetwork(
                     input_size,
-                    min(input_size, self.hparams.hidden_size),
-                    self.hparams.hidden_size,
+                    min(input_size, variable_hidden_size),
+                    variable_hidden_size,
                     self.hparams.dropout,
                 )
             for name, input_size in decoder_input_sizes.items():
                 if name not in self.shared_single_variable_grns:
                     self.shared_single_variable_grns[name] = GatedResidualNetwork(
                         input_size,
-                        min(input_size, self.hparams.hidden_size),
-                        self.hparams.hidden_size,
+                        min(input_size, variable_hidden_size),
+                        variable_hidden_size,
                         self.hparams.dropout,
                     )
-
+                    
+        input_embedding_flags = {name: True for name in self.hparams.time_varying_reals_encoder +
+                                 self.hparams.time_varying_categoricals_encoder}
+        # Set to d_model instead of hparams.hidden_size since patch output converts each variable to same d_model
+        #logging.info(f"input_embedding_flags:{input_embedding_flags}")
         self.encoder_variable_selection = VariableSelectionNetwork(
             input_sizes=encoder_input_sizes,
-            hidden_size=self.hparams.hidden_size,
-            input_embedding_flags={name: True for name in self.hparams.time_varying_categoricals_encoder},
+            hidden_size=d_model,
+            #input_embedding_flags={name: True for name in self.hparams.time_varying_categoricals_encoder},
+            input_embedding_flags=input_embedding_flags,
             dropout=self.hparams.dropout,
-            context_size=self.hparams.hidden_size,
-            prescalers=self.prescalers,
+            context_size=d_model,
+            # No scaler since all reals are already mapped to embeddings
+            #prescalers=self.prescalers,
+            prescalers={},
             single_variable_grns={}
             if not self.hparams.share_single_variable_networks
             else self.shared_single_variable_grns,
+            reduce=True
         )
-
+        #logging.info(f"encoder_variable_selection:{self.encoder_variable_selection}")
+        
         self.decoder_variable_selection = VariableSelectionNetwork(
             input_sizes=decoder_input_sizes,
-            hidden_size=self.hparams.hidden_size,
-            input_embedding_flags={name: True for name in self.hparams.time_varying_categoricals_decoder},
+            hidden_size=d_model,
+            input_embedding_flags=input_embedding_flags,
             dropout=self.hparams.dropout,
-            context_size=self.hparams.hidden_size,
-            prescalers=self.prescalers,
+            context_size=d_model,
+            prescalers={},
             single_variable_grns={}
             if not self.hparams.share_single_variable_networks
             else self.shared_single_variable_grns,
+            reduce = True
         )
+        #logging.info(f"decoder_variable_selection:{self.decoder_variable_selection}")
 
         # static encoders
         # for variable selection
         self.static_context_variable_selection = GatedResidualNetwork(
-            input_size=self.hparams.hidden_size,
-            hidden_size=self.hparams.hidden_size,
-            output_size=self.hparams.hidden_size,
+            input_size=variable_hidden_size,
+            hidden_size=variable_hidden_size,
+            output_size=variable_hidden_size,
             dropout=self.hparams.dropout,
         )
 
         # for hidden state of the lstm
         self.static_context_initial_hidden_lstm = GatedResidualNetwork(
-            input_size=self.hparams.hidden_size,
-            hidden_size=self.hparams.hidden_size,
-            output_size=self.hparams.hidden_size,
+            input_size=variable_hidden_size,
+            hidden_size=variable_hidden_size,
+            output_size=variable_hidden_size,
             dropout=self.hparams.dropout,
         )
 
         # for cell state of the lstm
         self.static_context_initial_cell_lstm = GatedResidualNetwork(
-            input_size=self.hparams.hidden_size,
-            hidden_size=self.hparams.hidden_size,
-            output_size=self.hparams.hidden_size,
+            input_size=variable_hidden_size,
+            hidden_size=variable_hidden_size,
+            output_size=variable_hidden_size,
             dropout=self.hparams.dropout,
         )
 
         # for post lstm static enrichment
         self.static_context_enrichment = GatedResidualNetwork(
-            self.hparams.hidden_size, self.hparams.hidden_size, self.hparams.hidden_size, self.hparams.dropout
+            variable_hidden_size, variable_hidden_size, variable_hidden_size, self.hparams.dropout
         )
 
         # lstm encoder (history) and decoder (future) for local processing
-        logging.info(f"lstm_input_size:{self.hparams.hidden_size}")
+        #logging.info(f"lstm_input_size:{self.hparams.hidden_size}")
         self.lstm_encoder = LSTM(
-            input_size=self.hparams.hidden_size,
-            hidden_size=self.hparams.hidden_size,
+            input_size=variable_hidden_size,
+            #hidden_size=self.hparams.hidden_size,
+            hidden_size=variable_hidden_size,
             num_layers=self.hparams.lstm_layers,
             dropout=self.hparams.dropout if self.hparams.lstm_layers > 1 else 0,
             batch_first=True,
         )
 
         self.lstm_decoder = LSTM(
-            input_size=self.hparams.hidden_size,
-            hidden_size=self.hparams.hidden_size,
+            input_size=variable_hidden_size,
+            hidden_size=variable_hidden_size,
             num_layers=self.hparams.lstm_layers,
             dropout=self.hparams.dropout if self.hparams.lstm_layers > 1 else 0,
             batch_first=True,
         )
 
         # skip connection for lstm
-        self.post_lstm_gate_encoder = GatedLinearUnit(self.hparams.hidden_size, dropout=self.hparams.dropout)
+        self.post_lstm_gate_encoder = GatedLinearUnit(variable_hidden_size, dropout=self.hparams.dropout)
         self.post_lstm_gate_decoder = self.post_lstm_gate_encoder
         # self.post_lstm_gate_decoder = GatedLinearUnit(self.hparams.hidden_size, dropout=self.hparams.dropout)
-        self.post_lstm_add_norm_encoder = AddNorm(self.hparams.hidden_size, trainable_add=False)
+        self.post_lstm_add_norm_encoder = AddNorm(variable_hidden_size, trainable_add=False)
         # self.post_lstm_add_norm_decoder = AddNorm(self.hparams.hidden_size, trainable_add=True)
         self.post_lstm_add_norm_decoder = self.post_lstm_add_norm_encoder
 
         # static enrichment and processing past LSTM
         self.static_enrichment = GatedResidualNetwork(
-            input_size=self.hparams.hidden_size,
-            hidden_size=self.hparams.hidden_size,
-            output_size=self.hparams.hidden_size,
+            input_size=variable_hidden_size,
+            hidden_size=variable_hidden_size,
+            output_size=variable_hidden_size,
             dropout=self.hparams.dropout,
-            context_size=self.hparams.hidden_size,
+            context_size=variable_hidden_size,
         )
         self.stride = stride
         assert head_type in ['pretrain', 'prediction', 'regression', 'classification'], 'head type should be either pretrain, prediction, or regression'
         # Backbone
-        logging.info(f"c_in:{c_in}, num_patch:{num_patch}, patch_len:{patch_len}, d_model:{d_model}, d_ff:{d_ff}, target_dim:{target_dim}")
-        logging.info(f"x_categoricals:{x_categoricals}, x_reals:{x_reals}, max_encoder_length:{max_encoder_length}, stride:{stride}")
+        #logging.info(f"c_in:{c_in}, num_patch:{num_patch}, patch_len:{patch_len}, d_model:{d_model}, d_ff:{d_ff}, target_dim:{target_dim}")
+        #logging.info(f"x_categoricals:{x_categoricals}, x_reals:{x_reals}, max_encoder_length:{max_encoder_length}, stride:{stride}")
         #exit(0)
         
         self.x_cat_patch = Patch(max_encoder_length, stride, c_in=len(x_categoricals), num_patch=num_patch, patch_len=patch_len,
@@ -723,29 +539,36 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             self.head = ClassificationHead(self.n_vars, d_model, target_dim, head_dropout)
         # attention for long-range processing
         self.multihead_attn = InterpretableMultiHeadAttention(
-            d_model=self.hparams.hidden_size, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
+            #d_model=self.hparams.hidden_size, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
+            d_model=d_model, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
         )
         self.post_attn_gate_norm = GateAddNorm(
-            self.hparams.hidden_size, dropout=self.hparams.dropout, trainable_add=False
+            #self.hparams.hidden_size, dropout=self.hparams.dropout, trainable_add=False
+            d_model, dropout=self.hparams.dropout, trainable_add=False
         )
         self.pos_wise_ff = GatedResidualNetwork(
-            self.hparams.hidden_size, self.hparams.hidden_size, self.hparams.hidden_size, dropout=self.hparams.dropout
+            #self.hparams.hidden_size, self.hparams.hidden_size, self.hparams.hidden_size, dropout=self.hparams.dropout
+            d_model, d_model, d_model, dropout=self.hparams.dropout
         )
 
         # output processing -> no dropout at this late stage
-        self.pre_output_gate_norm = GateAddNorm(self.hparams.hidden_size, dropout=None, trainable_add=False)
+        #self.pre_output_gate_norm = GateAddNorm(self.hparams.hidden_size, dropout=None, trainable_add=False)
+        self.pre_output_gate_norm = GateAddNorm(d_model, dropout=None, trainable_add=False)
 
         self.individual = False
-        self.head_nf = d_model * num_patch
-        logging.info(f"n_vars:{self.n_vars}, head_nf:{self.head_nf}, target_dim:{target_dim}")
-        self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_dim, head_dropout=head_dropout)
+        #self.head_nf = d_model * num_patch
+        self.head_nf = d_model
+        #logging.info(f"n_vars:{self.n_vars}, head_nf:{self.head_nf}, target_dim:{target_dim}")
+        self.flatten_head = Flatten_Head(self.individual, self.n_vars, self.prediction_num_patch, self.head_nf, target_dim, head_dropout=head_dropout)
                 
         if self.n_targets > 1:  # if to run with multiple targets
             self.output_layer = nn.ModuleList(
-                [nn.Linear(self.hparams.hidden_size, output_size) for output_size in self.hparams.output_size]
+                #[nn.Linear(self.hparams.hidden_size, output_size) for output_size in self.hparams.output_size]
+                [nn.Linear(d_model, output_size) for output_size in self.hparams.output_size]
             )
         else:
-            self.output_layer = nn.Linear(self.hparams.hidden_size, self.hparams.output_size)
+            #self.output_layer = nn.Linear(self.hparams.hidden_size, self.hparams.output_size)
+            self.output_layer = nn.Linear(d_model, self.hparams.output_size)
         #logging.info(f"output_layer:{self.output_layer}")
 
     @classmethod
@@ -784,6 +607,7 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
         """
         add time dimension to static context
         """
+        #logging.info(f"static_context:{context.shape}")
         return context[:, None].expand(-1, timesteps, -1)
 
     def get_attention_mask(self, encoder_lengths: torch.LongTensor, decoder_lengths: torch.LongTensor):
@@ -830,27 +654,29 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
         new_decoder_length = int(max_decoder_length / self.stride) - 1
         encoder_lengths = torch.ones_like(encoder_lengths) * new_encoder_length
         decoder_lengths = torch.ones_like(decoder_lengths) * new_decoder_length
-        logging.info(f"encoder_lengths:{encoder_lengths}, new_encoder_length:{new_encoder_length}")
-        logging.info(f"decoder_lengths:{decoder_lengths}, new_decoder_length:{new_decoder_length}")
+        #logging.info(f"encoder_lengths:{encoder_lengths}, new_encoder_length:{new_encoder_length}")
+        #logging.info(f"decoder_lengths:{decoder_lengths}, new_decoder_length:{new_decoder_length}")
         x_cat = torch.cat([x["encoder_cat"], x["decoder_cat"]], dim=1)  # concatenate in time dimension
         x_cont = torch.cat([x["encoder_cont"], x["decoder_cont"]], dim=1)  # concatenate in time dimension
-        logging.info(f"x_cat:{x_cat.shape}")
-        logging.info(f"x_cont:{x_cont.shape}")
+        #logging.info(f"x_cat:{x_cat.shape}")
+        #logging.info(f"x_cont:{x_cont.shape}")
         x_cont = self.x_cont_patch(x_cont)
-        logging.info(f"after_x_cont:{x_cont.shape}")
+        # bs x n_vars x num_patch x d_model
+        #logging.info(f"after_x_cont:{x_cont.shape}")
         x_cat = self.x_cat_patch(x_cat)
-        logging.info(f"after_x_cat:{x_cat.shape}")
-        timesteps = x_cont.size(1)-1  # encode + decode length - 1 (spanning encode/decode)
+        #exit(0)
+        timesteps = x_cont.size(2)-1  # encode + decode length - 1 (spanning encode/decode)
+        #logging.info(f"after_x_cat:{x_cat.shape}, timesteps:{timesteps}")
         input_vectors = self.input_embeddings(x_cat)
         input_vectors.update(
             {
-                name: x_cont[..., idx].unsqueeze(-1)
+                name: x_cont[:, idx, ...]
+                #name: x_cont[:, idx, ...].unsqueeze(1)
                 for idx, name in enumerate(self.hparams.x_reals)
                 if name in self.reals
             }
         )
-        logging.info(f"input_vectors:{input_vectors['close_back_cumsum'].shape}, timesteps:{timesteps}")
-        #exit(0)
+        #logging.info(f"input_vectors['close_back_cumsum']:{input_vectors['close_back_cumsum'].shape}, timesteps:{timesteps}")
 
         # Embedding and variable selection
         if len(self.static_variables) > 0:
@@ -859,7 +685,7 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             static_embedding, static_variable_selection = self.static_variable_selection(static_embedding)
         else:
             static_embedding = torch.zeros(
-                (x_cont.size(0), self.hparams.hidden_size), dtype=self.dtype, device=self.device
+                (x_cont.size(0), self.d_model), dtype=self.dtype, device=self.device
             )
             static_variable_selection = torch.zeros((x_cont.size(0), 0), dtype=self.dtype, device=self.device)
 
@@ -867,22 +693,27 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             self.static_context_variable_selection(static_embedding), timesteps
         )
 
+        #logging.info(f"self.encoder_variables:{self.encoder_variables}, new_encoder_length:{new_encoder_length}")
         embeddings_varying_encoder = {
             name: input_vectors[name][:, :new_encoder_length] for name in self.encoder_variables
         }
+        #logging.info(f"embeddings_varying_encoder:{embeddings_varying_encoder['relative_time_idx'].shape}")
         embeddings_varying_encoder, encoder_sparse_weights = self.encoder_variable_selection(
             embeddings_varying_encoder,
             static_context_variable_selection[:, :new_encoder_length],
         )
 
+        #logging.info(f"self.decoder_variables:{self.decoder_variables}")
         embeddings_varying_decoder = {
             # When patching, there is one spanning encoder and decoder and needs to be filtered out
             name: input_vectors[name][:, new_encoder_length+1:] for name in self.decoder_variables  # select decoder
         }
+        #logging.info(f"embeddings_varying_decoder before initial variable:{embeddings_varying_decoder['relative_time_idx'].shape}")
         embeddings_varying_decoder, decoder_sparse_weights = self.decoder_variable_selection(
             embeddings_varying_decoder,
             static_context_variable_selection[:, new_encoder_length+1:],
         )
+        #logging.info(f"embeddings_varying_decoder_after_variale_selection:{embeddings_varying_decoder.shape}")
 
         # LSTM
         # calculate initial state
@@ -890,15 +721,28 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             self.hparams.lstm_layers, -1, -1
         )
         input_cell = self.static_context_initial_cell_lstm(static_embedding).expand(self.hparams.lstm_layers, -1, -1)
+        #logging.info(f"input_hidden:{input_hidden.shape}, input_cell:{input_cell.shape}")
 
         # run local encoder
-        logging.info(f"embeddings_varying_encoder:{embeddings_varying_encoder.shape}, encoder_lengths:{encoder_lengths}")
+        #logging.info(f"embeddings_varying_encoder before reshape:{embeddings_varying_encoder.shape}")
+        # We need to reshape it into 3 dim since that is what is expected by LSTM
+        embeddings_varying_encoder = torch.reshape(embeddings_varying_encoder,
+                                                   (embeddings_varying_encoder.shape[0],
+                                                    embeddings_varying_encoder.shape[1],
+                                                    -1))
+        #logging.info(f"embeddings_varying_encoder after reshape:{embeddings_varying_encoder.shape}, encoder_lengths:{encoder_lengths}, input_hidden:{input_hidden}, input_cell:{input_cell}")
         encoder_output, (hidden, cell) = self.lstm_encoder(
-            embeddings_varying_encoder, (input_hidden, input_cell), lengths=encoder_lengths, enforce_sorted=False
+            embeddings_varying_encoder, (input_hidden, input_cell),
+            lengths=encoder_lengths, enforce_sorted=False
         )
-        logging.info(f"encoder_output:{encoder_output.shape}")
-        logging.info(f"embedding_varying_decoder:{embeddings_varying_decoder.shape}")
-
+        #logging.info(f"encoder_output:{encoder_output.shape}")
+        
+        #logging.info(f"embeddings_varying_decoder_before_reshape:{embeddings_varying_decoder.shape}")
+        embeddings_varying_decoder = torch.reshape(embeddings_varying_decoder,
+                                                   (embeddings_varying_decoder.shape[0],
+                                                    embeddings_varying_decoder.shape[1],
+                                                    -1))
+        #logging.info(f"embedding_varying_decoder:{embeddings_varying_decoder.shape}, hidden:{hidden.shape}, cell:{cell.shape}")
         # run local decoder
         decoder_output, _ = self.lstm_decoder(
             embeddings_varying_decoder,
@@ -906,7 +750,7 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             lengths=decoder_lengths,
             enforce_sorted=False,
         )
-
+        #logging.info(f"deocder_output:{decoder_output.shape}")
         # skip connection over lstm
         lstm_output_encoder = self.post_lstm_gate_encoder(encoder_output)
         lstm_output_encoder = self.post_lstm_add_norm_encoder(lstm_output_encoder, embeddings_varying_encoder)
@@ -915,7 +759,7 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
         lstm_output_decoder = self.post_lstm_add_norm_decoder(lstm_output_decoder, embeddings_varying_decoder)
 
         lstm_output = torch.cat([lstm_output_encoder, lstm_output_decoder], dim=1)
-
+        #logging.info(f"lstm_output:{lstm_output.shape}")
         # static enrichment
         static_context_enrichment = self.static_context_enrichment(static_embedding)
         attn_input = self.static_enrichment(
@@ -929,24 +773,31 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             v=attn_input,
             mask=self.get_attention_mask(encoder_lengths=encoder_lengths, decoder_lengths=decoder_lengths),
         )
-
+        #logging.info(f"attn_output:{attn_output.shape}, attn_input:{attn_input.shape}")
         # skip connection over attention
         attn_output = self.post_attn_gate_norm(attn_output, attn_input[:, new_encoder_length:])
 
         output = self.pos_wise_ff(attn_output)
-
+        #logging.info(f"pos_wise_ff_output:{output.shape}")
         # skip connection over temporal fusion decoder (not LSTM decoder despite the LSTM output contains
         # a skip from the variable selection network)
         output = self.pre_output_gate_norm(output, lstm_output[:, new_encoder_length:])
-        logging.info(f"output_shape before:{output.shape}")
-        output = self.head(output)
-        logging.info(f"output_shape after flatten:{output.shape}")
+        #logging.info(f"output_shape before:{output.shape}")
+
+        #output = torch.reshape(output, (output.shape(0), n_vars, output.shape[-2],output.shape[-1]))
+        # z: [bs x nvars x d_model]
+        #output = output.permute(0, 2, 3, 1)
+        # z: [bs x nvars x d_model]
+        output = self.flatten_head(output)
+        # z: [bs x nvars x target_dim]
+        #logging.info(f"output_shape after flatten:{output.shape}")
+        #logging.info(f"output_layer:{self.output_layer}")
         if self.n_targets > 1:  # if to use multi-target architecture
             output = [output_layer(output) for output_layer in self.output_layer]
         else:
             output = self.output_layer(output)
-        logging.info(f"output_shape after:{output.shape}")
-
+        #logging.info(f"output_shape after:{output.shape}")
+        #exit(0)
         return self.to_network_output(
             prediction=self.transform_output(output, target_scale=x["target_scale"]),
             encoder_attention=attn_output_weights[..., :new_encoder_length],

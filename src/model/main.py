@@ -12,7 +12,8 @@ from pipelines import (
     TimeSeriesPipeline,
     TemporalFusionTransformerPipeline,
     PatchTstTransformerPipeline,
-    PatchTstTftPipeline
+    PatchTstTftPipeline,
+    PatchTstTftSupervisedPipeline
 )
 import pytz
 import ray
@@ -37,6 +38,7 @@ def my_app(cfg: DictConfig) -> None:
         "tft": TemporalFusionTransformerPipeline,
         "patch_tst": PatchTstTransformerPipeline,
         "patch_tst_tft": PatchTstTftPipeline,
+        "patch_tst_tft_supervised": PatchTstTftSupervisedPipeline,
         "nhits": TimeSeriesPipeline
     }
     logging_utils.init_logging()

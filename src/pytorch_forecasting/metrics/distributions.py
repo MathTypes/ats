@@ -1,6 +1,7 @@
 """Metrics that allow the parametric forecast of parameters of uni- and multivariate distributions."""
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import logging
+import traceback
 import numpy as np
 from sklearn.base import BaseEstimator
 import torch
@@ -367,9 +368,10 @@ class MQF2DistributionLoss(DistributionLoss):
             torch.Tensor: metric value on which backpropagation can be applied
         """
         distribution = self.map_x_to_distribution(y_pred)
+        #traceback.print_stack()
         #logging.info(f"distribution:{distribution}")
-        #logging.info(f"y_pred:{y_pred.shape}")
-        #logging.info(f"y_actual:{y_actual.shape}")
+        #logging.info(f"y_pred:{y_pred.shape}, {y_pred}")
+        #logging.info(f"y_actual:{y_actual.shape}, {y_actual}")
         if self.is_energy_score:
             loss = distribution.energy_score(y_actual)
         else:
