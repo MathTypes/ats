@@ -6,6 +6,8 @@ import logging
 from typing import Dict, List, Tuple, Union, Optional, Callable
 
 from matplotlib import pyplot as plt
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import numpy as np
 import torch
 from torch import nn
@@ -1019,20 +1021,27 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
         if plot_attention:
             interpretation = self.interpret_output(out.iget(slice(idx, idx + 1)))
             for f in to_list(fig):
-                ax = f.axes[0]
-                ax2 = ax.twinx()
-                ax2.set_ylabel("Attention")
                 encoder_length = x["encoder_lengths"][0]
-                ax2.plot(
-                    torch.arange(-encoder_length, 0),
-                    interpretation["attention"][0, -encoder_length:].detach().cpu(),
-                    alpha=0.2,
-                    color="k",
+                f.add_trace(go.Scatter(x=torch.arange(-encoder_length, 0),
+                                       y=interpretation["attention"][0, -encoder_length:].detach().cpu(), name="Attention", yaxis="y2"))
+                f.update_layout(
+                    yaxis2=dict(title="Attention",
+                                overlaying="y",
+                                side="right",),
                 )
-                f.tight_layout()
+                #ax = f.axes[0]
+                #ax2 = ax.twinx()
+                #ax2.set_ylabel("Attention")
+                #ax2.plot(
+                #    torch.arange(-encoder_length, 0),
+                #    interpretation["attention"][0, -encoder_length:].detach().cpu(),
+                #    alpha=0.2,
+                #    color="k",
+                #)
+                #f.tight_layout()
         return fig
 
-    def plot_interpretation(self, interpretation: Dict[str, torch.Tensor]) -> Dict[str, plt.Figure]:
+    def plot_interpretation(self, outputs, idx:int=0) -> Dict[str, plt.Figure]:
         """
         Make figures that interpret model.
 
@@ -1046,28 +1055,77 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             dictionary of matplotlib figures
         """
         figs = {}
+        #logging.info(f"outputs:{outputs}")
+        interpretation = {
+            # use padded_stack because decoder length histogram can be of different length
+            name: padded_stack([x["interpretation"][name].detach() for x in outputs], side="right", value=0).sum(0)
+            for name in outputs[0]["interpretation"].keys()
+        }
+        # normalize attention with length histogram squared to account for: 1. zeros in attention and
+        # 2. higher attention due to less values
+        attention_occurances = interpretation["encoder_length_histogram"][1:].flip(0).float().cumsum(0)
+        attention_occurances = attention_occurances / attention_occurances.max()
+        attention_occurances = torch.cat(
+            [
+                attention_occurances,
+                torch.ones(
+                    interpretation["attention"].size(0) - attention_occurances.size(0),
+                    dtype=attention_occurances.dtype,
+                    device=attention_occurances.device,
+                ),
+            ],
+            dim=0,
+        )
+        interpretation["attention"] = interpretation["attention"] / attention_occurances.pow(2).clamp(1.0)
+        interpretation["attention"] = interpretation["attention"] / interpretation["attention"].sum()
 
         # attention
-        fig, ax = plt.subplots()
+        fig = make_subplots(1, 1)
+        #fig, ax = plt.subplots()
         attention = interpretation["attention"].detach().cpu()
         attention = attention / attention.sum(-1).unsqueeze(-1)
-        ax.plot(
-            np.arange(-self.hparams.max_encoder_length, attention.size(0) - self.hparams.max_encoder_length), attention
+        fig.add_trace(
+            go.Scatter(x=np.arange(-self.hparams.max_encoder_length, attention.size(0) - self.hparams.max_encoder_length),
+                       y=attention), row=1, col=1)
+        fig.update_layout(
+            xaxis=dict(
+                title="Time index"
+            ),
+            yaxis=dict(
+                title="Attention"
+            )
         )
-        ax.set_xlabel("Time index")
-        ax.set_ylabel("Attention")
-        ax.set_title("Attention")
+        #ax.plot(
+        #    np.arange(-self.hparams.max_encoder_length, attention.size(0) - self.hparams.max_encoder_length), attention
+                       #)
+        #ax.set_xlabel("Time index")
+        #ax.set_ylabel("Attention")
+        #ax.set_title("Attention")
         figs["attention"] = fig
 
         # variable selection
         def make_selection_plot(title, values, labels):
-            fig, ax = plt.subplots(figsize=(7, len(values) * 0.25 + 2))
+            #fig, ax = plt.subplots(figsize=(7, len(values) * 0.25 + 2))
+            fig = make_subplots(1, 1)
+            fig.update_layout(
+                autosize=False,
+                width=10,
+                xaxis=dict(
+                    title="Importance in %",
+                ),
+                height=len(values) * 0.25 + 10,)
             order = np.argsort(values)
             values = values / values.sum(-1).unsqueeze(-1)
-            ax.barh(np.arange(len(values)), values[order] * 100, tick_label=np.asarray(labels)[order])
-            ax.set_title(title)
-            ax.set_xlabel("Importance in %")
-            plt.tight_layout()
+            fig.add_trace(
+                go.Bar(
+                    x=np.arange(len(values)),
+                    #ids=np.asarray(labels)[order],
+                    y=values[order] * 100,
+                    orientation='h'))
+            #ax.barh(np.arange(len(values)), values[order] * 100, tick_label=np.asarray(labels)[order])
+            #ax.set_title(title)
+            #ax.set_xlabel("Importance in %")
+            #plt.tight_layout()
             return fig
 
         figs["static_variables"] = make_selection_plot(

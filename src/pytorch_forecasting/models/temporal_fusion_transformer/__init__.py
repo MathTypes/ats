@@ -330,7 +330,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
             )
         else:
             self.output_layer = nn.Linear(self.hparams.hidden_size, self.hparams.output_size)
-        logging.info(f"outut_layer:{self.output_layer}")
+        #logging.info(f"outut_layer:{self.output_layer}")
 
     @classmethod
     def from_dataset(

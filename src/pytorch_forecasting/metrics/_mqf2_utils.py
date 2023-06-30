@@ -304,7 +304,7 @@ class MQF2Distribution(Distribution):
             Unfolded time series with shape
             (batch_size * context_length, prediction_length)
         """
-        logging.info(f"z:{z.shape}, prediction_length:{self.prediction_length}")
+        #logging.info(f"z:{z.shape}, prediction_length:{self.prediction_length}")
         z = z.unfold(dimension=-1, size=self.prediction_length, step=1)
         z = z.reshape(-1, z.shape[-1])
 

@@ -790,8 +790,8 @@ class MultiHorizonMetric(Metric):
         else:
             lengths = torch.full((target.size(0),), fill_value=target.size(1), dtype=torch.long, device=target.device)
 
-        logger.info(f"y_pred:{y_pred.shape}")
-        logger.info(f"target:{target.shape}")
+        #logger.info(f"y_pred:{y_pred.shape}")
+        #logger.info(f"target:{target.shape}")
         #logger.info(f"loss:{self.loss}")
         losses = self.loss(y_pred, target)
         # weight samples
