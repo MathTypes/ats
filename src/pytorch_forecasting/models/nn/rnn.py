@@ -105,7 +105,7 @@ class RNN(ABC, nn.RNNBase):
                 return out, hidden_state
             else:
                 pack_lengths = lengths.where(lengths > 0, torch.ones_like(lengths))
-                logging.error(f"x:{x.shape}, hx:{hx[0].shape, hx[1].shape}")
+                #logging.error(f"x:{x.shape}, hx:{hx[0].shape, hx[1].shape}")
                 packed_out, hidden_state = super().forward(
                     rnn.pack_padded_sequence(
                         x, pack_lengths.cpu(), enforce_sorted=enforce_sorted, batch_first=self.batch_first

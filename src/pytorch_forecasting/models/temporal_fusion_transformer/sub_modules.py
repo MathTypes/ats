@@ -147,10 +147,10 @@ class AddNorm(nn.Module):
         if self.trainable_add:
             skip = skip * self.gate(self.mask) * 2.0
 
-        logging.info(f"x:{x.shape}, skip:{skip.shape}")
+        #logging.info(f"x:{x.shape}, skip:{skip.shape}")
         if skip.dim() == x.dim()-1:
             skip = skip[..., None, :,:]
-            logging.info(f"x:{x.shape}, skip:{skip.shape}")
+            #logging.info(f"x:{x.shape}, skip:{skip.shape}")
         output = self.norm(x + skip)
         return output
 
@@ -241,11 +241,11 @@ class GatedResidualNetwork(nn.Module):
 
         x = self.fc1(x)
         if context is not None:
-            logging.info(f"self.context:{self.context}, context:{context.shape}, x:{x.shape}")
+            #logging.info(f"self.context:{self.context}, context:{context.shape}, x:{x.shape}")
             context = self.context(context)
             if context.dim() == x.dim()-1:
                 context = context[..., None, :, :]
-            logging.info(f"context:{context.shape}, x:{x.shape}")
+            #logging.info(f"context:{context.shape}, x:{x.shape}")
             x = x + context
         x = self.elu(x)
         x = self.fc2(x)
@@ -339,19 +339,19 @@ class VariableSelectionNetwork(nn.Module):
                 weight_inputs.append(variable_embedding)
                 var_outputs.append(self.single_variable_grns[name](variable_embedding))
             var_outputs = torch.stack(var_outputs, dim=-1)
-            logging.info(f"x:{x['relative_time_idx'].shape}")
-            logging.info(f"context:{context.shape}")
-            logging.info(f"var_outputs:{var_outputs.shape}")
+            #logging.info(f"x:{x['relative_time_idx'].shape}")
+            #logging.info(f"context:{context.shape}")
+            #logging.info(f"var_outputs:{var_outputs.shape}")
             # calculate variable weights
             flat_embedding = torch.cat(weight_inputs, dim=-1)
             sparse_weights = self.flattened_grn(flat_embedding, context)
             sparse_weights = self.softmax(sparse_weights).unsqueeze(-2)
-            logging.info(f"sparse_weights:{sparse_weights.shape}")
+            #logging.info(f"sparse_weights:{sparse_weights.shape}")
             outputs = var_outputs * sparse_weights
-            logging.info(f"outputs before sum:{outputs.shape}")
+            #logging.info(f"outputs before sum:{outputs.shape}")
             if self.reduce:
                 outputs = outputs.sum(dim=-1)
-            logging.info(f"outputs after sum:{outputs.shape}")
+            #logging.info(f"outputs after sum:{outputs.shape}")
         else:  # for one input, do not perform variable selection but just encoding
             name = next(iter(self.single_variable_grns.keys()))
             variable_embedding = x[name]
