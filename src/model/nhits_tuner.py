@@ -24,7 +24,7 @@ from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.metrics import QuantileLoss
 
-import trainer_nhits_with_dp as nhits
+import model_utils
 
 optuna_logger = logging.getLogger("optuna")
 
@@ -161,11 +161,11 @@ def optimize_hyperparameters(
         trial_config["max_prediction_length"] = trial_config["prediction_length"]
         #gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
         #trial_config["gradient_clip_val"] = gradient_clip_val
-        data_module = nhits.get_data_module(trial_config)
-        model = nhits.get_model(trial_config, data_module)
+        data_module = model_utils.get_data_module(trial_config)
+        model = model_utils.get_model(trial_config, data_module)
         # find good learning rate
         if use_learning_rate_finder:
-            lr_trainer = nhits.get_trainer(trial_config, data_module)
+            lr_trainer = model_utils.get_trainer(trial_config, data_module)
             tuner = Tuner(lr_trainer)
             res = tuner.lr_find(
                 model,
@@ -204,7 +204,7 @@ def optimize_hyperparameters(
         #)
         logging.info(f"trial_config:{trial_config}")
         logging.info(f"model_hparams:{model.hparams}")
-        trainer = nhits.get_trainer(trial_config, data_module)
+        trainer = model_utils.get_trainer(trial_config, data_module)
         trainer.fit(model, train_dataloaders=data_module.train_dataloader(), val_dataloaders=data_module.val_dataloader())
         optuna_logger.info(f"Trainer: {trainer}")
         optuna_logger.info(f"Trainer metrics {trainer.callback_metrics}")

@@ -1,5 +1,4 @@
 # Usage
-# PYTHONPATH=.. python3 trainer_nhits_with_dp.py --start_date=2009-01-01 --end_date=2009-10-01 --mode=train --checkpoint=checkpoint
 import datetime
 import logging
 import os

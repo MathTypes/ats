@@ -7,7 +7,7 @@ from data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataMod
 from models import (
     AttentionEmbeddingLSTM
 )
-import trainer_nhits_with_dp as nhits
+import model_utils
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -87,8 +87,8 @@ class TimeSeriesPipeline(Pipeline):
         self.config = config
 
     def create_model(self):
-        self.data_module = nhits.get_data_module(self.config)
-        self.model = nhits.get_model(self.config, self.data_module)
+        self.data_module = model_utils.get_data_module(self.config)
+        self.model = model_utils.get_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
@@ -106,8 +106,8 @@ class TemporalFusionTransformerPipeline(Pipeline):
         self.config = config
 
     def create_model(self):
-        self.data_module = nhits.get_data_module(self.config)
-        self.model = nhits.get_tft_model(self.config, self.data_module)
+        self.data_module = model_utils.get_data_module(self.config)
+        self.model = model_utils.get_tft_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
@@ -126,8 +126,8 @@ class PatchTstTransformerPipeline(Pipeline):
         self.config = config
 
     def create_model(self):
-        self.data_module = nhits.get_data_module(self.config)
-        self.model = nhits.get_patch_tst_model(self.config, self.data_module)
+        self.data_module = model_utils.get_data_module(self.config)
+        self.model = model_utils.get_patch_tst_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
@@ -146,8 +146,8 @@ class PatchTstTftPipeline(Pipeline):
         self.config = config
 
     def create_model(self):
-        self.data_module = nhits.get_data_module(self.config)
-        self.model = nhits.get_patch_tst_tft_model(self.config, self.data_module)
+        self.data_module = model_utils.get_data_module(self.config)
+        self.model = model_utils.get_patch_tst_tft_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
@@ -167,8 +167,8 @@ class PatchTstTftSupervisedPipeline(Pipeline):
         self.config = config
 
     def create_model(self):
-        self.data_module = nhits.get_data_module(self.config)
-        self.model = nhits.get_patch_tst_tft_supervised_model(self.config, self.data_module)
+        self.data_module = model_utils.get_data_module(self.config)
+        self.model = model_utils.get_patch_tst_tft_supervised_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
