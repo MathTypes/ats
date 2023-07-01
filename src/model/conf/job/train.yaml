@@ -1,7 +1,8 @@
 device: cuda
 mode: train
-start_date: 2008-06-01
-end_date: 2023-01-01
+train_start_date: 2008-06-01
+test_start_date: 2010-01-01
+test_end_date: 2023-01-01
 workers: 8
 max_epochs: 10
 log_mode: All

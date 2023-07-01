@@ -46,8 +46,8 @@ def my_app(cfg: DictConfig) -> None:
     ray.init()
     enable_dask_on_ray()
     device = cfg.job.device
-    logging.info(f"start_date:{cfg.job.start_date}")
-    logging.info(f"end_date:{cfg.job.end_date}")
+    logging.info(f"train_start_date:{cfg.job.train_start_date}")
+    logging.info(f"test_start_date:{cfg.job.test_start_date}")
     prediction_length = cfg['model']['prediction_length']
     context_length = cfg['model']['context_length']
     config = {
@@ -61,8 +61,8 @@ def my_app(cfg: DictConfig) -> None:
         'loss_name': cfg['model']['loss_name'],
         'device' : cfg.job.device,
         'workers': cfg.job.workers,
-        'start_date': datetime.datetime.strptime(cfg.job.start_date, "%Y-%m-%d"),
-        'end_date': datetime.datetime.strptime(cfg.job.end_date, "%Y-%m-%d"),
+        'train_start_date': datetime.datetime.strptime(cfg.job.train_start_date, "%Y-%m-%d"),
+        'test_start_date': datetime.datetime.strptime(cfg.job.test_start_date, "%Y-%m-%d"),
         'max_encoder_length' : context_length,
         'max_prediction_length' : prediction_length,
         'min_encoder_length' : prediction_length,
@@ -72,7 +72,8 @@ def my_app(cfg: DictConfig) -> None:
         'eval_cut_off' : cfg.job.eval_cut_off,
         'max_epochs' : cfg.job.max_epochs,
         'model_path' : 'checkpoint'}
-    wandb.config = config
+    #wandb.config = config
+    wandb.config = cfg
     pipe = pipelines[cfg.model.name](dataset="FUT", device=device, config=cfg) 
     if cfg.job.mode == "train":
         pipe.create_model()

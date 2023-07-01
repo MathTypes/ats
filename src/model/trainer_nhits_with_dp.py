@@ -308,13 +308,11 @@ def get_input_dirs(config):
 
 
 def get_input_for_ticker(config, ticker):
-    since  = config.job.start_date
-    until = config.job.end_date
-    train_data = data_util.get_processed_data(config, ticker, "FUT")
-    train_data = train_data.replace([np.inf, -np.inf], np.nan)
-    train_data = train_data.dropna()
-    train_data = train_data.drop(columns=["time_idx"])
-    return train_data
+    all_data = data_util.get_processed_data(config, ticker, "FUT")
+    all_data = all_data.replace([np.inf, -np.inf], np.nan)
+    all_data = all_data.dropna()
+    all_data = all_data.drop(columns=["time_idx"])
+    return all_data
 
 def add_highs(df, width):
     df_cumsum = df.cumsum()
