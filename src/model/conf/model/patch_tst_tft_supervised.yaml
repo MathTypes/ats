@@ -1,0 +1,14 @@
+hidden_size: 8
+prediction_length: 32
+context_length: 320
+patch_len: 32
+stride: 16
+d_model: 12
+#loss_name: MAPCSE
+loss_name: MQF2DistributionLoss
+logging_metrics: ["SharpeLoss", "SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+name: patch_tst_tft_supervised
+target: "close_back_cumsum"
+time_varying_known_reals: []
+time_varying_unknown_reals: ["close_back_cumsum", "volume_back_cumsum"]
+add_relative_time_idx: True

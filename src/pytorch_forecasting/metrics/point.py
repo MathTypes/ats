@@ -258,6 +258,67 @@ class MASE(MultiHorizonMetric):
         #logging.info(f"scaling:{scaling}, shape={scaling.shape}")
         return scaling
 
+class SharpeLoss(MultiHorizonMetric):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update(
+        self,
+        y_pred,
+        target
+    ) -> torch.Tensor:
+        """
+        Update metric that handles masking of values.
+
+        Args:
+            y_pred (Dict[str, torch.Tensor]): network output
+            target (Tuple[Union[torch.Tensor, rnn.PackedSequence], torch.Tensor]): tuple of actual values and weights
+            encoder_target (Union[torch.Tensor, rnn.PackedSequence]): historic actual values
+            encoder_lengths (torch.Tensor): optional encoder lengths, not necessary if encoder_target
+                is rnn.PackedSequence. Assumed encoder_target is torch.Tensor
+
+        Returns:
+            torch.Tensor: loss as a single number for backpropagation
+        """
+        # unpack weight
+        if isinstance(target, (list, tuple)):
+            weight = target[1]
+            target = target[0]
+        else:
+            weight = None
+
+        # unpack target
+        if isinstance(target, rnn.PackedSequence):
+            target, lengths = unpack_sequence(target)
+        else:
+            lengths = torch.full((target.size(0),), fill_value=target.size(1), dtype=torch.long, device=target.device)
+        
+        losses = self.loss(y_pred, target)
+        #losses = torch.sum(losses, -1)
+        #logging.info(f"mapce:{losses}, {losses.shape}")
+        # weight samples
+        if weight is not None:
+            losses = losses * weight.unsqueeze(-1)
+
+        self._update_losses_and_lengths(losses, lengths)
+
+    def loss(self, y_pred, target):
+        #logging.info(f"y_pred:{y_pred}, {y_pred.shape}")
+        #logging.info(f"target:{target}, {target.shape}")
+        # TODO: pass base to compute return for first interval
+        returns = torch.diff(target)
+        #logging.info(f"returns:{returns}, {returns.shape}")
+        captured_returns = y_pred[...,1:] * returns
+        mean_returns = torch.mean(captured_returns)
+        return -(
+            mean_returns
+            / torch.sqrt(
+                torch.mean(torch.square(captured_returns))
+                - torch.square(mean_returns)
+                + 1e-9
+            )
+        )
+
 
 class MAPCSE(MultiHorizonMetric):
     def __init__(self, width: float = 46, **kwargs):

@@ -13,7 +13,6 @@ import warnings
 import pyarrow.dataset as pds
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
-#import lightning.pytorch as pl
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -21,16 +20,12 @@ import matplotlib.image as mpimg
 import torch
 from omegaconf import OmegaConf
 
-#import lightning.pytorch as pl
-#from import lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-#from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.tuner import Tuner
-#import pytorch_lightning as pl
 import lightning.pytorch as pl
 from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTstTftSupervisedTransformer
 from pytorch_forecasting.data import GroupNormalizer
-from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
+from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss, SharpeLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
 
 from pytorch_lightning.loggers import WandbLogger
@@ -49,9 +44,8 @@ import matplotlib as mpl
 #from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
 from wandb.keras import WandbMetricsLogger
 
-
+from torch import nn
 import data_util
-#from eval_callback import WandbClfEvalCallback
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
 from math import ceil
 import nhits_tuner
@@ -59,20 +53,13 @@ from util import logging_utils
 from util import config_utils
 from util import time_util
 
-def get_loss(config, prediction_length=None, hidden_size=None):
-    target_size = 1
-    is_multi_target = False
-    if not prediction_length:
-        prediction_length = config.model.prediction_length
-    #logging.info(f"prediction_length:{prediction_length}")
-    if OmegaConf.is_list(config.model.target):
-        target = OmegaConf.to_object(config.model.target)
-        target_size = len(target)
-        is_multi_target = True
-    loss_name = config.model.loss_name
+def create_loss(loss_name, device, prediction_length=None, hidden_size=None):
     loss = None
+    logging.info(f"loss_name:{loss_name}")
     if loss_name == "MASE":
         loss = MASE()
+    if loss_name == "SharpeLoss":
+        loss = SharpeLoss()
     if loss_name == "SMAPE":
         loss = SMAPE()
     if loss_name == "MAE":
@@ -85,13 +72,29 @@ def get_loss(config, prediction_length=None, hidden_size=None):
         loss = MAPCSE()
     if loss_name == "MQF2DistributionLoss":
         loss = MQF2DistributionLoss(prediction_length=prediction_length)
-    #logging.error(f"loss:{loss}")
-    loss = loss.to(config.job.device)
+    loss = loss.to(device)
     return loss
-    #if is_multi_target:
-    #    return MultiLoss(metrics=[loss] * target_size)
-    #else:
-    #    return loss
+
+def get_logging_metrics(config):
+    metrics = []
+    for loss_name in config.model.logging_metrics:
+        metrics.append(create_loss(loss_name, config.job.device, config.model.prediction_length))
+    return nn.ModuleList(metrics)
+
+def get_loss(config, prediction_length=None, hidden_size=None):
+    target_size = 1
+    is_multi_target = False
+    if not prediction_length:
+        prediction_length = config.model.prediction_length
+    #logging.info(f"prediction_length:{prediction_length}")
+    if OmegaConf.is_list(config.model.target):
+        target = OmegaConf.to_object(config.model.target)
+        target_size = len(target)
+        is_multi_target = True
+    loss_name = config.model.loss_name
+    loss = create_loss(loss_name, config.job.device, prediction_length)
+    return loss
+
 
 def get_model(config, data_module):
     device = config['device']
@@ -244,6 +247,7 @@ def get_patch_tst_tft_supervised_model(config, data_module):
         num_patch=num_patch,
         prediction_num_patch=prediction_num_patch,
         loss=loss,
+        logging_metrics=get_logging_metrics(config),
         # not meaningful for finding the learning rate but otherwise very important
         learning_rate=0.03,
         d_model=d_model,  # most important hyperparameter apart from learning rate
