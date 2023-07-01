@@ -419,7 +419,7 @@ class TimeSeriesDataSet(Dataset):
         #df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
         #df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
         # reduce return to bring down loss
-        data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()/10
+        data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
         # 1000 is required to bring down loss to avoid nan
         data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()/1000
         #logging.info(f"df_index_low_13:{df_index_low_13}")
