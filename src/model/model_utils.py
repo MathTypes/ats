@@ -275,9 +275,10 @@ def get_trainer(config, data_module):
     trainer = pl.Trainer(
         max_epochs=config['max_epochs'],
         accelerator=device,
+        benchmark=True,
         enable_model_summary=True,
         gradient_clip_val=0.1,
-        limit_train_batches=50,  # coment in for training, running valiation every 30 batches
+        #limit_train_batches=50,  # coment in for training, running valiation every 30 batches
         # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
         callbacks=[#lr_logger,
                    #early_stop_callback,
@@ -288,6 +289,9 @@ def get_trainer(config, data_module):
         strategy = "ddp",
         devices=1,
         precision=16,
+        check_val_every_n_epoch=10,
+        #val_check_interval=1000,
+        log_every_n_steps=50,
         logger=wandb_logger,
     )
     return trainer
