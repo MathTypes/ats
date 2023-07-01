@@ -798,6 +798,8 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             output = [output_layer(output) for output_layer in self.output_layer]
         else:
             output = self.output_layer(output)
+        # Remove last dimension if it is 1
+        output = torch.squeeze(output, dim=-1)
         #logging.info(f"output_shape after:{output.shape}")
         #exit(0)
         return self.to_network_output(
