@@ -619,8 +619,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"multiloss:{new_kwargs}")
         elif "output_size" not in kwargs:
             new_kwargs["output_size"] = get_output_size(dataset.target_normalizer, loss)
-        logging.info(f"n_targets:{new_kwargs}")
-        logging.info(f"loss:{loss}")
+        logging.info(f"new_kwatgs:{new_kwargs}")
+        #logging.info(f"loss:{loss}")
+        #exit(0)
         return new_kwargs
 
     def size(self) -> int:
@@ -773,7 +774,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             )
             out = self(x, **kwargs)
             prediction = out["prediction"]
-            logger.info(f"x:{x}, out:{out}")
+            #logger.info(f"x:{x}, out:{out}, y:{y}")
+            exit(0)
             # handle multiple targets
             prediction_list = to_list(prediction)
             gradient = 0
@@ -877,7 +879,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 to_list(x["encoder_target"]),
             ):
                 y_true = (y_part, y[1])
-                #logging.info(f"y_part:{y_part.shape}, y_point:{y_point.shape}")
+                #logging.info(f"y_part:{y_part.shape}, y_point:{y_point.shape}, metrics:{metric}")
                 if "reduction" in prediction_kwargs:
                     if isinstance(metric, MASE):
                         lengths = torch.full((y_part.size(0),), fill_value=y_part.size(1), dtype=torch.long, device=y_part.device)

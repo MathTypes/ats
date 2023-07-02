@@ -1,28 +1,24 @@
 import logging
-import torch
+from pathlib import Path
+
 import numpy as np
+import lightning.pytorch as pl
+from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
+from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+from lightning.pytorch.loggers import WandbLogger
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, SequentialSampler
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-#from pytorch_lightning.callbacks import GradientAccumulationScheduler, StochasticWeightAveraging
-#import pytorch_lightning as pl
-import lightning.pytorch as pl
-#from pytorch_lightning.loggers import WandbLogger
-from lightning.pytorch.loggers import WandbLogger
-#from pytorch_lightning import Trainer
 
+import wandb
 from wandb.keras import WandbCallback
 from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
-from eval_callback import WandbClfEvalCallback
 
-from data_module import LSTMDataModule, TransformerDataModule
-from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback, TSLogPredictionsCallback
-import wandb
-from pathlib import Path
-#from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 import data_module
+from data_module import LSTMDataModule, TransformerDataModule
+from eval_callback import WandbClfEvalCallback
+from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback, TSLogPredictionsCallback
 #from similarity_logger import SimilarityLogger
 
 torch.manual_seed(0)
@@ -273,7 +269,7 @@ class Pipeline:
         logging.info(f"device:{self.device}")
         wandb_logger = WandbLogger(project='ATS', log_model=True)
         logging.info(f"data_module:{self.data_module}")
-        prediction_logger = WandbClfEvalCallback(self.data_module, self.config)
+        prediction_logger = WandbClfEvalCallback(self.data_module, self.targets)
         #sim_logger = SimilarityLogger() 
         self.trainer = pl.Trainer(max_epochs=100, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor,
@@ -297,7 +293,9 @@ class Pipeline:
                              #profiler="advanced",
                              #precision='16-mixed',
                              # train in half precision
-                             deterministic=False, strategy='auto')
+                             deterministic=False,
+                             check_val_every_n_epoch=10,
+                             strategy='auto',)
         
     def tune_model(self):
         pass

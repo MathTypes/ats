@@ -58,7 +58,7 @@ def my_app(cfg: DictConfig) -> None:
         'learning_rate':cfg['optimizer']['lr'],
         'num_workers': 8,
         'log_mode': cfg['job']['log_mode'],
-        'loss_name': cfg['model']['loss_name'],
+        #'loss_name': cfg['model']['loss_name'],
         'device' : cfg.job.device,
         'workers': cfg.job.workers,
         'train_start_date': datetime.datetime.strptime(cfg.job.train_start_date, "%Y-%m-%d"),
@@ -80,6 +80,7 @@ def my_app(cfg: DictConfig) -> None:
         pipe.create_trainer()
         logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
         pipe.train_model()
+        pipe.test_model()
     elif cfg.job.mode == "tune":
         config['n_trials'] = cfg.job.n_trials
         pipe.tune_model(config, cfg.job.study_name)

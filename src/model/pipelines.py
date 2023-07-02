@@ -167,12 +167,22 @@ class PatchTstTftSupervisedPipeline(Pipeline):
         self.config = config
 
     def create_model(self):
-        self.data_module = model_utils.get_data_module(self.config)
-        self.model = model_utils.get_patch_tst_tft_supervised_model(self.config, self.data_module)
+        self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
+        logging.info(f"head:{self.heads}, targets:{self.targets}")
+        self.data_module = model_utils.get_data_module(self.config, self.targets)
+        self.model = model_utils.get_patch_tst_tft_supervised_model(self.config, self.data_module, self.heads)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
     def tune_model(self, study_name, config):
+        #self.data_module = nhits.get_data_module(self.config)
+        #self.model = nhits.get_model(self.config, self.data_module)
+        #self.trainer = nhits.get_trainer(self.config, self.data_module)
+        #self.model = self.model.to(self.device, non_blocking=True)
+        #nhits.run_tune(config, study_name)
+        pass
+
+    def test_model(self, config):
         #self.data_module = nhits.get_data_module(self.config)
         #self.model = nhits.get_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)

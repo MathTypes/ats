@@ -414,7 +414,7 @@ class PatchTstTftTransformer(BaseModelWithCovariates):
             head_type = "prediction", individual = False,
             y_range:Optional[tuple]=None, verbose:bool=False,
             lstm_layers: int = 1,
-            output_size: Union[int, List[int]] = 7,
+            output_size: Union[int, List[int], List[List[int]]] = 7,
             loss: MultiHorizonMetric = None,
             attention_head_size: int = 4,
             max_encoder_length: int = 10,

@@ -14,7 +14,7 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
-            self, data_module, config, num_samples=10, every_n_epochs=5
+            self, data_module, target, num_samples=10, every_n_epochs=5
     ):
         super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum"],
@@ -24,11 +24,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
-        self.config = config
-        self.target_size = 1
-        if OmegaConf.is_list(config.model.target):
-            target = OmegaConf.to_object(config.model.target)
-            target_size = len(target)
+        self.target_size = len(target)
         for batch in range(num_samples):
             val_x, val_y = next(iter(data_module.val_dataloader()))
             #logging.info(f"self.val_x:{val_x}")
@@ -196,9 +192,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         #logging.info(f"log:{log}")
         #logging.info(f"out:{out}")
         #exit(0)
-        rmse = result["train_RMSE"].cpu().detach().numpy()
+        rmse = result["close_back_cumsum train_RMSE"].cpu().detach().numpy()
         #mapcse = result["train_MAPCSE"].cpu().detach().numpy()
-        mae = result["train_MAE"].cpu().detach().numpy()
+        mae = result["close_back_cumsum train_MAE"].cpu().detach().numpy()
         y_raws = to_list(out["prediction"])[0]  # raw predictions - used for calculating loss
         prediction_kwargs = {}
         quantiles_kwargs = {}

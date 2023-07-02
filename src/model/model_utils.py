@@ -1,52 +1,46 @@
 # Usage
+import copy
 import datetime
 import logging
+from math import ceil
 import os
-import warnings
-import ray
-import time
-import wandb
-import copy
 from pathlib import Path
-import warnings
-import pyarrow.dataset as pds
+import time
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
-from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import torch
-from omegaconf import OmegaConf
+import warnings
+warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.tuner import Tuner
 import lightning.pytorch as pl
-from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTstTftSupervisedTransformer
-from pytorch_forecasting.data import GroupNormalizer
-from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss, SharpeLoss
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
-
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import numpy as np
+from omegaconf import OmegaConf
+import pandas as pd
+import pyarrow.dataset as pds
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
+from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTstTftSupervisedTransformer
 from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
-from pytorch_forecasting.metrics import MAE, MAPE, MASE, MAPCSE, RMSE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss
-
+from pytorch_forecasting.metrics import MAE, MAPE, MASE, MAPCSE, RMSE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss, SharpeLoss, DistributionLoss
+from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
+from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
+import ray
 from ray.util.dask import enable_dask_on_ray
 from ray_lightning import RayStrategy
 from ray.data import ActorPoolStrategy
+from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
+import torch
+from torch import nn
+import wandb
+from wandb.keras import WandbMetricsLogger
 
 from data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
 from datasets import generate_stock_returns
-warnings.filterwarnings("ignore")  # avoid printing out absolute paths
-import matplotlib as mpl
-#from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
-from wandb.keras import WandbMetricsLogger
-
-from torch import nn
 import data_util
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
-from math import ceil
+from loss import MultiLossWithUncertaintyWeight
 import nhits_tuner
 from util import logging_utils
 from util import config_utils
@@ -74,11 +68,26 @@ def create_loss(loss_name, device, prediction_length=None, hidden_size=None):
     loss = loss.to(device)
     return loss
 
-def get_logging_metrics(config):
+
+def get_logging_metrics(logging_metrics, device, prediction_length):
     metrics = []
-    for loss_name in config.model.logging_metrics:
-        metrics.append(create_loss(loss_name, config.job.device, config.model.prediction_length))
+    for loss_name in logging_metrics:
+        metrics.append(create_loss(loss_name, device, prediction_length))
     return nn.ModuleList(metrics)
+
+
+# Different heads must still have same prediction_length. Otherwise, the data loading
+# would not work since it can only have one sampling mode across heads. It is fine for
+# different heads to have different logging_metrics as the actual outputs can be different
+# across heads.
+def create_loss_per_head(heads, device, prediction_length):
+    loss_per_head = {}
+    for name, value in heads.items():
+        loss = create_loss(value.loss_name, device, prediction_length)
+        logging_metrics = get_logging_metrics(value.logging_metrics, device, prediction_length)
+        loss_per_head[name] = {'loss' : loss, 'logging_metrics': logging_metrics}
+    return loss_per_head
+
 
 def get_loss(config, prediction_length=None, hidden_size=None):
     target_size = 1
@@ -88,10 +97,18 @@ def get_loss(config, prediction_length=None, hidden_size=None):
     #logging.info(f"prediction_length:{prediction_length}")
     if OmegaConf.is_list(config.model.target):
         target = OmegaConf.to_object(config.model.target)
+        logging.info(f"target:{target}")
         target_size = len(target)
         is_multi_target = True
-    loss_name = config.model.loss_name
-    loss = create_loss(loss_name, config.job.device, prediction_length)
+        loss_name = OmegaConf.to_object(config.model.loss_name)
+        losses = []
+        for i in range(target_size):
+            losses.append(create_loss(loss_name[i], config.job.device, prediction_length))
+        loss = MultiLoss(losses)
+    else:
+        loss_name = config.model.loss_name
+        loss = create_loss(loss_name, config.job.device, prediction_length)
+    logging.info(f"created loss:{loss}")
     return loss
 
 
@@ -107,14 +124,6 @@ def get_model(config, data_module):
         training,
         weight_decay=1e-2,
         loss = loss,
-        #loss = MQF2DistributionLoss(prediction_length=max_prediction_length),
-        #loss=MultiLoss(metrics=[MQF2DistributionLoss(prediction_length=max_prediction_length),
-                                #MQF2DistributionLoss(prediction_length=max_prediction_length),
-                                #MQF2DistributionLoss(prediction_length=max_prediction_length)],
-        #                        ],
-        #               weights=[1.0
-                                #, 0.0, 0.0
-        #               ]),
         backcast_loss_ratio=0.0,
         hidden_size=config["hidden_size"],
         prediction_length=config["prediction_length"],
@@ -134,10 +143,8 @@ def get_tft_model(config, data_module):
     training = data_module.training
     max_prediction_length = config.model.prediction_length
     # configure network and trainer
-    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
     loss = get_loss(config)
-    #logging.error(f"loss:{loss}")
     net = TemporalFusionTransformer.from_dataset(
         training,
         weight_decay=1e-2,
@@ -198,7 +205,6 @@ def get_patch_tst_tft_model(config, data_module):
     stride = config.model.stride
     pl.seed_everything(42)
     d_model = config.model.d_model
-    #patch_prediction_length = int(prediction_length/stride)-1
     logging.info(f"prediction_length:{prediction_length}, patch_len:{patch_len}")
     loss = get_loss(config, hidden_size=d_model)
     num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
@@ -224,7 +230,22 @@ def get_patch_tst_tft_model(config, data_module):
     )
     return net
 
-def get_patch_tst_tft_supervised_model(config, data_module):
+
+def get_output_size(loss):
+    #logging.error(f"loss:{loss}")
+    if isinstance(loss, QuantileLoss):
+        #logging.info(f"QuantileLoss:{len(loss.quantiles)}")
+        return len(loss.quantiles)
+    #elif isinstance(normalizer, NaNLabelEncoder):
+    #    #logging.info(f"normalizer.classes_:{len(normalizer.classes_)}")
+    #    return len(normalizer.classes_)
+    elif isinstance(loss, DistributionLoss):
+        logging.error(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
+        return len(loss.distribution_arguments)
+    else:
+        return 1  # default to 1
+
+def get_patch_tst_tft_supervised_model(config, data_module, heads):
     device = config.job.device
     training = data_module.training
     prediction_length = config.model.prediction_length
@@ -235,10 +256,28 @@ def get_patch_tst_tft_supervised_model(config, data_module):
     pl.seed_everything(42)
     #patch_prediction_length = int(prediction_length/stride)-1
     logging.info(f"prediction_length:{prediction_length}, patch_len:{patch_len}")
-    loss = get_loss(config)
     num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
     prediction_num_patch = (max(prediction_length, patch_len)-patch_len) // stride + 1
     logging.info(f"patch_len:{patch_len}, num_patch:{num_patch}, context_length:{context_length}, stride:{stride}")
+    loss = None
+    logging_metrics = []
+    output_size_dict = {}
+    if config.model.multitask:
+        loss_per_head = create_loss_per_head(heads, device, prediction_length)
+        losses = []        
+        for name, l in loss_per_head.items():
+          losses.append(l["loss"])
+          logging_metrics.append(l["logging_metrics"])
+          logging.info(f"loss name: {name}, l:{l}")
+          output_size_dict[name] = get_output_size(l["loss"])
+        logging.info(f"losses:{losses}")
+        logging.info(f"logging_metrics:{logging_metrics}")
+        logging.info(f"output_size_dict:{output_size_dict}")
+        loss = MultiLossWithUncertaintyWeight(losses)
+    else:
+        # TODO implement single task loss
+        pass
+    
     net = PatchTstTftSupervisedTransformer.from_dataset(
         training,
         patch_len=patch_len,
@@ -246,7 +285,9 @@ def get_patch_tst_tft_supervised_model(config, data_module):
         num_patch=num_patch,
         prediction_num_patch=prediction_num_patch,
         loss=loss,
-        logging_metrics=get_logging_metrics(config),
+        loss_per_head=loss_per_head,
+        #logging_metrics=logging_metrics,
+        logging_metrics=None,
         # not meaningful for finding the learning rate but otherwise very important
         learning_rate=0.03,
         d_model=d_model,  # most important hyperparameter apart from learning rate
@@ -256,13 +297,14 @@ def get_patch_tst_tft_supervised_model(config, data_module):
         attn_dropout=0.1,  # between 0.1 and 0.3 are good values
         #hidden_continuous_size=8,  # set to <= hidden_size
         #loss=QuantileLoss(),
-        optimizer="Ranger"
+        optimizer="Ranger",
+        output_size=output_size_dict,
         # reduce learning rate if no improvement in validation loss after x epochs
         # reduce_on_plateau_patience=1000,
     )
     return net
 
-def get_trainer(config, data_module):
+def _get_trainer(config, data_module):
     device = config['device']
     use_gpu = device == "cuda"
     logging.getLogger().info(f"device:{device}, use_gpu:{use_gpu}")
@@ -270,7 +312,6 @@ def get_trainer(config, data_module):
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
     wandb_logger = WandbLogger(project='ATS', log_model=config["log_mode"])
-    #logger = TensorBoardLogger(config['model_path'])  # logging results to a tensorboard
     metrics_logger = WandbMetricsLogger(log_freq=10)
     trainer = pl.Trainer(
         max_epochs=config['max_epochs'],
@@ -337,7 +378,21 @@ def add_lows(df, width):
     df_low = df_low.bfill()
     return df_low["close_cumsum_low"]
 
-def get_data_module(config):
+def get_heads_and_targets(config):
+    heads = config.model.heads
+    logging.info(f"heads:{heads}")
+    head_dict = {}
+    targets = set()
+    for head in heads:
+        head_dict[head] = config.model[head]
+        if isinstance(head_dict[head], List):
+            for target in head_dict[head].target:
+                targets.add(target)
+        else:
+            targets.add(head_dict[head].target)
+    return head_dict, list(targets)
+        
+def get_data_module(config, targets):
     start = time.time()
     train_data_vec = []
     for ticker in config.dataset.model_tickers:
@@ -380,7 +435,7 @@ def get_data_module(config):
         "beer_capital",
         "music_fest",
     ]
-    data_module = TimeSeriesDataModule(config, train_data, eval_data)
+    data_module = TimeSeriesDataModule(config, train_data, eval_data, targets)
     return data_module
 
 

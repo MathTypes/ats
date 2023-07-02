@@ -110,7 +110,7 @@ class Patch(nn.Module):
         self.patch_len = patch_len
         self.d_model = d_model
         self.shared_embedding = shared_embedding        
-        logging.info(f"seq_len:{seq_len}, stride:{stride}, num_patch:{num_patch}")
+        #logging.info(f"seq_len:{seq_len}, stride:{stride}, num_patch:{num_patch}")
         # Input encoding: projection of feature vectors onto a d-dim vector space
         if not shared_embedding: 
             self.W_P = nn.ModuleList()
@@ -216,7 +216,7 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             head_type = "prediction", individual = False,
             y_range:Optional[tuple]=None, verbose:bool=False,
             lstm_layers: int = 1,
-            output_size: Union[int, List[int]] = 7,
+            output_size: Union[int, List[int], Dict[str, List[int]]] = 7,
             loss: MultiHorizonMetric = None,
             attention_head_size: int = 4,
             max_encoder_length: int = 10,
@@ -244,6 +244,7 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             share_single_variable_networks: bool = False,
             causal_attention: bool = True,
             logging_metrics: nn.ModuleList = None,
+            loss_per_head: Dict = None,
             **kwargs,
     ):
         """
@@ -272,7 +273,7 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
         Args:
 
             output_size: number of outputs (e.g. number of quantiles for QuantileLoss and one target or list
-                of output sizes).
+                of output sizes or dictionry from head name to list of output sizes).
             loss: loss function taking prediction and targets
             attention_head_size: number of attention heads (4 is a good default)
             max_encoder_length: length to encode (can be far longer than the decoder length but does not have to be)
@@ -319,13 +320,14 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             logging_metrics = nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE()])
         if loss is None:
             loss = QuantileLoss()
+        self.loss_per_head = loss_per_head
         self.save_hyperparameters()
         #logging.info(f"hparams:{self.hparams}")
         # store loss function separately as it is a module
         assert isinstance(loss, LightningMetric), "Loss has to be a PyTorch Lightning `Metric`"
-        logging.info(f"kwargs:{kwargs}")
+        #logging.info(f"kwargs:{kwargs}")
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
-        logging.info(f"after hparams:{self.hparams}")
+        #logging.info(f"after hparams:{self.hparams}")
         self.d_model = d_model
         # processing inputs
         # embeddings
@@ -544,6 +546,7 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             #d_model=self.hparams.hidden_size, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
             d_model=d_model, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
         )
+        self.position_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
         self.post_attn_gate_norm = GateAddNorm(
             #self.hparams.hidden_size, dropout=self.hparams.dropout, trainable_add=False
             d_model, dropout=self.hparams.dropout, trainable_add=False
@@ -563,15 +566,45 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
         #logging.info(f"n_vars:{self.n_vars}, head_nf:{self.head_nf}, target_dim:{target_dim}")
         self.flatten_head = Flatten_Head(self.individual, self.n_vars, self.prediction_num_patch, self.head_nf, target_dim, head_dropout=head_dropout)
                 
-        if self.n_targets > 1:  # if to run with multiple targets
+
+        output_size = self.hparams.output_size
+        returns_output_size = None
+        position_output_size = None
+        if isinstance(output_size, Dict):
+            returns_output_size = output_size["returns_prediction"]
+            position_output_size = output_size["position_optimization"]
+        #logging.info(f"returns_output_size:{returns_output_size}")
+        #logging.info(f"position_output_size:{position_output_size}")
+        if self.n_head_targets(head="returns_prediction") > 1:  # if to run with multiple targets
             self.output_layer = nn.ModuleList(
-                #[nn.Linear(self.hparams.hidden_size, output_size) for output_size in self.hparams.output_size]
-                [nn.Linear(d_model, output_size) for output_size in self.hparams.output_size]
+                [nn.Linear(d_model, output_size) for output_size in returns_output_size]
             )
         else:
-            #self.output_layer = nn.Linear(self.hparams.hidden_size, self.hparams.output_size)
-            self.output_layer = nn.Linear(d_model, self.hparams.output_size)
+            self.output_layer = nn.Linear(d_model, returns_output_size)
+        if self.n_head_targets(head="position_optimization") > 1:  # if to run with multiple targets
+            self.position_output_layer = nn.ModuleList(
+                [nn.Linear(d_model, output_size) for output_size in position_output_size]
+            )
+        else:
+            self.position_output_layer = nn.Linear(d_model, position_output_size)
         #logging.info(f"output_layer:{self.output_layer}")
+        #logging.info(f"position_output_layer:{self.position_output_layer}")
+
+
+    def n_head_targets(self, head) -> int:
+        """
+        Number of targets to forecast.
+
+        Based on loss function.
+
+        Returns:
+            int: number of targets
+        """
+        loss = self.loss_per_head[head]
+        if isinstance(loss, MultiLoss):
+            return len(loss.metrics)
+        else:
+            return 1
 
     @classmethod
     def from_dataset(
@@ -790,20 +823,33 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
         # z: [bs x nvars x d_model]
         #output = output.permute(0, 2, 3, 1)
         # z: [bs x nvars x d_model]
-        output = self.flatten_head(output)
+        embedding = self.flatten_head(output)
         # z: [bs x nvars x target_dim]
         #logging.info(f"output_shape after flatten:{output.shape}")
         #logging.info(f"output_layer:{self.output_layer}")
-        if self.n_targets > 1:  # if to use multi-target architecture
-            output = [output_layer(output) for output_layer in self.output_layer]
+        if self.n_head_targets(head="returns_prediction") > 1:  # if to run with multiple targets
+            output = [output_layer(embedding) for output_layer in self.output_layer]
         else:
-            output = self.output_layer(output)
+            output = self.output_layer(embedding)
+        if self.n_head_targets(head="position_optimization") > 1:  # if to run with multiple targets
+            position_output = [output_layer(embedding) for output_layer in self.position_output_layer]
+        else:
+            position_output = self.position_output_layer(embedding)
         # Remove last dimension if it is 1
-        output = torch.squeeze(output, dim=-1)
-        #logging.info(f"output_shape after:{output.shape}")
-        #exit(0)
+        #logging.info(f"output before squeeze:{output[0].shape}, {output[1].shape}")
+        if isinstance(output, List):
+          output = [ torch.squeeze(val, dim=-1) for val in output]
+        else:
+          output = torch.squeeze(output, dim=-1)
+        if isinstance(position_output, List):
+          position_output = [ torch.squeeze(val, dim=-1) for val in position_output]
+        else:
+          position_output = torch.squeeze(position_output, dim=-1)
+        #logging.info(f"output:{output.shape}")
+        #logging.info(f"position_output:{position_output.shape}")
         return self.to_network_output(
-            prediction=self.transform_output(output, target_scale=x["target_scale"]),
+            prediction=self.transform_output([output, position_output],
+                                             target_scale=x["target_scale"]),
             encoder_attention=attn_output_weights[..., :new_encoder_length],
             decoder_attention=attn_output_weights[..., new_encoder_length:],
             static_variables=static_variable_selection,

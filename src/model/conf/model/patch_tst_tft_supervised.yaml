@@ -4,12 +4,23 @@ context_length: 320
 patch_len: 32
 stride: 16
 d_model: 12
+multitask: True
+heads:
+  - returns_prediction
+  - position_optimization
+returns_prediction:
+  loss_name: MQF2DistributionLoss
+  target: "close_back_cumsum"
+  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+position_optimization:
+  loss_name: SharpeLoss
+  target: "close_back"
+  logging_metrics: []
 #loss_name: MAPCSE
-#loss_name: MQF2DistributionLoss
-loss_name: SharpeLoss
-logging_metrics: ["SharpeLoss", "SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+#loss_name: ["MQF2DistributionLoss", "SharpeLoss"]
+#loss_name: SharpeLoss
 name: patch_tst_tft_supervised
-target: "close_back_cumsum"
+#target: [["close_back_cumsum"], ["close_back"]]
 time_varying_known_reals: []
 time_varying_unknown_reals: ["close_back_cumsum", "volume_back_cumsum"]
 add_relative_time_idx: True

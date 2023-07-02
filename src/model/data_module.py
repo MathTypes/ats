@@ -3,7 +3,7 @@ import lightning.pytorch as pl
 import torch
 import logging
 from torch.utils.data import DataLoader
-import logging
+import typing
 from datasets import (
     generate_stock_tokens,
     generate_stock_returns,
@@ -168,27 +168,25 @@ class LSTMDataModule(pl.LightningDataModule):
 
 
 class TimeSeriesDataModule(pl.LightningDataModule):
-    def __init__(self, config, train_data, eval_data):
+    def __init__(self, config, train_data, eval_data, target):
         super().__init__()
         self.train_data = train_data
         self.eval_data = eval_data
-        logging.info(f"eval_data:{self.eval_data}")
+        logging.info(f"target:{target} {type(target)}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
-        target = config.model.target
         target_normalizer = None
         #target_normalizer ="auto"
-        if OmegaConf.is_list(config.model.target):
-            target = OmegaConf.to_object(config.model.target)
+        if isinstance(target, (typing.Set, typing.List)):
             normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
-            target_normalizer=MultiNormalizer(normalizer_list)
+            target_normalizer = MultiNormalizer(normalizer_list)
         time_varying_known_reals = config.model.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)
         time_varying_unknown_reals = config.model.time_varying_unknown_reals
         if OmegaConf.is_list(time_varying_unknown_reals):
             time_varying_unknown_reals =  OmegaConf.to_object(time_varying_unknown_reals)
-        logging.info(f"config.model.target:{target}")
+        logging.info(f"target:{target}")
         logging.info(f"config.model.time_varying_known_reals:{(time_varying_known_reals)}")
         logging.info(f"config.model.time_varying_unknown_reals:{(time_varying_unknown_reals)}")
         self.training = TimeSeriesDataSet(
