@@ -572,7 +572,8 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
         position_output_size = None
         if isinstance(output_size, Dict):
             returns_output_size = output_size["returns_prediction"]
-            position_output_size = output_size["position_optimization"]
+            if "position_optimization" in output_size:
+                position_output_size = output_size["position_optimization"]
         #logging.info(f"returns_output_size:{returns_output_size}")
         #logging.info(f"position_output_size:{position_output_size}")
         if self.n_head_targets(head="returns_prediction") > 1:  # if to run with multiple targets
@@ -581,12 +582,14 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             )
         else:
             self.output_layer = nn.Linear(d_model, returns_output_size)
-        if self.n_head_targets(head="position_optimization") > 1:  # if to run with multiple targets
-            self.position_output_layer = nn.ModuleList(
-                [nn.Linear(d_model, output_size) for output_size in position_output_size]
-            )
-        else:
-            self.position_output_layer = nn.Linear(d_model, position_output_size)
+        self.position_output_layer = None
+        if position_output_size:
+            if self.n_head_targets(head="position_optimization") > 1:  # if to run with multiple targets
+                self.position_output_layer = nn.ModuleList(
+                    [nn.Linear(d_model, output_size) for output_size in position_output_size]
+                )
+            else:
+                self.position_output_layer = nn.Linear(d_model, position_output_size)
         #logging.info(f"output_layer:{self.output_layer}")
         #logging.info(f"position_output_layer:{self.position_output_layer}")
 
@@ -831,24 +834,29 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
             output = [output_layer(embedding) for output_layer in self.output_layer]
         else:
             output = self.output_layer(embedding)
-        if self.n_head_targets(head="position_optimization") > 1:  # if to run with multiple targets
-            position_output = [output_layer(embedding) for output_layer in self.position_output_layer]
-        else:
-            position_output = self.position_output_layer(embedding)
+        position_output = None
+        if self.position_output_layer:
+            if self.n_head_targets(head="position_optimization") > 1:  # if to run with multiple targets
+                position_output = [output_layer(embedding) for output_layer in self.position_output_layer]
+            else:
+                position_output = self.position_output_layer(embedding)
         # Remove last dimension if it is 1
         #logging.info(f"output before squeeze:{output[0].shape}, {output[1].shape}")
         if isinstance(output, List):
           output = [ torch.squeeze(val, dim=-1) for val in output]
         else:
           output = torch.squeeze(output, dim=-1)
-        if isinstance(position_output, List):
-          position_output = [ torch.squeeze(val, dim=-1) for val in position_output]
-        else:
-          position_output = torch.squeeze(position_output, dim=-1)
+        if position_output:
+            if isinstance(position_output, List):
+                position_output = [ torch.squeeze(val, dim=-1) for val in position_output]
+            else:
+                position_output = torch.squeeze(position_output, dim=-1)
+            output = [output, position_output]
         #logging.info(f"output:{output.shape}")
         #logging.info(f"position_output:{position_output.shape}")
+        
         return self.to_network_output(
-            prediction=self.transform_output([output, position_output],
+            prediction=self.transform_output(output,
                                              target_scale=x["target_scale"]),
             encoder_attention=attn_output_weights[..., :new_encoder_length],
             decoder_attention=attn_output_weights[..., new_encoder_length:],
@@ -1066,7 +1074,8 @@ class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
         )
 
         # add attention on secondary axis
-        if plot_attention:
+        if False:
+        #if plot_attention:
             interpretation = self.interpret_output(out.iget(slice(idx, idx + 1)))
             for f in to_list(fig):
                 encoder_length = x["encoder_lengths"][0]

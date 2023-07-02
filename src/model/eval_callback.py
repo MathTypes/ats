@@ -14,7 +14,7 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
-            self, data_module, target, num_samples=10, every_n_epochs=5
+            self, data_module, target, num_samples=10, every_n_epochs=1
     ):
         super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum"],
@@ -93,6 +93,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             val_x = self.val_x_batch[batch_idx]
             val_y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
+            logging.info(f"val_x.encoder_target.shape:{len(val_x['encoder_target'])}, encoder_target[0].shape:{val_x['encoder_target'][0].shape}")
             #logging.info(f"val_y:{val_y}")
             y_close_cum_sum = val_y[0]
             # TODO: fix following hack to deal with multiple targets
@@ -101,13 +102,13 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 #logging.info("y_close_cum_sum is list")
                 y_close_cum_sum = y_close_cum_sum[0]
             #logging.info(f'y_close_cum_sum:{y_close_cum_sum.shape}, len:{len(y_close_cum_sum)}')
-            #logging.info(f"y_close_cum_sum:{y_close_cum_sum}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")
+            #logging.info(f"y_close_cum_sum:{y_close_cum_sum}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")            
             for idx in range(len(y_close_cum_sum)):
               # TODO: fix [0] hack to deal with multiple target
               if self.target_size > 1:
                   base = val_x['encoder_target'][0][idx][-1]
               else:
-                  base = val_x['encoder_target'][idx][-1]
+                  base = val_x['encoder_target'][0][idx][-1]
               #logging.info(f"idx:{idx}, y_close_cum_sum:{y_close_cum_sum}")
               #logging.info(f"encoder_x:{self.val_x['encoder_x'][idx]}")
               #logging.info(f"encoder_target:{self.val_x['encoder_target'][idx]}")
@@ -188,20 +189,25 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         #log, out = self.pl_module.predict_step((x,y), batch_idx=0)
         prediction_kwargs = {'reduction':None}
         result = self.pl_module.compute_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
-        #logging.info(f"result:{result}")
+        logging.info(f"result:{result}")
         #logging.info(f"log:{log}")
         #logging.info(f"out:{out}")
-        #exit(0)
-        rmse = result["close_back_cumsum train_RMSE"].cpu().detach().numpy()
+        if "train_RMSE" in result:
+            rmse = result["train_RMSE"].cpu().detach().numpy()
+        else:
+            rmse = result["close_back_cumsum train_RMSE"].cpu().detach().numpy()
         #mapcse = result["train_MAPCSE"].cpu().detach().numpy()
-        mae = result["close_back_cumsum train_MAE"].cpu().detach().numpy()
+        if "train_MAE" in result:
+            mae = result["train_MAE"].cpu().detach().numpy()
+        else:
+             mae = result["close_back_cumsum train_MAE"].cpu().detach().numpy()
         y_raws = to_list(out["prediction"])[0]  # raw predictions - used for calculating loss
         prediction_kwargs = {}
         quantiles_kwargs = {}
         y_hats = to_list(self.pl_module.to_prediction(out, **prediction_kwargs))[0]
         y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[0]
-        #logging.info(f"y_raws:{y_raws.shape}")
-        #logging.info(f"y_hats:{y_hats.shape}")
+        #logging.info(f"y_quantiles:{y_quantiles}")
+        #logging.info(f"y_hats:{y_hats}")
         #exit(0)
         #logging.info(f"y_quantiles:{y_quantiles.shape}")
         for idx in range(len(y_hats)):

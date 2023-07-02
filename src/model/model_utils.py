@@ -311,7 +311,7 @@ def _get_trainer(config, data_module):
     # configure network and trainer
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()  # log the learning rate
-    wandb_logger = WandbLogger(project='ATS', log_model=config["log_mode"])
+    wandb_logger = WandbLogger(project='ATS', log_model=config["log_mode"], )
     metrics_logger = WandbMetricsLogger(log_freq=10)
     trainer = pl.Trainer(
         max_epochs=config['max_epochs'],

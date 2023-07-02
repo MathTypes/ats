@@ -1141,7 +1141,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 plotter = go.Scatter
 
             # plot observed prediction
-            if show_future_observed:
+            if True:
+            #if show_future_observed:
                 fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed", line=dict(color=obs_color)))
 
             # plot prediction
@@ -1149,22 +1150,23 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
             # plot predicted quantiles
             fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean", line=dict(color=pred_color)))
+            quantile_colors = ["red", "purple", "pink", "green"]
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
                                              fill=None, mode='lines', name=f"quantile {i}",
-                                             line_color=pred_color))
+                                             line_color=quantile_colors[i]))
                     idx = y_quantile.shape[1]-(i+1)
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {idx}",
                                              fill='tonexty', # fill area between trace0 and trace1
-                                             mode='lines', line_color=pred_color))
+                                             mode='lines', line_color=quantile_colors[i]))
                 else:
                     quantiles = torch.tensor([[y_quantile[0, i]], [y_quantile[0, -i - 1]]])
                     fig.add_trace(go.errorbar(
                         x_pred,
                         y[[-n_pred]],
                         yerr=quantiles - y[-n_pred],
-                        c=pred_color,
+                        c=quantile_colors[i],
                         capsize=1.0,
                     ))
 

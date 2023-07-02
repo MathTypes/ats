@@ -7,7 +7,7 @@ d_model: 12
 multitask: True
 heads:
   - returns_prediction
-  - position_optimization
+#  - position_optimization
 returns_prediction:
   loss_name: MQF2DistributionLoss
   target: "close_back_cumsum"
