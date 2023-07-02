@@ -131,7 +131,7 @@ class PatchTstTransformerPipeline(Pipeline):
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
-    def tune_model(self, study_name, config):
+    def tune_model(self, study_name):
         #self.data_module = nhits.get_data_module(self.config)
         #self.model = nhits.get_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
@@ -174,7 +174,7 @@ class PatchTstTftSupervisedPipeline(Pipeline):
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
-    def tune_model(self, study_name, config):
+    def tune_model(self, study_name):
         #self.data_module = nhits.get_data_module(self.config)
         #self.model = nhits.get_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
@@ -182,7 +182,7 @@ class PatchTstTftSupervisedPipeline(Pipeline):
         #nhits.run_tune(config, study_name)
         pass
 
-    def test_model(self, config):
+    def test_model(self):
         #self.data_module = nhits.get_data_module(self.config)
         #self.model = nhits.get_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
