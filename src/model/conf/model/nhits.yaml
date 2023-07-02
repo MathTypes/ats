@@ -1,6 +1,21 @@
-hidden_size: 8
-prediction_length: 46
-context_length: 2300
+hidden_size: 64
+prediction_length: 32
+context_length: 320
+learning_rate : 0.02
 #loss_name: MAPCSE
-loss_name: RMSE
+#loss_name: RMSE
 name: nhits
+heads:
+  - returns_prediction
+#  - position_optimization
+returns_prediction:
+  loss_name: MQF2DistributionLoss
+  target: "close_back_cumsum"
+  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+position_optimization:
+  loss_name: SharpeLoss
+  target: "close_back"
+  logging_metrics: []
+time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month"]
+time_varying_unknown_reals: ["close_back_cumsum"]
+add_relative_time_idx: False

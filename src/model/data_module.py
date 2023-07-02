@@ -186,9 +186,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         time_varying_unknown_reals = config.model.time_varying_unknown_reals
         if OmegaConf.is_list(time_varying_unknown_reals):
             time_varying_unknown_reals =  OmegaConf.to_object(time_varying_unknown_reals)
-        logging.info(f"target:{target}")
         logging.info(f"config.model.time_varying_known_reals:{(time_varying_known_reals)}")
         logging.info(f"config.model.time_varying_unknown_reals:{(time_varying_unknown_reals)}")
+        logging.info(f"context_length:{context_length}")
         self.training = TimeSeriesDataSet(
             self.train_data,
             time_idx="time_idx",

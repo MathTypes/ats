@@ -112,23 +112,22 @@ def get_loss(config, prediction_length=None, hidden_size=None):
     return loss
 
 
-def get_model(config, data_module):
-    device = config['device']
+def get_nhits_model(config, data_module, loss):
+    device = config.job.device
     training = data_module.training
-    max_prediction_length = config['max_prediction_length']
+    max_prediction_length = config.model.prediction_length
     # configure network and trainer
     #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
-    loss = get_loss(config)
     net = NHiTS.from_dataset(
         training,
         weight_decay=1e-2,
         loss = loss,
         backcast_loss_ratio=0.0,
-        hidden_size=config["hidden_size"],
-        prediction_length=config["prediction_length"],
-        context_length=config["context_length"],
-        learning_rate=config["learning_rate"],
+        hidden_size=config.model.hidden_size,
+        prediction_length=config.model.prediction_length,
+        context_length=config.model.context_length,
+        learning_rate=config.model.learning_rate,
         optimizer="AdamW",
         log_interval=0.25,
         #n_blocks=[1,1,1],
@@ -254,7 +253,6 @@ def get_patch_tst_tft_supervised_model(config, data_module, heads):
     stride = config.model.stride
     d_model = config.model.d_model
     pl.seed_everything(42)
-    #patch_prediction_length = int(prediction_length/stride)-1
     logging.info(f"prediction_length:{prediction_length}, patch_len:{patch_len}")
     num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
     prediction_num_patch = (max(prediction_length, patch_len)-patch_len) // stride + 1
@@ -303,39 +301,6 @@ def get_patch_tst_tft_supervised_model(config, data_module, heads):
         # reduce_on_plateau_patience=1000,
     )
     return net
-
-def _get_trainer(config, data_module):
-    device = config['device']
-    use_gpu = device == "cuda"
-    logging.getLogger().info(f"device:{device}, use_gpu:{use_gpu}")
-    # configure network and trainer
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
-    lr_logger = LearningRateMonitor()  # log the learning rate
-    wandb_logger = WandbLogger(project='ATS', log_model=config["log_mode"], )
-    metrics_logger = WandbMetricsLogger(log_freq=10)
-    trainer = pl.Trainer(
-        max_epochs=config['max_epochs'],
-        accelerator=device,
-        benchmark=True,
-        enable_model_summary=True,
-        gradient_clip_val=0.1,
-        #limit_train_batches=50,  # coment in for training, running valiation every 30 batches
-        # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
-        callbacks=[#lr_logger,
-                   #early_stop_callback,
-                   #log_predictions_callback,
-                   #metrics_logger,
-                   #prediction_logger
-        ],
-        strategy = "ddp",
-        devices=1,
-        precision=16,
-        #check_val_every_n_epoch=10,
-        #val_check_interval=1000,
-        log_every_n_steps=50,
-        logger=wandb_logger,
-    )
-    return trainer
 
 
 def run_tune(study_name, config):
@@ -390,7 +355,12 @@ def get_heads_and_targets(config):
                 targets.add(target)
         else:
             targets.add(head_dict[head].target)
-    return head_dict, list(targets)
+    if len(targets) == 1:
+        targets = next(iter(targets))
+    else:
+        targets = list(targets)
+    logging.info(f"head_dict:{head_dict}, targets:{targets}")
+    return head_dict, targets
         
 def get_data_module(config, targets):
     start = time.time()

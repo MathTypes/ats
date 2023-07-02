@@ -50,29 +50,6 @@ def my_app(cfg: DictConfig) -> None:
     logging.info(f"test_start_date:{cfg.job.test_start_date}")
     prediction_length = cfg['model']['prediction_length']
     context_length = cfg['model']['context_length']
-    _config = {
-        'model_tickers': ['ES','NQ','CL','RTY','HG'],
-        'raw_dir': '.',
-        'base_dir':cfg['dataset']['base_dir'],
-        'hidden_size':cfg['model']['hidden_size'],
-        'learning_rate':cfg['optimizer']['lr'],
-        'num_workers': 8,
-        'log_mode': cfg['job']['log_mode'],
-        #'loss_name': cfg['model']['loss_name'],
-        'device' : cfg.job.device,
-        'workers': cfg.job.workers,
-        'train_start_date': datetime.datetime.strptime(cfg.job.train_start_date, "%Y-%m-%d"),
-        'test_start_date': datetime.datetime.strptime(cfg.job.test_start_date, "%Y-%m-%d"),
-        'max_encoder_length' : context_length,
-        'max_prediction_length' : prediction_length,
-        'min_encoder_length' : prediction_length,
-        'min_prediction_length' : prediction_length,
-        'context_length' : context_length,
-        'prediction_length' : prediction_length,
-        'eval_cut_off' : cfg.job.eval_cut_off,
-        'max_epochs' : cfg.job.max_epochs,
-        'model_path' : 'checkpoint'}
-    #wandb.config = config
     wandb.config = cfg
     pipe = pipelines[cfg.model.name](dataset="FUT", device=device, config=cfg) 
     if cfg.job.mode == "train":

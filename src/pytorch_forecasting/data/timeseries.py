@@ -419,9 +419,10 @@ class TimeSeriesDataSet(Dataset):
         #df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
         #df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
         # reduce return to bring down loss
-        data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
-        # 1000 is required to bring down loss to avoid nan
-        data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()/1000
+        if "ticker" in data.columns:
+          data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
+          # 1000 is required to bring down loss to avoid nan
+          data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()/1000
         #logging.info(f"df_index_low_13:{df_index_low_13}")
         #data["high_13"] = df_index_high_13
         #data["low_13"] = df_index_low_13
@@ -627,7 +628,7 @@ class TimeSeriesDataSet(Dataset):
                     else:
                         normalizers.append(GroupNormalizer(transformation=transformer))
             logging.info(f"normailizer:{normalizers}")
-            exit(0)
+            #exit(0)
             if self.multi_target:
                 self.target_normalizer = MultiNormalizer(normalizers)
             else:
@@ -852,7 +853,7 @@ class TimeSeriesDataSet(Dataset):
             # add target scales
             if self.add_target_scales:
                 #logging.info(f"does not expect add_target_scales")
-                exit(0)
+                #exit(0)
                 if not isinstance(self.target_normalizer, MultiNormalizer):
                     scales = [scales]
                 for target_idx, target in enumerate(self.target_names):

@@ -53,8 +53,8 @@ train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num
 val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size, num_workers=0)
 
 # calculate baseline absolute error
-baseline_predictions = Baseline().predict(val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True)
-SMAPE()(baseline_predictions.output, baseline_predictions.y)
+#baseline_predictions = Baseline().predict(val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True)
+#SMAPE()(baseline_predictions.output, baseline_predictions.y)
 
 pl.seed_everything(42)
 trainer = pl.Trainer(accelerator="cpu", gradient_clip_val=0.1)

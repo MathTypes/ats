@@ -149,7 +149,7 @@ class NHiTSBlock(nn.Module):
             self.pooling_layer = nn.AvgPool1d(kernel_size=self.pooling_sizes, stride=self.pooling_sizes, ceil_mode=True)
 
         hidden_layers = []
-        logging.info(f"hidden_size:{self.hidden_size}")
+        #logging.info(f"hidden_size:{self.hidden_size}")
         for i in range(n_layers):
             logging.info(f"i:{i}")
             hidden_layers.append(nn.Linear(in_features=self.hidden_size[i], out_features=self.hidden_size[i + 1]))
@@ -160,7 +160,7 @@ class NHiTSBlock(nn.Module):
 
             if self.dropout > 0:
                 hidden_layers.append(nn.Dropout(p=self.dropout))
-
+        #logging.info("hidden_layers:{hidden_layers}")
         output_layer = [
             nn.Linear(
                 in_features=self.hidden_size[-1],
@@ -179,11 +179,14 @@ class NHiTSBlock(nn.Module):
         self, encoder_y: torch.Tensor, encoder_x_t: torch.Tensor, decoder_x_t: torch.Tensor, x_s: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         batch_size = len(encoder_y)
-
+        #logging.info(f"batch_size:{batch_size}, encoder_y:{encoder_y.shape}")
         encoder_y = encoder_y.transpose(1, 2)
+        #logging.info(f"encoder_y_after transpose:{encoder_y.shape}, pooling_layer:{self.pooling_layer}")        
         # Pooling layer to downsample input
         encoder_y = self.pooling_layer(encoder_y)
+        #logging.info(f"encoder_y_after pooling:{encoder_y.shape}")
         encoder_y = encoder_y.transpose(1, 2).reshape(batch_size, -1)
+        #logging.info(f"encoder_y_after reshape:{encoder_y.shape}")
 
         if self.covariate_size > 0:
             encoder_y = torch.cat(
@@ -194,12 +197,15 @@ class NHiTSBlock(nn.Module):
                 ),
                 1,
             )
+        #logging.info(f"encoder_y_after covariate:{encoder_y.shape}")
 
         # Static exogenous
         if (self.static_size > 0) and (self.static_hidden_size > 0):
             x_s = self.static_encoder(x_s)
             encoder_y = torch.cat((encoder_y, x_s), 1)
+        #logging.info(f"encoder_y_after static:{encoder_y.shape}")
 
+        #logging.info(f"encoder_y_before_layers:{encoder_y.shape}, layer:{self.layers}")
         # Compute local projection weights and projection
         theta = self.layers(encoder_y)
         backcast_theta = theta[:, : self.context_length * len(self.output_size)].reshape(-1, self.context_length)

@@ -160,6 +160,7 @@ class NHiTS(BaseModelWithCovariates):
         if pooling_sizes is None:
             pooling_sizes = np.exp2(np.round(np.linspace(0.49, np.log2(prediction_length / 2), n_stacks)))
             pooling_sizes = [int(x) for x in pooling_sizes[::-1]]
+        logging.info(f"n_stacks:{n_stacks}, pooling_sizes:{pooling_sizes}")
         if downsample_frequencies is None:
             downsample_frequencies = [min(prediction_length, int(np.power(x, 1.5))) for x in pooling_sizes]
         logging.info(f"hidden_size:{hidden_size}")
@@ -173,7 +174,8 @@ class NHiTS(BaseModelWithCovariates):
 
         self.save_hyperparameters()
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
-        #logging.info(f"self.hparams.output_size:{self.hparams.output_size}")
+        logging.info(f"self.hparams:{self.hparams}")
+        #exit(0)
 
         self.embeddings = MultiEmbedding(
             embedding_sizes=self.hparams.embedding_sizes,

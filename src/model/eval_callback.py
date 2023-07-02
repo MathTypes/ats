@@ -24,7 +24,8 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
-        self.target_size = len(target)
+        logging.info(f"target:{target}")
+        self.target_size = len(target) if isinstance(target, List) else 1
         for batch in range(num_samples):
             val_x, val_y = next(iter(data_module.val_dataloader()))
             #logging.info(f"self.val_x:{val_x}")
@@ -93,7 +94,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             val_x = self.val_x_batch[batch_idx]
             val_y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
-            logging.info(f"val_x.encoder_target.shape:{len(val_x['encoder_target'])}, encoder_target[0].shape:{val_x['encoder_target'][0].shape}")
+            #logging.info(f"val_x.encoder_target.shape:{len(val_x['encoder_target'])}, encoder_target[0].shape:{val_x['encoder_target'][0].shape}")
             #logging.info(f"val_y:{val_y}")
             y_close_cum_sum = val_y[0]
             # TODO: fix following hack to deal with multiple targets
@@ -102,13 +103,17 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 #logging.info("y_close_cum_sum is list")
                 y_close_cum_sum = y_close_cum_sum[0]
             #logging.info(f'y_close_cum_sum:{y_close_cum_sum.shape}, len:{len(y_close_cum_sum)}')
-            #logging.info(f"y_close_cum_sum:{y_close_cum_sum}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")            
+            #logging.info(f"y_close_cum_sum:{y_close_cum_sum}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")
+            #logging.info(f"encoder_target:{val_x['encoder_target'].shape}")
             for idx in range(len(y_close_cum_sum)):
               # TODO: fix [0] hack to deal with multiple target
               if self.target_size > 1:
                   base = val_x['encoder_target'][0][idx][-1]
               else:
-                  base = val_x['encoder_target'][0][idx][-1]
+                  if val_x['encoder_target'].dim() == 2:
+                    base = val_x['encoder_target'][idx][-1]
+                  else:
+                    base = val_x['encoder_target'][0][idx][-1]
               #logging.info(f"idx:{idx}, y_close_cum_sum:{y_close_cum_sum}")
               #logging.info(f"encoder_x:{self.val_x['encoder_x'][idx]}")
               #logging.info(f"encoder_target:{self.val_x['encoder_target'][idx]}")
@@ -189,7 +194,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         #log, out = self.pl_module.predict_step((x,y), batch_idx=0)
         prediction_kwargs = {'reduction':None}
         result = self.pl_module.compute_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
-        logging.info(f"result:{result}")
+        #logging.info(f"result:{result}")
         #logging.info(f"log:{log}")
         #logging.info(f"out:{out}")
         if "train_RMSE" in result:

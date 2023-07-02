@@ -87,17 +87,18 @@ class TimeSeriesPipeline(Pipeline):
         self.config = config
 
     def create_model(self):
-        self.data_module = model_utils.get_data_module(self.config)
-        self.model = model_utils.get_model(self.config, self.data_module)
-        #self.trainer = nhits.get_trainer(self.config, self.data_module)
+        self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
+        self.data_module = model_utils.get_data_module(self.config, self.targets)
+        loss_per_head = model_utils.create_loss_per_head(self.heads, self.device, self.config.model.prediction_length)
+        self.model = model_utils.get_nhits_model(self.config, self.data_module, loss_per_head["returns_prediction"]["loss"])
         self.model = self.model.to(self.device, non_blocking=True)
 
-    def tune_model(self, study_name, config):
+    def tune_model(self, study_name):
         #self.data_module = nhits.get_data_module(self.config)
         #self.model = nhits.get_model(self.config, self.data_module)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         #self.model = self.model.to(self.device, non_blocking=True)
-        nhits.run_tune(config, study_name)
+        nhits.run_tune(self.config, study_name)
 
 class TemporalFusionTransformerPipeline(Pipeline):
     def __init__(self, dataset="fut", device=None, config=None):
