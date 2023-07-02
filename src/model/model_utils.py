@@ -330,7 +330,7 @@ def _get_trainer(config, data_module):
         strategy = "ddp",
         devices=1,
         precision=16,
-        check_val_every_n_epoch=10,
+        #check_val_every_n_epoch=10,
         #val_check_interval=1000,
         log_every_n_steps=50,
         logger=wandb_logger,

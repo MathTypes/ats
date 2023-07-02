@@ -242,6 +242,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
 
     
     def test_dataloader(self):
-        test_dataloader = self.test.to_dataloader(train=False, batch_size=self.eval_batch_size, num_workers=0,
-                                                  batch_sampler=None, pin_memory=True, drop_last=False)
+        # Here use same validation as we use simulation for test.
+        test_dataloader = self.validation.to_dataloader(train=False, batch_size=self.eval_batch_size, num_workers=0,
+                                                        batch_sampler=None, pin_memory=True, drop_last=False)
         return test_dataloader

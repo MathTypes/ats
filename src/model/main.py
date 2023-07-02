@@ -50,7 +50,7 @@ def my_app(cfg: DictConfig) -> None:
     logging.info(f"test_start_date:{cfg.job.test_start_date}")
     prediction_length = cfg['model']['prediction_length']
     context_length = cfg['model']['context_length']
-    config = {
+    _config = {
         'model_tickers': ['ES','NQ','CL','RTY','HG'],
         'raw_dir': '.',
         'base_dir':cfg['dataset']['base_dir'],
