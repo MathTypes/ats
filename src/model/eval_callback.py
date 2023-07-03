@@ -1,24 +1,26 @@
 from io import BytesIO
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import logging
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
+
 from omegaconf import OmegaConf
-import PIL
 import pandas as pd
-from typing import Any, Dict, Optional, Set
-import torch
-from wandb.keras import WandbEvalCallback
-import wandb
+import PIL
+import plotly.graph_objects as go
 from lightning.pytorch.callbacks.callback import Callback
 from lightning.pytorch.utilities.types import STEP_OUTPUT
+from plotly.subplots import make_subplots
 from pytorch_forecasting.utils import create_mask, detach, to_list
+import torch
+import wandb
+from wandb.keras import WandbEvalCallback
 
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
             self, data_module, target, num_samples=10, every_n_epochs=1
     ):
-        super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
+        super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month", "price_img",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum"],
-                         ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month",
+                         ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month", "price_img",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum",
                           "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "rmse", "mae"])
         self.val_x_batch = []
@@ -96,15 +98,21 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             indices = self.indices_batch[batch_idx]
             #logging.info(f"val_x.encoder_target.shape:{len(val_x['encoder_target'])}, encoder_target[0].shape:{val_x['encoder_target'][0].shape}")
             #logging.info(f"val_y:{val_y}")
-            y_close_cum_sum = val_y[0]
+            y_close = val_y[0]
             # TODO: fix following hack to deal with multiple targets
             #logging.info(f"y_close_cum_sum:{type(y_close_cum_sum)}")
-            if isinstance(y_close_cum_sum, list):
+            if isinstance(y_close, list):
                 #logging.info("y_close_cum_sum is list")
-                y_close_cum_sum = y_close_cum_sum[0]
+                y_close = y_closem[0]
+            #logging.info(f"y_close_cum_sum before:{y_close_cum_sum}")
+            y_close_cum_sum = torch.cumsum(y_close, dim=-1)
+            top_idx = torch.topk(y_close_cum_sum, 5)
             #logging.info(f'y_close_cum_sum:{y_close_cum_sum.shape}, len:{len(y_close_cum_sum)}')
-            #logging.info(f"y_close_cum_sum:{y_close_cum_sum}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")
+            #logging.info(f"top_idx:{top_idx}")
+            #logging.info(f"y_close_cum_sum max:{torch.max(y_close_cum_sum)}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")
             #logging.info(f"encoder_target:{val_x['encoder_target'].shape}")
+            #logging.info(f"val_x:{val_x}")
+            #exit(0)
             for idx in range(len(y_close_cum_sum)):
               # TODO: fix [0] hack to deal with multiple target
               if self.target_size > 1:
@@ -114,6 +122,8 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     base = val_x['encoder_target'][idx][-1]
                   else:
                     base = val_x['encoder_target'][0][idx][-1]
+              # when using close_back, base is always 0
+              base = 0
               #logging.info(f"idx:{idx}, y_close_cum_sum:{y_close_cum_sum}")
               #logging.info(f"encoder_x:{self.val_x['encoder_x'][idx]}")
               #logging.info(f"encoder_target:{self.val_x['encoder_target'][idx]}")
@@ -122,10 +132,31 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
               #logging.info(f"index:{index}")
               train_data_row = self.matched_eval_data[self.matched_eval_data.time_idx == index.time_idx].iloc[0]
               #logging.info(f"train_data_row:{train_data_row}")
+              #exit(0)
               dm = train_data_row["time"]
               #logging.info(f"dm:{dir(dm)}")
               y_close_cum_sum_row = y_close_cum_sum[idx]
-              #logging.info(f"y_close_cum_sum_row:{y_close_cum_sum_row}")
+              train_data_rows = self.matched_eval_data[(self.matched_eval_data.time_idx>=index.time_idx-320) & (self.matched_eval_data.time_idx<index.time_idx+32)]
+              fig = go.Figure(data=go.Ohlc(x=train_data_rows['time'],
+                    open=train_data_rows['open'],
+                    high=train_data_rows['high'],
+                    low=train_data_rows['low'],
+                    close=train_data_rows['close']))
+              fig.update(layout_xaxis_rangeslider_visible=False)
+              fig.update_xaxes(
+                  rangebreaks=[
+                      dict(bounds=["sat", "mon"]), #hide weekends
+                      #dict(bounds=[17, 9], pattern="hour"), #hide hours outside of 9am-5pm
+                      #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
+                  ]
+              )
+              img_bytes = fig.to_image(format="png") # kaleido library
+              im = PIL.Image.open(BytesIO(img_bytes))
+              if torch.max(y_close_cum_sum_row) > 0.10:
+                  logging.info(f"bad row:{train_data_row}, idx:{idx}, index:{index}")
+                  logging.info(f"y_close_cum_sum_row:{y_close_cum_sum_row}")
+                  logging.info(f"y_close:{y_close[idx]}")
+                  logging.info(f"train_data_rows:{train_data_rows}")
               self.data_table.add_data(
                 train_data_row["ticker"], # 0 ticker
                 dm, # 1 time
@@ -135,10 +166,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 train_data_row["year"], # 5 year
                 train_data_row["month"], # 6 month
                 train_data_row["day_of_month"], # 7 day_of_month
-                #wandb.Image(image),
+                wandb.Image(im),  # image
                 #np.argmax(label, axis=-1)
-                torch.max(y_close_cum_sum_row) - base, # 8 max
-                torch.min(y_close_cum_sum_row) - base, # 9 min
+                torch.max(y_close_cum_sum_row) - base, # 9 max
+                torch.min(y_close_cum_sum_row) - base, # 10 min
                 base, # 10 close_back_cusum
               )
         #logging.info(f"self.data_table:{self.data_table}")
@@ -163,15 +194,16 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 self.data_table_ref.data[idx][5], # year
                 self.data_table_ref.data[idx][6], # month
                 self.data_table_ref.data[idx][7], # day_of_month
-                self.data_table_ref.data[idx][8], # act_max_close_pct
-                self.data_table_ref.data[idx][9], # act_min_close_pct
-                self.data_table_ref.data[idx][10], # close_back_cumsum
+                self.data_table_ref.data[idx][8], # price image
+                self.data_table_ref.data[idx][9], # act_max_close_pct
+                self.data_table_ref.data[idx][10], # act_min_close_pct
+                self.data_table_ref.data[idx][11], # close_back_cumsum
                 pred[0], # pred_time_idx
                 pred[1] - self.data_table_ref.data[idx][10], # pred_close_pct_max
                 pred[2] - self.data_table_ref.data[idx][10], # pred_close_pct_min
                 pred[3], # img
-                pred[1] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][8], # error_max
-                pred[2] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][9], # error_min
+                pred[1] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][9], # error_max
+                pred[2] - self.data_table_ref.data[idx][10] - self.data_table_ref.data[idx][10], # error_min
                 #pred[4], # img_interp
                 pred[4], # rmse
                 pred[5], # mae
@@ -210,24 +242,30 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         prediction_kwargs = {}
         quantiles_kwargs = {}
         y_hats = to_list(self.pl_module.to_prediction(out, **prediction_kwargs))[0]
+        y_hats_cum = torch.cumsum(y_hats, dim=-1)
         y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[0]
         #logging.info(f"y_quantiles:{y_quantiles}")
         #logging.info(f"y_hats:{y_hats}")
         #exit(0)
         #logging.info(f"y_quantiles:{y_quantiles.shape}")
         for idx in range(len(y_hats)):
-          #logging.info(f"self.data_table_ref.data[idx]:{self.data_table_ref.data[idx]}")
+          decoder_time_idx = x["decoder_time_idx"][idx][0].cpu().detach().numpy()
+          x_time = self.matched_eval_data[(self.matched_eval_data.time_idx>=decoder_time_idx-320) & (self.matched_eval_data.time_idx<decoder_time_idx.time_idx+32)]["time"]
+          logging.info(f"x_time:{x_time}")
+          fig = make_subplots(rows=2, cols=2)
+          fig.update_layout(
+              autosize=False, width=1500, height=800,
+          )
           prediction_date_time = str(self.data_table_ref.data[idx][5]) + "-" + str(self.data_table_ref.data[idx][6]) + "-" + str(self.data_table_ref.data[idx][7]) + " " + str(self.data_table_ref.data[idx][3]) + " " + str(self.data_table_ref.data[idx][4])
-          fig = self.pl_module.plot_prediction(x, out, idx=idx, add_loss_to_title=True)
-          # TODO: fix this so that we can get additional fig
-          if isinstance(fig, (list, tuple)):
-              fig = fig[0]
-          fig.update_layout(title=prediction_date_time)
+          fig.update_layout(title=prediction_date_time, font=dict(size=20))
+          #logging.info(f"self.data_table_ref.data[idx]:{self.data_table_ref.data[idx]}")
+          self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=1, col=1, draw_cum=False, x_time=x_time)
+          self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=2, col=1, draw_cum=True, x_time=x_time)
           img_bytes = fig.to_image(format="png") # kaleido library
           im = PIL.Image.open(BytesIO(img_bytes))
-          decoder_time_idx = x["decoder_time_idx"][idx][-1]
-          #logging.info(f"decoder_time_idx:{decoder_time_idx}")
+          #logging.info(f"decoder_time_idx:{x['decoder_time_idx'][idx]}")
           y_hat = y_hats[idx]
+          y_hat_cum = y_hats_cum[idx]
           y_raw = y_raws[idx]
           #logging.info(f"y_hat:{y_hat}")
           #logging.info(f"y_raw:{y_raw}")
@@ -242,7 +280,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           #im_interp = PIL.Image.open(BytesIO(img_bytes_interp))
           #img_interp = wandb.Image(im_interp)
 
-          preds.append([decoder_time_idx, torch.max(y_hat), torch.min(y_hat), img, rmse[idx], mae[idx]])
+          preds.append([decoder_time_idx, torch.max(y_hat_cum), torch.min(y_hat_cum), img, rmse[idx], mae[idx]])
       #logging.info(f"preds:{len(preds)}")
       return preds
      

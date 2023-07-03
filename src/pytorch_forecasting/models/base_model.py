@@ -2,46 +2,31 @@
 Timeseries models share a number of common characteristics. This module implements these in a common base class.
 """
 from collections import namedtuple
-#import pytorch_lightning as pl
 import copy
 from copy import deepcopy
 import inspect
 import logging
 import os
-import PIL
 from io import BytesIO
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import warnings
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-import numpy
-import wandb
 import traceback
+
 import lightning.pytorch as pl
 from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks import BasePredictionWriter, LearningRateFinder
 from lightning.pytorch.trainer.states import RunningStage
 from lightning.pytorch.utilities.parsing import AttributeDict, get_init_args
-from pytorch_forecasting.utils import create_mask, unpack_sequence, unsqueeze_like
-#from pytorch_lightning import LightningModule, Trainer
-#from pytorch_lightning.callbacks import BasePredictionWriter, LearningRateFinder
-#from pytorch_lightning.trainer.states import RunningStage
-#from pytorch_lightning.utilities.parsing import AttributeDict, get_init_args
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib.function_base import iterable
 import pandas as pd
+import PIL
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import pytorch_optimizer
 from pytorch_optimizer import Ranger21
-import scipy.stats
-import torch
-import torch.nn as nn
-from torch.nn.utils import rnn
-from torch.optim.lr_scheduler import LambdaLR, ReduceLROnPlateau
-from torch.utils.data import DataLoader
-from tqdm.autonotebook import tqdm
-import yaml
-
+from pytorch_forecasting.utils import create_mask, unpack_sequence, unsqueeze_like
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import EncoderNormalizer, GroupNormalizer, MultiNormalizer, NaNLabelEncoder
 from pytorch_forecasting.metrics import (
@@ -68,6 +53,16 @@ from pytorch_forecasting.utils import (
     groupby_apply,
     to_list,
 )
+import scipy.stats
+import torch
+import torch.nn as nn
+from torch.nn.utils import rnn
+from torch.optim.lr_scheduler import LambdaLR, ReduceLROnPlateau
+from torch.utils.data import DataLoader
+from tqdm.autonotebook import tqdm
+import wandb
+import yaml
+
 
 # todo: compile models
 
@@ -775,7 +770,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             out = self(x, **kwargs)
             prediction = out["prediction"]
             #logger.info(f"x:{x}, out:{out}, y:{y}")
-            exit(0)
+            #exit(0)
             # handle multiple targets
             prediction_list = to_list(prediction)
             gradient = 0
@@ -1066,6 +1061,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         ax=None,
         quantiles_kwargs: Dict[str, Any] = {},
         prediction_kwargs: Dict[str, Any] = {},
+        row = 1,
+        col = 1,
+        draw_cum = False,
+        x_time = None
     ) -> plt.Figure:
         """
         Plot prediction of prediction vs actuals
@@ -1093,12 +1092,19 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         y_hats = to_list(self.to_prediction(out, **prediction_kwargs))
         y_quantiles = to_list(self.to_quantiles(out, **quantiles_kwargs))
 
+        fig = ax
+        if fig == None:
+            fig = make_subplots()
         # for each target, plot
         figs = []
         for y_raw, y_hat, y_quantile, encoder_target, decoder_target in zip(
             y_raws, y_hats, y_quantiles, encoder_targets, decoder_targets
         ):
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
+            if draw_cum:
+                #logging.info(f"before cumsum: {y_all}")
+                y_all = torch.cumsum(y_all, dim=-1)
+                #logging.info(f"after cumsum: {y_all}")
             max_encoder_length = x["encoder_lengths"].max()
             y = torch.cat(
                 (
@@ -1106,11 +1112,28 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     y_all[max_encoder_length : (max_encoder_length + x["decoder_lengths"][idx])],
                 ),
             )
+            #logging.info(f"y.shape:{y.shape}")
             # move predictions to cpu
             y_hat = y_hat.detach().cpu()[idx, : x["decoder_lengths"][idx]]
+            n_pred = y_hat.shape[0]
+            base = y[-n_pred-1].detach().cpu()
+            #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             y_raw = y_raw.detach().cpu()[idx, : x["decoder_lengths"][idx]]
-
+            if draw_cum:
+                #logging.info(f"y_raw before cumsum:{y_raw}, {y_raw.shape}")
+                #logging.info(f"y_hat before cumsum:{y_hat}, {y_hat.shape}")
+                #logging.info(f"y_quantile before cumsum:{y_quantile}, {y_quantile.shape}")
+                y_hat = torch.cumsum(y_hat, dim=-1)
+                y_hat = torch.add(y_hat, base)
+                y_raw = torch.cumsum(y_raw, dim=-1)
+                y_raw = torch.add(y_raw, base)
+                y_quantile = torch.cumsum(y_quantile, dim=-2)
+                y_quantile = torch.add(y_quantile, base)
+                #logging.info(f"y_raw:{y_raw}, {y_raw.shape}")
+                #logging.info(f"y_raw:{y_raw}, {yhat.shape}")
+                #logging.info(f"y_quantile:{y_quantile}, {y_quantile.shape}")
+                #logging.info(f"y_quantile after cumsum:{y_quantile}, {y_quantile.shape}")
             # move to cpu
             y = y.detach().cpu()
             # create figure
@@ -1118,86 +1141,55 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #    fig, ax = plt.subplots()
             #else:
             #    fig = ax.get_figure()
-            fig = make_subplots()
-            fig.update_layout(
-                autosize=False,
-                width=2400,
-                height=1000,
-                margin=dict(l=20, r=20, t=20, b=20)
-            )
-            n_pred = y_hat.shape[0]
             max_context = 500
             x_start = min(max_context, y.shape[0] - n_pred)
-            x_obs = np.arange(-max_context, 0)
-            x_pred = np.arange(n_pred)
+            x_obs = np.arange(-x_start, 0)
+            #x_pred = np.arange(n_pred)
+            x_pred = x_time[-n_pred:]
             prop_cycle = iter(plt.rcParams["axes.prop_cycle"])
             obs_color = next(prop_cycle)["color"]
             pred_color = next(prop_cycle)["color"]
             # plot observed history
+            plotter = go.Scatter
             if len(x_obs) > 0:
-                if len(x_obs) > 1:
-                    #plotter = ax.plot
-                    plotter = go.Scatter
-                else:
-                    #plotter = ax.scatter
-                    plotter = go.Scatter
-                plot = plotter(x=x_obs, y=y[-max_context:-n_pred], name="observed", line=dict(color=obs_color))
-                fig.add_trace(plot)
-            if len(x_pred) > 1:
-                plotter = go.Scatter
-            else:
-                plotter = go.Scatter
+                #plot = plotter(x=x_obs, y=y[-max_context:-n_pred], name="observed" if draw_cum else None, line=dict(color=obs_color))
+                plot = plotter(x=x_time[-max_context:-n_pred], y=y[-max_context:-n_pred], name="observed" if draw_cum else None, line=dict(color=obs_color))
+                fig.add_trace(plot, row=row, col=col)
 
             # plot observed prediction
             if True:
             #if show_future_observed:
-                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed", line=dict(color=obs_color)))
+                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed" if draw_cum else None, line=dict(color=obs_color)), row=row, col=col)
 
             # plot prediction
-            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted", line=dict(color=pred_color)))
+            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted" if draw_cum else None, line=dict(color=pred_color)), row=row, col=col)
 
             # plot predicted quantiles
-            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean", line=dict(color=pred_color)))
+            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean" if draw_cum else None, line=dict(color=pred_color)), row=row, col=col)
             quantile_colors = ["red", "purple", "pink"]
             quantiles = [0.02, 0.1, 0.25]
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
-                                             fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}",
-                                             fillcolor=quantile_colors[i]))
+                                             fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}" if draw_cum else None,
+                                             fillcolor=quantile_colors[i]), row=row, col=col)
                     idx = y_quantile.shape[1]-(i+1)
-                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}",
+                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}" if draw_cum else None,
                                              fill='tonexty', # fill area between trace0 and trace1
-                                             mode='none', fillcolor=quantile_colors[i]))
+                                             mode='none', fillcolor=quantile_colors[i]), row=row, col=col)
                 else:
                     quantiles = torch.tensor([[y_quantile[0, i]], [y_quantile[0, -i - 1]]])
+                    logging.info(f"bad x_pred")
+                    exit(0)
                     fig.add_trace(go.errorbar(
                         x_pred,
                         y[[-n_pred]],
                         yerr=quantiles - y[-n_pred],
                         c=quantile_colors[i],
                         capsize=1.0,
-                    ))
+                        name="bad"
+                    ), row=row, col=col)
 
-            if add_loss_to_title is not False:
-                if isinstance(add_loss_to_title, bool):
-                    loss = self.loss
-                elif isinstance(add_loss_to_title, torch.Tensor):
-                    loss = add_loss_to_title.detach()[idx].item()
-                elif isinstance(add_loss_to_title, Metric):
-                    loss = add_loss_to_title
-                else:
-                    raise ValueError(f"add_loss_to_title '{add_loss_to_title}'' is unkown")
-                if isinstance(loss, MASE):
-                    loss_value = loss(y_raw[None], (y[-n_pred:][None], None), y[:n_pred][None])
-                elif isinstance(loss, Metric):
-                    try:
-                        loss_value = loss(y_raw[None], (y[-n_pred:][None], None))
-                    except Exception:
-                        loss_value = "-"
-                else:
-                    loss_value = loss
-                #go.set_title(f"Loss {loss_value}")
             #go.set_xlabel("Time index")
             figs.append(fig)
 

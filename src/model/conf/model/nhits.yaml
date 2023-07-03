@@ -9,12 +9,12 @@ heads:
 #  - position_optimization
 returns_prediction:
   loss_name: MQF2DistributionLoss
-  target: "close_back_cumsum"
+  target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 position_optimization:
   loss_name: SharpeLoss
   target: "close_back"
   logging_metrics: []
 time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month"]
-time_varying_unknown_reals: ["close_back_cumsum"]
+time_varying_unknown_reals: ["close_back"]
 add_relative_time_idx: False

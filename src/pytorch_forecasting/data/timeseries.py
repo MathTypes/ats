@@ -10,10 +10,21 @@ import inspect
 from typing import Any, Callable, Dict, List, Tuple, Union
 import warnings
 import logging
+import math
 import traceback
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pytorch_forecasting.data.encoders import (
+    EncoderNormalizer,
+    GroupNormalizer,
+    MultiNormalizer,
+    NaNLabelEncoder,
+    TorchNormalizer,
+)
+from pytorch_forecasting.data.samplers import TimeSynchronizedBatchSampler
+from pytorch_forecasting.utils import repr_class
 from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import RobustScaler, StandardScaler
@@ -24,15 +35,6 @@ from torch.nn.utils import rnn
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import Sampler, SequentialSampler
 
-from pytorch_forecasting.data.encoders import (
-    EncoderNormalizer,
-    GroupNormalizer,
-    MultiNormalizer,
-    NaNLabelEncoder,
-    TorchNormalizer,
-)
-from pytorch_forecasting.data.samplers import TimeSynchronizedBatchSampler
-from pytorch_forecasting.utils import repr_class
 
 
 def _find_end_indices(diffs: np.ndarray, max_lengths: np.ndarray, min_length: int) -> Tuple[np.ndarray, np.ndarray]:
@@ -419,10 +421,12 @@ class TimeSeriesDataSet(Dataset):
         #df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
         #df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
         # reduce return to bring down loss
+        data['close_back'] = data['close_back'].apply(lambda x:math.log(1+x))
+        data['volume_back'] = data['volume_back'].apply(lambda x:math.log(1+x))
         if "ticker" in data.columns:
           data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
           # 1000 is required to bring down loss to avoid nan
-          data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()/1000
+          data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()
         #logging.info(f"df_index_low_13:{df_index_low_13}")
         #data["high_13"] = df_index_high_13
         #data["low_13"] = df_index_low_13
