@@ -1733,9 +1733,9 @@ class TimeSeriesDataSet(Dataset):
             encoder_target = target[0][:encoder_length]
             target = target[0][encoder_length:]
             target_scale = target_scale[0]
-            base = encoder_target[0]
-            encoder_target = encoder_target - base
-            target = target - base
+            #base = encoder_target[0]
+            #encoder_target = encoder_target - base
+            #target = target - base
             target_name = self.target_names[0]
             # modify input data
             #logging.info(f"target_name:{target_name}")
@@ -1743,9 +1743,10 @@ class TimeSeriesDataSet(Dataset):
                 #logging.info(f"Debase target from data_cont, base:{base}")
                 #shape = data_cont[:, self.reals.index(target_name)]
                 #logging.info(f"target_cont: shape:{shape}, {data_cont[:, self.reals.index(target_name)]}")
-                data_cont[:, self.reals.index(target_name)] = data_cont[:, self.reals.index(target_name)] - base
+                #data_cont[:, self.reals.index(target_name)] = data_cont[:, self.reals.index(target_name)] - base
                 #logging.info(f"after target_cont: {data_cont[:, self.reals.index(target_name)]}")
                 #exit(0)
+                pass
         
         #logging.info(f"target:{target}")
         #logging.info(f"adjusted target:{target}")
@@ -1840,19 +1841,19 @@ class TimeSeriesDataSet(Dataset):
                 for idx in range(target_size)
             ]
             #logging.info(f"encoder_target:{encoder_target}")
-            base = [torch.unsqueeze(encoder_target[idx][:,0], 1)
-                    for idx in range(target_size)
-            ]
-            encoder_target = [encoder_target[idx] - base[idx] for idx in range(target_size)]
+            #base = [torch.unsqueeze(encoder_target[idx][:,0], 1)
+            #        for idx in range(target_size)
+            #]
+            #encoder_target = [encoder_target[idx] - base[idx] for idx in range(target_size)]
             #logging.info(f"encoder_target:{encoder_target}")
-            target = [target[idx] - base[idx] for idx in range(target_size)]
+            #target = [target[idx] - base[idx] for idx in range(target_size)]
             #logging.info(f"target:{target}")
         else:
             target = rnn.pad_sequence([batch[1][0] for batch in batches], batch_first=True)
             encoder_target = rnn.pad_sequence([batch[0]["encoder_target"] for batch in batches], batch_first=True)
-            base = torch.unsqueeze(encoder_target[:,0], 1)
-            encoder_target = encoder_target - base
-            target = target - base
+            #base = torch.unsqueeze(encoder_target[:,0], 1)
+            #encoder_target = encoder_target - base
+            #target = target - base
 
         if batches[0][1][1] is not None:
             weight = rnn.pad_sequence([batch[1][1] for batch in batches], batch_first=True)

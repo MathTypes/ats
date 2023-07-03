@@ -378,18 +378,20 @@ def get_data_module(config, targets):
     raw_data["close_low_51"] = g['close_back'].transform(add_lows, width=51)
     raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
     raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
-    #logging.info(f"raw_data:{raw_data}")
+    logging.info(f"raw_data:{raw_data.head()}")
     eval_cut_off = config.job.eval_cut_off
     #logging.info(f"eval_cut_off:{eval_cut_off}")
-    train_data = raw_data[raw_data.year<=eval_cut_off]
-    eval_data = raw_data[raw_data.year>eval_cut_off]
+    #train_data = raw_data[raw_data.year<=eval_cut_off]
+    train_data = raw_data[(raw_data.time>=config.job.train_start_date) & (raw_data.time<config.job.test_start_date)]
+    #eval_data = raw_data[raw_data.year>eval_cut_off]
+    eval_data = raw_data[(raw_data.time>=config.job.test_start_date) & (raw_data.time<config.job.test_end_date)]
     train_data = train_data.sort_values(["ticker", "time"])
     eval_data = eval_data.sort_values(["ticker", "time"])
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
     eval_data.insert(0, 'time_idx', range(0, len(eval_data)))
     data_loading_time = time.time() - start
-    logging.info(f"Data loading time: {data_loading_time:.2f} seconds")
-
+    logging.info(f"train_data:{train_data[:1000]}")
+    logging.info(f"eval_data:{eval_data[:1000]}")
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding
     special_days = [
         "easter_day",

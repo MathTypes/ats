@@ -46,16 +46,24 @@ def get_input_dirs(config, ticker, asset_type):
         files = os.listdir(date_dir)
         files = [date_dir+'/'+f for f in files if os.path.isfile(date_dir+'/'+f)] #Filtering only the files.
         input_dirs.extend(files)
+    logging.info(f"reading files:{input_dirs}")
     return input_dirs
 
 def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
     input_dirs = get_input_dirs(config, ticker, asset_type)
     ds = ray.data.read_parquet(input_dirs, parallelism=100)
     ds = ds.to_pandas(10000000)
-    #logging.info(f"ds:{ds}")
-    ds.sort_index()
+    ds = ds.sort_index()
     ds = ds[~ds.index.duplicated(keep='first')]
-    #logging.info(f"ds:{ds.head()}")
+    ds = ds[(ds.hour_of_day>4) & ds.hour_of_day<17]
+    # Need to recompute close_back after filtering
+    ds = ds.drop(columns=["close_back", "volume_back", "dv_back"])
+    ds_pct_back = ds[["close", "volume", "dv"]].pct_change(periods=1)
+    #df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
+    ds = ds.join(ds_pct_back, rsuffix='_back')
+    #.join(df_pct_forward, rsuffix='_fwd')
+    logging.info(f"ds:{ds.head()}")
+    exit(0)
     #logging.info(f"ds:{ds.info()}")
     return ds
 

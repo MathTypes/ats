@@ -198,7 +198,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             max_encoder_length=context_length,
             min_prediction_length=prediction_length,
             max_prediction_length=prediction_length,
-            allow_missing_timesteps=True,
+            allow_missing_timesteps=False,
             #target_normalizer=None,
             target_normalizer=target_normalizer,
             #time_varying_known_reals=["relative_time_idx", "hour_of_day", "day_of_week", "day_of_month"],

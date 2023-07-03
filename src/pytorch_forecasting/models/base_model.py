@@ -1102,9 +1102,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         ):
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
             if draw_cum:
-                #logging.info(f"before cumsum: {y_all}")
+                logging.info(f"before cumsum: y_all:{y_all}")
                 y_all = torch.cumsum(y_all, dim=-1)
-                #logging.info(f"after cumsum: {y_all}")
+                #logging.info(f"after cumsum: y_all:{y_all}, {y_all.shape}")
             max_encoder_length = x["encoder_lengths"].max()
             y = torch.cat(
                 (
@@ -1130,8 +1130,6 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 y_raw = torch.add(y_raw, base)
                 y_quantile = torch.cumsum(y_quantile, dim=-2)
                 y_quantile = torch.add(y_quantile, base)
-                #logging.info(f"y_raw:{y_raw}, {y_raw.shape}")
-                #logging.info(f"y_raw:{y_raw}, {yhat.shape}")
                 #logging.info(f"y_quantile:{y_quantile}, {y_quantile.shape}")
                 #logging.info(f"y_quantile after cumsum:{y_quantile}, {y_quantile.shape}")
             # move to cpu
@@ -1141,7 +1139,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #    fig, ax = plt.subplots()
             #else:
             #    fig = ax.get_figure()
-            max_context = 500
+            max_context = 320
             x_start = min(max_context, y.shape[0] - n_pred)
             x_obs = np.arange(-x_start, 0)
             #x_pred = np.arange(n_pred)
@@ -1153,30 +1151,30 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             plotter = go.Scatter
             if len(x_obs) > 0:
                 #plot = plotter(x=x_obs, y=y[-max_context:-n_pred], name="observed" if draw_cum else None, line=dict(color=obs_color))
-                plot = plotter(x=x_time[-max_context:-n_pred], y=y[-max_context:-n_pred], name="observed" if draw_cum else None, line=dict(color=obs_color))
+                plot = plotter(x=x_time[-max_context:-n_pred], y=y[-max_context:-n_pred], name="observed" if draw_cum else None, line=dict(color=obs_color), showlegend=False)
                 fig.add_trace(plot, row=row, col=col)
 
             # plot observed prediction
             if True:
             #if show_future_observed:
-                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed" if draw_cum else None, line=dict(color=obs_color)), row=row, col=col)
+                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed" if draw_cum else None, line=dict(color=obs_color), showlegend=False), row=row, col=col)
 
             # plot prediction
-            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted" if draw_cum else None, line=dict(color=pred_color)), row=row, col=col)
+            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted" if draw_cum else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
 
             # plot predicted quantiles
-            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean" if draw_cum else None, line=dict(color=pred_color)), row=row, col=col)
+            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean" if draw_cum else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
             quantile_colors = ["red", "purple", "pink"]
             quantiles = [0.02, 0.1, 0.25]
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
                                              fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}" if draw_cum else None,
-                                             fillcolor=quantile_colors[i]), row=row, col=col)
+                                             fillcolor=quantile_colors[i], showlegend=False), row=row, col=col)
                     idx = y_quantile.shape[1]-(i+1)
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}" if draw_cum else None,
                                              fill='tonexty', # fill area between trace0 and trace1
-                                             mode='none', fillcolor=quantile_colors[i]), row=row, col=col)
+                                             mode='none', fillcolor=quantile_colors[i], showlegend=False), row=row, col=col)
                 else:
                     quantiles = torch.tensor([[y_quantile[0, i]], [y_quantile[0, -i - 1]]])
                     logging.info(f"bad x_pred")
