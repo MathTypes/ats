@@ -17,7 +17,7 @@ from pytorch_forecasting.models.rnn import RecurrentNetwork
 from pytorch_forecasting.models.temporal_fusion_transformer import TemporalFusionTransformer
 from pytorch_forecasting.models.patch_tst_ss import PatchTstTransformer
 from pytorch_forecasting.models.patch_tst_tft import PatchTstTftTransformer
-from pytorch_forecasting.models.patch_tst_s import PatchTstTftSupervisedTransformer
+from pytorch_forecasting.models.patch_tft_supervised import PatchTftSupervised
 
 __all__ = [
     "NBeats",

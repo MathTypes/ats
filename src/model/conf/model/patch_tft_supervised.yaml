@@ -19,7 +19,7 @@ position_optimization:
 #loss_name: MAPCSE
 #loss_name: ["MQF2DistributionLoss", "SharpeLoss"]
 #loss_name: SharpeLoss
-name: patch_tst_tft_supervised
+name: patch_tft_supervised
 #target: [["close_back_cumsum"], ["close_back"]]
 time_varying_known_reals: []
 time_varying_unknown_reals: ["close_back", "volume_back"]

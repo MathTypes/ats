@@ -169,7 +169,7 @@ class PatchTstTftPipeline(Pipeline):
         pass
     
 
-class PatchTstTftSupervisedPipeline(Pipeline):
+class PatchTftSupervisedPipeline(Pipeline):
     def __init__(self, dataset="fut", device=None, config=None):
         super().__init__(device)
         self.dataset = dataset
@@ -179,7 +179,7 @@ class PatchTstTftSupervisedPipeline(Pipeline):
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         logging.info(f"head:{self.heads}, targets:{self.targets}")
         self.data_module = model_utils.get_data_module(self.config, self.targets)
-        self.model = model_utils.get_patch_tst_tft_supervised_model(self.config, self.data_module, self.heads)
+        self.model = model_utils.get_patch_tft_supervised_model(self.config, self.data_module, self.heads)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 

@@ -1102,7 +1102,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         ):
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
             if draw_cum:
-                logging.info(f"before cumsum: y_all:{y_all}")
+                #logging.info(f"before cumsum: y_all:{y_all}")
                 y_all = torch.cumsum(y_all, dim=-1)
                 #logging.info(f"after cumsum: y_all:{y_all}, {y_all.shape}")
             max_encoder_length = x["encoder_lengths"].max()

@@ -46,7 +46,7 @@ from pytorch_forecasting.models import (
     get_rnn,
     PatchTstTransformer,
     PatchTstTftTransformer,
-    PatchTstTftSupervisedTransformer
+    PatchTftSupervised
 )
 from pytorch_forecasting.utils import (
     apply_to_list,

@@ -21,7 +21,7 @@ from omegaconf import OmegaConf
 import pandas as pd
 import pyarrow.dataset as pds
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTstTftSupervisedTransformer
+from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTftSupervised
 from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
 from pytorch_forecasting.metrics import MAE, MAPE, MASE, MAPCSE, RMSE, SMAPE, PoissonLoss, QuantileLoss, MQF2DistributionLoss, MultiLoss, SharpeLoss, DistributionLoss
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
@@ -244,7 +244,7 @@ def get_output_size(loss):
     else:
         return 1  # default to 1
 
-def get_patch_tst_tft_supervised_model(config, data_module, heads):
+def get_patch_tft_supervised_model(config, data_module, heads):
     device = config.job.device
     training = data_module.training
     prediction_length = config.model.prediction_length
@@ -271,12 +271,15 @@ def get_patch_tst_tft_supervised_model(config, data_module, heads):
         logging.info(f"losses:{losses}")
         logging.info(f"logging_metrics:{logging_metrics}")
         logging.info(f"output_size_dict:{output_size_dict}")
-        loss = MultiLossWithUncertaintyWeight(losses)
+        if len(losses)>1:
+            loss = MultiLossWithUncertaintyWeight(losses)
+        else:
+            loss = losses[0]
     else:
         # TODO implement single task loss
         pass
     
-    net = PatchTstTftSupervisedTransformer.from_dataset(
+    net = PatchTftSupervised.from_dataset(
         training,
         patch_len=patch_len,
         stride=stride,
