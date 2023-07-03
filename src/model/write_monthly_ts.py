@@ -1,5 +1,5 @@
 # Usage:
-#   PYTHONPATH=.. python3 write_rolling_ts.py --ticker=ES --asset_type=FUT --start_date=2008-01-01 --end_date=2009-01-01
+#   PYTHONPATH=.. python3 write_monthly_ts.py --ticker=ES --asset_type=FUT --start_date=2008-01-01 --end_date=2009-01-01 --input_dir=. --output_dir=data
 #
 import datetime
 import logging
@@ -50,12 +50,13 @@ def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date,
     return ds
 
 class Preprocessor:
-    def __init__(self, ticker, orig_since, orig_until, since, until):
+    def __init__(self, ticker, orig_since, orig_until, since, until, freq):
         self.orig_since = orig_since
         self.orig_until = orig_until
         self.since = since
         self.until = until
         self.ticker = ticker
+        self.freq = freq
 
     def __call__(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.set_index('Time')
@@ -65,24 +66,29 @@ class Preprocessor:
         df = df.rename(columns = {"Volume":"volume", "Open":"open",
                                   "High":"high", "Low":"low", "Close":"close"})                      
         df["dv"] = df["close"]*df["volume"]
-        df = df.resample('30Min').agg({'open': 'first', 
-                                        'high': 'max', 
-                                        'low': 'min', 
-                                        'close': 'last',
-                                        'volume': 'sum',
-                                        "dv": 'sum'})
+        df = df.resample(self.freq).agg({'open': 'first',
+                                         'high': 'max',
+                                         'low': 'min',
+                                         'close': 'last',
+                                         'volume': 'sum',
+                                         "dv": 'sum'})
         #df = df.compute()
         df["ticker"] = self.ticker
         df["time"] = df.index
         df["cum_volume"]  = df.volume.cumsum()
         df["cum_dv"]  = df.dv.cumsum()
+        df = df.sort_index()
+        # It is import to dropna before pct_change. The reason is that
+        # we do not have open/high/low/close for Sat, but volume is 0.
+        # If we do not drop them, they would cause Sun late trading to
+        # have nan volume pct change and causes Sun to be dropped.
+        df = df.dropna()
         logging.info(f"df:{df.head()}")
         df_pct_back = df[["close", "volume", "dv"]].pct_change(periods=1)
         df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
         df = df.join(df_pct_back, rsuffix='_back').join(df_pct_forward, rsuffix='_fwd')
         #df = roll_time_series(df, column_id="ticker", column_sort="time")
-        df = df.replace([np.inf, -np.inf], np.nan)
-        df = df.dropna()
+        #df = df.replace([np.inf, -np.inf], np.nan)
         df["month"] = df.time.dt.month  # categories have be strings
         df["year"] = df.time.dt.year  # categories have be strings
         df["hour_of_day"] = df.time.apply(lambda x:x.hour)
@@ -91,36 +97,41 @@ class Preprocessor:
         df["time_idx"] = df.index
         logging.info(f"df:{df.head()}")
         logging.info(f"df:{df.describe()}")
-        df = df.dropna()
+        #df = df.dropna()
         df["series_idx"] = df.index
         return df
 
-def process_month(ds, cur_date):
+def process_month(ds, cur_date, freq):
     for_date = cur_date[0]
     orig_since = cur_date[0]
     orig_until = cur_date[1]
-    since = orig_since + datetime.timedelta(days=-1)
-    until = orig_until + datetime.timedelta(days=1)
+    since = orig_since + datetime.timedelta(days=-4)
+    until = orig_until + datetime.timedelta(days=4)
             
     ds = ds.map_batches(Preprocessor,
                         batch_size=40096000,
                         compute=ActorPoolStrategy(1, 1),
                         fn_constructor_kwargs={"ticker": ticker, "orig_since":orig_since,
-                                               "orig_until":orig_until, "since":since, "until":until})
+                                               "orig_until":orig_until, "since":since, "until":until, "freq":freq})
     #df = ds.to_dask()
-    file_path = os.path.join(args.output_dir, asset_type, "30min", ticker)
+    file_path = os.path.join(args.output_dir, asset_type, freq, ticker) + "/" + for_date.strftime("%Y%m%d")
     if not os.path.exists(file_path):
         os.makedirs(file_path)
+    else:
+        logging.error(f"Directory {file_path} already exists, exiting!")
+        return
     ds = ds
-    ds.write_parquet(file_path + "/" + for_date.strftime("%Y%m%d"))
+    ds.write_parquet(file_path)
 
 if __name__ == '__main__':
     pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
     parser = config_utils.get_arg_parser("Scrape tweet by id")
     parser.add_argument("--input_dir", type=str)
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--ticker", type=str)
     parser.add_argument("--asset_type", type=str)
+    parser.add_argument("--freq", type=str)
     parser.add_argument(
         "--start_date",
         type=lambda d: datetime.datetime.strptime(d, "%Y-%m-%d").date(),
@@ -147,5 +158,5 @@ if __name__ == '__main__':
     until = args.end_date
     ds = pull_futures_sample_data(ticker, asset_type, since, until, args.input_dir)
     for cur_date in time_util.monthlist(since, until):
-        process_month(ds, cur_date)
+        process_month(ds, cur_date, args.freq)
     ray.shutdown()
