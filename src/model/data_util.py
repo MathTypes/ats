@@ -55,7 +55,9 @@ def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
     ds = ds.to_pandas(10000000)
     ds = ds.sort_index()
     ds = ds[~ds.index.duplicated(keep='first')]
-    ds = ds[(ds.hour_of_day>4) & ds.hour_of_day<17]
+    logging.info(f"ds before filter:{ds.head()}")
+    ds = ds[(ds.hour_of_day>4) & (ds.hour_of_day<17)]
+    logging.info(f"ds after filter:{ds.head()}")
     # Need to recompute close_back after filtering
     ds = ds.drop(columns=["close_back", "volume_back", "dv_back"])
     ds_pct_back = ds[["close", "volume", "dv"]].pct_change(periods=1)
@@ -63,7 +65,7 @@ def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
     ds = ds.join(ds_pct_back, rsuffix='_back')
     #.join(df_pct_forward, rsuffix='_fwd')
     logging.info(f"ds:{ds.head()}")
-    exit(0)
+    ds = ds.dropna()
     #logging.info(f"ds:{ds.info()}")
     return ds
 

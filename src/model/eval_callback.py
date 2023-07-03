@@ -152,7 +152,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
               fig.update_xaxes(
                   rangebreaks=[
                       dict(bounds=["sat", "mon"]), #hide weekends
-                      #dict(bounds=[17, 9], pattern="hour"), #hide hours outside of 9am-5pm
+                      dict(bounds=[17, 4], pattern="hour"), #hide hours outside of 4am-5pm
                       #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
                   ]
               )
@@ -272,7 +272,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           fig.update_xaxes(
               rangebreaks=[
                   dict(bounds=["sat", "mon"]), #hide weekends
-                  #dict(bounds=[17, 9], pattern="hour"), #hide hours outside of 9am-5pm
+                  dict(bounds=[17, 4], pattern="hour"), #hide hours outside of 4am-5pm
                   #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
               ]
           )
