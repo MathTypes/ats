@@ -204,7 +204,7 @@ class Flatten_Head(nn.Module):
             x = self.dropout(x)
         return x
 
-class PatchTstTftSupervisedTransformer(BaseModelWithCovariates):
+class PatchTftSupervised(BaseModelWithCovariates):
     def __init__(
             self,
             c_in:int, target_dim:int, patch_len:int, stride:int, num_patch:int,
