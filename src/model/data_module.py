@@ -175,8 +175,8 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         logging.info(f"target:{target} {type(target)}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
-        target_normalizer = None
-        #target_normalizer ="auto"
+        #target_normalizer = None
+        target_normalizer ="auto"
         if isinstance(target, (typing.Set, typing.List)):
             normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
             target_normalizer = MultiNormalizer(normalizer_list)

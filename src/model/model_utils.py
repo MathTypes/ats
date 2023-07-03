@@ -310,7 +310,7 @@ def run_tune(study_name, config):
 
 def get_input_dirs(config):
     base_dir = "data/FUT/30min_rsp/ES"
-    input_dirs = []
+    Input_dirs = []
     for cur_date in time_util.monthlist(config['start_date'], config['end_date']):
         for_date = cur_date[0]
         date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))

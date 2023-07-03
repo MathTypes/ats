@@ -1119,8 +1119,16 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #else:
             #    fig = ax.get_figure()
             fig = make_subplots()
+            fig.update_layout(
+                autosize=False,
+                width=2400,
+                height=1000,
+                margin=dict(l=20, r=20, t=20, b=20)
+            )
             n_pred = y_hat.shape[0]
-            x_obs = np.arange(-(y.shape[0] - n_pred), 0)
+            max_context = 500
+            x_start = min(max_context, y.shape[0] - n_pred)
+            x_obs = np.arange(-max_context, 0)
             x_pred = np.arange(n_pred)
             prop_cycle = iter(plt.rcParams["axes.prop_cycle"])
             obs_color = next(prop_cycle)["color"]
@@ -1133,7 +1141,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 else:
                     #plotter = ax.scatter
                     plotter = go.Scatter
-                plot = plotter(x=x_obs, y=y[:-n_pred], name="observed", line=dict(color=obs_color))
+                plot = plotter(x=x_obs, y=y[-max_context:-n_pred], name="observed", line=dict(color=obs_color))
                 fig.add_trace(plot)
             if len(x_pred) > 1:
                 plotter = go.Scatter
@@ -1150,16 +1158,17 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
             # plot predicted quantiles
             fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean", line=dict(color=pred_color)))
-            quantile_colors = ["red", "purple", "pink", "green"]
+            quantile_colors = ["red", "purple", "pink"]
+            quantiles = [0.02, 0.1, 0.25]
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
-                                             fill=None, mode='lines', name=f"quantile {i}",
-                                             line_color=quantile_colors[i]))
+                                             fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}",
+                                             fillcolor=quantile_colors[i]))
                     idx = y_quantile.shape[1]-(i+1)
-                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {idx}",
+                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}",
                                              fill='tonexty', # fill area between trace0 and trace1
-                                             mode='lines', line_color=quantile_colors[i]))
+                                             mode='none', fillcolor=quantile_colors[i]))
                 else:
                     quantiles = torch.tensor([[y_quantile[0, i]], [y_quantile[0, -i - 1]]])
                     fig.add_trace(go.errorbar(

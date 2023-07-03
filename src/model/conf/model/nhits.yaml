@@ -1,9 +1,8 @@
-hidden_size: 64
+hidden_size: 4
 prediction_length: 32
-context_length: 320
+context_length: 3200
 learning_rate : 0.02
-#loss_name: MAPCSE
-#loss_name: RMSE
+loss_name: "SMAPE"
 name: nhits
 heads:
   - returns_prediction
