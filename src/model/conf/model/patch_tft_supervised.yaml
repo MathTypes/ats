@@ -10,7 +10,7 @@ heads:
 #  - position_optimization
 returns_prediction:
   loss_name: MQF2DistributionLoss
-  target: "close_back_cumsum"
+  target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 position_optimization:
   loss_name: SharpeLoss
@@ -22,5 +22,5 @@ position_optimization:
 name: patch_tst_tft_supervised
 #target: [["close_back_cumsum"], ["close_back"]]
 time_varying_known_reals: []
-time_varying_unknown_reals: ["close_back_cumsum", "volume_back_cumsum"]
+time_varying_unknown_reals: ["close_back", "volume_back"]
 add_relative_time_idx: True
