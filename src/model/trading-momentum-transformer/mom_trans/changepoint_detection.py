@@ -273,6 +273,7 @@ def changepoint_loc_and_score(
             kC_changepoint_location=kC_changepoint_location,
             kC_steepness=kC_steepness,
         )
+        logging.info(f"changepoint_location:{changepoint_location}, kC_nlml:{kC_nkml}")
     except BaseException as ex:
         # do not want to optimise again if the hyperparameters
         # were already initialised as the defaults

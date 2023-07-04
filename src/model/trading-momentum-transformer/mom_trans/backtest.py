@@ -2,6 +2,7 @@ import os
 from typing import Tuple, List, Dict
 import tensorflow as tf
 import pandas as pd
+import logging
 import datetime as dt
 import numpy as np
 import shutil
@@ -396,6 +397,7 @@ def run_single_window(
     raw_data["date"] = raw_data["date"].astype("datetime64[ns]")
 
     # TODO more/less than the one year test buffer
+    logging.error(f"train_interval:{train_interval}")
     model_features = ModelFeatures(
         raw_data,
         params["total_time_steps"],

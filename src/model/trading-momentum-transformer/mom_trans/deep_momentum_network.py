@@ -3,7 +3,8 @@ import json
 import pathlib
 import shutil
 import copy
-
+import traceback
+import logging
 from keras_tuner.tuners.randomsearch import RandomSearch
 from abc import ABC, abstractmethod
 
@@ -35,6 +36,7 @@ class SharpeLoss(tf.keras.losses.Loss):
         super().__init__()
 
     def call(self, y_true, weights):
+        logging.error(f"y_true:{y_true}, weights:{weights}")
         captured_returns = weights * y_true
         mean_returns = tf.reduce_mean(captured_returns)
         return -(
@@ -85,11 +87,13 @@ class SharpeValidationLoss(keras.callbacks.Callback):
         self.best_sharpe = np.NINF
 
     def on_epoch_end(self, epoch, logs=None):
+        logging.info(f"inputs:{self.inputs.shape}")
         positions = self.model.predict(
             self.inputs,
             workers=self.n_multiprocessing_workers,
             use_multiprocessing=True,  # , batch_size=1
         )
+        logging.info(f"positions:{positions.shape}")
 
         captured_returns = tf.math.unsorted_segment_mean(
             positions * self.returns, self.time_indices, self.num_time
@@ -359,9 +363,11 @@ class DeepMomentumNetworkModel(ABC):
         hyperparameters,
         temp_folder: str,
     ):
+        traceback.print_stack()
         data, labels, active_flags, _, _ = ModelFeatures._unpack(train_data)
         val_data, val_labels, val_flags, _, val_time = ModelFeatures._unpack(valid_data)
-
+        logging.into(f"active_flags: {active_flags}")
+        logging.into(f"val_flags: {val_flags}")
         model = self.load_model(hyperparameters)
 
         if self.evaluate_diversified_val_sharpe:
@@ -457,7 +463,13 @@ class DeepMomentumNetworkModel(ABC):
         years_geq=np.iinfo(np.int32).min,
         years_lt=np.iinfo(np.int32).max,
     ):
+        traceback.print_stack()
+        logging.error(f"sliding_window:{sliding_window}")
         inputs, outputs, _, identifier, time = ModelFeatures._unpack(data)
+        logging.error(f"inputs:{inputs}")
+        logging.error(f"outputs:{outputs}")
+        logging.error(f"time:{time}")
+        logging.error(f"identifier:{identifier}")
         if sliding_window:
             time = pd.to_datetime(
                 time[:, -1, 0].flatten()
@@ -471,12 +483,13 @@ class DeepMomentumNetworkModel(ABC):
             identifier = identifier.flatten()
             returns = outputs.flatten()
         mask = (years >= years_geq) & (years < years_lt)
-
+        logging.info(f"returns:{returns.shape}")
         positions = model.predict(
             inputs,
             workers=self.n_multiprocessing_workers,
             use_multiprocessing=True,  # , batch_size=1
         )
+        logging.info(f"positions:{positions.shape}")
         if sliding_window:
             positions = positions[:, -1, 0].flatten()
         else:

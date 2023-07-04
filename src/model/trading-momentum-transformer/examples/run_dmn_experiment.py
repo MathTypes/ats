@@ -8,6 +8,8 @@ from mom_trans.backtest import run_all_windows
 import numpy as np
 from functools import reduce
 
+from util import logging_utils
+
 # define the asset class of each ticker here - for this example we have not done this
 TEST_MODE = False
 ASSET_CLASS_MAPPING = dict(zip(QUANDL_TICKERS, ["COMB"] * len(QUANDL_TICKERS)))
@@ -197,5 +199,5 @@ if __name__ == "__main__":
             args.test_window_size,
             args.num_repeats,
         )
-
+    logging_utils.init_logging()
     main(*get_args())
