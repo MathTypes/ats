@@ -329,6 +329,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
         #logging.info(f"after hparams:{self.hparams}")
         self.d_model = d_model
+        self.skipped_patch = int(patch_len/stride - 1)
         # processing inputs
         # embeddings
         self.input_embeddings = MultiEmbedding(
@@ -378,7 +379,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 for name in self.hparams.time_varying_reals_encoder
             }
         )
-        logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
+        #logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
         decoder_input_sizes = {
             name: self.input_embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_decoder
         }
@@ -389,7 +390,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 for name in self.hparams.time_varying_reals_decoder
             }
         )
-        logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
+        #logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
 
         # create single variable grns that are shared across decoder and encoder
         if self.hparams.share_single_variable_networks:
@@ -414,7 +415,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                  self.hparams.time_varying_categoricals_encoder}
         # Set to d_model instead of hparams.hidden_size since patch output converts each variable to same d_model
         #logging.info(f"input_embedding_flags:{input_embedding_flags}")
-        logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
+        #logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
         self.encoder_variable_selection = VariableSelectionNetwork(
             input_sizes=encoder_input_sizes,
             hidden_size=d_model,
@@ -431,7 +432,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             reduce=True
         )
         #logging.info(f"encoder_variable_selection:{self.encoder_variable_selection}")
-        logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
+        #logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
         self.decoder_variable_selection = VariableSelectionNetwork(
             input_sizes=decoder_input_sizes,
             hidden_size=d_model,
@@ -444,7 +445,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else self.shared_single_variable_grns,
             reduce = True
         )
-        logging.info(f"decoder_variable_selection:{self.decoder_variable_selection}")
+        #logging.info(f"decoder_variable_selection:{self.decoder_variable_selection}")
 
         # static encoders
         # for variable selection
@@ -646,7 +647,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         """
         add time dimension to static context
         """
-        #logging.info(f"static_context:{context.shape}")
+        #logging.info(f"static_context:{context.shape}, timestep:{timesteps}")
         return context[:, None].expand(-1, timesteps, -1)
 
     def get_attention_mask(self, encoder_lengths: torch.LongTensor, decoder_lengths: torch.LongTensor):
@@ -704,7 +705,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"after_x_cont:{x_cont.shape}")
         x_cat = self.x_cat_patch(x_cat)
         #exit(0)
-        timesteps = x_cont.size(2)-1  # encode + decode length - 1 (spanning encode/decode)
+        timesteps = x_cont.size(2)-self.skipped_patch  # encode + decode length - 1 (spanning encode/decode)
         #logging.info(f"after_x_cat:{x_cat.shape}, timesteps:{timesteps}")
         input_vectors = self.input_embeddings(x_cat)
         input_vectors.update(
@@ -745,7 +746,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"self.decoder_variables:{self.decoder_variables}")
         embeddings_varying_decoder = {
             # When patching, there is one spanning encoder and decoder and needs to be filtered out
-            name: input_vectors[name][:, new_encoder_length+1:] for name in self.decoder_variables  # select decoder
+            name: input_vectors[name][:, new_encoder_length+self.skipped_patch:] for name in self.decoder_variables  # select decoder
         }
         #logging.info(f"embeddings_varying_decoder before initial variable:{embeddings_varying_decoder['relative_time_idx'].shape}")
         embeddings_varying_decoder, decoder_sparse_weights = self.decoder_variable_selection(
@@ -1159,12 +1160,15 @@ class PatchTftSupervised(BaseModelWithCovariates):
             #    height=len(values) * 0.25 + 10,)
             order = np.argsort(values)
             values = values / values.sum(-1).unsqueeze(-1)
+            #logging.info(f"labels:{labels}, values:{values}")
             fig.add_trace(
                 go.Bar(
-                    x=np.arange(len(values)),
-                    #ids=np.asarray(labels)[order],
-                    y=values[order] * 100,
-                    orientation='h', name=title), row=row, col=col)
+                    #x=np.arange(len(values)),
+                    y=np.asarray(labels)[order],
+                    #y=values[order] * 100,
+                    x=values[order] * 100,
+                    name=title,
+                    orientation='h'), row=row, col=col)
             #ax.barh(np.arange(len(values)), values[order] * 100, tick_label=np.asarray(labels)[order])
             #ax.set_title(title)
             #ax.set_xlabel("Importance in %")
