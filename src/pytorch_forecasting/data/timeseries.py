@@ -436,7 +436,7 @@ class TimeSeriesDataSet(Dataset):
         #data["low_91"] = df_index_low_91
         data = data.dropna()
         #logging.info(f"enhanced_data:{data}")
-        logging.info(f"data:{data.describe()}")
+        #logging.info(f"data:{data.describe()}")
         
         # target normalizer
         # JJ: disable target normalizer
@@ -1316,8 +1316,8 @@ class TimeSeriesDataSet(Dataset):
 
         # filter out where encode and decode length are not satisfied
         df_index["sequence_length"] = df_index["time"].iloc[df_index["index_end"]].to_numpy() - df_index["time"] + 1
-        logging.info(f"df_index:{df_index}")
-        logging.info(f"min_sequence_length:{min_sequence_length}")
+        #logging.info(f"df_index:{df_index}")
+        #logging.info(f"min_sequence_length:{min_sequence_length}")
         # filter too short sequences
         df_index = df_index[
             # sequence must be at least of minimal prediction length

@@ -256,7 +256,7 @@ def get_patch_tft_supervised_model(config, data_module, heads):
     logging.info(f"prediction_length:{prediction_length}, patch_len:{patch_len}")
     num_patch = (max(context_length, patch_len)-patch_len) // stride + 1
     prediction_num_patch = (max(prediction_length, patch_len)-patch_len) // stride + 1
-    logging.info(f"patch_len:{patch_len}, num_patch:{num_patch}, context_length:{context_length}, stride:{stride}")
+    logging.info(f"patch_len:{patch_len}, num_patch:{num_patch}, context_length:{context_length}, stride:{stride}, prediction_num_patch:{prediction_num_patch}")
     loss = None
     logging_metrics = []
     output_size_dict = {}
@@ -290,12 +290,12 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         #logging_metrics=logging_metrics,
         logging_metrics=None,
         # not meaningful for finding the learning rate but otherwise very important
-        learning_rate=0.03,
+        learning_rate=config.model.learning_rate,
         d_model=d_model,  # most important hyperparameter apart from learning rate
-        hidden_size=8,
+        hidden_size=config.model.hidden_size,
         # number of attention heads. Set to up to 4 for large datasets
-        n_heads=1,
-        attn_dropout=0.1,  # between 0.1 and 0.3 are good values
+        n_heads=config.model.attn_heads,
+        attn_dropout=config.model.attn_dropout,  # between 0.1 and 0.3 are good values
         #hidden_continuous_size=8,  # set to <= hidden_size
         #loss=QuantileLoss(),
         optimizer="Ranger",
@@ -382,7 +382,7 @@ def get_data_module(config, targets):
     raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
     raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
     logging.info(f"raw_data:{raw_data.head()}")
-    eval_cut_off = config.job.eval_cut_off
+    #eval_cut_off = config.job.eval_cut_off
     #logging.info(f"eval_cut_off:{eval_cut_off}")
     #train_data = raw_data[raw_data.year<=eval_cut_off]
     train_data = raw_data[(raw_data.time>=config.job.train_start_date) & (raw_data.time<config.job.test_start_date)]
@@ -393,8 +393,8 @@ def get_data_module(config, targets):
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
     eval_data.insert(0, 'time_idx', range(0, len(eval_data)))
     data_loading_time = time.time() - start
-    logging.info(f"train_data:{train_data[:1000]}")
-    logging.info(f"eval_data:{eval_data[:1000]}")
+    #logging.info(f"train_data:{train_data[:1000]}")
+    #logging.info(f"eval_data:{eval_data[:1000]}")
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding
     special_days = [
         "easter_day",

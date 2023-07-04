@@ -378,7 +378,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 for name in self.hparams.time_varying_reals_encoder
             }
         )
-        #logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
+        logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
         decoder_input_sizes = {
             name: self.input_embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_decoder
         }
@@ -389,7 +389,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 for name in self.hparams.time_varying_reals_decoder
             }
         )
-        #logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
+        logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
 
         # create single variable grns that are shared across decoder and encoder
         if self.hparams.share_single_variable_networks:
@@ -414,6 +414,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                  self.hparams.time_varying_categoricals_encoder}
         # Set to d_model instead of hparams.hidden_size since patch output converts each variable to same d_model
         #logging.info(f"input_embedding_flags:{input_embedding_flags}")
+        logging.info(f"encoder_input_sizes:{encoder_input_sizes}")
         self.encoder_variable_selection = VariableSelectionNetwork(
             input_sizes=encoder_input_sizes,
             hidden_size=d_model,
@@ -430,7 +431,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             reduce=True
         )
         #logging.info(f"encoder_variable_selection:{self.encoder_variable_selection}")
-        
+        logging.info(f"decoder_input_sizes:{decoder_input_sizes}")
         self.decoder_variable_selection = VariableSelectionNetwork(
             input_sizes=decoder_input_sizes,
             hidden_size=d_model,
@@ -443,7 +444,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else self.shared_single_variable_grns,
             reduce = True
         )
-        #logging.info(f"decoder_variable_selection:{self.decoder_variable_selection}")
+        logging.info(f"decoder_variable_selection:{self.decoder_variable_selection}")
 
         # static encoders
         # for variable selection
@@ -749,7 +750,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"embeddings_varying_decoder before initial variable:{embeddings_varying_decoder['relative_time_idx'].shape}")
         embeddings_varying_decoder, decoder_sparse_weights = self.decoder_variable_selection(
             embeddings_varying_decoder,
-            static_context_variable_selection[:, new_encoder_length+1:],
+            #static_context_variable_selection[:, new_encoder_length+1:],
+            static_context_variable_selection[:, new_encoder_length:],
         )
         #logging.info(f"embeddings_varying_decoder_after_variale_selection:{embeddings_varying_decoder.shape}")
 

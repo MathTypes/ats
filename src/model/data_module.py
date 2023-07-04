@@ -199,7 +199,6 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             min_prediction_length=prediction_length,
             max_prediction_length=prediction_length,
             allow_missing_timesteps=False,
-            #target_normalizer=None,
             target_normalizer=target_normalizer,
             #time_varying_known_reals=["relative_time_idx", "hour_of_day", "day_of_week", "day_of_month"],
             time_varying_known_reals=time_varying_known_reals,
@@ -207,8 +206,8 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
             add_relative_time_idx = config.model.add_relative_time_idx
         )
-        logging.info(f"train_data:{self.train_data.describe()}")
-        logging.info(f"eval_data:{self.eval_data.describe()}")
+        #logging.info(f"train_data:{self.train_data.describe()}")
+        #logging.info(f"eval_data:{self.eval_data.describe()}")
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
         #logging.info(f"val_idx:{val_idx}, tst_idx:{tst_idx}")
@@ -217,9 +216,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         #self.test = TimeSeriesDataSet.from_dataset(self.training, self.train_data[tst_idx:])
         self.test = self.validation
         # create dataloaders for model
-        self.batch_size = 128*50  # set this between 32 to 128
+        self.batch_size = config.model.train_batch_size  # set this between 32 to 128
         # Need batch_size 1 to get example level metrics
-        self.eval_batch_size = 100
+        self.eval_batch_size = config.model.eval_batch_size
 
     def prepare_data(self):
         pass
@@ -228,7 +227,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         pass
         
     def train_dataloader(self):
-        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size, num_workers=10, pin_memory=True, drop_last=False)
+        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size,
+                                                       shuffle=True,
+                                                       num_workers=10, pin_memory=True, drop_last=False)
         return train_dataloader
     
     def val_dataloader(self):

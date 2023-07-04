@@ -339,7 +339,7 @@ class VariableSelectionNetwork(nn.Module):
                 weight_inputs.append(variable_embedding)
                 var_outputs.append(self.single_variable_grns[name](variable_embedding))
             var_outputs = torch.stack(var_outputs, dim=-1)
-            #logging.info(f"x:{x['relative_time_idx'].shape}")
+            # logging.info(f"x:{x['relative_time_idx'].shape}")
             #logging.info(f"context:{context.shape}")
             #logging.info(f"var_outputs:{var_outputs.shape}")
             # calculate variable weights

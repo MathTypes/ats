@@ -1,10 +1,22 @@
 import datetime
 import logging
 import os
+
+import numpy as np
 import pandas as pd
 from pyarrow import csv
 import ray
+
+from mom_trans.classical_strategies import (
+    MACDStrategy,
+    calc_returns,
+    calc_daily_vol,
+    calc_vol_scaled_returns,
+)
 from util import time_util
+
+VOL_THRESHOLD = 5  # multiple to winsorise by
+HALFLIFE_WINSORISE = 252
 
 def get_tick_data_with_ray(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
     #ticker = ticker.replace("CME_","")
@@ -30,8 +42,8 @@ def get_tick_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -
     ds = pd.read_csv(file_path, delimiter=",", header=0, names=names)
     ds["Time"] = ds.Time.apply(lambda x:datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
     ds.set_index("Time")
-    logging.info(f"ds:{ds.head()}")
-    logging.info(f"ds:{ds.info()}")
+    #logging.info(f"ds:{ds.head()}")
+    #logging.info(f"ds:{ds.info()}")
     return ds
 
 def get_input_dirs(config, ticker, asset_type):
@@ -55,11 +67,28 @@ def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
     ds = ds.to_pandas(10000000)
     ds = ds.sort_index()
     ds = ds[~ds.index.duplicated(keep='first')]
-    logging.info(f"ds before filter:{ds.head()}")
+    #logging.info(f"ds before filter:{ds.head()}")
     ds = ds[(ds.hour_of_day>4) & (ds.hour_of_day<17)]
-    logging.info(f"ds after filter:{ds.head()}")
+    #logging.info(f"ds after filter:{ds.head()}")
     # Need to recompute close_back after filtering
     ds = ds.drop(columns=["close_back", "volume_back", "dv_back"])
+    # winsorize using rolling 5X standard deviations to remove outliers
+    ewm = ds["close"].ewm(halflife=HALFLIFE_WINSORISE)
+    means = ewm.mean()
+    stds = ewm.std()
+    ds["close"] = np.minimum(ds["close"], means + VOL_THRESHOLD * stds)
+    ds["close"] = np.maximum(ds["close"], means - VOL_THRESHOLD * stds)
+    ds["daily_returns"] = calc_returns(ds["close"])
+    ds["daily_vol"] = calc_daily_vol(ds["daily_returns"])
+    ds["week_of_year"] = ds.index.isocalendar().week
+    ds["month_of_year"] = ds.index.month
+    
+    trend_combinations = [(8, 24), (16, 48), (32, 96)]
+    for short_window, long_window in trend_combinations:
+        ds[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
+            ds["close"], short_window, long_window
+        )
+
     ds_pct_back = ds[["close", "volume", "dv"]].pct_change(periods=1)
     #df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
     ds = ds.join(ds_pct_back, rsuffix='_back')

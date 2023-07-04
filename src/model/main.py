@@ -57,6 +57,7 @@ def my_app(cfg: DictConfig) -> None:
         pipe.create_model()
         pipe.create_trainer()
         logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
+        pipe.set_learning_rate()
         pipe.train_model()
         pipe.test_model()
     elif cfg.job.mode == "tune":

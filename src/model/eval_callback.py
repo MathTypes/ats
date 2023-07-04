@@ -30,7 +30,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
-        logging.info(f"target:{target}")
+        logging.info(f"target:{target}, num_samples:{num_samples}")
         self.target_size = len(target) if isinstance(target, List) else 1
         for batch in range(num_samples):
             val_x, val_y = next(iter(data_module.val_dataloader()))
@@ -154,7 +154,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                       dict(bounds=["sat", "mon"]), #hide weekends
                       dict(bounds=[17, 4], pattern="hour"), #hide hours outside of 4am-5pm
                       #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
-                  ]
+                  ],
               )
               img_bytes = fig.to_image(format="png") # kaleido library
               im = PIL.Image.open(BytesIO(img_bytes))
@@ -274,7 +274,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                   dict(bounds=["sat", "mon"]), #hide weekends
                   dict(bounds=[17, 4], pattern="hour"), #hide hours outside of 4am-5pm
                   #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
-              ]
+              ],
           )
           #logging.info(f"self.data_table_ref.data[idx][12]:{self.data_table_ref.data[idx][12]}")
           prediction_date_time = str(self.data_table_ref.data[idx][12]) + " " + day_of_week_map[self.data_table_ref.data[idx][3]]

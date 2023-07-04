@@ -122,7 +122,6 @@ class Pipeline:
                                         #StochasticWeightAveraging(swa_lrs=1e-2)
                              ],
                              devices=devices,
-                             #accelerator=self.device,
                              accelerator="gpu",
                              accumulate_grad_batches=8,
                              #stochastic_weight_avg=True,
@@ -131,9 +130,8 @@ class Pipeline:
                              default_root_dir=LIGHTNING_DIR,
                              log_every_n_steps=LOG_EVERY_N_STEPS,
                              detect_anomaly=True,
-                             precision=16,
                              #profiler="advanced",
-                             #precision='16-mixed',
+                             precision='16-mixed',
                              # train in half precision
                              deterministic=False,
                              #check_val_every_n_epoch=10,
