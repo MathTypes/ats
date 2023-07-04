@@ -186,15 +186,6 @@ class PatchTftSupervisedPipeline(Pipeline):
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         self.model = self.model.to(self.device, non_blocking=True)
 
-    def set_learning_rate(self):
-        res = Tuner(self.trainer).lr_find(self.model,
-                                          train_dataloaders=self.data_module.train_dataloader(),
-                                          val_dataloaders=self.data_module.val_dataloader(),
-                                          max_lr=10.0,
-                                          min_lr=1e-6)
-        logging.info(f"suggesting learning rate:{res.suggestion()}")
-        self.model.hparams.learning_rate = res.suggestion()
-
     
     def tune_model(self, study_name):
         #self.data_module = nhits.get_data_module(self.config)

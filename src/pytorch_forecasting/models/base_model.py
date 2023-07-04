@@ -1063,7 +1063,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         prediction_kwargs: Dict[str, Any] = {},
         row = 1,
         col = 1,
-        draw_cum = False,
+        draw_mode = "pred",
         x_time = None
     ) -> plt.Figure:
         """
@@ -1101,7 +1101,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             y_raws, y_hats, y_quantiles, encoder_targets, decoder_targets
         ):
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
-            if draw_cum:
+            if draw_mode == "pred_cum":
                 #logging.info(f"before cumsum: y_all:{y_all}")
                 y_all = torch.cumsum(y_all, dim=-1)
                 #logging.info(f"after cumsum: y_all:{y_all}, {y_all.shape}")
@@ -1120,16 +1120,17 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             y_raw = y_raw.detach().cpu()[idx, : x["decoder_lengths"][idx]]
-            if draw_cum:
+            if draw_mode == "pred_cum":
                 #logging.info(f"y_raw before cumsum:{y_raw}, {y_raw.shape}")
                 #logging.info(f"y_hat before cumsum:{y_hat}, {y_hat.shape}")
                 #logging.info(f"y_quantile before cumsum:{y_quantile}, {y_quantile.shape}")
+                y = torch.subtract(y, base)
                 y_hat = torch.cumsum(y_hat, dim=-1)
-                y_hat = torch.add(y_hat, base)
+                #y_hat = torch.add(y_hat, base)
                 y_raw = torch.cumsum(y_raw, dim=-1)
-                y_raw = torch.add(y_raw, base)
+                #y_raw = torch.add(y_raw, base)
                 y_quantile = torch.cumsum(y_quantile, dim=-2)
-                y_quantile = torch.add(y_quantile, base)
+                #y_quantile = torch.add(y_quantile, base)
                 #logging.info(f"y_quantile:{y_quantile}, {y_quantile.shape}")
                 #logging.info(f"y_quantile after cumsum:{y_quantile}, {y_quantile.shape}")
             # move to cpu
@@ -1150,31 +1151,31 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             # plot observed history
             plotter = go.Scatter
             if len(x_obs) > 0:
-                #plot = plotter(x=x_obs, y=y[-max_context:-n_pred], name="observed" if draw_cum else None, line=dict(color=obs_color))
-                plot = plotter(x=x_time[-max_context:-n_pred], y=y[-max_context:-n_pred], name="observed" if draw_cum else None, line=dict(color=obs_color), showlegend=False)
+                #plot = plotter(x=x_obs, y=y[-max_context:-n_pred], name="observed" if draw_mode=="pred" else None, line=dict(color=obs_color))
+                plot = plotter(x=x_time[-max_context:-n_pred], y=y[-max_context:-n_pred], name="observed" if draw_mode=="pred" else None, line=dict(color=obs_color), showlegend=False)
                 fig.add_trace(plot, row=row, col=col)
 
             # plot observed prediction
             if True:
             #if show_future_observed:
-                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed" if draw_cum else None, line=dict(color=obs_color), showlegend=False), row=row, col=col)
+                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed" if draw_mode=="pred" else None, line=dict(color=obs_color), showlegend=False), row=row, col=col)
 
             # plot prediction
-            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted" if draw_cum else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
+            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted" if draw_mode=="pred" else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
 
             # plot predicted quantiles
-            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean" if draw_cum else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
+            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean" if draw_mode=="pred" else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
             quantile_colors = ["red", "purple", "magenta"]
             quantiles = [0.02, 0.1, 0.25]
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
-                                             fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}" if draw_cum else None,
-                                             fillcolor=quantile_colors[i], opacity=0.5, showlegend=False), row=row, col=col)
+                                             fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}" if draw_mode=="pred" else None,
+                                             fillcolor=quantile_colors[i], opacity=0.1, showlegend=False), row=row, col=col)
                     idx = y_quantile.shape[1]-(i+1)
-                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}" if draw_cum else None,
+                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}" if draw_mode=="pred" else None,
                                              fill='tonexty', # fill area between trace0 and trace1
-                                             mode='none', fillcolor=quantile_colors[i], opacity=0.5, showlegend=False), row=row, col=col)
+                                             mode='none', fillcolor=quantile_colors[i], opacity=0.1, showlegend=False), row=row, col=col)
                 else:
                     quantiles = torch.tensor([[y_quantile[0, i]], [y_quantile[0, -i - 1]]])
                     logging.info(f"bad x_pred")

@@ -18,6 +18,10 @@ from wandb.keras import WandbEvalCallback
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
+def get_output_by_idx(out, idx):
+    return {name: out[name][idx] for name in out.keys()}
+    
+
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def __init__(
             self, data_module, target, num_samples=10, every_n_epochs=1
@@ -236,7 +240,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         result = self.pl_module.compute_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
         #logging.info(f"result:{result}")
         #logging.info(f"log:{log}")
-        #logging.info(f"out:{out}")
         if "train_RMSE" in result:
             rmse = result["train_RMSE"].cpu().detach().numpy()
         else:
@@ -256,6 +259,13 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         #logging.info(f"y_hats:{y_hats}")
         #exit(0)
         #logging.info(f"y_quantiles:{y_quantiles.shape}")
+        interp_output = self.pl_module.interpret_output(
+            detach(out),
+            reduction="none",
+            attention_prediction_horizon=0,  # attention only for first prediction horizon
+        )
+        #logging.info(f"out:{out}")
+        #logging.info(f"interpretation:{interp_output}")
         for idx in range(len(y_hats)):
           context_length = len(x["encoder_target"][idx])
           prediction_length = len(x["decoder_time_idx"][idx])
@@ -265,7 +275,8 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           #logging.info(f"decoder_time_idx:{decoder_time_idx}")
           x_time = self.matched_eval_data[(self.matched_eval_data.time_idx>=decoder_time_idx-context_length) & (self.matched_eval_data.time_idx<decoder_time_idx+prediction_length)]["time"]
           #logging.info(f"x_time:{x_time}")
-          fig = make_subplots(rows=2, cols=2)
+          fig = make_subplots(rows=2, cols=3, specs=[[{"secondary_y": True}, {"secondary_y": True},  {"secondary_y": True}],
+                                                     [{"secondary_y": True}, {"secondary_y": True},  {"secondary_y": True}]], )
           fig.update_layout(
               autosize=False, width=1500, height=800,
           )
@@ -280,8 +291,18 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           prediction_date_time = str(self.data_table_ref.data[idx][12]) + " " + day_of_week_map[self.data_table_ref.data[idx][3]]
           fig.update_layout(title=prediction_date_time, font=dict(size=20))
           #logging.info(f"self.data_table_ref.data[idx]:{self.data_table_ref.data[idx]}")
-          self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=1, col=1, draw_cum=False, x_time=x_time)
-          self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=2, col=1, draw_cum=True, x_time=x_time)
+          self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=1, col=1, draw_mode="pred", x_time=x_time)
+          self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=2, col=1, draw_mode="pred_cum", x_time=x_time)
+          interpretation = {}
+          for name in interp_output.keys():
+              if interp_output[name].dim()>1:
+                  interpretation[name] = interp_output[name][idx]
+              else:
+                  interpretation[name] = interp_output[name]
+          self.pl_module.plot_interpretation(interpretation, ax=fig,
+                                             cells =[{"row":1, "col":2}, {"row":2, "col":2},
+                                                     {"row":1, "col":3}, {"row":2, "col":3}])
+          #logging.info(f"after self.pl_module.plot_interpretation, {interpretation}")
           img_bytes = fig.to_image(format="png") # kaleido library
           im = PIL.Image.open(BytesIO(img_bytes))
           #logging.info(f"decoder_time_idx:{x['decoder_time_idx'][idx]}")

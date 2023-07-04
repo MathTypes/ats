@@ -6,8 +6,8 @@ test_end_date: 2023-01-01
 workers: 8
 max_epochs: 5
 log_mode: All
-#eval_cut_off: 2020
-eval_batches: 5
+eval_batches: 2
 log_example_eval_every_n_epochs: 5
+tag: default
 
 

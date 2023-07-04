@@ -7,6 +7,7 @@ defines a class that is able to handle a wide variety of timeseries data problem
 from copy import copy as _copy, deepcopy
 from functools import lru_cache
 import inspect
+import math
 from typing import Any, Callable, Dict, List, Tuple, Union
 import warnings
 import logging
@@ -421,8 +422,11 @@ class TimeSeriesDataSet(Dataset):
         #df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
         #df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
         # reduce return to bring down loss
+        #logging.info(f"close:{data['close_back']}")
+        #logging.info(f"volume:{data['volume_back']}")
+        #exit(0)
         data['close_back'] = data['close_back'].apply(lambda x:math.log(1+x))
-        data['volume_back'] = data['volume_back'].apply(lambda x:math.log(1+x))
+        #data['volume_back'] = data['volume_back'].apply(lambda x:math.log(1+x))
         if "ticker" in data.columns:
           data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
           # 1000 is required to bring down loss to avoid nan

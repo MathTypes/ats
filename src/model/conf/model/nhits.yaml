@@ -1,6 +1,8 @@
 hidden_size: 4
 prediction_length: 32
 context_length: 320
+train_batch_size: 1024
+eval_batch_size: 128
 learning_rate : 0.02
 loss_name: "SMAPE"
 name: nhits

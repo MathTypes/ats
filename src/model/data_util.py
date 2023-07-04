@@ -18,6 +18,25 @@ from util import time_util
 VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
+def compute_minutes_after_daily_close(x):
+    #logging.info(f"x:{x}, {type(x)}")
+    return x
+
+def compute_minutes_to_daily_close(x):
+    return x
+
+def compute_days_to_weekly_close(x):
+    return x
+
+def compute_days_to_monthly_close(x):
+    return x
+
+def compute_days_to_quarterly_close(x):
+    return x
+
+def compute_days_to_option_exipiration(x):
+    return x
+
 def get_tick_data_with_ray(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
     #ticker = ticker.replace("CME_","")
     names = ["Time", "Open", "High", "Low", "Close", "Volume"]
@@ -82,6 +101,12 @@ def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
     ds["daily_vol"] = calc_daily_vol(ds["daily_returns"])
     ds["week_of_year"] = ds.index.isocalendar().week
     ds["month_of_year"] = ds.index.month
+    ds["minutes_after_daily_close"] = ds.time.apply(lambda x : compute_minutes_after_daily_close(x))
+    ds["minutes_to_daily_close"] = ds.time.apply(lambda x : compute_minutes_to_daily_close(x))
+    ds["days_to_weekly_close"] = ds.time.apply(lambda x : compute_days_to_weekly_close(x))
+    ds["days_to_monthly_close"] = ds.time.apply(lambda x : compute_days_to_monthly_close(x))
+    ds["days_to_quarterly_close"] = ds.time.apply(lambda x : compute_days_to_quarterly_close(x))
+    ds["days_to_option_expiration"] = ds.time.apply(lambda x : compute_days_to_option_exipiration(x))
     
     trend_combinations = [(8, 24), (16, 48), (32, 96)]
     for short_window, long_window in trend_combinations:

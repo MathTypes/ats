@@ -29,7 +29,7 @@ RESULTS_PATH = Path("results")
 
 @hydra.main(config_path="conf", config_name="config")
 def my_app(cfg: DictConfig) -> None:
-    wandb.init(project="ats")
+    wandb.init(project="ats", name=f"{cfg.model.name}-{cfg.job.tag}", config=cfg)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_rows', None)
     datasets = ["stock_returns"]

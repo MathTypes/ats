@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 
+# find optimal learning rate
+from lightning.pytorch.tuner import Tuner
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
@@ -95,6 +97,16 @@ class Pipeline:
 
     def create_model(self):
         pass
+
+    def set_learning_rate(self):
+        res = Tuner(self.trainer).lr_find(self.model,
+                                          train_dataloaders=self.data_module.train_dataloader(),
+                                          val_dataloaders=self.data_module.val_dataloader(),
+                                          max_lr=0.1,
+                                          min_lr=1e-3)
+        logging.info(f"suggesting learning rate:{res.suggestion()}")
+        self.model.hparams.learning_rate = res.suggestion()
+
 
     def create_trainer(self):
         checkpoint_callback = ModelCheckpoint(
