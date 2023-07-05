@@ -1,9 +1,9 @@
 hidden_size: 4
 prediction_length: 32
-context_length: 640
-patch_len: 32
-stride: 16
-d_model: 4
+context_length: 128
+patch_len: 16
+stride: 8
+d_model: 8
 train_batch_size: 1024
 eval_batch_size: 128
 learning_rate: 0.02
@@ -14,15 +14,17 @@ heads:
   - returns_prediction
 #  - position_optimization
 returns_prediction:
-  loss_name: MQF2DistributionLoss
+  #loss_name: MQF2DistributionLoss
+  loss_name: SMAPE
   target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 position_optimization:
   loss_name: SharpeLoss
   target: "close_back"
   logging_metrics: []
+lags: {"close_high_21":[21], "close_low_21":[21], "close_high_51":[51], "close_low_51":[51]}
 name: patch_tft_supervised
-#time_varying_known_reals: ["relative_time_idx", "daily_vol", "macd_8_24", "macd_16_48", "macd_32_96"]
-time_varying_known_reals: ["daily_vol",  "hour_of_day", "day_of_week", "day_of_month"]
-time_varying_unknown_reals: ["close_back", "volume_back"]
+static_categoricals: ["ticker"]
+time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month"]
+time_varying_unknown_reals: ["close_back", "volume_back", "daily_vol", "macd_8_24", "macd_16_48", "macd_32_96", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51"]
 add_relative_time_idx: True

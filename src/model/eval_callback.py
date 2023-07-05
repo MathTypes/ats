@@ -3,6 +3,7 @@ from io import BytesIO
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
+import numpy as np
 from omegaconf import OmegaConf
 import pandas as pd
 import PIL
@@ -23,9 +24,7 @@ def get_output_by_idx(out, idx):
     
 
 class WandbClfEvalCallback(WandbEvalCallback, Callback):
-    def __init__(
-            self, data_module, target, num_samples=10, every_n_epochs=1
-    ):
+    def __init__(self, data_module, target, config):
         super().__init__(["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month", "price_img",
                           "act_close_pct_max", "act_close_pct_min", "close_back_cumsum", "time_str"],
                          ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month", "price_img",
@@ -34,24 +33,18 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.val_x_batch = []
         self.val_y_batch = []
         self.indices_batch = []
-        logging.info(f"target:{target}, num_samples:{num_samples}")
+        self.config = config
         self.target_size = len(target) if isinstance(target, List) else 1
-        for batch in range(num_samples):
+        self.num_samples = config.job.eval_batches
+        self.every_n_epochs = config.job.log_example_eval_every_n_epochs
+        for batch in range(self.num_samples):
             val_x, val_y = next(iter(data_module.val_dataloader()))
-            #logging.info(f"self.val_x:{val_x}")
-            #logging.info(f"self.val_y:{val_y}")
             indices = data_module.validation.x_to_index(val_x)
             self.val_x_batch.append(val_x)
             self.val_y_batch.append(val_y)
             self.indices_batch.append(indices)
-        #logging.info(f"self.indices:{self.indices}")
         eval_data = data_module.eval_data
-        #self.matched_train_data = train_data[train_data.isin({"time_idx":self.indices})]
         self.matched_eval_data = eval_data
-        #logging.info(f"self.matched_train_data:{self.matched_train_data}")
-        #self.ticker_decoder = data_module.training.categorical_encoders["ticker"]
-        self.num_samples = num_samples
-        self.every_n_epochs = every_n_epochs
 
     def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         #super().on_train_end(trainer, pl_module)
@@ -144,12 +137,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
               dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
               #logging.info(f"dm:{dir(dm)}, series_idx:{type(train_data_row['series_idx'])}, dm_str:{dm_str}")
               y_close_cum_sum_row = y_close_cum_sum[idx]
-              train_data_rows = self.matched_eval_data[(self.matched_eval_data.time_idx>=index.time_idx-320) & (self.matched_eval_data.time_idx<index.time_idx+32)]
+              train_data_rows = self.matched_eval_data[(self.matched_eval_data.time_idx>=index.time_idx-self.config.model.context_length)
+                                                       & (self.matched_eval_data.time_idx<index.time_idx+self.config.model.prediction_length)]
               fig = go.Figure(data=go.Ohlc(x=train_data_rows['time'],
                     open=train_data_rows['open'],
                     high=train_data_rows['high'],
                     low=train_data_rows['low'],
                     close=train_data_rows['close']))
+              # add a bar at prediction time
               fig.update(layout_xaxis_rangeslider_visible=False)
               prediction_date_time = dm_str + " " + day_of_week_map[train_data_row["day_of_week"]]
               fig.update_layout(title=prediction_date_time, font=dict(size=20))

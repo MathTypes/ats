@@ -1047,6 +1047,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
         add_loss_to_title: bool = False,
         show_future_observed: bool = True,
         ax=None,
+        row=1,
+        col=1,
         **kwargs,
     ) -> plt.Figure:
         """
@@ -1073,12 +1075,12 @@ class PatchTftSupervised(BaseModelWithCovariates):
             idx=idx,
             add_loss_to_title=add_loss_to_title,
             show_future_observed=show_future_observed,
-            ax=ax,
+            ax=ax, row=row, col=col,
             **kwargs,
         )
 
         # add attention on secondary axis
-        if True:
+        if False:
             interpretation = self.interpret_output(out.iget(slice(idx, idx + 1)))
             #fig = list(ax)
             #for f in to_list(fig):
@@ -1086,12 +1088,13 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 encoder_length = x["encoder_lengths"][0]
                 f.add_trace(go.Scatter(x=torch.arange(-encoder_length, 0),
                                        y=interpretation["attention"][0, -encoder_length:].detach().cpu(),
-                                       name="Attention", yaxis="y2"), secondary_y=True)
-                f.update_layout(
-                    yaxis2=dict(title="Attention",
-                                overlaying="y",
-                                side="right",),
-                )
+                                       name="Attention", yaxis="y2", showlegend=False), secondary_y=True,
+                            row=row, col=col)
+                #f.update_layout(
+                #    yaxis2=dict(title="Attention",
+                #                overlaying="y",
+                #                side="right",),
+                #)
                 #ax = f.axes[0]
                 #ax2 = ax.twinx()
                 #ax2.set_ylabel("Attention")
@@ -1138,7 +1141,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         fig.add_trace(
             go.Scatter(x=np.arange(-self.hparams.max_encoder_length, attention.size(0) -
                                    self.hparams.max_encoder_length),
-                       y=attention, name="Attention"), row=cells[0]["row"], col=cells[0]["col"])
+                       y=attention, name="Attention", showlegend=False), row=cells[0]["row"], col=cells[0]["col"])
         #ax.plot(
         #    np.arange(-self.hparams.max_encoder_length, attention.size(0) - self.hparams.max_encoder_length), attention
                        #)
@@ -1167,7 +1170,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                     y=np.asarray(labels)[order],
                     #y=values[order] * 100,
                     x=values[order] * 100,
-                    name=title,
+                    name=title, showlegend=False,
                     orientation='h'), row=row, col=col)
             #ax.barh(np.arange(len(values)), values[order] * 100, tick_label=np.asarray(labels)[order])
             #ax.set_title(title)

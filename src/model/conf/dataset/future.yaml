@@ -1,4 +1,5 @@
 base_dir: /home/ubuntu/ats/src/model/data/FUT/30min
-model_tickers: ['ES','NQ','RTY']
+#model_tickers: ['ES', 'NQ']
+model_tickers: ['ES','NQ','RTY','CL','HG','ZN', 'NKD']
 context_tickers: ['CL','HG','YM','ZN', 'NKD']
 #model_tickers: ['ES']

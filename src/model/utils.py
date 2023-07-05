@@ -121,9 +121,7 @@ class Pipeline:
         logging.info(f"device:{self.device}")
         wandb_logger = WandbLogger(project='ATS', log_model=True)
         logging.info(f"data_module:{self.data_module}")
-        prediction_logger = WandbClfEvalCallback(self.data_module, self.targets,
-                                                 num_samples=self.config.job.eval_batches,
-                                                 every_n_epochs=self.config.job.log_example_eval_every_n_epochs)
+        prediction_logger = WandbClfEvalCallback(self.data_module, self.targets, self.config)
         #sim_logger = SimilarityLogger() 
         self.trainer = pl.Trainer(max_epochs=self.config.job.max_epochs, logger=wandb_logger,
                              callbacks=[checkpoint_callback, lr_monitor,
@@ -143,7 +141,7 @@ class Pipeline:
                              log_every_n_steps=LOG_EVERY_N_STEPS,
                              detect_anomaly=True,
                              #profiler="advanced",
-                             precision='16-mixed',
+                             #precision='16-mixed',
                              # train in half precision
                              deterministic=False,
                              #check_val_every_n_epoch=10,

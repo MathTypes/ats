@@ -1171,11 +1171,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
                                              fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}" if draw_mode=="pred" else None,
-                                             fillcolor=quantile_colors[i], opacity=0.1, showlegend=False), row=row, col=col)
+                                             fillcolor=quantile_colors[i], opacity=0.5, showlegend=False), row=row, col=col)
                     idx = y_quantile.shape[1]-(i+1)
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}" if draw_mode=="pred" else None,
                                              fill='tonexty', # fill area between trace0 and trace1
-                                             mode='none', fillcolor=quantile_colors[i], opacity=0.1, showlegend=False), row=row, col=col)
+                                             mode='none', fillcolor=quantile_colors[i], opacity=0.5, showlegend=False), row=row, col=col)
                 else:
                     quantiles = torch.tensor([[y_quantile[0, i]], [y_quantile[0, -i - 1]]])
                     logging.info(f"bad x_pred")
