@@ -14,17 +14,20 @@ heads:
   - returns_prediction
 #  - position_optimization
 returns_prediction:
-  #loss_name: MQF2DistributionLoss
-  loss_name: SMAPE
+  loss_name: MQF2DistributionLoss
+  #loss_name: SMAPE
   target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 position_optimization:
   loss_name: SharpeLoss
   target: "close_back"
   logging_metrics: []
-lags: {"close_high_21":[21], "close_low_21":[21], "close_high_51":[51], "close_low_51":[51]}
+#lags: {"close_high_21":[21], "close_low_21":[21], "close_high_51":[51], "close_low_51":[51], "close_back_cumsum":[1], "close_low_201":[201], "close_high_201":[201], "close":[1], "high":[1], "low":[1], "open":[1], "volume_back":[1], "close_back":[1], "macd_8_24":[1], "macd_16_48":[1], "macd_32_96":[1],}
+lags: {}
 name: patch_tft_supervised
 static_categoricals: ["ticker"]
 time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month"]
-time_varying_unknown_reals: ["close_back", "volume_back", "daily_vol", "macd_8_24", "macd_16_48", "macd_32_96", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51"]
+#time_varying_unknown_reals: ["close_back", "volume_back", "daily_vol", "macd_8_24", "macd_16_48", "macd_32_96", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51"]
+#time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51", "close_low_201", "close_high_201", "macd_8_24", "macd_16_48", "macd_32_96"]
+time_varying_unknown_reals: ["close_back"]
 add_relative_time_idx: True
