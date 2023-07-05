@@ -414,36 +414,15 @@ class TimeSeriesDataSet(Dataset):
         self.add_encoder_length = add_encoder_length
 
         g = data.groupby(self.group_ids, observed=True)
-        #df_index_high_13 = g['close_back'].transform(add_highs, width=13)
-        #logging.info(f"df_index_high_13:{df_index_high_13}")
-        #df_index_low_13 = g['close_back'].transform(add_lows, width=13)
-        #df_index_high_91 = g['close_back'].transform(add_highs, width=13*7)
-        #df_index_low_91 = g['close_back'].transform(add_lows, width=13*7)
-        #df_index_high_39 = g['close_back'].transform(add_highs, width=13*3)
-        #df_index_low_39 = g['close_back'].transform(add_lows, width=13*3)
         # reduce return to bring down loss
         data_bad = data[data['close_back']<-0.2]
         if not data_bad.empty:
             logging.info(f"data with large negative return:{data_bad.head()}")
-            #exit(0)
-        #data['close_back'] = data['close_back'].apply(lambda x:math.log(1+x))
-        #logging.info(f"close:{data['close_back']}")
-        #logging.info(f"volume:{data['volume_back']}")
-        #data['volume_back'] = data['volume_back'].apply(lambda x:math.log(1+x))
         if "ticker" in data.columns:
           data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
           # 1000 is required to bring down loss to avoid nan
           data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()
-        #logging.info(f"df_index_low_13:{df_index_low_13}")
-        #data["high_13"] = df_index_high_13
-        #data["low_13"] = df_index_low_13
-        #data["high_39"] = df_index_high_39
-        #data["low_39"] = df_index_low_39
-        #data["high_91"] = df_index_high_91
-        #data["low_91"] = df_index_low_91
         data = data.dropna()
-        #logging.info(f"enhanced_data:{data}")
-        #logging.info(f"data:{data.describe()}")
         
         # target normalizer
         # JJ: disable target normalizer
@@ -754,6 +733,7 @@ class TimeSeriesDataSet(Dataset):
             encoder = deepcopy(self.categorical_encoders.get(group_name, NaNLabelEncoder()))
             self.categorical_encoders[group_name] = encoder.fit(data[name].to_numpy().reshape(-1), overwrite=False)
             data[group_name] = self.transform_values(name, data[name], inverse=False, group_id=True)
+            logging.info(f"data[{group_name}]:{data[group_name][:100]}")
 
         # encode categoricals first to ensure that group normalizer for relies on encoded categories
         if isinstance(
@@ -773,6 +753,7 @@ class TimeSeriesDataSet(Dataset):
                     try:
                         check_is_fitted(self.categorical_encoders[name])
                     except NotFittedError:
+                        logging.info(f"fitting:{name}")
                         self.categorical_encoders[name] = self.categorical_encoders[name].fit(
                             data[columns].to_numpy().reshape(-1)
                         )
@@ -789,10 +770,10 @@ class TimeSeriesDataSet(Dataset):
         for name in dict.fromkeys(group_ids_to_encode + self.flat_categoricals):
             # targets and its lagged versions are handled separetely
             if name not in self.target_names and name not in self.lagged_targets:
+                logging.info(f"transorm:{name}")
                 data[name] = self.transform_values(
                     name, data[name], inverse=False, ignore_na=name in self.lagged_variables
                 )
-
         # save special variables
         assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
         data["__time_idx__"] = data[self.time_idx]  # save unscaled
@@ -816,6 +797,7 @@ class TimeSeriesDataSet(Dataset):
                 if isinstance(self.target_normalizer, EncoderNormalizer):
                     self.target_normalizer.fit(data[self.target])
                 elif isinstance(self.target_normalizer, (GroupNormalizer, MultiNormalizer)):
+                    logging.info(f"self.target:{self.target}, {type(self.target)}")
                     self.target_normalizer.fit(data[self.target], data)
                 else:
                     self.target_normalizer.fit(data[self.target])
@@ -1790,7 +1772,6 @@ class TimeSeriesDataSet(Dataset):
         """
         # collate function for dataloader
         # lengths
-        #traceback.print_stack()
         encoder_lengths = torch.tensor([batch[0]["encoder_length"] for batch in batches], dtype=torch.long)
         decoder_lengths = torch.tensor([batch[0]["decoder_length"] for batch in batches], dtype=torch.long)
 

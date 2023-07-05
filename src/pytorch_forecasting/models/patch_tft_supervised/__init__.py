@@ -129,7 +129,7 @@ class Patch(nn.Module):
         x: [bs x seq_len x n_vars]
         """
         x = x[:, self.s_begin:, :]
-        #logging.info(f"x_before_unfold:{x.shape}")
+        logging.info(f"x_before_unfold:{x.shape}")
         x = x.permute(0, 2, 1)
         # x: [bs x n_vars x seq_len]
         x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
@@ -140,7 +140,7 @@ class Patch(nn.Module):
         if x.size(1)==0:
             return torch.reshape(x, (bs*n_vars, patch_num, self.d_model) )
         # Input encoding
-        #logging.info(f"x:{x.shape}")
+        logging.info(f"x:{x}, x:{x.shape}")
         if not self.shared_embedding:
             x_out = []
             for i in range(n_vars): 

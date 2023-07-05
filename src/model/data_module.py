@@ -177,6 +177,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         prediction_length = config.model.prediction_length
         #target_normalizer = None
         target_normalizer ="auto"
+        #target_normalizer=GroupNormalizer(
+        #    groups=["ticker"], transformation="softplus"
+        #),  # use softplus and normalize by group
         if isinstance(target, (typing.Set, typing.List)):
             normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
             target_normalizer = MultiNormalizer(normalizer_list)
@@ -205,16 +208,12 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             time_varying_known_reals=time_varying_known_reals,
             time_varying_unknown_reals=time_varying_unknown_reals,
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
+            #categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},            
             add_relative_time_idx = config.model.add_relative_time_idx
         )
-        #logging.info(f"train_data:{self.train_data.describe()}")
-        #logging.info(f"eval_data:{self.eval_data.describe()}")
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
-        #logging.info(f"val_idx:{val_idx}, tst_idx:{tst_idx}")
-        #self.validation = TimeSeriesDataSet.from_dataset(self.training, self.train_data[val_idx:tst_idx])
         self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
-        #self.test = TimeSeriesDataSet.from_dataset(self.training, self.train_data[tst_idx:])
         self.test = self.validation
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128
