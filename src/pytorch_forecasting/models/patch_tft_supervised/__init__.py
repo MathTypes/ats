@@ -1204,13 +1204,14 @@ class PatchTftSupervised(BaseModelWithCovariates):
             #        title="Importance in %",
             #    ),
             #    height=len(values) * 0.25 + 10,)
+            #labels = np.array(labels)
             order = np.argsort(values)
             values = values / values.sum(-1).unsqueeze(-1)
-            #logging.info(f"labels:{labels}, values:{values}")
+            logging.info(f"labels:{labels}, labels_type:{type(labels)}, values:{values}")
             fig.add_trace(
                 go.Bar(
                     #x=np.arange(len(values)),
-                    y=np.asarray(labels)[order],
+                    y=np.asarray(np.asarray(labels)[order]),
                     #y=values[order] * 100,
                     x=values[order] * 100,
                     name=title, showlegend=False,
