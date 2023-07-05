@@ -97,8 +97,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             val_x = self.val_x_batch[batch_idx]
             val_y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
-            #logging.info(f"val_x.encoder_target.shape:{len(val_x['encoder_target'])}, encoder_target[0].shape:{val_x['encoder_target'][0].shape}")
-            #logging.info(f"val_y:{val_y}")
             y_close = val_y[0]
             # TODO: fix following hack to deal with multiple targets
             #logging.info(f"y_close_cum_sum:{type(y_close_cum_sum)}")
@@ -107,13 +105,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 y_close = y_closem[0]
             #logging.info(f"y_close_cum_sum before:{y_close_cum_sum}")
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
-            #top_idx = torch.topk(y_close_cum_sum, 5)
-            #logging.info(f'y_close_cum_sum:{y_close_cum_sum.shape}, len:{len(y_close_cum_sum)}')
-            #logging.info(f"top_idx:{top_idx}")
-            #logging.info(f"y_close_cum_sum max:{torch.max(y_close_cum_sum)}, len:{len(y_close_cum_sum)}, shape:{y_close_cum_sum.shape}")
-            #logging.info(f"encoder_target:{val_x['encoder_target'].shape}")
-            #logging.info(f"val_x:{val_x}")
-            #exit(0)
             for idx in range(len(y_close_cum_sum)):
               # TODO: fix [0] hack to deal with multiple target
               if self.target_size > 1:
@@ -125,17 +116,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     base = val_x['encoder_target'][0][idx][-1]
               # when using close_back, base is always 0
               base = 0
-              #logging.info(f"idx:{idx}, y_close_cum_sum:{y_close_cum_sum}")
-              #logging.info(f"encoder_x:{self.val_x['encoder_x'][idx]}")
-              #logging.info(f"encoder_target:{self.val_x['encoder_target'][idx]}")
-              #logging.info(f"decoder_target:{self.val_x['decoder_target'][idx]}")
               index = indices.iloc[idx]
-              #logging.info(f"index:{index}")
               train_data_row = self.matched_eval_data[self.matched_eval_data.time_idx == index.time_idx].iloc[0]
-              #logging.info(f"train_data_row:{train_data_row}")
               dm = train_data_row["time"]
               dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
-              #logging.info(f"dm:{dir(dm)}, series_idx:{type(train_data_row['series_idx'])}, dm_str:{dm_str}")
               y_close_cum_sum_row = y_close_cum_sum[idx]
               train_data_rows = self.matched_eval_data[(self.matched_eval_data.time_idx>=index.time_idx-self.config.model.context_length)
                                                        & (self.matched_eval_data.time_idx<index.time_idx+self.config.model.prediction_length)]
@@ -146,7 +130,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     close=train_data_rows['close']))
               # add a bar at prediction time
               fig.update(layout_xaxis_rangeslider_visible=False)
-              prediction_date_time = dm_str + " " + day_of_week_map[train_data_row["day_of_week"]]
+              prediction_date_time = train_data_row["ticker" + " " + dm_str + " " + day_of_week_map[train_data_row["day_of_week"]]
               fig.update_layout(title=prediction_date_time, font=dict(size=20))
               fig.update_xaxes(
                   rangebreaks=[
@@ -250,24 +234,15 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         y_hats = to_list(self.pl_module.to_prediction(out, **prediction_kwargs))[0]
         y_hats_cum = torch.cumsum(y_hats, dim=-1)
         y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[0]
-        #logging.info(f"y_quantiles:{y_quantiles}")
-        #logging.info(f"y_hats:{y_hats}")
-        #exit(0)
-        #logging.info(f"y_quantiles:{y_quantiles.shape}")
         interp_output = self.pl_module.interpret_output(
             detach(out),
             reduction="none",
             attention_prediction_horizon=0,  # attention only for first prediction horizon
         )
-        #logging.info(f"out:{out}")
-        #logging.info(f"interpretation:{interp_output}")
         for idx in range(len(y_hats)):
           context_length = len(x["encoder_target"][idx])
           prediction_length = len(x["decoder_time_idx"][idx])
-          #logging.info(f"context_length:{context_length}, prediction_length:{prediction_length}, enccoder_target:{x['encoder_target'][idx]}")
-          #logging.info(f"decoder:{x['decoder_time_idx'][idx].shape}")
           decoder_time_idx = x["decoder_time_idx"][idx][0].cpu().detach().numpy()
-          #logging.info(f"decoder_time_idx:{decoder_time_idx}")
           x_time = self.matched_eval_data[(self.matched_eval_data.time_idx>=decoder_time_idx-context_length) & (self.matched_eval_data.time_idx<decoder_time_idx+prediction_length)]["time"]
           #logging.info(f"x_time:{x_time}")
           fig = make_subplots(rows=2, cols=3, specs=[[{"secondary_y": True}, {"secondary_y": True},  {"secondary_y": True}],
@@ -282,8 +257,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                   #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
               ],
           )
-          #logging.info(f"self.data_table_ref.data[idx][12]:{self.data_table_ref.data[idx][12]}")
-          prediction_date_time = str(self.data_table_ref.data[idx][12]) + " " + day_of_week_map[self.data_table_ref.data[idx][3]]
+          prediction_date_time = self.data_table_ref.data[idx][0] + " " + str(self.data_table_ref.data[idx][12]) + " " + day_of_week_map[self.data_table_ref.data[idx][3]]
           fig.update_layout(title=prediction_date_time, font=dict(size=20))
           #logging.info(f"self.data_table_ref.data[idx]:{self.data_table_ref.data[idx]}")
           self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=1, col=1, draw_mode="pred", x_time=x_time)
@@ -297,29 +271,12 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
           self.pl_module.plot_interpretation(interpretation, ax=fig,
                                              cells =[{"row":1, "col":2}, {"row":2, "col":2},
                                                      {"row":1, "col":3}, {"row":2, "col":3}])
-          #logging.info(f"after self.pl_module.plot_interpretation, {interpretation}")
           img_bytes = fig.to_image(format="png") # kaleido library
           im = PIL.Image.open(BytesIO(img_bytes))
-          #logging.info(f"decoder_time_idx:{x['decoder_time_idx'][idx]}")
           y_hat = y_hats[idx]
           y_hat_cum = y_hats_cum[idx]
           y_raw = y_raws[idx]
-          #exit(0)
-          #if "20100811-13000" in prediction_date_time:
-          #    exit(0)
-          #logging.info(f"y_hat:{y_hat}")
-          #logging.info(f"y_raw:{y_raw}")
-          #y_hat_cum_sum = torch.cumsum(y_hat, dim=-1)
-          #y_raw_cum_sum = torch.cumsum(y_raw, dim=-1)
           img = wandb.Image(im)
-
-          #fig_interp = self.pl_module.plot_interpretation(x, out, idx=idx)
-          #fig_interp = self.pl_module.plot_interpretation(out, idx=idx)
-          #fig.update_layout(title=prediction_date_time)
-          #img_bytes_interp = fig_interp.to_image(format="png") # kaleido library
-          #im_interp = PIL.Image.open(BytesIO(img_bytes_interp))
-          #img_interp = wandb.Image(im_interp)
-
           preds.append([decoder_time_idx, torch.max(y_hat_cum), torch.min(y_hat_cum), img, rmse[idx], mae[idx]])
       #logging.info(f"preds:{len(preds)}")
       return preds
