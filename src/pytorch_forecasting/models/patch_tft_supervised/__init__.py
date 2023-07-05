@@ -129,7 +129,7 @@ class Patch(nn.Module):
         x: [bs x seq_len x n_vars]
         """
         x = x[:, self.s_begin:, :]
-        logging.info(f"x_before_unfold:{x.shape}")
+        #logging.info(f"x_before_unfold:{x.shape}")
         x = x.permute(0, 2, 1)
         # x: [bs x n_vars x seq_len]
         x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
@@ -140,7 +140,7 @@ class Patch(nn.Module):
         if x.size(1)==0:
             return torch.reshape(x, (bs*n_vars, patch_num, self.d_model) )
         # Input encoding
-        logging.info(f"x:{x}, x:{x.shape}")
+        #logging.info(f"x:{x}, x:{x.shape}")
         if not self.shared_embedding:
             x_out = []
             for i in range(n_vars): 
@@ -340,6 +340,14 @@ class PatchTftSupervised(BaseModelWithCovariates):
             max_embedding_size=self.hparams.hidden_size,
         )
 
+        self.x_cat_index_start_dict = {}
+        self.x_cat_index_end_dict = {}
+        x_cat_index_start = 0
+        for name in self.hparams.x_categoricals:
+            self.x_cat_index_start_dict[name] = x_cat_index_start
+            x_cat_index_end = x_cat_index_start + self.input_embeddings.output_size[name]
+            self.x_cat_index_end_dict[name] = x_cat_index_end
+            x_cat_index_start = x_cat_index_end
         # continuous variable processing
         self.prescalers = nn.ModuleDict(
             {
@@ -348,11 +356,17 @@ class PatchTftSupervised(BaseModelWithCovariates):
             }
         )
 
+        variable_hidden_size = d_model 
         # variable selection
         # variable selection for static variables
         static_input_sizes = {
-            name: self.input_embeddings.output_size[name] for name in self.hparams.static_categoricals
+            #name: self.input_embeddings.output_size[name] for name in self.hparams.static_categoricals
+            # We does embedding first and then patch and then selection. After patch, categorical
+            # features become d_model.
+            name: self.d_model * self.input_embeddings.output_size[name] for name in self.hparams.static_categoricals
         }
+        #logging.info(f"static_input_sizes:{static_input_sizes}")
+        #exit(0)
         static_input_sizes.update(
             {
                 name: self.hparams.hidden_continuous_sizes.get(name, self.hparams.hidden_continuous_size)
@@ -361,14 +375,14 @@ class PatchTftSupervised(BaseModelWithCovariates):
         )
         self.static_variable_selection = VariableSelectionNetwork(
             input_sizes=static_input_sizes,
-            hidden_size=self.hparams.hidden_size,
+            hidden_size=variable_hidden_size,
+            #hidden_size=self.hparams.hidden_size,
             input_embedding_flags={name: True for name in self.hparams.static_categoricals},
             dropout=self.hparams.dropout,
             prescalers=self.prescalers,
         )
         self.prediction_num_patch = prediction_num_patch
         # variable selection for encoder and decoder
-        variable_hidden_size = d_model 
         encoder_input_sizes = {
             name: self.input_embeddings.output_size[name] for name in self.hparams.time_varying_categoricals_encoder
         }
@@ -703,11 +717,30 @@ class PatchTftSupervised(BaseModelWithCovariates):
         x_cont = self.x_cont_patch(x_cont)
         # bs x n_vars x num_patch x d_model
         #logging.info(f"after_x_cont:{x_cont.shape}")
-        x_cat = self.x_cat_patch(x_cat)
+        x_cat_input_vectors = self.input_embeddings(x_cat)
+        #logging.info(f"x_cat_input_vectors:{x_cat_input_vectors}")
+        x_cat_outputs = []
+        for name in x_cat_input_vectors.keys():
+            x_cat_outputs.append(x_cat_input_vectors[name])
+        x_cat_input = torch.concat(x_cat_outputs, dim=-1)
+        #logging.info(f"x_cat_input:{x_cat_input.shape}")
+        x_cat = self.x_cat_patch(x_cat_input)
+        # bs x n_vars x num_patch x d_model
+        #logging.info(f"x_cat:{x_cat.shape}")
         #exit(0)
+        bs = x_cont.size(0)
         timesteps = x_cont.size(2)-self.skipped_patch  # encode + decode length - 1 (spanning encode/decode)
-        #logging.info(f"after_x_cat:{x_cat.shape}, timesteps:{timesteps}")
-        input_vectors = self.input_embeddings(x_cat)
+        #logging.info(f"after_x_cat:{x_cat.shape}, timesteps:{timesteps}, batch_size:{bs}")
+        #input_vectors = self.input_embeddings(x_cat)
+        input_vectors = {}
+        input_vectors.update(
+            {
+                # TODO: the following assumes all categoicals features have same embedding sizes, which can not
+                # always be true. Fix this with proper mapping from name to idx.
+                name: x_cat[:, self.x_cat_index_start_dict[name]:self.x_cat_index_end_dict[name], ...]
+                for idx, name in enumerate(self.hparams.x_categoricals)
+            }
+        )
         input_vectors.update(
             {
                 name: x_cont[:, idx, ...]
@@ -716,19 +749,29 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 if name in self.reals
             }
         )
-        #logging.info(f"input_vectors['close_back_cumsum']:{input_vectors['close_back_cumsum'].shape}, timesteps:{timesteps}")
-
+        #logging.info(f"input_vectors:{input_vectors.keys()}")
+        #logging.info(f"input_vectors['close_back']:{input_vectors['close_back'].shape}, timesteps:{timesteps}")
+        #logging.info(f"input_vectors['ticker']:{input_vectors['ticker'].shape}, timesteps:{timesteps}")
+        #exit(0)
+        # input_vector:
+        #   - real: variable name: bs x steps x d_model
+        #   - categorical: bs x hidden_size x steps x d_model
         # Embedding and variable selection
         if len(self.static_variables) > 0:
             # static embeddings will be constant over entire batch
-            static_embedding = {name: input_vectors[name][:, 0] for name in self.static_variables}
+            # bs x hidden_size x d_model
+            static_embedding = {name: torch.reshape(input_vectors[name][:, :, 0, :], (bs, -1)) for name in self.static_variables}
+            # bs x (hidden_size * d_model)
+            #logging.info(f"static_embedding before selection:{static_embedding['ticker'].shape}")
             static_embedding, static_variable_selection = self.static_variable_selection(static_embedding)
+            # bs x hidden_size x d_model
+            #logging.info(f"static_embedding after selection:{static_embedding.shape}")
         else:
             static_embedding = torch.zeros(
                 (x_cont.size(0), self.d_model), dtype=self.dtype, device=self.device
             )
             static_variable_selection = torch.zeros((x_cont.size(0), 0), dtype=self.dtype, device=self.device)
-
+        #logging.info(f"static_embedding:{static_embedding.shape}")
         static_context_variable_selection = self.expand_static_context(
             self.static_context_variable_selection(static_embedding), timesteps
         )

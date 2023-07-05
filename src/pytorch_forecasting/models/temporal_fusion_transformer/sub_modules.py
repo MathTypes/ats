@@ -276,7 +276,7 @@ class VariableSelectionNetwork(nn.Module):
         self.dropout = dropout
         self.context_size = context_size
         #logging.info(f"input_size_total:{self.input_size_total}")
-        if self.num_inputs > 1:
+        if self.num_inputs >= 1:
             if self.context_size is not None:
                 self.flattened_grn = GatedResidualNetwork(
                     self.input_size_total,
@@ -327,7 +327,7 @@ class VariableSelectionNetwork(nn.Module):
         return len(self.input_sizes)
 
     def forward(self, x: Dict[str, torch.Tensor], context: torch.Tensor = None):
-        if self.num_inputs > 1:
+        if self.num_inputs >= 1:
             # transform single variables
             var_outputs = []
             weight_inputs = []
@@ -336,6 +336,7 @@ class VariableSelectionNetwork(nn.Module):
                 variable_embedding = x[name]
                 if name in self.prescalers:
                     variable_embedding = self.prescalers[name](variable_embedding)
+                #logging.info(f"variable_embedding:{variable_embedding.shape}")
                 weight_inputs.append(variable_embedding)
                 var_outputs.append(self.single_variable_grns[name](variable_embedding))
             var_outputs = torch.stack(var_outputs, dim=-1)
@@ -344,6 +345,7 @@ class VariableSelectionNetwork(nn.Module):
             #logging.info(f"var_outputs:{var_outputs.shape}")
             # calculate variable weights
             flat_embedding = torch.cat(weight_inputs, dim=-1)
+            #logging.info(f"flat_embedding:{flat_embedding.shape}")
             sparse_weights = self.flattened_grn(flat_embedding, context)
             sparse_weights = self.softmax(sparse_weights).unsqueeze(-2)
             #logging.info(f"sparse_weights:{sparse_weights.shape}")
@@ -358,10 +360,13 @@ class VariableSelectionNetwork(nn.Module):
             if name in self.prescalers:
                 variable_embedding = self.prescalers[name](variable_embedding)
             outputs = self.single_variable_grns[name](variable_embedding)  # fast forward if only one variable
+            #logging.info(f"single variable: outputs:{outputs.shape}")
+            # outputs: bs x n_variables, hidden_size
             if outputs.ndim == 3:  # -> batch size, time, hidden size, n_variables
                 sparse_weights = torch.ones(outputs.size(0), outputs.size(1), 1, 1, device=outputs.device)  #
             else:  # ndim == 2 -> batch size, hidden size, n_variables
                 sparse_weights = torch.ones(outputs.size(0), 1, 1, device=outputs.device)
+        #logging.info(f"outputs:{outputs.shape}, sparse_weights:{sparse_weights.shape}")
         return outputs, sparse_weights
 
 
