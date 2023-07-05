@@ -90,9 +90,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         super().on_test_epoch_end(trainer, pl_module)
 
     def add_ground_truth(self, logs=None):
-        #y_close_cum_sum = torch.cumsum(self.val_y[0], dim=-1)
-        #logging.info(f"y_close_cum_sum:{y_close_cum_sum}")
-        #logging.info(f"val_x:{self.val_x}")
         for batch_idx in range(self.num_samples):
             val_x = self.val_x_batch[batch_idx]
             val_y = self.val_y_batch[batch_idx]
@@ -101,9 +98,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             # TODO: fix following hack to deal with multiple targets
             #logging.info(f"y_close_cum_sum:{type(y_close_cum_sum)}")
             if isinstance(y_close, list):
-                #logging.info("y_close_cum_sum is list")
                 y_close = y_closem[0]
-            #logging.info(f"y_close_cum_sum before:{y_close_cum_sum}")
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
             for idx in range(len(y_close_cum_sum)):
               # TODO: fix [0] hack to deal with multiple target
@@ -130,13 +125,12 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     close=train_data_rows['close']))
               # add a bar at prediction time
               fig.update(layout_xaxis_rangeslider_visible=False)
-              prediction_date_time = train_data_row["ticker" + " " + dm_str + " " + day_of_week_map[train_data_row["day_of_week"]]
+              prediction_date_time = train_data_row["ticker"] + " " + dm_str + " " + day_of_week_map[train_data_row["day_of_week"]]
               fig.update_layout(title=prediction_date_time, font=dict(size=20))
               fig.update_xaxes(
                   rangebreaks=[
                       dict(bounds=["sat", "mon"]), #hide weekends
                       dict(bounds=[17, 4], pattern="hour"), #hide hours outside of 4am-5pm
-                      #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
                   ],
               )
               img_bytes = fig.to_image(format="png") # kaleido library
@@ -162,7 +156,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 base, # 11 close_back_cusum
                 dm_str, # 12
               )
-        #logging.info(f"self.data_table:{self.data_table}")
 
     def add_model_predictions(self, epoch, logs=None):
         if epoch % self.every_n_epochs:
@@ -170,8 +163,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         
         preds = self._inference()
         table_idxs = self.data_table_ref.get_index()
-        #logging.info(f"preds:{preds}")
-        #logging.info(f"table_idxs:{table_idxs}")
         for idx in table_idxs:
             pred = preds[idx]
             self.pred_table.add_data(
@@ -207,23 +198,16 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         x = self.val_x_batch[batch_idx]
         y = self.val_y_batch[batch_idx]
       
-        #logging.info(f"x:{x}")
-        #logging.info(f"inference val_y:{y}")
         x = {key:[v.to(device) for v in val] if isinstance(val, list) else val.to(device) for key, val in x.items()}
         y = [[v.to(device) for v in val] if isinstance(val, list) else val.to(device) if val is not None else None for val in y]
         kwargs={'nolog': True}
-        #logging.info(f"pl_module:{self.pl_module}, {dir(self.pl_module)}")
         log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
-        #log, out = self.pl_module.predict_step((x,y), batch_idx=0)
         prediction_kwargs = {'reduction':None}
         result = self.pl_module.compute_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
-        #logging.info(f"result:{result}")
-        #logging.info(f"log:{log}")
         if "train_RMSE" in result:
             rmse = result["train_RMSE"].cpu().detach().numpy()
         else:
             rmse = result["close_back_cumsum train_RMSE"].cpu().detach().numpy()
-        #mapcse = result["train_MAPCSE"].cpu().detach().numpy()
         if "train_MAE" in result:
             mae = result["train_MAE"].cpu().detach().numpy()
         else:
@@ -254,12 +238,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
               rangebreaks=[
                   dict(bounds=["sat", "mon"]), #hide weekends
                   dict(bounds=[17, 4], pattern="hour"), #hide hours outside of 4am-5pm
-                  #dict(values=["2015-12-25", "2016-01-01"])  # hide Christmas and New Year's
               ],
           )
           prediction_date_time = self.data_table_ref.data[idx][0] + " " + str(self.data_table_ref.data[idx][12]) + " " + day_of_week_map[self.data_table_ref.data[idx][3]]
           fig.update_layout(title=prediction_date_time, font=dict(size=20))
-          #logging.info(f"self.data_table_ref.data[idx]:{self.data_table_ref.data[idx]}")
           self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=1, col=1, draw_mode="pred", x_time=x_time)
           self.pl_module.plot_prediction(x, out, idx=idx, ax=fig, row=2, col=1, draw_mode="pred_cum", x_time=x_time)
           interpretation = {}
