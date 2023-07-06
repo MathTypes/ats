@@ -36,10 +36,10 @@ def pull_sample_data(ticker: str, intraday: bool) -> pd.DataFrame:
 def pull_futures_sample_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -> pd.DataFrame:
     #ticker = ticker.replace("CME_","")
     names = ["Time", "Open", "High", "Low", "Close", "Volume"]
-    if asset_type in ["FUT"]:
-        file_path = os.path.join(f"{raw_dir}/futures", f"{ticker}_1min_continuous_adjusted.txt")
-    else:
-        file_path = os.path.join(f"{raw_dir}/stock", f"{ticker}_full_1min_adjsplitdiv.txt")
+    if asset_type == "FUT":
+        file_path = os.path.join(f"{raw_dir}/{asset_type}", f"{ticker}_1min_continuous_adjusted.txt")
+    elif asset_type == "ETF":
+        file_path = os.path.join(f"{raw_dir}/{asset_type}", f"{ticker}_full_1min_adjsplitdiv.txt")
     read_options = csv.ReadOptions(
                column_names=names,
                skip_rows=1)
