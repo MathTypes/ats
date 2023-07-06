@@ -324,11 +324,15 @@ def get_input_dirs(config):
 
 
 def get_input_for_ticker(config, ticker):
-    all_data = data_util.get_processed_data(config, ticker, "FUT")
-    all_data = all_data.replace([np.inf, -np.inf], np.nan)
-    all_data = all_data.dropna()
-    all_data = all_data.drop(columns=["time_idx"])
-    return all_data
+    try:
+        all_data = data_util.get_processed_data(config, ticker, "FUT")
+        all_data = all_data.replace([np.inf, -np.inf], np.nan)
+        all_data = all_data.dropna()
+        all_data = all_data.drop(columns=["time_idx"])
+        return all_data
+    except:
+        logging.info(f"can not get input for {ticker}")
+        return None
 
 def add_highs(df, width):
     df_cumsum = df.cumsum()
@@ -370,6 +374,8 @@ def get_data_module(config, targets):
     train_data_vec = []
     for ticker in config.dataset.model_tickers:
         ticker_train_data = get_input_for_ticker(config, ticker)
+        if ticker_train_data is None:
+            continue
         ticker_train_data["new_idx"] = ticker_train_data.apply(lambda x : x.ticker + "_" + str(x.series_idx), axis=1)
         ticker_train_data = ticker_train_data.set_index("new_idx")
         train_data_vec.append(ticker_train_data)

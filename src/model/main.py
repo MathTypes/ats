@@ -65,6 +65,9 @@ def my_app(cfg: DictConfig) -> None:
     elif cfg.job.mode == "eval":
         pipe.create_model(cfg.job.checkpoint)
         pipe.eval_model()
+    elif cfg.job.mode == "test":
+        pipe.create_model(cfg.job.checkpoint)
+        pipe.test_model()
 
     ray.shutdown()
     torch.cuda.empty_cache()
