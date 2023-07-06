@@ -1448,7 +1448,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"not use metrics:{out['prediction']}, loss:{self.loss}")
                 out = Metric.to_prediction(self.loss, out["prediction"])
         else:
-            logging.info(f"before prediction:{out}")
+            #logging.info(f"before prediction:{out}")
             if isinstance(out, (List)):
                 out = out[1]
             try:
@@ -1456,7 +1456,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"use metrics:{out}, loss:{self.loss}")
                 out = self.loss.to_prediction(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
-                logging.info(f"to_prediction_out:{out}")
+                #logging.info(f"to_prediction_out:{out}")
                 out = self.loss.to_prediction(out["prediction"])
         return out
 
@@ -1493,7 +1493,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             try:
                 out = self.loss.to_quantiles(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
-                logging.info(f"to_quantile:{out}")
+                #logging.info(f"to_quantile:{out}")
                 out = self.loss.to_quantiles(out["prediction"])
         return out
 

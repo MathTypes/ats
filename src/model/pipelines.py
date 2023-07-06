@@ -234,7 +234,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                                              return_y=True, trainer_kwargs=trainer_kwargs)
         #logging.info(f"out:{predictions.output.shape}")
         #logging.info(f"model:{self.model}")
-        logging.info(f"raw_predictions:{raw_predictions}")
+        #logging.info(f"raw_predictions:{raw_predictions}")
         prediction_kwargs = {'reduction':None}
         prediction_kwargs = {}
         y_hats = to_list(self.model.to(self.device).to_prediction([None, raw_predictions.output], **prediction_kwargs))[0]
