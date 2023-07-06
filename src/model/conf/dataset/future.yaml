@@ -1,5 +1,5 @@
 base_dir: /home/ubuntu/ats/src/model/data/FUT/30min
 #model_tickers: ['ES', 'NQ']
-model_tickers: ['ES','NQ','RTY','CL','HG','ZN', 'NKD']
+model_tickers: ["A6", "AD", "ALI", "B6", "BFX", "BR", "BTC", "BZ", "C", "CB", "CC", "CL", "CNH", "CSC", "CT", "DC", "DX", "E1", "E6", "E7", "EBM", "ED", "ES", "ESG", "EW", "FBON", "FBTM", "FBTP", "FBTS", "FCE", "FDAX", "FDIV", "FDXM", "FDXS", "FESX", "FEU3", "FGBL", "FGBM", "FGBS", "FGBX", "FOAM", "FOAT", "FSMX", "FTDD", "FTDX", "FTI", "FTUK", "FVSA", "FXXP", "G", "GC", "GF", "GSCI", "HE", "HG", "HH", "HO", "HRC", "ISE", "J1", "J7", "KC", "KRW", "L", "LBS", "LE", "M2K", "MAX", "MBT", "MCL", "MES", "MET", "MFC", "MFS", "MGC", "MME", "MNQ", "MP", "MURA", "N6", "NG", "NIY", "NKD", "NOK", "NQ", "OJ", "PA", "PL", "PRK", "PSI", "QG", "RB", "RM", "RP", "RS", "RTY", "RU", "SB", "SEK", "SI", "SIL", "SIR", "SR1", "SR3", "T6", "TN", "UB", "US", "VX", "VXM", "XAE", "XAF", "XAI", "XC", "YM", "ZC", "ZF", "ZK", "ZL", "ZM", "ZN", "ZO", "ZQ", "ZR", "ZRPA", "ZS", "ZT", "ZTWA", "ZW"]
 context_tickers: ['CL','HG','YM','ZN', 'NKD']
 #model_tickers: ['ES']
