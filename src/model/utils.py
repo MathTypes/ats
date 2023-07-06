@@ -150,12 +150,7 @@ class Pipeline:
     def tune_model(self):
         pass
 
-    def eval_model(self):
-        # evaluate the model on a test set
-        self.trainer.test(datamodule=self.data_module,
-                          ckpt_path=config["checkpoint_path"])  # uses last-saved model
-
-
+    
     def train_model(self):
         logging.info(f"MODELS_DIR:{MODELS_DIR}")
         self.history = self.trainer.fit(self.model, self.data_module)

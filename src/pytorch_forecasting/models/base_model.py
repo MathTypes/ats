@@ -238,7 +238,8 @@ class PredictCallback(BasePredictionWriter):
         nan_mask = create_mask(lengths.max(), lengths)
         if isinstance(self.mode, (tuple, list)):
             if self.mode[0] == "raw":
-                out = out[self.mode[1]]
+                # out = (loss, output)
+                out = out[1][self.mode[1]]
             else:
                 raise ValueError(
                     f"If a tuple is specified, the first element must be 'raw' - got {self.mode[0]} instead"
@@ -324,11 +325,12 @@ class PredictCallback(BasePredictionWriter):
                 output["decoder_lengths"] = torch.cat(self._decode_lenghts, dim=0)
             if self.return_y:
                 y = concat_sequences([yi[0] for yi in self._y])
+                logging.info(f"self._y:{self._y[-1][0].shape}")
                 if self._y[-1][1] is None:
                     weight = None
                 else:
                     weight = concat_sequences([yi[1] for yi in self._y])
-
+                y = y.reshape(len(self._y), -1)
                 output["y"] = (y, weight)
             if isinstance(output, dict):
                 output = Prediction(**output)  # save for later writing or outputting
@@ -1414,9 +1416,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"not use metrics:{out['prediction']}, loss:{self.loss}")
                 out = Metric.to_prediction(self.loss, out["prediction"])
         else:
+            loss, out = out
             try:
                 #traceback.print_stack()
-                #logging.info(f"use metrics:{out['prediction']}, loss:{self.loss}, prediction_shape:{out['prediction'].shape}")
+                #logging.info(f"use metrics:{out}, loss:{loss}")
                 out = self.loss.to_prediction(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
                 out = self.loss.to_prediction(out["prediction"])

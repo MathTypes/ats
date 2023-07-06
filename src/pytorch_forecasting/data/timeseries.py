@@ -733,7 +733,7 @@ class TimeSeriesDataSet(Dataset):
             encoder = deepcopy(self.categorical_encoders.get(group_name, NaNLabelEncoder()))
             self.categorical_encoders[group_name] = encoder.fit(data[name].to_numpy().reshape(-1), overwrite=False)
             data[group_name] = self.transform_values(name, data[name], inverse=False, group_id=True)
-            logging.info(f"data[{group_name}]:{data[group_name][:100]}")
+            #logging.info(f"data[{group_name}]:{data[group_name][:100]}")
 
         # encode categoricals first to ensure that group normalizer for relies on encoded categories
         if isinstance(
@@ -815,7 +815,7 @@ class TimeSeriesDataSet(Dataset):
                 copy_kwargs = {name: getattr(self.target_normalizer, name) for name in common_init_args}
                 normalizer = GroupNormalizer(groups=self.group_ids, **copy_kwargs)
                 data[self.target], scales = normalizer.fit_transform(data[self.target], data, return_norm=True)
-                logging.info(f"encoder normalizr scales:{scales}")
+                #logging.info(f"encoder normalizr scales:{scales}")
 
             elif isinstance(self.target_normalizer, GroupNormalizer):
                 data[self.target], scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)

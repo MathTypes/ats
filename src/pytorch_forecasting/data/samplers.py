@@ -91,10 +91,10 @@ class GroupedSampler(Sampler):
         # create index from which can be sampled: index is equal to number of batches
         # associate index with prediction time
         self._group_index = np.repeat(list(self._group_sizes.keys()), list(self._group_sizes.values()))
-        logging.info(f"self._group_index:{self._group_index}")
+        #logging.info(f"self._group_index:{self._group_index}")
         # associate index with batch within prediction time group
         self._sub_group_index = np.concatenate([np.arange(size) for size in self._group_sizes.values()])
-        logging.info(f"self._sub_group_index:{self._sub_group_index}")
+        #logging.info(f"self._sub_group_index:{self._sub_group_index}")
 
     def __iter__(self):
         if self.shuffle:  # shuffle samples
@@ -110,7 +110,7 @@ class GroupedSampler(Sampler):
             sub_group_start = sub_group * self.batch_size
             sub_group_end = sub_group_start + self.batch_size
             batch = groups[name][sub_group_start:sub_group_end]
-            logging.info(f"batch: start={sub_group_start}, end={sub_group_end}, name={name}")
+            #logging.info(f"batch: start={sub_group_start}, end={sub_group_end}, name={name}")
             yield batch
 
     def __len__(self):

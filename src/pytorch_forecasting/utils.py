@@ -4,6 +4,7 @@ Helper functions for PyTorch forecasting
 from collections import namedtuple
 from contextlib import redirect_stdout
 import inspect
+import logging
 import os
 from typing import Any, Callable, Dict, List, Tuple, Union
 
@@ -246,6 +247,7 @@ def concat_sequences(
     if isinstance(sequences[0], rnn.PackedSequence):
         return rnn.pack_sequence(sequences, enforce_sorted=False)
     elif isinstance(sequences[0], torch.Tensor):
+        #logging.info(f"{[s.shape for s in sequences]}")
         return torch.cat(sequences, dim=1)
     elif isinstance(sequences[0], (tuple, list)):
         return tuple(

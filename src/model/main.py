@@ -34,7 +34,6 @@ def my_app(cfg: DictConfig) -> None:
     pd.set_option('display.max_rows', None)
     datasets = ["stock_returns"]
     pipelines = {
-        #TFTPipeline
         "attention":AttentionEmbeddingLSTMPipeline,
         "tft": TemporalFusionTransformerPipeline,
         "patch_tst": PatchTstTransformerPipeline,
@@ -54,7 +53,7 @@ def my_app(cfg: DictConfig) -> None:
     wandb.config = cfg
     pipe = pipelines[cfg.model.name](dataset="FUT", device=device, config=cfg) 
     if cfg.job.mode == "train":
-        pipe.create_model()
+        pipe.create_model(cfg.job.checkpoint)
         pipe.create_trainer()
         logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
         pipe.set_learning_rate()
@@ -64,10 +63,9 @@ def my_app(cfg: DictConfig) -> None:
         config['n_trials'] = cfg.job.n_trials
         pipe.tune_model(config, cfg.job.study_name)
     elif cfg.job.mode == "eval":
-        pipe.create_model()
-        config["checkpoint_path"] = cfg.job.checkpoint
-        pipe.create_trainer()
-        pipe.eval_model(config)
+        pipe.create_model(cfg.job.checkpoint)
+        pipe.eval_model()
+
     ray.shutdown()
     torch.cuda.empty_cache()
     

@@ -98,7 +98,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             # TODO: fix following hack to deal with multiple targets
             #logging.info(f"y_close_cum_sum:{type(y_close_cum_sum)}")
             if isinstance(y_close, list):
-                y_close = y_closem[0]
+                y_close = y_close[0]
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
             for idx in range(len(y_close_cum_sum)):
               # TODO: fix [0] hack to deal with multiple target
