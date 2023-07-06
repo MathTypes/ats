@@ -175,7 +175,7 @@ STAGE_STATES = {
 
 # return type of predict function
 PredictTuple = namedtuple(
-    "prediction", ["output", "x", "index", "decoder_lengths", "y"], defaults=(None, None, None, None, None)
+    "prediction", ["output", "x", "index", "decoder_lengths", "y", "pred", "quantile"], defaults=(None, None, None, None, None, None, None)
 )
 
 
@@ -232,18 +232,43 @@ class PredictCallback(BasePredictionWriter):
         # extract predictions form output
         x = batch[0]
         out = outputs
+        prediction = None
+        quantiles = None
+        loss = None
+        #logging.info(f"outputs:{outputs}")
 
         lengths = x["decoder_lengths"]
 
         nan_mask = create_mask(lengths.max(), lengths)
         if isinstance(self.mode, (tuple, list)):
             if self.mode[0] == "raw":
+                out = out[self.mode[1]]
                 # out = (loss, output)
-                out = out[1][self.mode[1]]
+                #loss, out = out
+                #logging.info(f"mode_tuple_out:{out}")
             else:
                 raise ValueError(
                     f"If a tuple is specified, the first element must be 'raw' - got {self.mode[0]} instead"
                 )
+           # prediction = pl_module.to_prediction([loss, {"prediction":out}], **self.mode_kwargs)
+            #logging.info(f"post to_prediction:{prediction}")
+            # mask non-predictions
+           # if isinstance(prediction, (list, tuple)):
+           #     prediction = [
+           #         o.masked_fill(nan_mask, torch.tensor(float("nan"))) if o.dtype == torch.float else o for o in prediction
+           #     ]
+           # elif prediction.dtype == torch.float:  # only floats can be filled with nans
+           #     prediction = prediction.masked_fill(nan_mask, torch.tensor(float("nan")))
+            #logging.info(f"done to_prediction:{prediction}")
+           # quantiles = pl_module.to_quantiles({"prediction":out}, **self.mode_kwargs)
+           # # mask non-predictions
+           # if isinstance(quantiles, (list, tuple)):
+           #     quantiles = [
+           #         o.masked_fill(nan_mask.unsqueeze(-1), torch.tensor(float("nan"))) if o.dtype == torch.float else o
+           #         for o in quantiles
+           #     ]
+           # elif quantiles.dtype == torch.float:
+           #     quantiles = quantiles.masked_fill(nan_mask.unsqueeze(-1), torch.tensor(float("nan")))
         elif self.mode == "prediction":
             out = pl_module.to_prediction(out, **self.mode_kwargs)
             # mask non-predictions
@@ -264,12 +289,19 @@ class PredictCallback(BasePredictionWriter):
             elif out.dtype == torch.float:
                 out = out.masked_fill(nan_mask.unsqueeze(-1), torch.tensor(float("nan")))
         elif self.mode == "raw":
+            # skip loss
+            out = out[1]
             pass
         else:
             raise ValueError(f"Unknown mode {self.mode} - see docs for valid arguments")
 
         self._output.append(out)
         out = dict(output=out)
+        #logging.info(f"before to_prediction:{prediction}")
+        #out["pred"] = prediction
+        #out["quantile"] = quantiles
+        #logging.info(f"post out:{out}")
+        
         if self.return_x:
             self._x_list.append(x)
             out["x"] = self._x_list[-1]
@@ -285,6 +317,7 @@ class PredictCallback(BasePredictionWriter):
 
         if isinstance(out, dict):
             out = Prediction(**out)
+        #logging.info(f"post dict:{out}")
         # write to disk
         if self.output_dir is not None:
             super().on_predict_batch_end(trainer, pl_module, out, batch, batch_idx, dataloader_idx)
@@ -325,7 +358,7 @@ class PredictCallback(BasePredictionWriter):
                 output["decoder_lengths"] = torch.cat(self._decode_lenghts, dim=0)
             if self.return_y:
                 y = concat_sequences([yi[0] for yi in self._y])
-                logging.info(f"self._y:{self._y[-1][0].shape}")
+                #logging.info(f"self._y:{self._y[-1][0].shape}")
                 if self._y[-1][1] is None:
                     weight = None
                 else:
@@ -1089,8 +1122,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # all true values for y of the first sample in batch
         encoder_targets = to_list(x["encoder_target"])
         decoder_targets = to_list(x["decoder_target"])
-
-        y_raws = to_list(out["prediction"])  # raw predictions - used for calculating loss
+        if isinstance(out, Tuple):
+            # skip loss
+            out = out[1]
         y_hats = to_list(self.to_prediction(out, **prediction_kwargs))
         y_quantiles = to_list(self.to_quantiles(out, **quantiles_kwargs))
 
@@ -1099,8 +1133,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             fig = make_subplots()
         # for each target, plot
         figs = []
-        for y_raw, y_hat, y_quantile, encoder_target, decoder_target in zip(
-            y_raws, y_hats, y_quantiles, encoder_targets, decoder_targets
+        for y_hat, y_quantile, encoder_target, decoder_target in zip(
+            y_hats, y_quantiles, encoder_targets, decoder_targets
         ):
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
             if draw_mode == "pred_cum":
@@ -1121,7 +1155,6 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             base = y[-n_pred-1].detach().cpu()
             #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
-            y_raw = y_raw.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             if draw_mode == "pred_cum":
                 #logging.info(f"y_raw before cumsum:{y_raw}, {y_raw.shape}")
                 #logging.info(f"y_hat before cumsum:{y_hat}, {y_hat.shape}")
@@ -1129,7 +1162,6 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 y = torch.subtract(y, base)
                 y_hat = torch.cumsum(y_hat, dim=-1)
                 #y_hat = torch.add(y_hat, base)
-                y_raw = torch.cumsum(y_raw, dim=-1)
                 #y_raw = torch.add(y_raw, base)
                 y_quantile = torch.cumsum(y_quantile, dim=-2)
                 #y_quantile = torch.add(y_quantile, base)
@@ -1416,12 +1448,15 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"not use metrics:{out['prediction']}, loss:{self.loss}")
                 out = Metric.to_prediction(self.loss, out["prediction"])
         else:
-            loss, out = out
+            logging.info(f"before prediction:{out}")
+            if isinstance(out, (List)):
+                out = out[1]
             try:
                 #traceback.print_stack()
-                #logging.info(f"use metrics:{out}, loss:{loss}")
+                #logging.info(f"use metrics:{out}, loss:{self.loss}")
                 out = self.loss.to_prediction(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
+                logging.info(f"to_prediction_out:{out}")
                 out = self.loss.to_prediction(out["prediction"])
         return out
 
@@ -1458,6 +1493,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             try:
                 out = self.loss.to_quantiles(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
+                logging.info(f"to_quantile:{out}")
                 out = self.loss.to_quantiles(out["prediction"])
         return out
 

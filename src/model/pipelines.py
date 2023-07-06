@@ -1,4 +1,5 @@
 import datetime
+from io import BytesIO
 import logging
 
 import numpy as np
@@ -8,10 +9,13 @@ from lightning.pytorch.tuner import Tuner
 from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTftSupervised
 from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
 from pytorch_forecasting.metrics import MAE, MAPE, MASE, MAPCSE, RMSE, SMAPE, PoissonLoss, QuantileLoss
-from timeseries_transformer import TimeSeriesTFT
+from pytorch_forecasting.utils import create_mask, detach, to_list
+import plotly.graph_objects as go
+import PIL
 from plotly.subplots import make_subplots
-import wandb
+from timeseries_transformer import TimeSeriesTFT
 import torch
+import wandb
 
 from data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
 from models import (
@@ -216,32 +220,45 @@ class PatchTftSupervisedPipeline(Pipeline):
     def eval_model(self):
         #self.data_module = nhits.get_data_module(self.config)
         # calcualte metric by which to display
+        logging.info(f"device:{self.device}")
         wandb_logger = WandbLogger(project='ATS', log_model=True)        
         trainer_kwargs = {'logger':wandb_logger}
         logging.info(f"rows:{len(self.data_module.eval_data)}")
-        predictions = self.model.predict(self.data_module.val_dataloader(),
-                                         mode=["raw", "prediction"],
-                                         return_x=True, return_index=True,
-                                         return_y=True, trainer_kwargs=trainer_kwargs)
-        logging.info(f"predictions:{predictions.output.shape}, {predictions.y[0].shape}")
-        logging.info(f"predictions:{predictions}")
-        mean_losses = SMAPE(reduction="none")(predictions.output, predictions.y).mean(1)
+        #predictions = self.model.predict(self.data_module.val_dataloader(),
+        #                                 mode="prediction",
+        #                                 return_x=True, return_index=True,
+        #                                 return_y=True, trainer_kwargs=trainer_kwargs)
+        raw_predictions = self.model.predict(self.data_module.val_dataloader(),
+                                             mode="raw",
+                                             return_x=True, return_index=True,
+                                             return_y=True, trainer_kwargs=trainer_kwargs)
+        #logging.info(f"out:{predictions.output.shape}")
+        #logging.info(f"model:{self.model}")
+        logging.info(f"raw_predictions:{raw_predictions}")
+        prediction_kwargs = {'reduction':None}
+        prediction_kwargs = {}
+        y_hats = to_list(self.model.to(self.device).to_prediction([None, raw_predictions.output], **prediction_kwargs))[0]
+        #y_hats = predictions.output
+        metrics = SMAPE(reduction="none").to(self.device)
+        mean_losses = metrics(y_hats, raw_predictions.y).mean(1)
         indices = mean_losses.argsort(descending=True)  # sort losses
         matched_eval_data = self.data_module.eval_data
-        x = predictions.x
-        y_close = predictions.y[0]
+        x = raw_predictions.x
+        y_close = raw_predictions.y[0]
         y_close_cum_sum = torch.cumsum(y_close, dim=-1)
-        logging.info(f"x:{x}")
+        y_hats_cum_sum = torch.cumsum(y_hats, dim=-1)
+        #logging.info(f"x:{x}")
         column_names = ["ticker", "time", "time_idx", "day_of_week", "hour_of_day", "year", "month", "day_of_month", "price_img",
                         "act_close_pct_max", "act_close_pct_min", "close_back_cumsum", "time_str",
                         "pred_time_idx", "pred_close_pct_max", "pred_close_pct_min", "img", "error_max", "error_min", "rmse", "mae"]
         data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
         day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
-        for idx in range(10):  # plot 10 examples
+        for idx in range(1000):  # plot 1000 examples
             idx=indices[idx]
             context_length = len(x["encoder_target"][idx])
             prediction_length = len(x["decoder_time_idx"][idx])
             decoder_time_idx = int(x["decoder_time_idx"][idx][0].cpu().detach().numpy())
+            y_close_cum_sum_row = y_close_cum_sum[idx]
             train_data_row = matched_eval_data[matched_eval_data.time_idx == decoder_time_idx].iloc[0]
             dm = train_data_row["time"]
             dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
@@ -262,11 +279,11 @@ class PatchTftSupervisedPipeline(Pipeline):
             )
             prediction_date_time = train_data_row["ticker"] + " " + dm_str + " " + day_of_week_map[train_data_row["day_of_week"]]
             fig.update_layout(title=prediction_date_time, font=dict(size=20))
-            self.model.plot_prediction(
-                predictions.x,
-                predictions.output,
+            self.model.to(self.device).plot_prediction(
+                raw_predictions.x,
+                (None, raw_predictions.output),
                 idx=idx,
-                add_loss_to_title=SMAPE(quantiles=self.model.loss.quantiles),
+                #add_loss_to_title=SMAPE(quantiles=self.model.loss.quantiles),
                 ax=fig, row=1, col=1, draw_mode="pred_cum", x_time=x_time
             )
 
@@ -275,7 +292,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             pred_img = wandb.Image(im)
             
             y_hat = y_hats[idx]
-            y_hat_cum = y_hats_cum[idx]
+            y_hat_cum = y_hats_cum_sum[idx]
             img = wandb.Image(im)
             fig = go.Figure(data=go.Ohlc(x=train_data_rows['time'],
                     open=train_data_rows['open'],
@@ -295,12 +312,11 @@ class PatchTftSupervisedPipeline(Pipeline):
             img_bytes = fig.to_image(format="png") # kaleido library
             im = PIL.Image.open(BytesIO(img_bytes))
             img = wandb.Image(im)
-            if torch.max(y_close_cum_sum_row) > 0.10:
-                logging.info(f"bad row:{train_data_row}, idx:{idx}, index:{index}")
-                logging.info(f"y_close_cum_sum_row:{y_close_cum_sum_row}")
-                logging.info(f"y_close:{y_close[idx]}")
-                logging.info(f"train_data_rows:{train_data_rows[-32:]}")
             base = 0
+            y_max = torch.max(y_close_cum_sum_row) - base
+            y_min = torch.min(y_close_cum_sum_row) - base
+            pred_max = torch.max(y_hat_cum)
+            pred_min = torch.min(y_hat_cum)
             data_table.add_data(
                 train_data_row["ticker"], # 0 ticker
                 dm, # 1 time
@@ -312,11 +328,18 @@ class PatchTftSupervisedPipeline(Pipeline):
                 train_data_row["day_of_month"], # 7 day_of_month
                 wandb.Image(im),  # 8 image
                 #np.argmax(label, axis=-1)
-                torch.max(y_close_cum_sum_row) - base, # 9 max
-                torch.min(y_close_cum_sum_row) - base, # 10 min
+                y_max, # 9 max
+                y_min, # 10 min
                 base, # 11 close_back_cusum
                 dm_str, # 12
-                decoder_time_idx, torch.max(y_hat_cum), torch.min(y_hat_cum), pred_img, 0, 0
+                decoder_time_idx, #13,
+                torch.max(y_hat_cum), #14
+                torch.min(y_hat_cum), #15
+                pred_img, #16
+                pred_max - y_max, # error_max
+                pred_min - y_min, # error_min
+                0, #17
+                0 #18
               )
         data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pred", type="evaluation")
         data_artifact.add(data_table, "eval_data")
