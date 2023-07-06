@@ -1,4 +1,5 @@
 #import pytorch_lightning as pl
+import traceback
 import lightning.pytorch as pl
 import torch
 import logging
@@ -211,14 +212,16 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             #categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},            
             add_relative_time_idx = config.model.add_relative_time_idx
         )
-        # create validation set (predict=True) which means to predict the last max_prediction_length points in time
-        # for each series
-        self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
-        self.test = self.validation
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128
         # Need batch_size 1 to get example level metrics
         self.eval_batch_size = config.model.eval_batch_size
+        # create validation set (predict=True) which means to predict the last max_prediction_length points in time
+        # for each series
+        eval_data_size = int(len(self.eval_data) / self.eval_batch_size) * self.eval_batch_size
+        self.eval_data = self.eval_data[:eval_data_size]
+        self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
+        self.test = self.validation
 
     def prepare_data(self):
         pass
@@ -229,21 +232,21 @@ class TimeSeriesDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size,
                                                        shuffle=True,
-                                                       num_workers=10, pin_memory=True, drop_last=False)
+                                                       num_workers=10, pin_memory=True, drop_last=True)
         return train_dataloader
     
     def val_dataloader(self):
         #logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
         # train = True is the hack to randomly sample from time series from different ticker. 
-        val_dataloader = self.validation.to_dataloader(train=True,
+        val_dataloader = self.validation.to_dataloader(train=False,
                                                        batch_size=self.eval_batch_size, num_workers=4,
-                                                       batch_sampler=None,
-                                                       pin_memory=True, drop_last=False)
+                                                       batch_sampler="synchronized",
+                                                       pin_memory=True, drop_last=True)
         return val_dataloader
 
     
     def test_dataloader(self):
         # Here use same validation as we use simulation for test.
         test_dataloader = self.validation.to_dataloader(train=False, batch_size=self.eval_batch_size, num_workers=0,
-                                                        batch_sampler=None, pin_memory=True, drop_last=False)
+                                                        batch_sampler=None, pin_memory=True, drop_last=True)
         return test_dataloader
