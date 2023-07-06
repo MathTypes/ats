@@ -228,8 +228,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         #self.model = self.model.to(self.device, non_blocking=True)
         #nhits.run_tune(config, study_name)
-        test_start_date = self.config.test_start_date
-        data_start_date = test_start_date - datetime.timedelta(hours=-2*self.model.context_length)
+        data_start_date = self.test_start_date - datetime.timedelta(hours=-2*self.model.context_length)
         now = test_start_date
         pass
 
