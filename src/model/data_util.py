@@ -65,23 +65,26 @@ def get_tick_data(ticker: str, asset_type: str, start_date, end_date, raw_dir) -
     #logging.info(f"ds:{ds.info()}")
     return ds
 
-def get_input_dirs(config, ticker, asset_type):
-    base_dir = f"{config.dataset.base_dir}/{ticker}"
+def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_interval):
+    base_dir = f"{base_dir}/{asset_type}/{time_interval}/{ticker}"
     input_dirs = []
-    start_date = datetime.datetime.strptime(config.job.train_start_date,"%Y-%m-%d") + datetime.timedelta(days=-60)
+    start_date = start_date + datetime.timedelta(days=-60)
     start_date = start_date.replace(day=1)
-    end_date = datetime.datetime.strptime(config.job.test_end_date,"%Y-%m-%d")
+    #end_date = datetime.datetime.strptime(config.job.test_end_date,"%Y-%m-%d")
+    #logging.info(f"looking for {base_dir}, start_date:{start_date}, end_date:{end_date}, {type(end_date)}")
     for cur_date in time_util.monthlist(start_date, end_date):
         for_date = cur_date[0]
+        #logging.info(f"checking {for_date}")
         date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
+        #logging.info(f"listing:{date_dir}")
         files = os.listdir(date_dir)
         files = [date_dir+'/'+f for f in files if os.path.isfile(date_dir+'/'+f)] #Filtering only the files.
         input_dirs.extend(files)
-    logging.info(f"reading files:{input_dirs}")
+    #logging.info(f"reading files:{input_dirs}")
     return input_dirs
 
-def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
-    input_dirs = get_input_dirs(config, ticker, asset_type)
+def get_processed_data(base_dir, start_date, end_date, ticker: str, asset_type: str, time_interval) -> pd.DataFrame:
+    input_dirs = get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_interval)
     ds = ray.data.read_parquet(input_dirs, parallelism=100)
     ds = ds.to_pandas(10000000)
     ds = ds.sort_index()
@@ -118,7 +121,7 @@ def get_processed_data(config, ticker: str, asset_type: str) -> pd.DataFrame:
     #df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
     ds = ds.join(ds_pct_back, rsuffix='_back')
     #.join(df_pct_forward, rsuffix='_fwd')
-    logging.info(f"ds:{ds.head()}")
+    #logging.info(f"ds:{ds.head()}")
     ds = ds.dropna()
     #logging.info(f"ds:{ds.info()}")
     return ds
@@ -146,7 +149,7 @@ class Preprocessor:
         df["time"] = df.index
         df["cum_volume"]  = df.volume.cumsum()
         df["cum_dv"]  = df.dv.cumsum()
-        logging.info(f"df:{df.head()}")
+        #logging.info(f"df:{df.head()}")
         df_pct_back = df[["close", "volume", "dv"]].pct_change(periods=1)
         df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
         df = df.join(df_pct_back, rsuffix='_back').join(df_pct_forward, rsuffix='_fwd')
@@ -159,7 +162,7 @@ class Preprocessor:
         #df["week_of_month"] = df.time.apply(lambda x:x.isocalendar().week_of_month)
         #df["week_of_year"] = df.time.apply(lambda x:x.isocalendar().week)
         #df["date"] = df.est_time
-        logging.info(f"df:{df.head()}")
-        logging.info(f"df:{df.describe()}")
+        #logging.info(f"df:{df.head()}")
+        #logging.info(f"df:{df.describe()}")
         df = df.dropna()
         return df

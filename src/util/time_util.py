@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 def round_down(tm, minutes):
     discard = datetime.timedelta(minutes=tm.minute % minutes,
@@ -24,10 +25,7 @@ def last_day_of_month(any_day):
     next_month = any_day.replace(day=28) + datetime.timedelta(days=4)  # this will never fail
     return next_month - datetime.timedelta(days=next_month.day)
 
-def monthlist(begin,end):
-    #begin = datetime.datetime.strptime(begin, "%Y-%m-%d")
-    #end = datetime.datetime.strptime(end, "%Y-%m-%d")
-
+def monthlist(begin, end):
     result = []
     while True:
         if begin.month == 12:

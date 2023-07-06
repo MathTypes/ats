@@ -2,6 +2,7 @@ import datetime
 from io import BytesIO
 import logging
 
+import pandas_market_calendars as mcal
 import numpy as np
 # find optimal learning rate
 from lightning.pytorch.loggers import WandbLogger
@@ -104,7 +105,12 @@ class TimeSeriesPipeline(Pipeline):
 
     def create_model(self):
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
-        self.data_module = model_utils.get_data_module(self.config, self.targets)
+        self.train_start_date = datetime.datetime.strptime(config.job.train_start_date,"%Y-%m-%d")
+        self.test_end_date = datetime.datetime.strptime(config.job.test_end_date,"%Y-%m-%d")
+        self.data_module = model_utils.get_data_module(self.config.dateset.base_dir,
+                                                       self.train_start_date,
+                                                       self.test_end_date,
+                                                       self.targets)
         loss_per_head = model_utils.create_loss_per_head(self.heads, self.device, self.config.model.prediction_length)
         self.model = model_utils.get_nhits_model(self.config, self.data_module, loss_per_head["returns_prediction"]["loss"])
         self.model = self.model.to(self.device, non_blocking=True)
@@ -186,15 +192,22 @@ class PatchTstTftPipeline(Pipeline):
     
 
 class PatchTftSupervisedPipeline(Pipeline):
-    def __init__(self, dataset="fut", device=None, config=None):
-        super().__init__(device)
+    def __init__(self, dataset="fut", config=None):
+        super().__init__(config)
         self.dataset = dataset
         self.config = config
 
     def create_model(self, checkpoint):
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         logging.info(f"head:{self.heads}, targets:{self.targets}")
-        self.data_module = model_utils.get_data_module(self.config, self.targets)
+        self.data_module = model_utils.get_data_module(self.config,
+                                                       self.config.dataset.base_dir,
+                                                       self.train_start_date,
+                                                       self.test_start_date,
+                                                       self.test_end_date,
+                                                       self.targets,
+                                                       self.config.dataset.model_tickers,
+                                                       self.config.dataset.time_interval)
         self.model = model_utils.get_patch_tft_supervised_model(self.config, self.data_module, self.heads)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         if checkpoint:
@@ -215,6 +228,9 @@ class PatchTftSupervisedPipeline(Pipeline):
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         #self.model = self.model.to(self.device, non_blocking=True)
         #nhits.run_tune(config, study_name)
+        test_start_date = self.config.test_start_date
+        data_start_date = test_start_date - datetime.timedelta(hours=-2*self.model.context_length)
+        now = test_start_date
         pass
 
 

@@ -27,7 +27,6 @@ lags: {}
 name: patch_tft_supervised
 static_categoricals: ["ticker"]
 time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month"]
-#time_varying_unknown_reals: ["close_back", "volume_back", "daily_vol", "macd_8_24", "macd_16_48", "macd_32_96", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51"]
 #time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51", "close_low_201", "close_high_201", "macd_8_24", "macd_16_48", "macd_32_96"]
 time_varying_unknown_reals: ["close_back"]
 add_relative_time_idx: True

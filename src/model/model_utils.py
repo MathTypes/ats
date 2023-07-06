@@ -323,15 +323,15 @@ def get_input_dirs(config):
     return input_dirs
 
 
-def get_input_for_ticker(config, ticker):
+def get_input_for_ticker(base_dir, start_date, end_date, ticker, asset_type, time_interval):
     try:
-        all_data = data_util.get_processed_data(config, ticker, "FUT")
+        all_data = data_util.get_processed_data(base_dir, start_date, end_date, ticker, asset_type, time_interval)
         all_data = all_data.replace([np.inf, -np.inf], np.nan)
         all_data = all_data.dropna()
         all_data = all_data.drop(columns=["time_idx"])
         return all_data
-    except:
-        logging.info(f"can not get input for {ticker}")
+    except Exception as e:
+        logging.info(f"can not get input for {ticker}, {e}")
         return None
 
 def add_highs(df, width):
@@ -369,11 +369,13 @@ def get_heads_and_targets(config):
     logging.info(f"head_dict:{head_dict}, targets:{targets}")
     return head_dict, targets
         
-def get_data_module(config, targets):
+def get_data_module(config, base_dir, train_start_date, test_start_date,
+                    test_end_date, targets, model_tickers, time_interval):
     start = time.time()
     train_data_vec = []
-    for ticker in config.dataset.model_tickers:
-        ticker_train_data = get_input_for_ticker(config, ticker)
+    for ticker in model_tickers:
+        logging.info(f"get_input_for base_dir:{base_dir}, start_date:{train_start_date}, end_date:{test_end_date}, ticker:{ticker}")
+        ticker_train_data = get_input_for_ticker(base_dir, train_start_date, test_end_date, ticker, "FUT", time_interval)
         if ticker_train_data is None:
             continue
         ticker_train_data["new_idx"] = ticker_train_data.apply(lambda x : x.ticker + "_" + str(x.series_idx), axis=1)
@@ -387,20 +389,19 @@ def get_data_module(config, targets):
     raw_data["close_low_51"] = g['close_back'].transform(add_lows, width=51)
     raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
     raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
-    logging.info(f"raw_data:{raw_data.head()}")
-    #eval_cut_off = config.job.eval_cut_off
-    #logging.info(f"eval_cut_off:{eval_cut_off}")
-    #train_data = raw_data[raw_data.year<=eval_cut_off]
-    train_data = raw_data[(raw_data.time>=config.job.train_start_date) & (raw_data.time<config.job.test_start_date)]
-    #eval_data = raw_data[raw_data.year>eval_cut_off]
-    eval_data = raw_data[(raw_data.time>=config.job.test_start_date) & (raw_data.time<config.job.test_end_date)]
+    logging.info(f"raw_data before filtering: {len(raw_data)}")
+    train_data = raw_data[(raw_data.time>=train_start_date) & (raw_data.time<test_start_date)]
+    logging.info(f"train_data: {len(train_data)}")
+    train_data = raw_data[(raw_data.time>=train_start_date) & (raw_data.time<test_start_date)]
+    eval_data = raw_data[(raw_data.time>=test_start_date) & (raw_data.time<test_end_date)]
+    logging.info(f"eval_data: {len(eval_data)}")
     train_data = train_data.sort_values(["ticker", "time"])
     eval_data = eval_data.sort_values(["ticker", "time"])
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
     eval_data.insert(0, 'time_idx', range(0, len(eval_data)))
     data_loading_time = time.time() - start
-    #logging.info(f"train_data:{train_data[:1000]}")
-    #logging.info(f"eval_data:{eval_data[:1000]}")
+    logging.info(f"train_data:{train_data[:100]}")
+    logging.info(f"eval_data:{eval_data[:100]}")
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding
     special_days = [
         "easter_day",

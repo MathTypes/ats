@@ -1,3 +1,4 @@
+import datetime
 import logging
 from pathlib import Path
 
@@ -85,7 +86,7 @@ class Pipeline:
     """
     Class to ease the running of multiple experiments.
     """
-    def __init__(self, device):
+    def __init__(self, config):
         self.model = None
         self.data_module = None
         self.history = None
@@ -93,7 +94,11 @@ class Pipeline:
 
         self.preds = None
         self.tests = None
-        self.device = device
+        self.config = config
+        self.device = config.job.device
+        self.train_start_date = datetime.datetime.strptime(config.job.train_start_date,"%Y-%m-%d")
+        self.test_start_date = datetime.datetime.strptime(config.job.test_start_date,"%Y-%m-%d")
+        self.test_end_date = datetime.datetime.strptime(config.job.test_end_date,"%Y-%m-%d")
 
     def create_model(self):
         pass
@@ -102,10 +107,15 @@ class Pipeline:
         res = Tuner(self.trainer).lr_find(self.model,
                                           train_dataloaders=self.data_module.train_dataloader(),
                                           val_dataloaders=self.data_module.val_dataloader(),
+                                          early_stop_threshold=None,
                                           max_lr=0.1,
                                           min_lr=1e-3)
+        suggested_learning_rate = res.suggestion()
         logging.info(f"suggesting learning rate:{res.suggestion()}")
-        self.model.hparams.learning_rate = res.suggestion()
+        if not suggested_learning_rate:
+            logging.info(f"can not find learning rate!")
+            exit(0)
+        self.model.hparams.learning_rate = suggested_learning_rate
 
 
     def create_trainer(self):
