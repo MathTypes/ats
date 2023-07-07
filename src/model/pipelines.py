@@ -247,8 +247,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         #nhits.run_tune(config, study_name)
         test_dates = self.market_cal.valid_days(start_date=self.test_start_date, end_date=self.test_end_date)
         train_dataset = self.data_module.training
-        train_data = self.data_module.train_data
-        
+        train_data = self.data_module.train_data        
         future_data = self.data_module.eval_data
         
         logging.info(f"future_data:{future_data.iloc[:1]}")
@@ -256,7 +255,6 @@ class PatchTftSupervisedPipeline(Pipeline):
         last_time_idx = train_data.iloc[-1]["time_idx"]
         for test_date in test_dates:
             schedule = self.market_cal.schedule(start_date=test_date, end_date=test_date)
-            logging.info(f"schedule:{schedule}")
             logging.info(f"sod {test_date}")
             time_range = mcal.date_range(schedule, frequency='30M')
             max_prediction_length = self.config.model.prediction_length
@@ -267,21 +265,21 @@ class PatchTftSupervisedPipeline(Pipeline):
                 # 2. run inference to get returns and new positions
                 # 3. update PNL and positions
                 logging.info(f"running step {nyc_time}")
-                logging.info(f"nyc_time={nyc_time}, {nyc_time.timestamp()}")
-                logging.info(f"matched_time_stamp:{future_data[(future_data.timestamp>nyc_time.timestamp()-10) & (future_data.timestamp<nyc_time.timestamp()+10)]['timestamp']}")
+                #logging.info(f"nyc_time={nyc_time}, {nyc_time.timestamp()}")
+                #logging.info(f"matched_time_stamp:{future_data[(future_data.timestamp>nyc_time.timestamp()-10) & (future_data.timestamp<nyc_time.timestamp()+10)]['timestamp']}")
                 new_data = future_data[(future_data.timestamp==nyc_time.timestamp()) & (future_data.ticker=="ES")]
                 if new_data.empty:
                     continue
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
-                logging.info(f"new_data:{new_data}")
+                #logging.info(f"new_data:{new_data}")
                 train_dataset.add_new_data(new_data)
-                logging.info(f"train_dataset_index:{train_dataset.decoded_index.iloc[-3:]}, last_time_idx:{last_time_idx}")
+                #logging.info(f"train_dataset_index:{train_dataset.decoded_index.iloc[-3:]}, last_time_idx:{last_time_idx}")
                 new_prediction_data = train_dataset.filter(lambda x: (x.time_idx_last == last_time_idx))
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
                 new_raw_predictions = self.model.predict(new_prediction_data, mode="raw", return_x=True,
                                                          trainer_kwargs=trainer_kwargs)
-                logging.info(f"new_raw_predictions:{new_raw_predictions}")
+                #logging.info(f"new_raw_predictions:{new_raw_predictions}")
             logging.info(f"eod {test_date}")
 
 

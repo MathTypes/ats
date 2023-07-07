@@ -64,7 +64,10 @@ def my_app(cfg: DictConfig) -> None:
         pipe.create_model(cfg.job.checkpoint)
         pipe.eval_model()
     elif cfg.job.mode == "test":
+        # train model until test start
+        pipe.create_trainer()
         pipe.create_model(cfg.job.checkpoint)
+        pipe.train_model()
         pipe.test_model()
 
     ray.shutdown()
