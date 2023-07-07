@@ -1,0 +1,15 @@
+device: cuda
+mode: train
+train_start_date: 2008-06-01
+test_start_date: 2022-06-01
+test_end_date: 2023-01-01
+workers: 8
+num_tune_iter: 20
+max_epochs: 50
+log_mode: All
+eval_batches: 2
+tune_learning_rate: False
+log_example_eval_every_n_epochs: 5
+tag: prod
+checkpoint:
+

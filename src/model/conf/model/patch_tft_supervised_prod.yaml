@@ -1,0 +1,25 @@
+hidden_size: 8
+prediction_length: 32
+context_length: 128
+patch_len: 16
+stride: 8
+d_model: 8
+train_batch_size: 1024
+eval_batch_size: 32
+learning_rate: 0.02
+attn_heads : 4
+attn_dropout: 0.1
+multitask: True
+heads:
+  - returns_prediction
+#  - position_optimization
+returns_prediction:
+  loss_name: MQF2DistributionLoss
+  #loss_name: SMAPE
+  target: "close_back"
+  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+position_optimization:
+  loss_name: SharpeLoss
+  target: "close_back"
+  logging_metrics: []
+name: patch_tft_supervised
