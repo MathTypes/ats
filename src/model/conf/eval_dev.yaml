@@ -1,0 +1,5 @@
+defaults:
+ - dataset: future
+ - optimizer: adam
+ - model: patch_tft_supervised
+ - job: eval

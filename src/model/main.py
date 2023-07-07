@@ -45,18 +45,16 @@ def my_app(cfg: DictConfig) -> None:
     logging.info(f"cfg:{cfg}, dir(cfg)")
     ray.init()
     enable_dask_on_ray()
-    device = cfg.job.device
-    logging.info(f"train_start_date:{cfg.job.train_start_date}")
-    logging.info(f"test_start_date:{cfg.job.test_start_date}")
     prediction_length = cfg['model']['prediction_length']
     context_length = cfg['model']['context_length']
     wandb.config = cfg
     pipe = pipelines[cfg.model.name](dataset="FUT", config=cfg) 
     if cfg.job.mode == "train":
-        pipe.create_model(cfg.job.checkpoint)
         pipe.create_trainer()
+        pipe.create_model(cfg.job.checkpoint)
         logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
-        pipe.set_learning_rate()
+        if cfg.job.tune_learning_rate:
+            pipe.set_learning_rate()
         pipe.train_model()
         #pipe.test_model()
     elif cfg.job.mode == "tune":

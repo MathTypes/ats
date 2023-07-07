@@ -196,18 +196,32 @@ class PatchTftSupervisedPipeline(Pipeline):
         super().__init__(config)
         self.dataset = dataset
         self.config = config
+        self.init_env()
 
-    def create_model(self, checkpoint):
+    def init_env(self):
+        self.test_start_date = datetime.datetime.strptime(self.config.job.test_start_date,"%Y-%m-%d")
+        self.test_end_date = datetime.datetime.strptime(self.config.job.test_end_date,"%Y-%m-%d")
+        if self.config.job.mode == "train":
+            self.train_start_date = datetime.datetime.strptime(self.config.job.train_start_date,"%Y-%m-%d")
+        elif self.config.job.mode == "test":
+            self.data_start_date = self.test_start_date - datetime.timedelta(hours=-2*self.config.model.context_length)
+            self.market_cal = mcal.get_calendar(self.config.job.market)
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         logging.info(f"head:{self.heads}, targets:{self.targets}")
+        if self.config.job.mode == "train":
+            start_date = self.train_start_date
+        else:
+            start_date = self.data_start_date
         self.data_module = model_utils.get_data_module(self.config,
                                                        self.config.dataset.base_dir,
-                                                       self.train_start_date,
+                                                       start_date,
                                                        self.test_start_date,
                                                        self.test_end_date,
                                                        self.targets,
                                                        self.config.dataset.model_tickers,
                                                        self.config.dataset.time_interval)
+        
+    def create_model(self, checkpoint):
         self.model = model_utils.get_patch_tft_supervised_model(self.config, self.data_module, self.heads)
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         if checkpoint:
@@ -228,7 +242,12 @@ class PatchTftSupervisedPipeline(Pipeline):
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         #self.model = self.model.to(self.device, non_blocking=True)
         #nhits.run_tune(config, study_name)
-        data_start_date = self.test_start_date - datetime.timedelta(hours=-2*self.model.context_length)
+        test_dates = mcal.valid_days(start_date=self.test_start_date, end_date=self.test_end_date)
+        for test_date in test_dates:
+            logging.info(f"sod {test_date}")
+            time_range = mcal.date_range([test_date], frequency='30M')
+            logging.info(f"time_range:{time_range}")
+            logging.info(f"eod {test_date}")
         now = test_start_date
         pass
 

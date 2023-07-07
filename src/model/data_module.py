@@ -171,9 +171,9 @@ class LSTMDataModule(pl.LightningDataModule):
 class TimeSeriesDataModule(pl.LightningDataModule):
     def __init__(self, config, train_data, eval_data, target):
         super().__init__()
-        self.train_data = train_data
-        self.eval_data = eval_data
-        logging.info(f"target:{target} {type(target)}")
+        self.train_data = train_data.dropna()
+        self.eval_data = eval_data.dropna()
+        #logging.info(f"target:{target} {type(target)}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
         #target_normalizer = None
@@ -184,10 +184,10 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         if isinstance(target, (typing.Set, typing.List)):
             normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
             target_normalizer = MultiNormalizer(normalizer_list)
-        time_varying_known_reals = config.model.time_varying_known_reals
+        time_varying_known_reals = config.features.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)
-        time_varying_unknown_reals = config.model.time_varying_unknown_reals
+        time_varying_unknown_reals = config.features.time_varying_unknown_reals
         if OmegaConf.is_list(time_varying_unknown_reals):
             time_varying_unknown_reals =  OmegaConf.to_object(time_varying_unknown_reals)
         logging.info(f"train_data:{len(self.train_data)}")
@@ -202,13 +202,13 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             max_prediction_length=prediction_length,
             allow_missing_timesteps=False,
             target_normalizer=target_normalizer,
-            lags=config.model.lags,
-            static_categoricals=config.model.static_categoricals,
+            lags=config.features.lags,
+            static_categoricals=config.features.static_categoricals,
             time_varying_known_reals=time_varying_known_reals,
             time_varying_unknown_reals=time_varying_unknown_reals,
             categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
             #categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},            
-            add_relative_time_idx = config.model.add_relative_time_idx
+            add_relative_time_idx = config.features.add_relative_time_idx
         )
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128
@@ -234,11 +234,11 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         return train_dataloader
     
     def val_dataloader(self):
-        #logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
+        logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
         # train = True is the hack to randomly sample from time series from different ticker. 
         val_dataloader = self.validation.to_dataloader(train=False,
                                                        batch_size=self.eval_batch_size, num_workers=4,
-                                                       batch_sampler="synchronized",
+                                                       #batch_sampler="synchronized",
                                                        pin_memory=True, drop_last=True)
         return val_dataloader
 

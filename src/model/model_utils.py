@@ -266,11 +266,11 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         for name, l in loss_per_head.items():
           losses.append(l["loss"])
           logging_metrics.append(l["logging_metrics"])
-          logging.info(f"loss name: {name}, l:{l}")
+          #logging.info(f"loss name: {name}, l:{l}")
           output_size_dict[name] = get_output_size(l["loss"])
-        logging.info(f"losses:{losses}")
-        logging.info(f"logging_metrics:{logging_metrics}")
-        logging.info(f"output_size_dict:{output_size_dict}")
+        #logging.info(f"losses:{losses}")
+        #logging.info(f"logging_metrics:{logging_metrics}")
+        #logging.info(f"output_size_dict:{output_size_dict}")
         if len(losses)>1:
             loss = MultiLossWithUncertaintyWeight(losses)
         else:
@@ -352,7 +352,7 @@ def add_lows(df, width):
 
 def get_heads_and_targets(config):
     heads = config.model.heads
-    logging.info(f"heads:{heads}")
+    #logging.info(f"heads:{heads}")
     head_dict = {}
     targets = set()
     for head in heads:
@@ -366,7 +366,7 @@ def get_heads_and_targets(config):
         targets = next(iter(targets))
     else:
         targets = list(targets)
-    logging.info(f"head_dict:{head_dict}, targets:{targets}")
+    #logging.info(f"head_dict:{head_dict}, targets:{targets}")
     return head_dict, targets
         
 def get_data_module(config, base_dir, train_start_date, test_start_date,
@@ -374,9 +374,9 @@ def get_data_module(config, base_dir, train_start_date, test_start_date,
     start = time.time()
     train_data_vec = []
     for ticker in model_tickers:
-        logging.info(f"get_input_for base_dir:{base_dir}, start_date:{train_start_date}, end_date:{test_end_date}, ticker:{ticker}")
+        #logging.info(f"get_input_for base_dir:{base_dir}, start_date:{train_start_date}, end_date:{test_end_date}, ticker:{ticker}")
         ticker_train_data = get_input_for_ticker(base_dir, train_start_date, test_end_date, ticker, "FUT", time_interval)
-        if ticker_train_data is None:
+        if ticker_train_data is None or ticker_train_data.empty:
             continue
         ticker_train_data["new_idx"] = ticker_train_data.apply(lambda x : x.ticker + "_" + str(x.series_idx), axis=1)
         ticker_train_data = ticker_train_data.set_index("new_idx")
@@ -389,9 +389,9 @@ def get_data_module(config, base_dir, train_start_date, test_start_date,
     raw_data["close_low_51"] = g['close_back'].transform(add_lows, width=51)
     raw_data["close_high_201"] = g['close_back'].transform(add_highs, width=201)
     raw_data["close_low_201"] = g['close_back'].transform(add_lows, width=201)
-    logging.info(f"raw_data before filtering: {len(raw_data)}")
+    #logging.info(f"raw_data before filtering: {len(raw_data)}")
     train_data = raw_data[(raw_data.time>=train_start_date) & (raw_data.time<test_start_date)]
-    logging.info(f"train_data: {len(train_data)}")
+    #logging.info(f"train_data: {len(train_data)}")
     train_data = raw_data[(raw_data.time>=train_start_date) & (raw_data.time<test_start_date)]
     eval_data = raw_data[(raw_data.time>=test_start_date) & (raw_data.time<test_end_date)]
     logging.info(f"eval_data: {len(eval_data)}")
@@ -400,8 +400,8 @@ def get_data_module(config, base_dir, train_start_date, test_start_date,
     train_data.insert(0, 'time_idx', range(0, len(train_data)))
     eval_data.insert(0, 'time_idx', range(0, len(eval_data)))
     data_loading_time = time.time() - start
-    logging.info(f"train_data:{train_data[:100]}")
-    logging.info(f"eval_data:{eval_data[:100]}")
+    #logging.info(f"train_data:{train_data[:100]}")
+    #logging.info(f"eval_data:{eval_data[:100]}")
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding
     special_days = [
         "easter_day",

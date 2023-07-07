@@ -1122,9 +1122,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # all true values for y of the first sample in batch
         encoder_targets = to_list(x["encoder_target"])
         decoder_targets = to_list(x["decoder_target"])
-        if isinstance(out, Tuple):
+        #if isinstance(out, Tuple):
             # skip loss
-            out = out[1]
+        #    out = out[1]
         y_hats = to_list(self.to_prediction(out, **prediction_kwargs))
         y_quantiles = to_list(self.to_quantiles(out, **quantiles_kwargs))
 
@@ -1448,12 +1448,12 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"not use metrics:{out['prediction']}, loss:{self.loss}")
                 out = Metric.to_prediction(self.loss, out["prediction"])
         else:
-            #logging.info(f"before prediction:{out}")
-            if isinstance(out, (List)):
-                out = out[1]
+            #logging.info(f"before prediction:{out}, {type(out)}")
+            #if isinstance(out, (Tuple)):
+            #    out = out[1]
             try:
                 #traceback.print_stack()
-                #logging.info(f"use metrics:{out}, loss:{self.loss}")
+                #logging.info(f"use metrics:{out}")
                 out = self.loss.to_prediction(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
                 #logging.info(f"to_prediction_out:{out}")

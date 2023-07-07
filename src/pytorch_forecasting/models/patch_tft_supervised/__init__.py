@@ -1207,7 +1207,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             #labels = np.array(labels)
             order = np.argsort(values)
             values = values / values.sum(-1).unsqueeze(-1)
-            logging.info(f"labels:{labels}, labels_type:{type(labels)}, values:{values}")
+            #logging.info(f"labels:{labels}, labels_type:{type(labels)}, values:{values}")
             fig.add_trace(
                 go.Bar(
                     #x=np.arange(len(values)),

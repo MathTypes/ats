@@ -96,9 +96,6 @@ class Pipeline:
         self.tests = None
         self.config = config
         self.device = config.job.device
-        self.train_start_date = datetime.datetime.strptime(config.job.train_start_date,"%Y-%m-%d")
-        self.test_start_date = datetime.datetime.strptime(config.job.test_start_date,"%Y-%m-%d")
-        self.test_end_date = datetime.datetime.strptime(config.job.test_end_date,"%Y-%m-%d")
 
     def create_model(self):
         pass
@@ -108,17 +105,19 @@ class Pipeline:
                                           train_dataloaders=self.data_module.train_dataloader(),
                                           val_dataloaders=self.data_module.val_dataloader(),
                                           early_stop_threshold=None,
+                                          num_iter=self.config.job.num_tune_iter,
                                           max_lr=0.1,
                                           min_lr=1e-3)
         suggested_learning_rate = res.suggestion()
         logging.info(f"suggesting learning rate:{res.suggestion()}")
         if not suggested_learning_rate:
             logging.info(f"can not find learning rate!")
-            exit(0)
-        self.model.hparams.learning_rate = suggested_learning_rate
+        else:
+            self.model.hparams.learning_rate = suggested_learning_rate
 
 
     def create_trainer(self):
+        config = self.config
         checkpoint_callback = ModelCheckpoint(
             dirpath=MODELS_DIR,
             monitor="val_loss",
@@ -163,7 +162,8 @@ class Pipeline:
     
     def train_model(self):
         logging.info(f"MODELS_DIR:{MODELS_DIR}")
-        self.history = self.trainer.fit(self.model, self.data_module)
+        with torch.cuda.amp.autocast(enabled=False):
+            self.history = self.trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
         #self.trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
 

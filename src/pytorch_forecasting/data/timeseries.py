@@ -596,7 +596,7 @@ class TimeSeriesDataSet(Dataset):
         Args:
             data (pd.DataFrame): input data
         """
-        logging.info(f"target_normalizer:{self.target_normalizer}")
+        #logging.info(f"target_normalizer:{self.target_normalizer}")
         if isinstance(self.target_normalizer, str) and self.target_normalizer == "auto":
             normalizers = []
             for target in self.target_names:
@@ -617,7 +617,7 @@ class TimeSeriesDataSet(Dataset):
                         normalizers.append(EncoderNormalizer(transformation=transformer))
                     else:
                         normalizers.append(GroupNormalizer(transformation=transformer))
-            logging.info(f"normailizer:{normalizers}")
+            #logging.info(f"normailizer:{normalizers}")
             #exit(0)
             if self.multi_target:
                 self.target_normalizer = MultiNormalizer(normalizers)
@@ -638,7 +638,7 @@ class TimeSeriesDataSet(Dataset):
             "multiple targets / list of targets requires MultiNormalizer as target_normalizer "
             f"but found {self.target_normalizer}"
         )
-        logging.info(f"self.target_normalizer:{self.target_normalizer}")
+        #logging.info(f"self.target_normalizer:{self.target_normalizer}")
 
     @property
     @lru_cache(None)
@@ -753,7 +753,7 @@ class TimeSeriesDataSet(Dataset):
                     try:
                         check_is_fitted(self.categorical_encoders[name])
                     except NotFittedError:
-                        logging.info(f"fitting:{name}")
+                        #logging.info(f"fitting:{name}")
                         self.categorical_encoders[name] = self.categorical_encoders[name].fit(
                             data[columns].to_numpy().reshape(-1)
                         )
@@ -770,14 +770,14 @@ class TimeSeriesDataSet(Dataset):
         for name in dict.fromkeys(group_ids_to_encode + self.flat_categoricals):
             # targets and its lagged versions are handled separetely
             if name not in self.target_names and name not in self.lagged_targets:
-                logging.info(f"transorm:{name}")
+                #logging.info(f"transorm:{name}")
                 data[name] = self.transform_values(
                     name, data[name], inverse=False, ignore_na=name in self.lagged_variables
                 )
         # save special variables
         assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
         data["__time_idx__"] = data[self.time_idx]  # save unscaled
-        logging.info(f"target_names:type{self.target_names}")
+        #logging.info(f"target_names:type{self.target_names}")
         for target in self.target_names:
             #logging.info(f"target:{target}")
             assert (
@@ -793,11 +793,11 @@ class TimeSeriesDataSet(Dataset):
             try:
                 check_is_fitted(self.target_normalizer)
             except NotFittedError:
-                logging.info(f"fitting target, {self.target_normalizer}")
+                #logging.info(f"fitting target, {self.target_normalizer}")
                 if isinstance(self.target_normalizer, EncoderNormalizer):
                     self.target_normalizer.fit(data[self.target])
                 elif isinstance(self.target_normalizer, (GroupNormalizer, MultiNormalizer)):
-                    logging.info(f"self.target:{self.target}, {type(self.target)}")
+                    #logging.info(f"self.target:{self.target}, {type(self.target)}")
                     self.target_normalizer.fit(data[self.target], data)
                 else:
                     self.target_normalizer.fit(data[self.target])
@@ -819,11 +819,11 @@ class TimeSeriesDataSet(Dataset):
 
             elif isinstance(self.target_normalizer, GroupNormalizer):
                 data[self.target], scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-                logging.info(f"group normalizr scales:{scales}")
+                #logging.info(f"group normalizr scales:{scales}")
 
             elif isinstance(self.target_normalizer, MultiNormalizer):
                 transformed, scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-                logging.info(f"multi normalizr scales:{scales}")
+                #logging.info(f"multi normalizr scales:{scales}")
 
                 for idx, target in enumerate(self.target_names):
                     data[target] = transformed[idx]
@@ -834,14 +834,14 @@ class TimeSeriesDataSet(Dataset):
 
             elif isinstance(self.target_normalizer, NaNLabelEncoder):
                 data[self.target] = self.target_normalizer.transform(data[self.target])
-                logging.info(f"nan label normalizr scales:{scales}")
+                #logging.info(f"nan label normalizr scales:{scales}")
                 # overwrite target because it requires encoding (continuous targets should not be normalized)
                 data[f"__target__{self.target}"] = data[self.target]
                 scales = None
 
             else:
                 data[self.target], scales = self.target_normalizer.transform(data[self.target], return_norm=True)
-                logging.info(f"default normalizr scales:{scales}")
+                #logging.info(f"default normalizr scales:{scales}")
 
             # add target scales
             if self.add_target_scales:
@@ -878,7 +878,7 @@ class TimeSeriesDataSet(Dataset):
 
         # encode after fitting
         for name in self.reals:
-            logging.info(f"encode name:{name}")
+            #logging.info(f"encode name:{name}")
             # targets are handled separately
             transformer = self.get_transformer(name)
             if (

@@ -1,5 +1,6 @@
 defaults:
- - dataset: future
+ - dataset: future_dev
+ - features: dev
  - optimizer: adam
- - model: nhits
+ - model: patch_tft_supervised_dev
  - job: train
