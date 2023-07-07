@@ -202,7 +202,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         y = [[v.to(device) for v in val] if isinstance(val, list) else val.to(device) if val is not None else None for val in y]
         kwargs={'nolog': True}
         log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
-        logging.info(f"out:{out}")
+        #logging.info(f"out:{out}")
         prediction_kwargs = {'reduction':None}
         result = self.pl_module.compute_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
         if "train_RMSE" in result:
