@@ -206,6 +206,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         if self.config.job.mode == "train":
             self.train_start_date = datetime.datetime.strptime(self.config.job.train_start_date,"%Y-%m-%d")
         elif self.config.job.mode == "test":
+            if not self.config.job.data_start_date:
             self.data_start_date = self.test_start_date - datetime.timedelta(days=self.max_lags)
             self.market_cal = mcal.get_calendar(self.config.job.market)
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
@@ -240,11 +241,6 @@ class PatchTftSupervisedPipeline(Pipeline):
         pass
 
     def test_model(self):
-        #self.data_module = nhits.get_data_module(self.config)
-        #self.model = nhits.get_model(self.config, self.data_module)
-        #self.trainer = nhits.get_trainer(self.config, self.data_module)
-        #self.model = self.model.to(self.device, non_blocking=True)
-        #nhits.run_tune(config, study_name)
         test_dates = self.market_cal.valid_days(start_date=self.test_start_date, end_date=self.test_end_date)
         train_dataset = self.data_module.training
         train_data = self.data_module.train_data        
@@ -265,8 +261,6 @@ class PatchTftSupervisedPipeline(Pipeline):
                 # 2. run inference to get returns and new positions
                 # 3. update PNL and positions
                 logging.info(f"running step {nyc_time}")
-                #logging.info(f"nyc_time={nyc_time}, {nyc_time.timestamp()}")
-                #logging.info(f"matched_time_stamp:{future_data[(future_data.timestamp>nyc_time.timestamp()-10) & (future_data.timestamp<nyc_time.timestamp()+10)]['timestamp']}")
                 new_data = future_data[(future_data.timestamp==nyc_time.timestamp()) & (future_data.ticker=="ES")]
                 if new_data.empty:
                     continue
@@ -274,7 +268,6 @@ class PatchTftSupervisedPipeline(Pipeline):
                 new_data["time_idx"] = last_time_idx
                 #logging.info(f"new_data:{new_data}")
                 train_dataset.add_new_data(new_data)
-                #logging.info(f"train_dataset_index:{train_dataset.decoded_index.iloc[-3:]}, last_time_idx:{last_time_idx}")
                 new_prediction_data = train_dataset.filter(lambda x: (x.time_idx_last == last_time_idx))
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
                 new_raw_predictions = self.model.predict(new_prediction_data, mode="raw", return_x=True,
