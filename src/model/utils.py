@@ -133,28 +133,28 @@ class Pipeline:
         prediction_logger = WandbClfEvalCallback(self.data_module, self.targets, self.config)
         #sim_logger = SimilarityLogger() 
         self.trainer = pl.Trainer(max_epochs=self.config.job.max_epochs, logger=wandb_logger,
-                             callbacks=[checkpoint_callback, lr_monitor,
+                                  callbacks=[checkpoint_callback, lr_monitor,
                                         #log_predictions_callback,
                                         prediction_logger,
                                         #WandbModelCheckpoint("models"),
                                         #WandbMetricsLogger(),
                                         #StochasticWeightAveraging(swa_lrs=1e-2)
-                             ],
-                             devices=devices,
-                             accelerator="gpu",
-                             accumulate_grad_batches=8,
-                             #stochastic_weight_avg=True,
-                             #precision="bf16",
-                             gradient_clip_val=0.5,
-                             default_root_dir=LIGHTNING_DIR,
-                             log_every_n_steps=LOG_EVERY_N_STEPS,
-                             detect_anomaly=True,
-                             #profiler="advanced",
-                             #precision='16-mixed',
-                             # train in half precision
-                             deterministic=False,
-                             #check_val_every_n_epoch=10,
-                             strategy='auto',)
+                                  ],
+                                  devices=devices,
+                                  accelerator="gpu",
+                                  accumulate_grad_batches=8,
+                                  #stochastic_weight_avg=True,
+                                  #precision="bf16",
+                                  gradient_clip_val=0.5,
+                                  default_root_dir=LIGHTNING_DIR,
+                                  log_every_n_steps=LOG_EVERY_N_STEPS,
+                                  detect_anomaly=True,
+                                  #profiler="advanced",
+                                  #precision='16-mixed',
+                                  # train in half precision
+                                  deterministic=False,
+                                  #check_val_every_n_epoch=10,
+                                  strategy='auto',)
         
     def tune_model(self):
         pass

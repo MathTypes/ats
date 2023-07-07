@@ -11,6 +11,7 @@ from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesD
 from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
 from pytorch_forecasting.metrics import MAE, MAPE, MASE, MAPCSE, RMSE, SMAPE, PoissonLoss, QuantileLoss
 from pytorch_forecasting.utils import create_mask, detach, to_list
+import pytz
 import plotly.graph_objects as go
 import PIL
 from plotly.subplots import make_subplots
@@ -201,10 +202,11 @@ class PatchTftSupervisedPipeline(Pipeline):
     def init_env(self):
         self.test_start_date = datetime.datetime.strptime(self.config.job.test_start_date,"%Y-%m-%d")
         self.test_end_date = datetime.datetime.strptime(self.config.job.test_end_date,"%Y-%m-%d")
+        self.max_lags = self.config.job.max_lags
         if self.config.job.mode == "train":
             self.train_start_date = datetime.datetime.strptime(self.config.job.train_start_date,"%Y-%m-%d")
         elif self.config.job.mode == "test":
-            self.data_start_date = self.test_start_date - datetime.timedelta(hours=-2*self.config.model.context_length)
+            self.data_start_date = self.test_start_date - datetime.timedelta(days=self.max_lags)
             self.market_cal = mcal.get_calendar(self.config.job.market)
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         logging.info(f"head:{self.heads}, targets:{self.targets}")
@@ -212,6 +214,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             start_date = self.train_start_date
         else:
             start_date = self.data_start_date
+        logging.info(f"start_date:{start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}")
         self.data_module = model_utils.get_data_module(self.config,
                                                        self.config.dataset.base_dir,
                                                        start_date,
@@ -242,14 +245,44 @@ class PatchTftSupervisedPipeline(Pipeline):
         #self.trainer = nhits.get_trainer(self.config, self.data_module)
         #self.model = self.model.to(self.device, non_blocking=True)
         #nhits.run_tune(config, study_name)
-        test_dates = mcal.valid_days(start_date=self.test_start_date, end_date=self.test_end_date)
+        test_dates = self.market_cal.valid_days(start_date=self.test_start_date, end_date=self.test_end_date)
+        train_dataset = self.data_module.training
+        train_data = self.data_module.train_data
+        
+        future_data = self.data_module.eval_data
+        
+        logging.info(f"future_data:{future_data.iloc[:1]}")
+        wandb_logger = WandbLogger(project='ATS', log_model=True)
+        last_time_idx = train_data.iloc[-1]["time_idx"]
         for test_date in test_dates:
+            schedule = self.market_cal.schedule(start_date=test_date, end_date=test_date)
+            logging.info(f"schedule:{schedule}")
             logging.info(f"sod {test_date}")
-            time_range = mcal.date_range([test_date], frequency='30M')
-            logging.info(f"time_range:{time_range}")
+            time_range = mcal.date_range(schedule, frequency='30M')
+            max_prediction_length = self.config.model.prediction_length
+            trainer_kwargs = {"logger" : wandb_logger}
+            for utc_time in time_range:
+                nyc_time = utc_time.astimezone(pytz.timezone('America/New_York'))
+                # 1. prepare prediction with latest prices
+                # 2. run inference to get returns and new positions
+                # 3. update PNL and positions
+                logging.info(f"running step {nyc_time}")
+                logging.info(f"nyc_time={nyc_time}, {nyc_time.timestamp()}")
+                logging.info(f"matched_time_stamp:{future_data[(future_data.timestamp>nyc_time.timestamp()-10) & (future_data.timestamp<nyc_time.timestamp()+10)]['timestamp']}")
+                new_data = future_data[(future_data.timestamp==nyc_time.timestamp()) & (future_data.ticker=="ES")]
+                if new_data.empty:
+                    continue
+                last_time_idx += 1
+                new_data["time_idx"] = last_time_idx
+                logging.info(f"new_data:{new_data}")
+                train_dataset.add_new_data(new_data)
+                logging.info(f"train_dataset_index:{train_dataset.decoded_index.iloc[-3:]}, last_time_idx:{last_time_idx}")
+                new_prediction_data = train_dataset.filter(lambda x: (x.time_idx_last == last_time_idx))
+                #logging.info(f"new_prediction_data:{new_prediction_data}")
+                new_raw_predictions = self.model.predict(new_prediction_data, mode="raw", return_x=True,
+                                                         trainer_kwargs=trainer_kwargs)
+                logging.info(f"new_raw_predictions:{new_raw_predictions}")
             logging.info(f"eod {test_date}")
-        now = test_start_date
-        pass
 
 
     def eval_model(self):
