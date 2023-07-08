@@ -1,0 +1,6 @@
+defaults:
+ - dataset: future_dev
+ - features: dev
+ - optimizer: adam
+ - model: patch_tft_supervised_dev
+ - job: test_dev

@@ -1,3 +1,4 @@
 base_dir: /home/ubuntu/ats/src/model/data
 time_interval: "30min"
 model_tickers: ['ES']
+trading_tickers: ['ES']

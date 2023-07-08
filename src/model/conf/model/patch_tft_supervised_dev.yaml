@@ -12,14 +12,15 @@ attn_dropout: 0.1
 multitask: True
 heads:
   - returns_prediction
-#  - position_optimization
+  - position_optimization
 returns_prediction:
   loss_name: MQF2DistributionLoss
-  #loss_name: SMAPE
   target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 position_optimization:
   loss_name: SharpeLoss
-  target: "close_back"
+  # TODO: figure out how to allow multi loss when same targets are
+  # used in different heads.
+  target: "close_back_cumsum"
   logging_metrics: []
 name: patch_tft_supervised
