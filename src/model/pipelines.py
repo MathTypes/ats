@@ -336,8 +336,8 @@ class PatchTftSupervisedPipeline(Pipeline):
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
                 logging.info(f"running step {nyc_time}, new_data:{new_data}")
-                train_dataset.add_new_data(new_data)
-                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
+                train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
+                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}, last_time_idex={last_time_idx}")
                 new_prediction_data = train_dataset.filter(
                     lambda x: (x.time_idx_last == last_time_idx)
                 )
@@ -349,7 +349,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                     #return_y=True,
                     trainer_kwargs=trainer_kwargs,
                 )
-                #logging.info(f"new_raw_predictions:{new_raw_predictions}")
+                logging.info(f"new_raw_predictions:{new_raw_predictions}")
                 prediction_kwargs = {}
                 y_hats = to_list(
                     self.model.to_prediction(
@@ -357,8 +357,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                     ))
                 #logging.info(f"y_hats:{y_hats}")
                 #logging.info(f"y:{new_raw_predictions.y}")
-                # TODO: figure out how come position becomes first output
-                position, prediction = y_hats
+                prediction, position = y_hats
                 logging.info(f"new_position:{position}, prediction:{prediction}")
             logging.info(f"eod {test_date}")
 

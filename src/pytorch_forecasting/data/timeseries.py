@@ -36,7 +36,7 @@ from torch.nn.utils import rnn
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import Sampler, SequentialSampler
 
-
+import data_util
 
 def _find_end_indices(diffs: np.ndarray, max_lengths: np.ndarray, min_length: int) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -421,13 +421,20 @@ class TimeSeriesDataSet(Dataset):
         self._set_target_normalizer(data)
 
         data = self.preprocess_data(data)
+        logging.info(f"data:{data.iloc[-10:]}")
         if not simulation_mode:
             self.transform_data(data)
 
     def preprocess_data(self, data : pd.DataFrame):
         data = data.sort_values(self.group_ids + [self.time_idx])
-        g = data.groupby(self.group_ids, observed=True)
+        #g = data.groupby(self.group_ids, observed=True)
         # reduce return to bring down loss
+        logging.info(f"data:{data.iloc[-3:]}")
+        #logging.info(f"data:{data.describe()}")
+        data_dup = data[data.index.duplicated()]
+        if not data_dup.empty:
+            logging.info(f"data_dup:{data_dup}")
+            exit(0)
         data_bad = data[data['close_back']<-0.2]
         if not data_bad.empty:
             logging.info(f"data with large negative return:{data_bad.head()}")
@@ -446,6 +453,7 @@ class TimeSeriesDataSet(Dataset):
         return data
 
     def transform_data(self, data : pd.DataFrame):
+        #logging.info(f"data:{data.iloc[-30:]}")
         for target in self.target_names:
             assert (
                 target not in self.time_varying_known_reals
@@ -2055,6 +2063,7 @@ class TimeSeriesDataSet(Dataset):
                 and transformer is not None
                 and not isinstance(transformer, EncoderNormalizer)
             ):
+                #logging.info(f"name:{name}, data:{data[name]}")
                 data[name] = self.transform_values(name, data[name], data=data, inverse=False)
 
         # encode lagged categorical targets
@@ -2309,6 +2318,7 @@ class TimeSeriesDataSet(Dataset):
 
         # reals
         elif name in self.reals:
+            #logging.info(f"tranform {name}, {values}")
             if isinstance(transformer, GroupNormalizer):
                 return transform(values, data, **kwargs)
             elif isinstance(transformer, EncoderNormalizer):
@@ -2839,9 +2849,11 @@ class TimeSeriesDataSet(Dataset):
             ).clip(max=self.max_prediction_length)
         return decoder_length
 
-    def add_new_data(self, new_data: pd.DataFrame):
+    def add_new_data(self, new_data: pd.DataFrame, interval_minutes):
         self.raw_data = pd.concat([self.raw_data, new_data])
-        #logging.info(f"full_data:{self.raw_data.iloc[-2:]}")
+        logging.info(f"new_full_data_before_add_derived_features:{self.raw_data.iloc[-3:]}")
+        self.raw_data = data_util.add_derived_features(self.raw_data, interval_minutes)
+        logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
         data = self.preprocess_data(self.raw_data)
         self.transform_data(data)
     

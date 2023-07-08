@@ -5,6 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 from pyarrow import csv
+import pytz
 import ray
 
 from mom_trans.classical_strategies import (
@@ -13,11 +14,25 @@ from mom_trans.classical_strategies import (
     calc_daily_vol,
     calc_vol_scaled_returns,
 )
+from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
 from util import time_util
 
 VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
+def utc_to_nyse_time(utc_time, interval_minutes):
+    utc_time = time_util.round_up(utc_time, interval_minutes)
+    nyc_time = pytz.timezone('America/New_York').localize(
+        datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
+                          utc_time.hour, utc_time.minute))
+    # Do not use following.
+    # See https://stackoverflow.com/questions/18541051/datetime-and-timezone-conversion-with-pytz-mind-blowing-behaviour
+    # why datetime(..., tzinfo) does not work.
+    #nyc_time = datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
+    #                             utc_time.hour, utc_time.minute,
+    #                             tzinfo=pytz.timezone('America/New_York'))
+    return nyc_time
+    
 
 def compute_minutes_after_daily_close(x):
     # logging.info(f"x:{x}, {type(x)}")
@@ -167,12 +182,93 @@ def get_processed_data(
     ds_pct_back = ds[["close", "volume", "dv"]].pct_change(periods=1)
     # df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
     ds = ds.join(ds_pct_back, rsuffix="_back")
+    ds_dup = ds[ds.index.duplicated()]
+    if not ds_dup.empty:
+        logging.info(f"ds_dup:{ds_dup}")
+        #exit(0)
     # .join(df_pct_forward, rsuffix='_fwd')
     # logging.info(f"ds:{ds.head()}")
     ds = ds.dropna()
     # logging.info(f"ds:{ds.info()}")
     return ds
 
+def add_highs(df_cumsum, df_time, width):
+    high_idx, _ = find_peaks(df_cumsum, width=width)
+    high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
+    high_time = df_time.iloc[high_idx].to_frame(name="time_high")
+    df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
+    df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
+    df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
+    return df_high
+
+def add_lows(df_cumsum, df_time, width):
+    low_idx, _ = find_peaks(np.negative(df_cumsum), width=width)
+    low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
+    low_time = df_time.iloc[low_idx].to_frame(name="time_low")
+    df_low = df_cumsum.to_frame(name="close_cumsum").join(low).join(low_time)
+    df_low["close_cumsum_low_ff"] = df_low["close_cumsum_low"].ffill()
+    df_low["close_cumsum_low_bf"] = df_low["close_cumsum_low"].bfill()
+    return df_low
+
+def ticker_transform(raw_data):
+    #logging.info(f"raw_data:{raw_data.iloc[:2]}")
+    #raw_data = raw_data.drop(columns=["time_dix"])
+    #raw_data = raw_data.insert(0, 'time_idx', range(0, len(raw_data)))
+    raw_data["time_idx"] = range(0, len(raw_data))
+    raw_data["cum_volume"] = raw_data.volume.cumsum()
+    raw_data["cum_dv"] = raw_data.dv.cumsum()
+    df_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
+    df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
+    raw_data = raw_data.join(df_pct_back, rsuffix="_back").join(df_pct_forward, rsuffix="_fwd")
+
+    raw_data['close_back_cumsum'] = raw_data['close_back'].cumsum()
+    raw_data['volume_back_cumsum'] = raw_data['volume_back'].cumsum()
+
+    close_back_cumsum = raw_data['close_back_cumsum']
+    timestamp = raw_data['timestamp']
+    df = add_highs(close_back_cumsum, timestamp, width=21)
+    raw_data["close_high_21_ff"] = df["close_cumsum_high_ff"]
+    raw_data["close_high_21_bf"] = df["close_cumsum_high_bf"]
+    df = add_lows(close_back_cumsum, timestamp, width=21)
+    raw_data["close_low_21_ff"] = df["close_cumsum_low_ff"]
+    raw_data["close_low_21_bf"] = df["close_cumsum_low_bf"]
+    df = add_highs(close_back_cumsum, timestamp, width=51)
+    raw_data["close_high_51_ff"] = df["close_cumsum_high_ff"]
+    raw_data["close_high_51_bf"] = df["close_cumsum_high_bf"]
+    df = add_lows(close_back_cumsum, timestamp, width=51)
+    raw_data["close_low_51_ff"] = df["close_cumsum_low_ff"]
+    raw_data["close_low_51_bf"] = df["close_cumsum_low_bf"]
+    df = add_highs(close_back_cumsum, timestamp, width=201)
+    raw_data["close_high_201_ff"] = df["close_cumsum_high_ff"]
+    raw_data["close_high_201_bf"] = df["close_cumsum_high_bf"]
+    df = add_lows(close_back_cumsum, timestamp, width=201)
+    raw_data["close_low_201_ff"] = df["close_cumsum_low_ff"]
+    raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
+    return raw_data
+
+def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
+    raw_data = raw_data.reset_index()
+    # TODO: the original time comes from aggregated time is UTC, but actually
+    # has New York time in it.
+    raw_data["time"] = raw_data.time.apply(utc_to_nyse_time, interval_minutes=interval_minutes)
+    raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
+    raw_data["month"] = raw_data.time.dt.month  # categories have be strings
+    raw_data["year"] = raw_data.time.dt.year  # categories have be strings
+    raw_data["hour_of_day"] = raw_data.time.apply(lambda x: x.hour)
+    raw_data["day_of_week"] = raw_data.time.apply(lambda x: x.dayofweek)
+    raw_data["day_of_month"] = raw_data.time.apply(lambda x: x.day)
+    raw_data["new_idx"] = raw_data.apply(
+        lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
+    raw_data = raw_data.set_index("new_idx")
+    raw_data = raw_data.sort_values(["ticker", "time"])
+    #logging.info(f"raw_data: {raw_data.iloc[:3]}")
+    new_features = raw_data.groupby(["ticker"])['volume','dv','close','timestamp'].apply(ticker_transform)
+    raw_data = raw_data.join(new_features, rsuffix="_back")
+    # Drop duplicae columns
+    raw_data = raw_data.loc[:,~raw_data.columns.duplicated()]
+    #logging.info(f"raw_data: {raw_data.iloc[-5:]}")
+    #raw_data = raw_data.dropna()
+    return raw_data
 
 class Preprocessor:
     def __init__(self, ticker, since, until):

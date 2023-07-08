@@ -379,25 +379,6 @@ def get_input_for_ticker(
         logging.info(f"can not get input for {ticker}, {e}")
         return None
 
-
-def add_highs(df, width):
-    df_cumsum = df.cumsum()
-    high_idx, _ = find_peaks(df_cumsum, width=width)
-    high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
-    df_high = df_cumsum.to_frame(name="close_cumsum").join(high)
-    df_high = df_high.bfill()
-    return df_high["close_cumsum_high"]
-
-
-def add_lows(df, width):
-    df_cumsum = df.cumsum()
-    low_idx, _ = find_peaks(np.negative(df_cumsum), width=width)
-    low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
-    df_low = df_cumsum.to_frame(name="close_cumsum").join(low)
-    df_low = df_low.bfill()
-    return df_low["close_cumsum_low"]
-
-
 def get_heads_and_targets(config):
     heads = config.model.heads
     # logging.info(f"heads:{heads}")
@@ -413,24 +394,13 @@ def get_heads_and_targets(config):
     if len(targets) == 1:
         targets = next(iter(targets))
     else:
-        targets = list(targets)
+        # Need sorted to have consistent target orders. This affects prediction
+        # output position from model.
+        targets = list(sorted(targets))
     # logging.info(f"head_dict:{head_dict}, targets:{targets}")
     return head_dict, targets
 
 
-def utc_to_nyse_time(utc_time, interval_minutes):
-    utc_time = time_util.round_up(utc_time, interval_minutes)
-    nyc_time = pytz.timezone('America/New_York').localize(
-        datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
-                          utc_time.hour, utc_time.minute))
-    # Do not use following.
-    # See https://stackoverflow.com/questions/18541051/datetime-and-timezone-conversion-with-pytz-mind-blowing-behaviour
-    # why datetime(..., tzinfo) does not work.
-    #nyc_time = datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
-    #                             utc_time.hour, utc_time.minute,
-    #                             tzinfo=pytz.timezone('America/New_York'))
-    return nyc_time
-    
 def get_data_module(
     config,
     base_dir,
@@ -457,19 +427,7 @@ def get_data_module(
         ticker_train_data = ticker_train_data.set_index("new_idx")
         train_data_vec.append(ticker_train_data)
     raw_data = pd.concat(train_data_vec)
-    raw_data = raw_data.sort_values(["ticker", "time"])
-    raw_data['close_back_cumsum'] = raw_data.groupby(['ticker'])['close_back'].cumsum()
-    raw_data['volume_back_cumsum'] = raw_data.groupby(['ticker'])['volume_back'].cumsum()
-    g = raw_data.groupby(["ticker"], observed=True)
-    logging.info(f"raw_data: {raw_data.iloc[:3]}")
-    raw_data["close_high_21"] = g["close_back"].transform(add_highs, width=21)
-    raw_data["close_low_21"] = g["close_back"].transform(add_lows, width=21)
-    raw_data["close_high_51"] = g["close_back"].transform(add_highs, width=51)
-    raw_data["close_low_51"] = g["close_back"].transform(add_lows, width=51)
-    raw_data["close_high_201"] = g["close_back"].transform(add_highs, width=201)
-    raw_data["close_low_201"] = g["close_back"].transform(add_lows, width=201)
-    raw_data["time"] = raw_data.time.apply(utc_to_nyse_time, interval_minutes=config.job.time_interval_minutes)
-    raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
+    raw_data = data_util.add_derived_features(raw_data, config.job.time_interval_minutes)
     logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
     train_start_timestamp = train_start_date.timestamp()
     test_start_timestamp = test_start_date.timestamp()
@@ -489,8 +447,8 @@ def get_data_module(
     logging.info(f"eval_data: {len(eval_data)}")
     train_data = train_data.sort_values(["ticker", "time"])
     eval_data = eval_data.sort_values(["ticker", "time"])
-    train_data.insert(0, "time_idx", range(0, len(train_data)))
-    eval_data.insert(0, "time_idx", range(0, len(eval_data)))
+    #train_data.insert(0, "time_idx", range(0, len(train_data)))
+    #eval_data.insert(0, "time_idx", range(0, len(eval_data)))
     data_loading_time = time.time() - start
     # logging.info(f"train_data:{train_data[:100]}")
     # logging.info(f"eval_data:{eval_data[:100]}")
