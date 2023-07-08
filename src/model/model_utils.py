@@ -467,7 +467,7 @@ def get_data_module(
         "beer_capital",
         "music_fest",
     ]
-    data_module = TimeSeriesDataModule(config, train_data, eval_data, targets)
+    data_module = TimeSeriesDataModule(config, train_data, eval_data, targets, simulation_mode=simulation_mode)
     return data_module
 
 

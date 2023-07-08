@@ -1541,6 +1541,7 @@ class TimeSeriesDataSet(Dataset):
         if len(filtered_index) == 0:
             raise ValueError("After applying filter no sub-sequences left in dataset")
         if copy:
+            logging.info(f"filter_index:{filtered_index}")
             dataset = _copy(self)
             dataset.index = filtered_index
             return dataset

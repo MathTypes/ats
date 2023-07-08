@@ -308,6 +308,8 @@ class PatchTftSupervisedPipeline(Pipeline):
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         last_time_idx = train_data.iloc[-1]["time_idx"]
         last_data_time = None
+        position_map = {}
+        prediction_map = {}
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -349,6 +351,9 @@ class PatchTftSupervisedPipeline(Pipeline):
                     #return_y=True,
                     trainer_kwargs=trainer_kwargs,
                 )
+                if isinstance(new_raw_predictions, (list)) and len(new_raw_predictions)<1:
+                    logging.info(f"no prediction")
+                    continue
                 logging.info(f"new_raw_predictions:{new_raw_predictions}")
                 prediction_kwargs = {}
                 y_hats = to_list(
@@ -358,7 +363,11 @@ class PatchTftSupervisedPipeline(Pipeline):
                 #logging.info(f"y_hats:{y_hats}")
                 #logging.info(f"y:{new_raw_predictions.y}")
                 prediction, position = y_hats
+                prediction_map[nyc_time] = prediction
+                position_map[nyc_time] = position
                 logging.info(f"new_position:{position}, prediction:{prediction}")
+            logging.info("predictions:{prediction_map}")
+            logging.info("positions:{position_map}")
             logging.info(f"eod {test_date}")
 
     def eval_model(self):
