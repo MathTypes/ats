@@ -173,7 +173,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         super().__init__()
         self.train_data = train_data.dropna()
         self.eval_data = eval_data.dropna()
-        #logging.info(f"target:{target} {type(target)}")
+        logging.info(f"target:{target} {type(target)}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
         #target_normalizer = None

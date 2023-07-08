@@ -270,7 +270,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
                 new_raw_predictions = self.model.predict(new_prediction_data, mode="raw", return_x=True,
                                                          trainer_kwargs=trainer_kwargs)
-                #logging.info(f"new_raw_predictions:{new_raw_predictions}")
+                logging.info(f"new_raw_predictions:{new_raw_predictions}")
             logging.info(f"eod {test_date}")
 
 
