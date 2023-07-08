@@ -405,6 +405,8 @@ def get_data_module(
     config,
     base_dir,
     train_start_date,
+    eval_start_date,
+    eval_end_date,
     test_start_date,
     test_end_date,
     targets,
@@ -430,23 +432,30 @@ def get_data_module(
     raw_data = data_util.add_derived_features(raw_data, config.job.time_interval_minutes)
     logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
     train_start_timestamp = train_start_date.timestamp()
+    eval_start_timestamp = eval_start_date.timestamp()
+    eval_end_timestamp = eval_end_date.timestamp()
     test_start_timestamp = test_start_date.timestamp()
     test_end_timestamp = test_end_date.timestamp()
     train_data = raw_data[
         (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
     ]
-    # logging.info(f"train_data: {len(train_data)}")
+    logging.info(f"train_data: {len(train_data)}")
     train_data = raw_data[
         (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
     ]
     eval_data = raw_data[
+        (raw_data.timestamp >= eval_start_timestamp) & (raw_data.timestamp < eval_end_timestamp)
+    ]
+    test_data = raw_data[
         (raw_data.timestamp >= test_start_timestamp) & (raw_data.timestamp < test_end_timestamp)
     ]
     logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
     logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
+    logging.info(f"test data after filtering: {test_data.iloc[:3]}")
     logging.info(f"eval_data: {len(eval_data)}")
     train_data = train_data.sort_values(["ticker", "time"])
     eval_data = eval_data.sort_values(["ticker", "time"])
+    test_data = test_data.sort_values(["ticker", "time"])
     #train_data.insert(0, "time_idx", range(0, len(train_data)))
     #eval_data.insert(0, "time_idx", range(0, len(eval_data)))
     data_loading_time = time.time() - start
@@ -467,7 +476,7 @@ def get_data_module(
         "beer_capital",
         "music_fest",
     ]
-    data_module = TimeSeriesDataModule(config, train_data, eval_data, targets, simulation_mode=simulation_mode)
+    data_module = TimeSeriesDataModule(config, train_data, eval_data, test_data, targets, simulation_mode=simulation_mode)
     return data_module
 
 

@@ -241,6 +241,12 @@ class PatchTftSupervisedPipeline(Pipeline):
         self.train_start_date = datetime.datetime.strptime(
             self.config.job.train_start_date, "%Y-%m-%d"
         ).replace(tzinfo=datetime.timezone.utc)
+        self.eval_start_date = datetime.datetime.strptime(
+            self.config.job.eval_start_date, "%Y-%m-%d"
+        ).replace(tzinfo=datetime.timezone.utc)
+        self.eval_end_date = datetime.datetime.strptime(
+            self.config.job.eval_end_date, "%Y-%m-%d"
+        ).replace(tzinfo=datetime.timezone.utc)
         self.test_start_date = datetime.datetime.strptime(
             self.config.job.test_start_date, "%Y-%m-%d"
         ).replace(tzinfo=datetime.timezone.utc)
@@ -270,12 +276,14 @@ class PatchTftSupervisedPipeline(Pipeline):
             self.config,
             self.config.dataset.base_dir,
             start_date,
+            self.eval_start_date,
+            self.eval_end_date,
             self.test_start_date,
             self.test_end_date,
             self.targets,
             self.config.dataset.model_tickers,
             self.config.dataset.time_interval,
-            simulation_mode=True
+            simulation_mode=True,
         )
 
     def create_model(self, checkpoint):
@@ -301,7 +309,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         )
         train_dataset = self.data_module.training
         train_data = self.data_module.train_data
-        future_data = self.data_module.eval_data
+        future_data = self.data_module.test_data
 
         logging.info(f"train_data:{train_data.iloc[-2:]}")
         logging.info(f"future_data:{future_data.iloc[:2]}")
@@ -366,8 +374,8 @@ class PatchTftSupervisedPipeline(Pipeline):
                 prediction_map[nyc_time] = prediction
                 position_map[nyc_time] = position
                 logging.info(f"new_position:{position}, prediction:{prediction}")
-            logging.info("predictions:{prediction_map}")
-            logging.info("positions:{position_map}")
+            logging.info(f"predictions:{prediction_map}")
+            logging.info(f"positions:{position_map}")
             logging.info(f"eod {test_date}")
 
     def eval_model(self):

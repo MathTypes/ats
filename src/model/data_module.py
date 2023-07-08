@@ -199,10 +199,20 @@ class LSTMDataModule(pl.LightningDataModule):
 
 
 class TimeSeriesDataModule(pl.LightningDataModule):
-    def __init__(self, config, train_data, eval_data, target, simulation_mode = False):
+    def __init__(self, config, train_data, eval_data, test_data, target, simulation_mode = False):
         super().__init__()
+        train_data = train_data.drop(columns=["close_low_201_bf", "close_high_21_bf",
+                                              "close_low_21_bf", "close_high_201_bf",
+                                              "close_low_51_bf", "close_high_51_bf"])
+        eval_data = eval_data.drop(columns=["close_low_201_bf", "close_high_21_bf",
+                                            "close_low_21_bf", "close_high_201_bf",
+                                            "close_low_51_bf", "close_high_51_bf"])
+        logging.info(f"train_data:{train_data.describe()}")
         self.train_data = train_data.dropna()
+        logging.info(f"train_data:{train_data.describe()}")
+        logging.info(f"train_data:{train_data.iloc[-5:]}")
         self.eval_data = eval_data.dropna()
+        self.test_data = test_data
         logging.info(f"target:{target} {type(target)}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
@@ -243,7 +253,6 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             },
             # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
             add_relative_time_idx=config.features.add_relative_time_idx,
-            simulation_mode=simulation_mode
         )
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128
@@ -256,7 +265,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         )
         self.eval_data = self.eval_data[:eval_data_size]
         self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
-        self.test = self.validation
+        self.test = TimeSeriesDataSet.from_dataset(self.training, self.test_data, simulation_mode=simulation_mode)
 
     def prepare_data(self):
         pass
@@ -293,7 +302,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         test_dataloader = self.validation.to_dataloader(
             train=False,
             batch_size=self.eval_batch_size,
-            num_workers=0,
+            num_workers=4,
             batch_sampler=None,
             pin_memory=True,
             drop_last=True,

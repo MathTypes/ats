@@ -421,7 +421,7 @@ class TimeSeriesDataSet(Dataset):
         self._set_target_normalizer(data)
 
         data = self.preprocess_data(data)
-        logging.info(f"data:{data.iloc[-10:]}")
+        logging.info(f"data:{data.iloc[-10:]}m simulation_mode:{simulation_mode}")
         if not simulation_mode:
             self.transform_data(data)
 
