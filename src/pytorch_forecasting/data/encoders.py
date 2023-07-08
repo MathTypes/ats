@@ -1062,8 +1062,6 @@ class MultiNormalizer(TorchNormalizer):
             y = y.to_numpy()
 
         for idx, normalizer in enumerate(self.normalizers):
-            logging.info(f"y:{y.shape}, x:{X}")
-            logging.info(f"idx:{idx}, normalizer:{normalizer}")
             if isinstance(normalizer, GroupNormalizer):
                 normalizer.fit(y[:, idx], X)
             else:

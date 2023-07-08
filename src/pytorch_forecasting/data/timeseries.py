@@ -932,7 +932,7 @@ class TimeSeriesDataSet(Dataset):
             pd.DataFrame: pre-processed dataframe
         """
         # add lags to data
-        logging.info(f"tranforming data:{data.iloc[-3:]}")
+        #logging.info(f"tranforming data:{data.iloc[-3:]}")
         for name in self.lags:
             # todo: add support for variable groups
             assert (
@@ -963,7 +963,7 @@ class TimeSeriesDataSet(Dataset):
                 data[name] = self.transform_values(
                     name, data[name], inverse=False, ignore_na=name in self.lagged_variables
                 )
-        logging.info(f"transformed_data:{data.iloc[-3:]}")
+        #logging.info(f"transformed_data:{data.iloc[-3:]}")
         # save special variables
         assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
         data["__time_idx__"] = data[self.time_idx]  # save unscaled
@@ -1065,7 +1065,7 @@ class TimeSeriesDataSet(Dataset):
             )[0]
 
         # shorten data by maximum of lagged sequences to avoid NA values - shorten only after encoding
-        logging.info(f"before select:{data.iloc[-3:]}, max_lag:{self.max_lag}")
+        #logging.info(f"before select:{data.iloc[-3:]}, max_lag:{self.max_lag}")
         if self.max_lag > 0:
             # negative tail implementation as .groupby().tail(-self.max_lag) is not implemented in pandas
             g = data.groupby(self._group_ids, observed=True)
@@ -2085,14 +2085,14 @@ class TimeSeriesDataSet(Dataset):
             pd.DataFrame: pre-processed dataframe
         """
         # add lags to data
-        logging.info(f"tranforming data:{data.iloc[-3:]}")
+        #logging.info(f"tranforming data:{data.iloc[-3:]}")
         for name in self.lags:
             # todo: add support for variable groups
             assert (
                 name not in self.variable_groups
             ), f"lagged variables that are in {self.variable_groups} are not supported yet"
             for lagged_name, lag in self._get_lagged_names(name).items():
-                logging.info(f"shitting {lagged_name}, {lag}")
+                #logging.info(f"shitting {lagged_name}, {lag}")
                 data[lagged_name] = data.groupby(self.group_ids, observed=True)[name].shift(lag)
 
         # encode group ids - this encoding
@@ -2117,7 +2117,7 @@ class TimeSeriesDataSet(Dataset):
                 data[name] = self.transform_values(
                     name, data[name], inverse=False, ignore_na=name in self.lagged_variables
                 )
-        logging.info(f"transformed_data:{data.iloc[-3:]}")
+        #logging.info(f"transformed_data:{data.iloc[-3:]}")
         # save special variables
         assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
         data["__time_idx__"] = data[self.time_idx]  # save unscaled
@@ -2219,7 +2219,7 @@ class TimeSeriesDataSet(Dataset):
             )[0]
 
         # shorten data by maximum of lagged sequences to avoid NA values - shorten only after encoding
-        logging.info(f"before select:{data}, max_lag:{self.max_lag}")
+        # logging.info(f"before select:{data}, max_lag:{self.max_lag}")
         if self.max_lag > 0:
             # negative tail implementation as .groupby().tail(-self.max_lag) is not implemented in pandas
             g = data.groupby(self._group_ids, observed=True)
