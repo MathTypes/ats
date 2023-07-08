@@ -420,9 +420,16 @@ def get_heads_and_targets(config):
 
 def utc_to_nyse_time(utc_time, interval_minutes):
     utc_time = time_util.round_up(utc_time, interval_minutes)
-    return datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
-                             utc_time.hour, utc_time.minute, utc_time.second,
-                             0, tzinfo=pytz.timezone('America/New_York'))
+    nyc_time = pytz.timezone('America/New_York').localize(
+        datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
+                          utc_time.hour, utc_time.minute))
+    # Do not use following.
+    # See https://stackoverflow.com/questions/18541051/datetime-and-timezone-conversion-with-pytz-mind-blowing-behaviour
+    # why datetime(..., tzinfo) does not work.
+    #nyc_time = datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
+    #                             utc_time.hour, utc_time.minute,
+    #                             tzinfo=pytz.timezone('America/New_York'))
+    return nyc_time
     
 def get_data_module(
     config,
@@ -461,7 +468,7 @@ def get_data_module(
     raw_data["close_low_51"] = g["close_back"].transform(add_lows, width=51)
     raw_data["close_high_201"] = g["close_back"].transform(add_highs, width=201)
     raw_data["close_low_201"] = g["close_back"].transform(add_lows, width=201)
-    raw_data.time = raw_data.time.apply(utc_to_nyse_time, config.job.time_interval_minutes)
+    raw_data["time"] = raw_data.time.apply(utc_to_nyse_time, interval_minutes=config.job.time_interval_minutes)
     raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
     logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
     train_start_timestamp = train_start_date.timestamp()

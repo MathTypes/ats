@@ -307,6 +307,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         logging.info(f"future_data:{future_data.iloc[:2]}")
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         last_time_idx = train_data.iloc[-1]["time_idx"]
+        last_data_time = None
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -317,6 +318,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             trainer_kwargs = {"logger": wandb_logger}
             for utc_time in time_range:
                 nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
+                logging.info(f"looking up nyc_time:{nyc_time}")
                 # 1. prepare prediction with latest prices
                 # 2. run inference to get returns and new positions
                 # 3. update PNL and positions
@@ -325,7 +327,12 @@ class PatchTftSupervisedPipeline(Pipeline):
                     & (future_data.ticker == "ES")
                 ]
                 if new_data.empty:
-                    continue
+                    if last_data_time is None or nyc_time < last_data_time + datetime.timedelta(minutes=self.config.dataset.max_stale_minutes):
+                        continue
+                    else:
+                        logging.info("data is too stale, now:{nyc_time}, last_data_time:{last_data_time}")
+                        exit(0)
+                last_data_time = nyc_time
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
                 logging.info(f"running step {nyc_time}, new_data:{new_data}")
