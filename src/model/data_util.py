@@ -77,9 +77,13 @@ def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_inte
         #logging.info(f"checking {for_date}")
         date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
         #logging.info(f"listing:{date_dir}")
-        files = os.listdir(date_dir)
-        files = [date_dir+'/'+f for f in files if os.path.isfile(date_dir+'/'+f)] #Filtering only the files.
-        input_dirs.extend(files)
+        try:
+            files = os.listdir(date_dir)
+            files = [date_dir+'/'+f for f in files if os.path.isfile(date_dir+'/'+f)] #Filtering only the files.
+            input_dirs.extend(files)
+        except:
+            logging.warn(f"can not find files under {date_dir}")
+            pass
     #logging.info(f"reading files:{input_dirs}")
     return input_dirs
 
