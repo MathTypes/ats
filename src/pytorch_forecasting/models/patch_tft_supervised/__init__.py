@@ -892,7 +892,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
           output = [ torch.squeeze(val, dim=-1) for val in output]
         else:
           output = torch.squeeze(output, dim=-1)
-        if position_output:
+        if position_output is not None:
             if isinstance(position_output, List):
                 position_output = [ torch.squeeze(val, dim=-1) for val in position_output]
             else:
