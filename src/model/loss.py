@@ -6,6 +6,7 @@ import torch
 from torch import nn
 from torchmetrics import Metric as LightningMetric
 
+
 class MultiLossWithUncertaintyWeight(MultiLoss):
     def __init__(self, metrics: List[LightningMetric]):
         super(MultiLossWithUncertaintyWeight, self).__init__(metrics)
@@ -40,6 +41,6 @@ class MultiLossWithUncertaintyWeight(MultiLoss):
             except TypeError:  # silently update without kwargs if not supported
                 res = metric(y_pred[idx], (y_actual[0][idx], y_actual[1]))
             precision = torch.exp(-self.log_vars[idx])
-            res = precision*res + self.log_vars[idx]
+            res = precision * res + self.log_vars[idx]
             results += res
         return results

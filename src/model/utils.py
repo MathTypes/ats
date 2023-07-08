@@ -6,7 +6,11 @@ from pathlib import Path
 from lightning.pytorch.tuner import Tuner
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 import lightning.pytorch as pl
-from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+from lightning.pytorch.callbacks import (
+    ModelCheckpoint,
+    EarlyStopping,
+    LearningRateMonitor,
+)
 from lightning.pytorch.loggers import WandbLogger
 import numpy as np
 import torch
@@ -20,7 +24,11 @@ from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
 import data_module
 from data_module import LSTMDataModule, TransformerDataModule
 from eval_callback import WandbClfEvalCallback
-from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback, TSLogPredictionsCallback
+from log_prediction import (
+    LogPredictionsCallback,
+    LSTMLogPredictionsCallback,
+    TSLogPredictionsCallback,
+)
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -29,6 +37,8 @@ LOG_EVERY_N_STEPS = 10000
 BASE_DIR = Path(__file__).parent
 LIGHTNING_DIR = BASE_DIR.joinpath("data/lightning")
 MODELS_DIR = LIGHTNING_DIR.joinpath("models")
+
+
 class Time2Vec(nn.Module):
     """General Time2Vec Embedding/Encoding Layer.
 
@@ -57,28 +67,29 @@ class Time2Vec(nn.Module):
     .. [2] Time2Vec: Learning a Vector Representation of Time
        https://arxiv.org/abs/1907.05321
     """
+
     def __init__(
         self,
         linear_channel: int,
         period_channel: int,
         input_channel: int = 1,
-        period_activation=torch.sin
+        period_activation=torch.sin,
     ):
         super().__init__()
-        
+
         self.linear_channel = linear_channel
         self.period_channel = period_channel
-        #logging.info(f"input_channel:{input_channel}, linear_channel:{linear_channel}")
+        # logging.info(f"input_channel:{input_channel}, linear_channel:{linear_channel}")
         self.linear_fc = nn.Linear(input_channel, linear_channel)
         self.period_fc = nn.Linear(input_channel, period_channel)
         self.period_activation = period_activation
 
     def forward(self, x):
-        #logging.info(f"x:{x.shape}")
+        # logging.info(f"x:{x.shape}")
         linear_vec = self.linear_fc(x)
-        #logging.info(f"linear_vec:{linear_vec.shape}")
+        # logging.info(f"linear_vec:{linear_vec.shape}")
         period_vec = self.period_activation(self.period_fc(x))
-        #logging.info(f"period_vec:{period_vec.shape}")
+        # logging.info(f"period_vec:{period_vec.shape}")
         return torch.cat([linear_vec, period_vec], dim=-1)
 
 
@@ -86,6 +97,7 @@ class Pipeline:
     """
     Class to ease the running of multiple experiments.
     """
+
     def __init__(self, config):
         self.model = None
         self.data_module = None
@@ -101,13 +113,15 @@ class Pipeline:
         pass
 
     def set_learning_rate(self):
-        res = Tuner(self.trainer).lr_find(self.model,
-                                          train_dataloaders=self.data_module.train_dataloader(),
-                                          val_dataloaders=self.data_module.val_dataloader(),
-                                          early_stop_threshold=None,
-                                          num_iter=self.config.job.num_tune_iter,
-                                          max_lr=0.1,
-                                          min_lr=1e-3)
+        res = Tuner(self.trainer).lr_find(
+            self.model,
+            train_dataloaders=self.data_module.train_dataloader(),
+            val_dataloaders=self.data_module.val_dataloader(),
+            early_stop_threshold=None,
+            num_iter=self.config.job.num_tune_iter,
+            max_lr=0.1,
+            min_lr=1e-3,
+        )
         suggested_learning_rate = res.suggestion()
         logging.info(f"suggesting learning rate:{res.suggestion()}")
         if not suggested_learning_rate:
@@ -115,57 +129,59 @@ class Pipeline:
         else:
             self.model.hparams.learning_rate = suggested_learning_rate
 
-
     def create_trainer(self):
         config = self.config
         checkpoint_callback = ModelCheckpoint(
-            dirpath=MODELS_DIR,
-            monitor="val_loss",
-            save_top_k=1,
-            verbose=True
+            dirpath=MODELS_DIR, monitor="val_loss", save_top_k=1, verbose=True
         )
-        #es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
-        lr_monitor = LearningRateMonitor(logging_interval='epoch')
+        # es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
+        lr_monitor = LearningRateMonitor(logging_interval="epoch")
         devices = 1
         logging.info(f"device:{self.device}")
-        wandb_logger = WandbLogger(project='ATS', log_model=True)
+        wandb_logger = WandbLogger(project="ATS", log_model=True)
         logging.info(f"data_module:{self.data_module}")
-        prediction_logger = WandbClfEvalCallback(self.data_module, self.targets, self.config)
-        #sim_logger = SimilarityLogger() 
-        self.trainer = pl.Trainer(max_epochs=self.config.job.max_epochs, logger=wandb_logger,
-                                  callbacks=[checkpoint_callback, lr_monitor,
-                                        #log_predictions_callback,
-                                        prediction_logger,
-                                        #WandbModelCheckpoint("models"),
-                                        #WandbMetricsLogger(),
-                                        #StochasticWeightAveraging(swa_lrs=1e-2)
-                                  ],
-                                  devices=devices,
-                                  accelerator="gpu",
-                                  accumulate_grad_batches=8,
-                                  #stochastic_weight_avg=True,
-                                  #precision="bf16",
-                                  gradient_clip_val=0.5,
-                                  default_root_dir=LIGHTNING_DIR,
-                                  log_every_n_steps=LOG_EVERY_N_STEPS,
-                                  detect_anomaly=True,
-                                  #profiler="advanced",
-                                  #precision='16-mixed',
-                                  # train in half precision
-                                  deterministic=False,
-                                  #check_val_every_n_epoch=10,
-                                  strategy='auto',)
-        
+        prediction_logger = WandbClfEvalCallback(
+            self.data_module, self.targets, self.config
+        )
+        # sim_logger = SimilarityLogger()
+        self.trainer = pl.Trainer(
+            max_epochs=self.config.job.max_epochs,
+            logger=wandb_logger,
+            callbacks=[
+                checkpoint_callback,
+                lr_monitor,
+                # log_predictions_callback,
+                prediction_logger,
+                # WandbModelCheckpoint("models"),
+                # WandbMetricsLogger(),
+                # StochasticWeightAveraging(swa_lrs=1e-2)
+            ],
+            devices=devices,
+            accelerator="gpu",
+            accumulate_grad_batches=8,
+            # stochastic_weight_avg=True,
+            # precision="bf16",
+            gradient_clip_val=0.5,
+            default_root_dir=LIGHTNING_DIR,
+            log_every_n_steps=LOG_EVERY_N_STEPS,
+            detect_anomaly=True,
+            # profiler="advanced",
+            # precision='16-mixed',
+            # train in half precision
+            deterministic=False,
+            # check_val_every_n_epoch=10,
+            strategy="auto",
+        )
+
     def tune_model(self):
         pass
 
-    
     def train_model(self):
         logging.info(f"MODELS_DIR:{MODELS_DIR}")
         with torch.cuda.amp.autocast(enabled=False):
             self.history = self.trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
-        #self.trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
+        # self.trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
 
 
 def count_parameters(model):

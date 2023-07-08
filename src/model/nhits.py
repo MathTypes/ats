@@ -47,14 +47,20 @@ training = TimeSeriesDataSet(
     max_prediction_length=prediction_length,
 )
 
-validation = TimeSeriesDataSet.from_dataset(training, data, min_prediction_idx=training_cutoff + 1)
+validation = TimeSeriesDataSet.from_dataset(
+    training, data, min_prediction_idx=training_cutoff + 1
+)
 batch_size = 128
-train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0)
-val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size, num_workers=0)
+train_dataloader = training.to_dataloader(
+    train=True, batch_size=batch_size, num_workers=0
+)
+val_dataloader = validation.to_dataloader(
+    train=False, batch_size=batch_size, num_workers=0
+)
 
 # calculate baseline absolute error
-#baseline_predictions = Baseline().predict(val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True)
-#SMAPE()(baseline_predictions.output, baseline_predictions.y)
+# baseline_predictions = Baseline().predict(val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True)
+# SMAPE()(baseline_predictions.output, baseline_predictions.y)
 
 pl.seed_everything(42)
 trainer = pl.Trainer(accelerator="cpu", gradient_clip_val=0.1)
@@ -72,14 +78,20 @@ net = NHiTS.from_dataset(
 from lightning.pytorch.tuner import Tuner
 
 res = Tuner(trainer).lr_find(
-    net, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader, min_lr=1e-5, max_lr=1e-1
+    net,
+    train_dataloaders=train_dataloader,
+    val_dataloaders=val_dataloader,
+    min_lr=1e-5,
+    max_lr=1e-1,
 )
 print(f"suggested learning rate: {res.suggestion()}")
 fig = res.plot(show=True, suggest=True)
 fig.show()
 net.hparams.learning_rate = res.suggestion()
 
-early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
+early_stop_callback = EarlyStopping(
+    monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min"
+)
 trainer = pl.Trainer(
     max_epochs=5,
     accelerator="cpu",
@@ -112,38 +124,50 @@ trainer.fit(
 best_model_path = trainer.checkpoint_callback.best_model_path
 best_model = NHiTS.load_from_checkpoint(best_model_path)
 
-predictions = best_model.predict(val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True)
+predictions = best_model.predict(
+    val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True
+)
 MAE()(predictions.output, predictions.y)
 
-raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True, trainer_kwargs=dict(accelerator="cpu"))
+raw_predictions = best_model.predict(
+    val_dataloader, mode="raw", return_x=True, trainer_kwargs=dict(accelerator="cpu")
+)
 
 for idx in range(10):  # plot 10 examples
-    #best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
-    fig = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+    # best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+    fig = best_model.plot_prediction(
+        raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True
+    )
     print(f"fig:{fig}")
     filename = "/tmp/file.png"
     fig.savefig(filename)
     img = mpimg.imread(filename)
-    #plt.imshow()
+    # plt.imshow()
     imgplot = plt.imshow(img)
     plt.show()
 
 for idx in range(2):  # plot 10 examples
-    #best_model.plot_interpretation(raw_predictions.x, raw_predictions.output, idx=idx)
-    fig = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+    # best_model.plot_interpretation(raw_predictions.x, raw_predictions.output, idx=idx)
+    fig = best_model.plot_prediction(
+        raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True
+    )
     print(f"fig:{fig}")
     filename = "/tmp/file.png"
     fig.savefig(filename)
     img = mpimg.imread(filename)
-    #plt.imshow()
+    # plt.imshow()
     imgplot = plt.imshow(img)
     plt.show()
 
 # sample 500 paths
-samples = best_model.loss.sample(raw_predictions.output["prediction"][[0]], n_samples=500)[0]
+samples = best_model.loss.sample(
+    raw_predictions.output["prediction"][[0]], n_samples=500
+)[0]
 
 # plot prediction
-fig = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=0, add_loss_to_title=True)
+fig = best_model.plot_prediction(
+    raw_predictions.x, raw_predictions.output, idx=0, add_loss_to_title=True
+)
 ax = fig.get_axes()[0]
 # plot first two sampled paths
 ax.plot(samples[:, 0], color="g", label="Sample 1")
@@ -154,7 +178,7 @@ print(f"fig:{fig}")
 filename = "/tmp/file.png"
 fig.savefig(filename)
 img = mpimg.imread(filename)
-#plt.imshow()
+# plt.imshow()
 imgplot = plt.imshow(img)
 plt.show()
 
@@ -166,7 +190,3 @@ plt.xlabel("Sum of predictions")
 plt.ylabel("Frequency")
 
 plt.show()
-
-
-
-

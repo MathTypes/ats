@@ -45,7 +45,9 @@ training = TimeSeriesDataSet(
     max_prediction_length=prediction_length,
 )
 
-validation = TimeSeriesDataSet.from_dataset(training, data, min_prediction_idx=training_cutoff + 1)
+validation = TimeSeriesDataSet.from_dataset(
+    training, data, min_prediction_idx=training_cutoff + 1
+)
 batch_size = 128
 # synchronize samples in each batch over time - only necessary for DeepVAR, not for DeepAR
 train_dataloader = training.to_dataloader(
@@ -56,7 +58,9 @@ val_dataloader = validation.to_dataloader(
 )
 
 # calculate baseline absolute error
-baseline_predictions = Baseline().predict(val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True)
+baseline_predictions = Baseline().predict(
+    val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True
+)
 SMAPE()(baseline_predictions.output, baseline_predictions.y)
 
 pl.seed_everything(42)
@@ -88,7 +92,9 @@ fig = res.plot(show=True, suggest=True)
 fig.show()
 net.hparams.learning_rate = res.suggestion()
 
-early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
+early_stop_callback = EarlyStopping(
+    monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min"
+)
 trainer = pl.Trainer(
     max_epochs=30,
     accelerator="cpu",
@@ -121,23 +127,30 @@ best_model_path = trainer.checkpoint_callback.best_model_path
 best_model = DeepAR.load_from_checkpoint(best_model_path)
 
 # best_model = net
-predictions = best_model.predict(val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True)
+predictions = best_model.predict(
+    val_dataloader, trainer_kwargs=dict(accelerator="cpu"), return_y=True
+)
 MAE()(predictions.output, predictions.y)
 
 raw_predictions = net.predict(
-    val_dataloader, mode="raw", return_x=True, n_samples=100, trainer_kwargs=dict(accelerator="cpu")
+    val_dataloader,
+    mode="raw",
+    return_x=True,
+    n_samples=100,
+    trainer_kwargs=dict(accelerator="cpu"),
 )
 
 print(f"raw_predictions.output:{raw_predictions.output}")
 series = validation.x_to_index(raw_predictions.x)["series"]
 for idx in range(20):  # plot 10 examples
-    fig = best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+    fig = best_model.plot_prediction(
+        raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True
+    )
     print(f"fig:{fig}")
     filename = "/tmp/file.png"
     fig.savefig(filename)
     img = mpimg.imread(filename)
-    #plt.imshow()
+    # plt.imshow()
     imgplot = plt.imshow(img)
     plt.suptitle(f"Series: {series.iloc[idx]}")
     plt.show()
-

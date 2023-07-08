@@ -1,6 +1,7 @@
 import os
 import warnings
 import logging
+
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 os.chdir("../../..")
@@ -19,7 +20,9 @@ import torch
 from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
 from pytorch_forecasting.data import GroupNormalizer
 from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
+from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
+    optimize_hyperparameters,
+)
 
 from pytorch_forecasting.data.examples import get_stallion_data
 from util import logging_utils
@@ -33,10 +36,16 @@ data["time_idx"] = data["date"].dt.year * 12 + data["date"].dt.month
 data["time_idx"] -= data["time_idx"].min()
 
 # add additional features
-data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
+data["month"] = data.date.dt.month.astype(str).astype(
+    "category"
+)  # categories have be strings
 data["log_volume"] = np.log(data.volume + 1e-8)
-data["avg_volume_by_sku"] = data.groupby(["time_idx", "sku"], observed=True).volume.transform("mean")
-data["avg_volume_by_agency"] = data.groupby(["time_idx", "agency"], observed=True).volume.transform("mean")
+data["avg_volume_by_sku"] = data.groupby(
+    ["time_idx", "sku"], observed=True
+).volume.transform("mean")
+data["avg_volume_by_agency"] = data.groupby(
+    ["time_idx", "agency"], observed=True
+).volume.transform("mean")
 
 # we want to encode special days as one variable and thus need to first reverse one-hot encoding
 special_days = [
@@ -53,7 +62,9 @@ special_days = [
     "beer_capital",
     "music_fest",
 ]
-data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
+data[special_days] = (
+    data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
+)
 data.sample(10, random_state=521)
 
 max_prediction_length = 6
@@ -65,14 +76,17 @@ training = TimeSeriesDataSet(
     time_idx="time_idx",
     target="volume",
     group_ids=["agency", "sku"],
-    min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
+    min_encoder_length=max_encoder_length
+    // 2,  # keep encoder length long (as it is in the validation set)
     max_encoder_length=max_encoder_length,
     min_prediction_length=1,
     max_prediction_length=max_prediction_length,
     static_categoricals=["agency", "sku"],
     static_reals=["avg_population_2017", "avg_yearly_household_income_2017"],
     time_varying_known_categoricals=["special_days", "month"],
-    variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
+    variable_groups={
+        "special_days": special_days
+    },  # group of categorical variables can be treated as one variable
     time_varying_known_reals=["time_idx", "price_regular", "discount_in_percent"],
     time_varying_unknown_categoricals=[],
     time_varying_unknown_reals=[
@@ -94,12 +108,18 @@ training = TimeSeriesDataSet(
 
 # create validation set (predict=True) which means to predict the last max_prediction_length points in time
 # for each series
-validation = TimeSeriesDataSet.from_dataset(training, data, predict=True, stop_randomization=True)
+validation = TimeSeriesDataSet.from_dataset(
+    training, data, predict=True, stop_randomization=True
+)
 
 # create dataloaders for model
 batch_size = 128  # set this between 32 to 128
-train_dataloader = training.to_dataloader(train=True, batch_size=batch_size, num_workers=0)
-val_dataloader = validation.to_dataloader(train=False, batch_size=batch_size * 10, num_workers=0)
+train_dataloader = training.to_dataloader(
+    train=True, batch_size=batch_size, num_workers=0
+)
+val_dataloader = validation.to_dataloader(
+    train=False, batch_size=batch_size * 10, num_workers=0
+)
 
 # calculate baseline mean absolute error, i.e. predict next value as the last available value from the history
 baseline_predictions = Baseline().predict(val_dataloader, return_y=True)
@@ -134,6 +154,7 @@ print(f"Number of parameters in network: {tft.size()/1e3:.1f}k")
 # find optimal learning rate
 from lightning.pytorch.tuner import Tuner
 
+
 def run_tuner():
     res = Tuner(trainer).lr_find(
         tft,
@@ -147,8 +168,11 @@ def run_tuner():
     fig = res.plot(show=True, suggest=True)
     fig.show()
 
+
 # configure network and trainer
-early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
+early_stop_callback = EarlyStopping(
+    monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min"
+)
 lr_logger = LearningRateMonitor()  # log the learning rate
 logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
 
@@ -190,10 +214,14 @@ best_model_path = trainer.checkpoint_callback.best_model_path
 logging.info(f"best_model_path:{best_model_path}")
 best_tft = TemporalFusionTransformer.load_from_checkpoint(best_model_path)
 
+
 # calcualte mean absolute error on validation set
 def run_eval_mae():
-    predictions = best_tft.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu"))
+    predictions = best_tft.predict(
+        val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu")
+    )
     MAE()(predictions.output, predictions.y)
+
 
 logging.info(f"before raw_predictions.x")
 # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
@@ -203,7 +231,9 @@ logging.info(f"raw_predictions.x:{raw_predictions.x}")
 logging.info(f"raw_predictions.output:{raw_predictions.output}")
 for idx in range(10):  # plot 10 examples
     logging.info(f"plotting:{idx}")
-    fig = best_tft.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+    fig = best_tft.plot_prediction(
+        raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True
+    )
     fig.show()
 exit(0)
 
@@ -220,16 +250,26 @@ for idx in range(10):  # plot 10 examples
     )
 
 predictions = best_tft.predict(val_dataloader, return_x=True)
-predictions_vs_actuals = best_tft.calculate_prediction_actual_by_variable(predictions.x, predictions.output)
+predictions_vs_actuals = best_tft.calculate_prediction_actual_by_variable(
+    predictions.x, predictions.output
+)
 best_tft.plot_prediction_actual_by_variable(predictions_vs_actuals)
 
 best_tft.predict(
-    training.filter(lambda x: (x.agency == "Agency_01") & (x.sku == "SKU_01") & (x.time_idx_first_prediction == 15)),
+    training.filter(
+        lambda x: (x.agency == "Agency_01")
+        & (x.sku == "SKU_01")
+        & (x.time_idx_first_prediction == 15)
+    ),
     mode="quantiles",
 )
 
 raw_prediction = best_tft.predict(
-    training.filter(lambda x: (x.agency == "Agency_01") & (x.sku == "SKU_01") & (x.time_idx_first_prediction == 15)),
+    training.filter(
+        lambda x: (x.agency == "Agency_01")
+        & (x.sku == "SKU_01")
+        & (x.time_idx_first_prediction == 15)
+    ),
     mode="raw",
     return_x=True,
 )
@@ -244,16 +284,25 @@ encoder_data = data[lambda x: x.time_idx > x.time_idx.max() - max_encoder_length
 # for changes in special days and prices (which you absolutely should do but we are too lazy here)
 last_data = data[lambda x: x.time_idx == x.time_idx.max()]
 decoder_data = pd.concat(
-    [last_data.assign(date=lambda x: x.date + pd.offsets.MonthBegin(i)) for i in range(1, max_prediction_length + 1)],
+    [
+        last_data.assign(date=lambda x: x.date + pd.offsets.MonthBegin(i))
+        for i in range(1, max_prediction_length + 1)
+    ],
     ignore_index=True,
 )
 
 # add time index consistent with "data"
-decoder_data["time_idx"] = decoder_data["date"].dt.year * 12 + decoder_data["date"].dt.month
-decoder_data["time_idx"] += encoder_data["time_idx"].max() + 1 - decoder_data["time_idx"].min()
+decoder_data["time_idx"] = (
+    decoder_data["date"].dt.year * 12 + decoder_data["date"].dt.month
+)
+decoder_data["time_idx"] += (
+    encoder_data["time_idx"].max() + 1 - decoder_data["time_idx"].min()
+)
 
 # adjust additional time feature(s)
-decoder_data["month"] = decoder_data.date.dt.month.astype(str).astype("category")  # categories have be strings
+decoder_data["month"] = decoder_data.date.dt.month.astype(str).astype(
+    "category"
+)  # categories have be strings
 
 # combine encoder and decoder data
 new_prediction_data = pd.concat([encoder_data, decoder_data], ignore_index=True)
@@ -261,19 +310,27 @@ new_prediction_data = pd.concat([encoder_data, decoder_data], ignore_index=True)
 new_raw_predictions = best_tft.predict(new_prediction_data, mode="raw", return_x=True)
 
 for idx in range(10):  # plot 10 examples
-    best_tft.plot_prediction(new_raw_predictions.x, new_raw_predictions.output, idx=idx, show_future_observed=False)
+    best_tft.plot_prediction(
+        new_raw_predictions.x,
+        new_raw_predictions.output,
+        idx=idx,
+        show_future_observed=False,
+    )
 
 interpretation = best_tft.interpret_output(raw_predictions.output, reduction="sum")
 best_tft.plot_interpretation(interpretation)
 
 dependency = best_tft.predict_dependency(
-    val_dataloader.dataset, "discount_in_percent", np.linspace(0, 30, 30), show_progress_bar=True, mode="dataframe"
+    val_dataloader.dataset,
+    "discount_in_percent",
+    np.linspace(0, 30, 30),
+    show_progress_bar=True,
+    mode="dataframe",
 )
 
-#plotting median and 25% and 75% percentile
+# plotting median and 25% and 75% percentile
 agg_dependency = dependency.groupby("discount_in_percent").normalized_prediction.agg(
     median="median", q25=lambda x: x.quantile(0.25), q75=lambda x: x.quantile(0.75)
 )
 ax = agg_dependency.plot(y="median")
 ax.fill_between(agg_dependency.index, agg_dependency.q25, agg_dependency.q75, alpha=0.3)
-

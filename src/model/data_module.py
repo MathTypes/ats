@@ -1,4 +1,4 @@
-#import pytorch_lightning as pl
+# import pytorch_lightning as pl
 import traceback
 import lightning.pytorch as pl
 import torch
@@ -8,10 +8,10 @@ import typing
 from datasets import (
     generate_stock_tokens,
     generate_stock_returns,
-    tabular_to_sliding_dataset
+    tabular_to_sliding_dataset,
 )
 from omegaconf import OmegaConf
-from scipy.signal import argrelmax,argrelmin, argrelextrema, find_peaks
+from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
 import timeseries_dataset
 import timeseries_utils
 from pytorch_forecasting.data.encoders import (
@@ -26,14 +26,18 @@ from pytorch_forecasting.data.encoders import NaNLabelEncoder
 
 eval_batch_size = 10
 
+
 class TransformerDataModule(pl.LightningDataModule):
-    def __init__(self, dataset,
-                 dec_seq_len = 92,
-                 enc_seq_len = 153,
-                 output_sequence_length = 24,
-                 step_size: int = 1,
-                 batch_size = 1024,
-                 eval_batch_size = 10):
+    def __init__(
+        self,
+        dataset,
+        dec_seq_len=92,
+        enc_seq_len=153,
+        output_sequence_length=24,
+        step_size: int = 1,
+        batch_size=1024,
+        eval_batch_size=10,
+    ):
         super().__init__()
         self.batch_size = batch_size
         self.eval_batch_size = eval_batch_size
@@ -41,7 +45,9 @@ class TransformerDataModule(pl.LightningDataModule):
         self.dec_seq_len = dec_seq_len
         self.enc_seq_len = enc_seq_len
         self.output_sequence_length = output_sequence_length
-        self.window_size = enc_seq_len + output_sequence_length # used to slice data into sub-sequences
+        self.window_size = (
+            enc_seq_len + output_sequence_length
+        )  # used to slice data into sub-sequences
         self.step_size = step_size
         self.generate_data()
 
@@ -76,53 +82,71 @@ class TransformerDataModule(pl.LightningDataModule):
         pass
 
     def setup(self, stage=None):
-        #self.generate_data()
+        # self.generate_data()
         pass
-        
+
     def train_dataloader(self):
         self.training_indices = timeseries_utils.get_indices_entire_sequence(
-            data=self.X_train.numpy(), 
-            window_size=self.window_size, 
-            step_size=self.step_size)
+            data=self.X_train.numpy(),
+            window_size=self.window_size,
+            step_size=self.step_size,
+        )
         train_wrapper = timeseries_dataset.TransformerDataset(
             data=self.X_train,
             indices=self.training_indices,
             enc_seq_len=self.enc_seq_len,
             dec_seq_len=self.dec_seq_len,
-            target_seq_len=self.output_sequence_length
-            )
-        return DataLoader(train_wrapper, batch_size=self.batch_size,
-                          pin_memory=True, num_workers=12, shuffle=True)
-    
+            target_seq_len=self.output_sequence_length,
+        )
+        return DataLoader(
+            train_wrapper,
+            batch_size=self.batch_size,
+            pin_memory=True,
+            num_workers=12,
+            shuffle=True,
+        )
+
     def val_dataloader(self):
         self.val_indices = timeseries_utils.get_indices_entire_sequence(
-            data=self.X_val.numpy(), 
-            window_size=self.window_size, 
-            step_size=self.step_size)
+            data=self.X_val.numpy(),
+            window_size=self.window_size,
+            step_size=self.step_size,
+        )
         val_wrapper = timeseries_dataset.TransformerDataset(
             data=self.X_val,
             indices=self.val_indices,
             enc_seq_len=self.enc_seq_len,
             dec_seq_len=self.dec_seq_len,
-            target_seq_len=self.output_sequence_length
-            )
-        return DataLoader(val_wrapper, batch_size=self.eval_batch_size, pin_memory=True,
-                          num_workers=8, shuffle=True)
-    
+            target_seq_len=self.output_sequence_length,
+        )
+        return DataLoader(
+            val_wrapper,
+            batch_size=self.eval_batch_size,
+            pin_memory=True,
+            num_workers=8,
+            shuffle=True,
+        )
+
     def test_dataloader(self):
         self.test_indices = timeseries_utils.get_indices_entire_sequence(
-            data=self.X_test.numpy(), 
-            window_size=self.window_size, 
-            step_size=self.step_size)
+            data=self.X_test.numpy(),
+            window_size=self.window_size,
+            step_size=self.step_size,
+        )
         test_wrapper = timeseries_dataset.TransformerDataset(
             data=self.X_test,
             indices=self.val_indices,
             enc_seq_len=self.enc_seq_len,
             dec_seq_len=self.dec_seq_len,
-            target_seq_len=self.output_sequence_length
-            )
-        return DataLoader(test_wrapper, batch_size=self.eval_batch_size, pin_memory=True,
-                          num_workers=8)
+            target_seq_len=self.output_sequence_length,
+        )
+        return DataLoader(
+            test_wrapper,
+            batch_size=self.eval_batch_size,
+            pin_memory=True,
+            num_workers=8,
+        )
+
 
 class LSTMDataModule(pl.LightningDataModule):
     def __init__(self, dataset, batch_size=64, n_past=48, n_future=48):
@@ -152,20 +176,26 @@ class LSTMDataModule(pl.LightningDataModule):
         pass
 
     def setup(self, stage=None):
-        #self.generate_data()
+        # self.generate_data()
         pass
-        
+
     def train_dataloader(self):
         train_wrapper = torch.utils.data.TensorDataset(self.X_train, self.y_train)
-        return DataLoader(train_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=8)
-    
+        return DataLoader(
+            train_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=8
+        )
+
     def val_dataloader(self):
         val_wrapper = torch.utils.data.TensorDataset(self.X_val, self.y_val)
-        return DataLoader(val_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=8)
-    
+        return DataLoader(
+            val_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=8
+        )
+
     def test_dataloader(self):
         test_wrapper = torch.utils.data.TensorDataset(self.X_test, self.y_test)
-        return DataLoader(test_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=8)
+        return DataLoader(
+            test_wrapper, batch_size=self.batch_size, pin_memory=True, num_workers=8
+        )
 
 
 class TimeSeriesDataModule(pl.LightningDataModule):
@@ -176,20 +206,22 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         logging.info(f"target:{target} {type(target)}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
-        #target_normalizer = None
-        target_normalizer ="auto"
-        #target_normalizer=GroupNormalizer(
+        # target_normalizer = None
+        target_normalizer = "auto"
+        # target_normalizer=GroupNormalizer(
         #    groups=["ticker"], transformation="softplus"
-        #),  # use softplus and normalize by group
+        # ),  # use softplus and normalize by group
         if isinstance(target, (typing.Set, typing.List)):
-            normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
+            normalizer_list = [
+                EncoderNormalizer(transformation="relu") for i in range(len(target))
+            ]
             target_normalizer = MultiNormalizer(normalizer_list)
         time_varying_known_reals = config.features.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)
         time_varying_unknown_reals = config.features.time_varying_unknown_reals
         if OmegaConf.is_list(time_varying_unknown_reals):
-            time_varying_unknown_reals =  OmegaConf.to_object(time_varying_unknown_reals)
+            time_varying_unknown_reals = OmegaConf.to_object(time_varying_unknown_reals)
         logging.info(f"train_data:{len(self.train_data)}")
         self.training = TimeSeriesDataSet(
             self.train_data,
@@ -206,9 +238,11 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             static_categoricals=config.features.static_categoricals,
             time_varying_known_reals=time_varying_known_reals,
             time_varying_unknown_reals=time_varying_unknown_reals,
-            categorical_encoders={"ticker": NaNLabelEncoder().fit(self.train_data.ticker)},
-            #categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},            
-            add_relative_time_idx = config.features.add_relative_time_idx
+            categorical_encoders={
+                "ticker": NaNLabelEncoder().fit(self.train_data.ticker)
+            },
+            # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
+            add_relative_time_idx=config.features.add_relative_time_idx,
         )
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128
@@ -216,7 +250,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.eval_batch_size = config.model.eval_batch_size
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
-        eval_data_size = int(len(self.eval_data) / self.eval_batch_size) * self.eval_batch_size
+        eval_data_size = (
+            int(len(self.eval_data) / self.eval_batch_size) * self.eval_batch_size
+        )
         self.eval_data = self.eval_data[:eval_data_size]
         self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
         self.test = self.validation
@@ -226,25 +262,39 @@ class TimeSeriesDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
         pass
-        
+
     def train_dataloader(self):
-        train_dataloader = self.training.to_dataloader(train=True, batch_size=self.batch_size,
-                                                       shuffle=True,
-                                                       num_workers=10, pin_memory=True, drop_last=True)
+        train_dataloader = self.training.to_dataloader(
+            train=True,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=10,
+            pin_memory=True,
+            drop_last=True,
+        )
         return train_dataloader
-    
+
     def val_dataloader(self):
         logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
-        # train = True is the hack to randomly sample from time series from different ticker. 
-        val_dataloader = self.validation.to_dataloader(train=False,
-                                                       batch_size=self.eval_batch_size, num_workers=4,
-                                                       #batch_sampler="synchronized",
-                                                       pin_memory=True, drop_last=True)
+        # train = True is the hack to randomly sample from time series from different ticker.
+        val_dataloader = self.validation.to_dataloader(
+            train=False,
+            batch_size=self.eval_batch_size,
+            num_workers=4,
+            # batch_sampler="synchronized",
+            pin_memory=True,
+            drop_last=True,
+        )
         return val_dataloader
 
-    
     def test_dataloader(self):
         # Here use same validation as we use simulation for test.
-        test_dataloader = self.validation.to_dataloader(train=False, batch_size=self.eval_batch_size, num_workers=0,
-                                                        batch_sampler=None, pin_memory=True, drop_last=True)
+        test_dataloader = self.validation.to_dataloader(
+            train=False,
+            batch_size=self.eval_batch_size,
+            num_workers=0,
+            batch_sampler=None,
+            pin_memory=True,
+            drop_last=True,
+        )
         return test_dataloader

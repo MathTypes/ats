@@ -1,12 +1,13 @@
 import torch
 import pytorch_lightning as pl
-import torch.nn as nn 
+import torch.nn as nn
 from torch import nn, Tensor
 import positional_encoder as pe
 import torch.nn.functional as F
 import timeseries_utils
 import logging
 import inference
+
 
 class TimeSeriesTFT(pl.LightningModule):
 
@@ -23,51 +24,51 @@ class TimeSeriesTFT(pl.LightningModule):
     configuration/hyperparameter, this class uses the values from Vaswani et al
     (2017) [2] or from PyTorch source code.
 
-    Unlike the paper, this class assumes that input layers, positional encoding 
-    layers and linear mapping layers are separate from the encoder and decoder, 
-    i.e. the encoder and decoder only do what is depicted as their sub-layers 
-    in the paper. For practical purposes, this assumption does not make a 
+    Unlike the paper, this class assumes that input layers, positional encoding
+    layers and linear mapping layers are separate from the encoder and decoder,
+    i.e. the encoder and decoder only do what is depicted as their sub-layers
+    in the paper. For practical purposes, this assumption does not make a
     difference - it merely means that the linear and positional encoding layers
-    are implemented inside the present class and not inside the 
+    are implemented inside the present class and not inside the
     Encoder() and Decoder() classes.
 
-    [1] Wu, N., Green, B., Ben, X., O'banion, S. (2020). 
-    'Deep Transformer Models for Time Series Forecasting: 
-    The Influenza Prevalence Case'. 
-    arXiv:2001.08317 [cs, stat] [Preprint]. 
+    [1] Wu, N., Green, B., Ben, X., O'banion, S. (2020).
+    'Deep Transformer Models for Time Series Forecasting:
+    The Influenza Prevalence Case'.
+    arXiv:2001.08317 [cs, stat] [Preprint].
     Available at: http://arxiv.org/abs/2001.08317 (Accessed: 9 March 2022).
 
-    [2] Vaswani, A. et al. (2017) 
+    [2] Vaswani, A. et al. (2017)
     'Attention Is All You Need'.
-    arXiv:1706.03762 [cs] [Preprint]. 
+    arXiv:1706.03762 [cs] [Preprint].
     Available at: http://arxiv.org/abs/1706.03762 (Accessed: 9 March 2022).
 
     """
 
-    def __init__(self, 
+    def __init__(
+        self,
         input_size: int,
         dec_seq_len: int,
         batch_first: bool,
-        out_seq_len: int=58,
-        dim_val: int=16,  
-        n_encoder_layers: int=4,
-        n_decoder_layers: int=4,
-        n_heads: int=8,
-        dropout_encoder: float=0.2, 
-        dropout_decoder: float=0.2,
-        dropout_pos_enc: float=0.1,
-        dim_feedforward_encoder: int=64,
-        dim_feedforward_decoder: int=64,
-        num_predicted_features: int=1,
-        forecast_window = 48,
-        device = 'cuda'
-        ): 
-
+        out_seq_len: int = 58,
+        dim_val: int = 16,
+        n_encoder_layers: int = 4,
+        n_decoder_layers: int = 4,
+        n_heads: int = 8,
+        dropout_encoder: float = 0.2,
+        dropout_decoder: float = 0.2,
+        dropout_pos_enc: float = 0.1,
+        dim_feedforward_encoder: int = 64,
+        dim_feedforward_decoder: int = 64,
+        num_predicted_features: int = 1,
+        forecast_window=48,
+        device="cuda",
+    ):
         """
         Args:
             input_size: int, number of input variables. 1 if univariate.
             dec_seq_len: int, the length of the input sequence fed to the decoder
-            dim_val: int, aka d_model. All sub-layers in the model produce 
+            dim_val: int, aka d_model. All sub-layers in the model produce
                      outputs of dimension dim_val
             n_encoder_layers: int, number of stacked encoder layers in the encoder
             n_decoder_layers: int, number of stacked encoder layers in the decoder
@@ -75,9 +76,9 @@ class TimeSeriesTFT(pl.LightningModule):
             dropout_encoder: float, the dropout rate of the encoder
             dropout_decoder: float, the dropout rate of the decoder
             dropout_pos_enc: float, the dropout rate of the positional encoder
-            dim_feedforward_encoder: int, number of neurons in the linear layer 
+            dim_feedforward_encoder: int, number of neurons in the linear layer
                                      of the encoder
-            dim_feedforward_decoder: int, number of neurons in the linear layer 
+            dim_feedforward_decoder: int, number of neurons in the linear layer
                                      of the decoder
             num_predicted_features: int, the number of features you want to predict.
                                     Most of the time, this will be 1 because we're
@@ -86,10 +87,10 @@ class TimeSeriesTFT(pl.LightningModule):
                                     model, num_predicted_features should be 2.
         """
 
-        super().__init__() 
+        super().__init__()
 
         self.criterion = torch.nn.L1Loss().to(device)
-        #self.criterion = torch.nn.MSELoss()
+        # self.criterion = torch.nn.MSELoss()
         self.dev = device
         self.dec_seq_len = dec_seq_len
         self.forecast_window = forecast_window
@@ -97,36 +98,31 @@ class TimeSeriesTFT(pl.LightningModule):
 
         # Creating the three linear layers needed for the model
         self.encoder_input_layer = nn.Linear(
-            in_features=input_size, 
-            out_features=dim_val 
-            ).to(self.dev)
-
+            in_features=input_size, out_features=dim_val
+        ).to(self.dev)
 
         self.decoder_input_layer = nn.Linear(
-            in_features=num_predicted_features,
-            out_features=dim_val
-            ).to(self.dev)  
-        
+            in_features=num_predicted_features, out_features=dim_val
+        ).to(self.dev)
+
         self.linear_mapping = nn.Linear(
-            in_features=dim_val, 
-            out_features=num_predicted_features
-            ).to(self.dev)
+            in_features=dim_val, out_features=num_predicted_features
+        ).to(self.dev)
 
         # Create positional encoder
         self.positional_encoding_layer = pe.PositionalEncoder(
-            d_model=dim_val,
-            dropout=dropout_pos_enc
-            ).to(self.dev)
+            d_model=dim_val, dropout=dropout_pos_enc
+        ).to(self.dev)
 
         # The encoder layer used in the paper is identical to the one used by
         # Vaswani et al (2017) on which the PyTorch module is based.
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=dim_val, 
+            d_model=dim_val,
             nhead=n_heads,
             dim_feedforward=dim_feedforward_encoder,
             dropout=dropout_encoder,
-            batch_first=batch_first
-            ).to(self.dev)
+            batch_first=batch_first,
+        ).to(self.dev)
 
         # Stack the encoder layers in nn.TransformerDecoder
         # It seems the option of passing a normalization instance is redundant
@@ -134,18 +130,16 @@ class TimeSeriesTFT(pl.LightningModule):
         # after each sub-layer
         # (https://github.com/pytorch/pytorch/issues/24930).
         self.encoder = nn.TransformerEncoder(
-            encoder_layer=encoder_layer,
-            num_layers=n_encoder_layers, 
-            norm=None
-            ).to(self.dev)
+            encoder_layer=encoder_layer, num_layers=n_encoder_layers, norm=None
+        ).to(self.dev)
 
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=dim_val,
             nhead=n_heads,
             dim_feedforward=dim_feedforward_decoder,
             dropout=dropout_decoder,
-            batch_first=batch_first
-            ).to(self.dev)
+            batch_first=batch_first,
+        ).to(self.dev)
 
         # Stack the decoder layers in nn.TransformerDecoder
         # It seems the option of passing a normalization instance is redundant
@@ -153,56 +147,54 @@ class TimeSeriesTFT(pl.LightningModule):
         # after each sub-layer
         # (https://github.com/pytorch/pytorch/issues/24930).
         self.decoder = nn.TransformerDecoder(
-            decoder_layer=decoder_layer,
-            num_layers=n_decoder_layers, 
-            norm=None
-            ).to(self.dev)
+            decoder_layer=decoder_layer, num_layers=n_decoder_layers, norm=None
+        ).to(self.dev)
         self.tgt_mask = timeseries_utils.generate_square_subsequent_mask(
-            dim1=forecast_window,
-            dim2=forecast_window
-            ).to(self.dev)
+            dim1=forecast_window, dim2=forecast_window
+        ).to(self.dev)
         self.src_mask = timeseries_utils.generate_square_subsequent_mask(
-            dim1=forecast_window,
-            dim2=self.dec_seq_len
-            ).to(self.dev)
+            dim1=forecast_window, dim2=self.dec_seq_len
+        ).to(self.dev)
 
     def forward(self, X):
         """
         Returns a tensor of shape:
         [target_sequence_length, batch_size, num_predicted_features]
-        
+
         Args:
-            src: the encoder's output sequence. Shape: (S,E) for unbatched input, 
-                 (S, N, E) if batch_first=False or (N, S, E) if 
-                 batch_first=True, where S is the source sequence length, 
+            src: the encoder's output sequence. Shape: (S,E) for unbatched input,
+                 (S, N, E) if batch_first=False or (N, S, E) if
+                 batch_first=True, where S is the source sequence length,
                  N is the batch size, and E is the number of features (1 if univariate)
-            tgt: the sequence to the decoder. Shape: (T,E) for unbatched input, 
-                 (T, N, E)(T,N,E) if batch_first=False or (N, T, E) if 
-                 batch_first=True, where T is the target sequence length, 
+            tgt: the sequence to the decoder. Shape: (T,E) for unbatched input,
+                 (T, N, E)(T,N,E) if batch_first=False or (N, T, E) if
+                 batch_first=True, where T is the target sequence length,
                  N is the batch size, and E is the number of features (1 if univariate)
-            src_mask: the mask for the src sequence to prevent the model from 
+            src_mask: the mask for the src sequence to prevent the model from
                       using data points from the target sequence
             tgt_mask: the mask for the tgt sequence to prevent the model from
                       using data points from the target sequence
         """
         (src, tgt, src_mask, tgt_mask) = X
-        src = src[:,:,:5]
-        tgt = tgt[:,:,:5]
+        src = src[:, :, :5]
+        tgt = tgt[:, :, :5]
 
         # Pass throguh the input layer right before the encoder
-        src = self.encoder_input_layer(src)# src shape: [batch_size, src length, dim_val] regardless of number of input features
+        src = self.encoder_input_layer(
+            src
+        )  # src shape: [batch_size, src length, dim_val] regardless of number of input features
 
         # Pass through the positional encoding layer
-        src = self.positional_encoding_layer(src) # src shape: [batch_size, src length, dim_val] regardless of number of input features
+        src = self.positional_encoding_layer(
+            src
+        )  # src shape: [batch_size, src length, dim_val] regardless of number of input features
 
         # Pass through all the stacked encoder layers in the encoder
         # Masking is only needed in the encoder if input sequences are padded
         # which they are not in this time series use case, because all my
-        # input sequences are naturally of the same length. 
+        # input sequences are naturally of the same length.
         # (https://github.com/huggingface/transformers/issues/4083)
-        src = self.encoder( # src shape: [batch_size, enc_seq_len, dim_val]
-            src=src
-            )
+        src = self.encoder(src=src)  # src shape: [batch_size, enc_seq_len, dim_val]
 
         # Pass decoder input through decoder input layer
         # src shape: [target sequence length, batch_size, dim_val] regardless of number of input features
@@ -210,24 +202,23 @@ class TimeSeriesTFT(pl.LightningModule):
 
         # Pass throguh decoder - output shape: [batch_size, target seq len, dim_val]
         decoder_output = self.decoder(
-            tgt=decoder_output,
-            memory=src,
-            tgt_mask=tgt_mask,
-            memory_mask=src_mask
-            )
+            tgt=decoder_output, memory=src, tgt_mask=tgt_mask, memory_mask=src_mask
+        )
 
         # Pass through linear mapping
-        decoder_output = self.linear_mapping(decoder_output) # shape [batch_size, target seq len]
+        decoder_output = self.linear_mapping(
+            decoder_output
+        )  # shape [batch_size, target seq len]
         return decoder_output.to(self.dev)
-    
+
     def compute_loss(self, y_hat, y):
-        if y.dim()==3 and y.shape[2]==5:
-            y = y[:,:,3]
-        if y_hat.dim()==3 and y_hat.shape[2]==5:
-            y_hat = torch.squeeze(y_hat[:,:,3])
-        if y.dim()==3:
+        if y.dim() == 3 and y.shape[2] == 5:
+            y = y[:, :, 3]
+        if y_hat.dim() == 3 and y_hat.shape[2] == 5:
+            y_hat = torch.squeeze(y_hat[:, :, 3])
+        if y.dim() == 3:
             y = torch.squeeze(y)
-        if y_hat.dim()==3:
+        if y_hat.dim() == 3:
             y_hat = torch.squeeze(y_hat)
         loss = self.criterion.to(self.dev)(y_hat.to(self.dev), y.to(self.dev))
         assert not torch.isnan(y_hat).any()
@@ -240,24 +231,24 @@ class TimeSeriesTFT(pl.LightningModule):
         if self.batch_first == False:
             src = src.permute(1, 0, 2)
             trg = trg.permute(1, 0, 2)
-            trg = trg[:,:,3]
+            trg = trg[:, :, 3]
 
             if trg_y.dim() == 3:
                 trg_y = trg_y.permute(1, 0, 2)
-                trg_y = trg_y[:,:,3]
+                trg_y = trg_y[:, :, 3]
             else:
                 trg_y = trg_y.permute(1, 0)
         else:
-            trg = trg[:,:,3]
+            trg = trg[:, :, 3]
             if trg_y.dim() == 3:
-                trg_y = trg_y[:,:,3]
-        src = src[:,:,:5]
+                trg_y = trg_y[:, :, 3]
+        src = src[:, :, :5]
         trg = trg.unsqueeze(-1)
         trg_y = trg_y.unsqueeze(-1)
         assert not torch.isnan(src).any()
         y_hat = self.forward((src, trg, self.src_mask, self.tgt_mask))
         loss = self.compute_loss(y_hat, trg_y)
-        self.log('train_loss', loss)
+        self.log("train_loss", loss)
         return loss
 
     def on_after_backward(self) -> None:
@@ -268,11 +259,15 @@ class TimeSeriesTFT(pl.LightningModule):
         valid_gradients = True
         for name, param in self.named_parameters():
             if param.grad is not None:
-                valid_gradients = not (torch.isnan(param.grad).any() or torch.isinf(param.grad).any())
+                valid_gradients = not (
+                    torch.isnan(param.grad).any() or torch.isinf(param.grad).any()
+                )
                 if not valid_gradients:
                     break
         if not valid_gradients:
-            print(f'detected inf or nan values in gradients. not updating model parameters')
+            print(
+                f"detected inf or nan values in gradients. not updating model parameters"
+            )
             # self.zero_grad()
 
     def validation_step(self, batch, batch_idx):
@@ -281,22 +276,22 @@ class TimeSeriesTFT(pl.LightningModule):
             src = src.permute(1, 0, 2)
             if trg_y.dim() == 3:
                 trg_y = trg_y.permute(1, 0, 2)
-                trg_y = trg_y[:,:,3]
+                trg_y = trg_y[:, :, 3]
             else:
                 trg_y = trg_y.permute(1, 0)
         else:
             if trg_y.dim() == 3:
-                trg_y = trg_y[:,:,3]
-        src = src[:,:,:5]
+                trg_y = trg_y[:, :, 3]
+        src = src[:, :, :5]
         assert not torch.isnan(src).any()
         prediction = inference.run_encoder_decoder_inference(
-                model=self, 
-                src=src,
-                forecast_window=self.forecast_window,
-                batch_size=src.shape[1]
-                )
+            model=self,
+            src=src,
+            forecast_window=self.forecast_window,
+            batch_size=src.shape[1],
+        )
         loss = self.compute_loss(prediction, trg_y)
-        self.log('val_loss', loss)
+        self.log("val_loss", loss)
 
     def test_step(self, batch, batch_idx):
         src, _, trg_y = batch
@@ -304,26 +299,26 @@ class TimeSeriesTFT(pl.LightningModule):
             src = src.permute(1, 0, 2)
             if trg_y.dim() == 3:
                 trg_y = trg_y.permute(1, 0, 2)
-                trg_y = trg_y[:,:,3]
+                trg_y = trg_y[:, :, 3]
             else:
                 trg_y = trg_y.permute(1, 0)
         else:
             if trg_y.dim() == 3:
-                trg_y = trg_y[:,:,3]
-        src = src[:,:,:5]
+                trg_y = trg_y[:, :, 3]
+        src = src[:, :, :5]
         assert not torch.isnan(src).any()
         prediction = inference.run_encoder_decoder_inference(
-                model=self, 
-                src=src, 
-                forecast_window=self.forecast_window,
-                batch_size=src.shape[1]
-                )
+            model=self,
+            src=src,
+            forecast_window=self.forecast_window,
+            batch_size=src.shape[1],
+        )
         loss = self.compute_loss(prediction, trg_y)
-        self.log('test_loss', loss)
+        self.log("test_loss", loss)
 
     def configure_optimizers(self):
-        #optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         optimizer = torch.optim.Adam(self.parameters(), lr=0.005)
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
         return [optimizer], [lr_scheduler]
-        #return optimizer
+        # return optimizer

@@ -10,6 +10,7 @@ np.random.seed(0)
 import pyarrow.parquet as pq
 import logging
 
+
 def tabular_to_sliding_dataset(
     dataset: np.ndarray,
     validation_idx: int,
@@ -104,9 +105,7 @@ def tabular_to_sliding_dataset(
     # get a rolling view of each data chunk
     output = []
     for chunk in [train, validation, test]:
-        X, y = get_features_and_labels(
-            array=chunk, n_past=n_past, n_future=n_future
-        )
+        X, y = get_features_and_labels(array=chunk, n_past=n_past, n_future=n_future)
 
         # make a copy to generate a writable array
         if make_writable:
@@ -120,13 +119,14 @@ def tabular_to_sliding_dataset(
     output = [item for sublist in output for item in sublist]
     return output
 
+
 def generate_stock_returns(n_past, n_futures):
-    data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
+    data = pd.read_parquet("data/token/FUT/30min/ES", engine="fastparquet")
     logging.info(f"data:{data.head()}")
     logging.info(f"data:{data.info()}")
     data["Time"] = data.index
-    data["Time"] = data["Time"].apply(lambda x:x.timestamp()).astype(np.float32)
-    val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
+    data["Time"] = data["Time"].apply(lambda x: x.timestamp()).astype(np.float32)
+    val_idx = max(int(len(data) * 0.7), len(data) - 2048 * 16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
 
     X_train, y_train, X_val, y_val, X_test, y_test = tabular_to_sliding_dataset(
@@ -134,7 +134,7 @@ def generate_stock_returns(n_past, n_futures):
         validation_idx=val_idx,
         test_idx=tst_idx,
         n_past=n_past,
-        n_future=n_futures
+        n_future=n_futures,
     )
     logging.info(f"X_train:{X_train.shape}")
     logging.info(f"X_train:{X_train[:1]}")
@@ -154,12 +154,15 @@ def generate_stock_returns(n_past, n_futures):
     logging.info(f"y_test:{y_test.shape}")
     return X_train, y_train, X_val, y_val, X_test, y_test
 
+
 def generate_stock_tokens():
-    data = pd.read_parquet("data/token/FUT/30min/ES", engine='fastparquet')
-    logging.info(f"data.OpenPct:{data.OpenPct.shape}, type:{type(data.OpenPct)}, dtype:{data.OpenPct.dtype}")
+    data = pd.read_parquet("data/token/FUT/30min/ES", engine="fastparquet")
+    logging.info(
+        f"data.OpenPct:{data.OpenPct.shape}, type:{type(data.OpenPct)}, dtype:{data.OpenPct.dtype}"
+    )
     logging.info(f"data.OpenPct.:{data.OpenPct[0:10]}")
     data["Time"] = data.index
-    data["Time"] = data["Time"].apply(lambda x:float(x.timestamp()))
+    data["Time"] = data["Time"].apply(lambda x: float(x.timestamp()))
     data = data.dropna()
     open = data.OpenPct.to_numpy()
     high = data.HighPct.to_numpy()
@@ -168,10 +171,14 @@ def generate_stock_tokens():
     volume = data.VolumePct.to_numpy()
     time = data.Time.to_numpy().astype(np.float32)
     logging.info(f"before open:{open.shape}, type:{type(open)}, dtype:{open.dtype}")
-    logging.info(f"before volume:{volume.shape}, type:{type(volume)}, dtype:{volume.dtype}")
+    logging.info(
+        f"before volume:{volume.shape}, type:{type(volume)}, dtype:{volume.dtype}"
+    )
     values = np.stack((open, high, low, close, volume, time), axis=-1)
-    logging.info(f"before values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
-    val_idx = max(int(len(data) * 0.7), len(data) - 2048*16)
+    logging.info(
+        f"before values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}"
+    )
+    val_idx = max(int(len(data) * 0.7), len(data) - 2048 * 16)
     tst_idx = max(int(len(data) * 0.8), len(data) - 2048)
 
     logging.info(f"values1:{values.shape}, type:{type(values)}, dtype:{values.dtype}")
@@ -188,5 +195,5 @@ def generate_stock_tokens():
     logging.info(f"X_train:{X_train[:30]}")
     logging.info(f"X_val:{X_val[:30]}")
     logging.info(f"X_test:{X_test[:30]}")
-    
+
     return X_train, X_val, X_test

@@ -26,7 +26,13 @@ from typing import Dict, Optional, Union
 
 from huggingface_hub import model_info
 
-from .utils import HF_MODULES_CACHE, TRANSFORMERS_DYNAMIC_MODULE_NAME, cached_file, is_offline_mode, logging
+from .utils import (
+    HF_MODULES_CACHE,
+    TRANSFORMERS_DYNAMIC_MODULE_NAME,
+    cached_file,
+    is_offline_mode,
+    logging,
+)
 
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
@@ -73,9 +79,13 @@ def get_relative_imports(module_file):
         content = f.read()
 
     # Imports of the form `import .xxx`
-    relative_imports = re.findall(r"^\s*import\s+\.(\S+)\s*$", content, flags=re.MULTILINE)
+    relative_imports = re.findall(
+        r"^\s*import\s+\.(\S+)\s*$", content, flags=re.MULTILINE
+    )
     # Imports of the form `from .xxx import yyy`
-    relative_imports += re.findall(r"^\s*from\s+\.(\S+)\s+import", content, flags=re.MULTILINE)
+    relative_imports += re.findall(
+        r"^\s*from\s+\.(\S+)\s+import", content, flags=re.MULTILINE
+    )
     # Unique-ify
     return list(set(relative_imports))
 
@@ -100,7 +110,9 @@ def get_relative_import_files(module_file):
 
         module_path = Path(module_file).parent
         new_import_files = [str(module_path / m) for m in new_imports]
-        new_import_files = [f for f in new_import_files if f not in all_relative_imports]
+        new_import_files = [
+            f for f in new_import_files if f not in all_relative_imports
+        ]
         files_to_check = [f"{f}.py" for f in new_import_files]
 
         no_change = len(new_import_files) == 0
@@ -170,7 +182,9 @@ def get_class_in_module(class_name, module_path):
                 pass
 
         # copy back the file that we want to import
-        shutil.copyfile(f"{tmp_dir}/{module_file_name}", f"{module_dir}/{module_file_name}")
+        shutil.copyfile(
+            f"{tmp_dir}/{module_file_name}", f"{module_dir}/{module_file_name}"
+        )
 
         # import the module
         module_path = module_path.replace(os.path.sep, ".")
@@ -262,7 +276,9 @@ def get_cached_module_file(
         )
 
     except EnvironmentError:
-        logger.error(f"Could not locate the {module_file} inside {pretrained_model_name_or_path}.")
+        logger.error(
+            f"Could not locate the {module_file} inside {pretrained_model_name_or_path}."
+        )
         raise
 
     # Check we have all the requirements in our environment
@@ -279,11 +295,16 @@ def get_cached_module_file(
         shutil.copy(resolved_module_file, submodule_path / module_file)
         for module_needed in modules_needed:
             module_needed = f"{module_needed}.py"
-            shutil.copy(os.path.join(pretrained_model_name_or_path, module_needed), submodule_path / module_needed)
+            shutil.copy(
+                os.path.join(pretrained_model_name_or_path, module_needed),
+                submodule_path / module_needed,
+            )
     else:
         # Get the commit hash
         # TODO: we will get this info in the etag soon, so retrieve it from there and not here.
-        commit_hash = model_info(pretrained_model_name_or_path, revision=revision, token=use_auth_token).sha
+        commit_hash = model_info(
+            pretrained_model_name_or_path, revision=revision, token=use_auth_token
+        ).sha
 
         # The module file will end up being placed in a subfolder with the git hash of the repo. This way we get the
         # benefit of versioning.
@@ -432,7 +453,9 @@ def custom_object_save(obj, folder, config=None):
                     slow_tokenizer = getattr(obj, "slow_tokenizer_class")
                     slow_tok_module_name = slow_tokenizer.__module__
                     last_slow_tok_module = slow_tok_module_name.split(".")[-1]
-                    slow_tokenizer_class = f"{last_slow_tok_module}.{slow_tokenizer.__name__}"
+                    slow_tokenizer_class = (
+                        f"{last_slow_tok_module}.{slow_tokenizer.__name__}"
+                    )
             else:
                 # Slow tokenizer: no way to have the fast class
                 slow_tokenizer_class = f"{last_module}.{obj.__class__.__name__}"

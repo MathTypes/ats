@@ -30,28 +30,30 @@ optuna_logger = logging.getLogger("optuna")
 
 
 # need to inherit from callback for this to work
-class PyTorchLightningPruningCallbackAdjusted(pl.Callback, PyTorchLightningPruningCallback):
+class PyTorchLightningPruningCallbackAdjusted(
+    pl.Callback, PyTorchLightningPruningCallback
+):
     pass
 
 
 def optimize_hyperparameters(
-        study_name: str,
-        config: Dict[str, Any] = {},
-        timeout: float = 3600 * 8.0,  # 8 hours
-        gradient_clip_val_range: Tuple[float, float] = (0.01, 100.0),
-        context_length_ratio_range: Tuple[int, int] = (1, 30),
-        prediction_length_range: Tuple[int, int] = (4, 48*3),
-        static_hidden_size_range: Tuple[int, int] = (8, 64),
-        hidden_size_range: Tuple[int, int] = (4, 64),
-        dropout_range: Tuple[float, float] = (0.1, 0.3),
-        learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
-        use_learning_rate_finder: bool = True,
-        trainer_kwargs: Dict[str, Any] = {},
-        log_dir: str = "lightning_logs",
-        study: optuna.Study = None,
-        verbose: Union[int, bool] = None,
-        pruner: optuna.pruners.BasePruner = optuna.pruners.SuccessiveHalvingPruner(),
-        **kwargs,
+    study_name: str,
+    config: Dict[str, Any] = {},
+    timeout: float = 3600 * 8.0,  # 8 hours
+    gradient_clip_val_range: Tuple[float, float] = (0.01, 100.0),
+    context_length_ratio_range: Tuple[int, int] = (1, 30),
+    prediction_length_range: Tuple[int, int] = (4, 48 * 3),
+    static_hidden_size_range: Tuple[int, int] = (8, 64),
+    hidden_size_range: Tuple[int, int] = (4, 64),
+    dropout_range: Tuple[float, float] = (0.1, 0.3),
+    learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
+    use_learning_rate_finder: bool = True,
+    trainer_kwargs: Dict[str, Any] = {},
+    log_dir: str = "lightning_logs",
+    study: optuna.Study = None,
+    verbose: Union[int, bool] = None,
+    pruner: optuna.pruners.BasePruner = optuna.pruners.SuccessiveHalvingPruner(),
+    **kwargs,
 ) -> optuna.Study:
     """
     Optimize Temporal Fusion Transformer hyperparameters.
@@ -97,9 +99,9 @@ def optimize_hyperparameters(
     Returns:
         optuna.Study: optuna study results
     """
-    model_path = config['model_path']
-    max_epochs = config['max_epochs']
-    n_trials = config['n_trials']
+    model_path = config["model_path"]
+    max_epochs = config["max_epochs"]
+    n_trials = config["n_trials"]
     logging_level = {
         None: optuna.logging.get_verbosity(),
         0: optuna.logging.WARNING,
@@ -117,12 +119,14 @@ def optimize_hyperparameters(
     def objective(trial: optuna.Trial) -> float:
         # Filenames for each trial must be made unique in order to access each checkpoint.
         checkpoint_callback = ModelCheckpoint(
-            dirpath=os.path.join(model_path, "trial_{}".format(trial.number)), filename="{epoch}", monitor="val_loss"
+            dirpath=os.path.join(model_path, "trial_{}".format(trial.number)),
+            filename="{epoch}",
+            monitor="val_loss",
         )
 
         learning_rate_callback = LearningRateMonitor()
-        #logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
-        #default_trainer_kwargs = dict(
+        # logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
+        # default_trainer_kwargs = dict(
         #    accelerator="auto",
         #    max_epochs=max_epochs,
         #    gradient_clip_val=gradient_clip_val,
@@ -132,35 +136,39 @@ def optimize_hyperparameters(
         #        checkpoint_callback,
         #        PyTorchLightningPruningCallbackAdjusted(trial, monitor="val_loss"),
         #    ],
-            #logger=logger,
+        # logger=logger,
         #    enable_progress_bar=optuna_verbose < optuna.logging.INFO,
         #    enable_model_summary=[False, True][optuna_verbose < optuna.logging.INFO],
-        #)
-        #default_trainer_kwargs.update(trainer_kwargs)
+        # )
+        # default_trainer_kwargs.update(trainer_kwargs)
 
         # create model
-        #hidden_size = trial.suggest_int("hidden_size", *hidden_size_range, log=True)
-        #context_length = trial.suggest_int("context_length", *context_length_range, log=True)
-        #prediction_length = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
+        # hidden_size = trial.suggest_int("hidden_size", *hidden_size_range, log=True)
+        # context_length = trial.suggest_int("context_length", *context_length_range, log=True)
+        # prediction_length = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
         kwargs["loss"] = copy.deepcopy(loss)
         trial_config = config
         trial_config.update(dict(trial.params))
         trial_config["learning_rate"] = 0.02
         trial_config["trial.number"] = trial.number
-        #trial_config["dropout"]=trial.suggest_uniform("dropout", *dropout_range)
-        #trial_config["hidden_size"] = trial.suggest_int("hidden_size", *hidden_size_range, log=False)
+        # trial_config["dropout"]=trial.suggest_uniform("dropout", *dropout_range)
+        # trial_config["hidden_size"] = trial.suggest_int("hidden_size", *hidden_size_range, log=False)
         trial_config["log_mode"] = True
         logging.info(f"trial_config:{trial_config}")
-        #trial_config["prediction_length"] = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
-        context_length_ratio = trial.suggest_int("context_length_ratio", *context_length_ratio_range, log=True)
-        trial_config["context_length"] = trial_config["prediction_length"]*context_length_ratio
-        #trial_config["loss_name"] = trial.suggest_categorical("loss", ["MASE", "SMAPE", "MAE", "RMSE", "MAPE", "MQF2DistributionLoss"])
+        # trial_config["prediction_length"] = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
+        context_length_ratio = trial.suggest_int(
+            "context_length_ratio", *context_length_ratio_range, log=True
+        )
+        trial_config["context_length"] = (
+            trial_config["prediction_length"] * context_length_ratio
+        )
+        # trial_config["loss_name"] = trial.suggest_categorical("loss", ["MASE", "SMAPE", "MAE", "RMSE", "MAPE", "MQF2DistributionLoss"])
         trial_config["min_encoder_length"] = trial_config["context_length"]
         trial_config["max_encoder_length"] = trial_config["context_length"]
         trial_config["min_prediction_length"] = trial_config["prediction_length"]
         trial_config["max_prediction_length"] = trial_config["prediction_length"]
-        #gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
-        #trial_config["gradient_clip_val"] = gradient_clip_val
+        # gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
+        # trial_config["gradient_clip_val"] = gradient_clip_val
         data_module = model_utils.get_data_module(trial_config)
         model = model_utils.get_model(trial_config, data_module)
         # find good learning rate
@@ -178,7 +186,9 @@ def optimize_hyperparameters(
             )
 
             loss_finite = np.isfinite(res.results["loss"])
-            if loss_finite.sum() > 3:  # at least 3 valid values required for learning rate finder
+            if (
+                loss_finite.sum() > 3
+            ):  # at least 3 valid values required for learning rate finder
                 lr_smoothed, loss_smoothed = sm.nonparametric.lowess(
                     np.asarray(res.results["loss"])[loss_finite],
                     np.asarray(res.results["lr"])[loss_finite],
@@ -191,24 +201,38 @@ def optimize_hyperparameters(
                 optimal_lr = res.results["lr"][optimal_idx]
             optuna_logger.info(f"Using learning rate of {optimal_lr:.3g}")
             # add learning rate artificially
-            model.hparams.learning_rate = trial.suggest_uniform("learning_rate", optimal_lr, optimal_lr)
+            model.hparams.learning_rate = trial.suggest_uniform(
+                "learning_rate", optimal_lr, optimal_lr
+            )
         else:
-            model.hparams.learning_rate = trial.suggest_loguniform("learning_rate", *learning_rate_range)
+            model.hparams.learning_rate = trial.suggest_loguniform(
+                "learning_rate", *learning_rate_range
+            )
         trial_config["learning_rate"] = model.hparams.learning_rate
-        #logging.info(f"trial_config_before_model:{trial_config}")
-        #trial_config.update(dict(model.hparams))
-        wandb.init(project="ats-optuna", entity="johnnychen7622", config=trial_config, group=study_name, reinit=True)
+        # logging.info(f"trial_config_before_model:{trial_config}")
+        # trial_config.update(dict(model.hparams))
+        wandb.init(
+            project="ats-optuna",
+            entity="johnnychen7622",
+            config=trial_config,
+            group=study_name,
+            reinit=True,
+        )
         # fit
-        #trainer = pl.Trainer(
+        # trainer = pl.Trainer(
         #    **default_trainer_kwargs,
-        #)
+        # )
         logging.info(f"trial_config:{trial_config}")
         logging.info(f"model_hparams:{model.hparams}")
         trainer = model_utils.get_trainer(trial_config, data_module)
-        trainer.fit(model, train_dataloaders=data_module.train_dataloader(), val_dataloaders=data_module.val_dataloader())
+        trainer.fit(
+            model,
+            train_dataloaders=data_module.train_dataloader(),
+            val_dataloaders=data_module.val_dataloader(),
+        )
         optuna_logger.info(f"Trainer: {trainer}")
         optuna_logger.info(f"Trainer metrics {trainer.callback_metrics}")
-        wandb.log(data={"validation loss":trainer.callback_metrics["val_loss"].item()})
+        wandb.log(data={"validation loss": trainer.callback_metrics["val_loss"].item()})
         wandb.finish()
         # report result
         return trainer.callback_metrics["val_loss"].item()
@@ -219,15 +243,15 @@ def optimize_hyperparameters(
         n_startup_trials=2, n_warmup_steps=5, interval_steps=3
     )
     if study is None:
-        study = optuna.create_study(direction="minimize", pruner=pruner, study_name=study_name)
+        study = optuna.create_study(
+            direction="minimize", pruner=pruner, study_name=study_name
+        )
     wandb_kwargs = {
         "project": "ats-optuna",
         "entity": "johnnychen7622",
         "reinit": True,
     }
-    wandbc = WeightsAndBiasesCallback(
-        metric_name="val_loss", wandb_kwargs=wandb_kwargs
-    )
+    wandbc = WeightsAndBiasesCallback(metric_name="val_loss", wandb_kwargs=wandb_kwargs)
 
     study = optuna.create_study(direction="maximize", sampler=sampler)
     study.optimize(objective, n_trials=n_trials, callbacks=[wandbc])

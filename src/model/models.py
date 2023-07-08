@@ -6,6 +6,7 @@ import torch.nn as nn
 from utils import Time2Vec
 import wandb
 import pytorch_lightning as pl
+
 torch.manual_seed(0)
 from torch.nn import functional as F
 import timeseries_utils as ts_utils
@@ -16,30 +17,40 @@ from transformers.modeling_outputs import (
     Seq2SeqTSModelOutput,
     Seq2SeqTSPredictionOutput,
 )
-from transformers.time_series_utils import NegativeBinomialOutput, NormalOutput, StudentTOutput
-from transformers.models.time_series_transformer.configuration_time_series_transformer import TimeSeriesTransformerConfig
+from transformers.time_series_utils import (
+    NegativeBinomialOutput,
+    NormalOutput,
+    StudentTOutput,
+)
+from transformers.models.time_series_transformer.configuration_time_series_transformer import (
+    TimeSeriesTransformerConfig,
+)
+
 
 class MLP(nn.Module):
-  '''
+    """
     Multilayer Perceptron.
-  '''
-  def __init__(self, out_size):
-    super().__init__()
-    self.layers = nn.Sequential(
-      nn.Flatten(),
-      nn.Linear(32 * 32 * 3, 64),
-      nn.ReLU(),
-      nn.Linear(64, 32),
-      nn.ReLU(),
-      nn.Linear(32, 10)
-    )
+    """
+
+    def __init__(self, out_size):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(32 * 32 * 3, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 10),
+        )
+
+    def forward(self, x):
+        """Forward pass"""
+        return self.layers(x)
 
 
-  def forward(self, x):
-    '''Forward pass'''
-    return self.layers(x)
-
-def weighted_average(input_tensor: torch.Tensor, weights: Optional[torch.Tensor] = None, dim=None) -> torch.Tensor:
+def weighted_average(
+    input_tensor: torch.Tensor, weights: Optional[torch.Tensor] = None, dim=None
+) -> torch.Tensor:
     """
     Computes the weighted average of a given tensor across a given `dim`, masking values associated with weight zero,
     meaning instead of `nan * 0 = nan` you will get `0 * 0 = 0`.
@@ -56,17 +67,25 @@ def weighted_average(input_tensor: torch.Tensor, weights: Optional[torch.Tensor]
         `torch.FloatTensor`: The tensor with values averaged along the specified `dim`.
     """
     if weights is not None:
-        weighted_tensor = torch.where(weights != 0, input_tensor * weights, torch.zeros_like(input_tensor))
-        sum_weights = torch.clamp(weights.sum(dim=dim) if dim else weights.sum(), min=1.0)
-        return (weighted_tensor.sum(dim=dim) if dim else weighted_tensor.sum()) / sum_weights
+        weighted_tensor = torch.where(
+            weights != 0, input_tensor * weights, torch.zeros_like(input_tensor)
+        )
+        sum_weights = torch.clamp(
+            weights.sum(dim=dim) if dim else weights.sum(), min=1.0
+        )
+        return (
+            weighted_tensor.sum(dim=dim) if dim else weighted_tensor.sum()
+        ) / sum_weights
     else:
         return input_tensor.mean(dim=dim)
+
 
 def nll(input: torch.distributions.Distribution, target: torch.Tensor) -> torch.Tensor:
     """
     Computes the negative log likelihood loss from input distribution with respect to target.
     """
     return -input.log_prob(target)
+
 
 def create_mlp(num_inputs, hidden_size, num_outputs, seq_len):
     # MLP as a CNN
@@ -76,14 +95,16 @@ def create_mlp(num_inputs, hidden_size, num_outputs, seq_len):
         nn.Conv1d(hidden_size, hidden_size, seq_len),
         nn.Tanh(),
         nn.Conv1d(hidden_size, num_outputs, seq_len),
-        nn.LogSoftmax(dim=seq_len)
+        nn.LogSoftmax(dim=seq_len),
     )
     return mlp
+
 
 class AttentionEmbeddingLSTM(pl.LightningModule):
     """
     Time2vec embedding + Attention + LSTM.
     """
+
     def __init__(
         self,
         input_features,
@@ -95,12 +116,12 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         hidden_size=4,
         n_layers=2,
         dropout_rate=0.2,
-        config: TimeSeriesTransformerConfig = None
+        config: TimeSeriesTransformerConfig = None,
     ):
         super(AttentionEmbeddingLSTM, self).__init__()
         self.scaler = ts_utils.TimeSeriesStdScaler(dim=1, keepdim=True)
-        #self.criterion = nn.HuberLoss()
-        #self.criterion = torch.nn.MAELoss(reduction='sum')
+        # self.criterion = nn.HuberLoss()
+        # self.criterion = torch.nn.MAELoss(reduction='sum')
         self.out_values = out_values
         self.criterion = nll
         # Build a one-dimensional convolutional neural layer
@@ -113,29 +134,39 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         # s is the stride, s = 0
         kernel_size = 4
         stride = 2
-        output_channels = int(((input_size-kernel_size+2*0)/stride)+1)
-        logging.info(f"output_channels:{output_channels}, input_features:{input_features}")
-        self.cov1d = nn.Conv1d(in_channels=input_features,
-                               out_channels=1,
-                               kernel_size=kernel_size, stride=stride)
-        #self.emb = Time2Vec(linear_channel, period_channel, input_size)
-        logging.info(f"linear_channel:{linear_channel}, period_channel:{period_channel}, output_channels:{output_channels}")
-        self.emb = Time2Vec(linear_channel, input_size-linear_channel, output_channels)
+        output_channels = int(((input_size - kernel_size + 2 * 0) / stride) + 1)
+        logging.info(
+            f"output_channels:{output_channels}, input_features:{input_features}"
+        )
+        self.cov1d = nn.Conv1d(
+            in_channels=input_features,
+            out_channels=1,
+            kernel_size=kernel_size,
+            stride=stride,
+        )
+        # self.emb = Time2Vec(linear_channel, period_channel, input_size)
+        logging.info(
+            f"linear_channel:{linear_channel}, period_channel:{period_channel}, output_channels:{output_channels}"
+        )
+        self.emb = Time2Vec(
+            linear_channel, input_size - linear_channel, output_channels
+        )
         self.att = nn.MultiheadAttention(
-            embed_dim=input_size, num_heads=input_size
-            #embed_dim=output_channels, num_heads=output_channels
+            embed_dim=input_size,
+            num_heads=input_size
+            # embed_dim=output_channels, num_heads=output_channels
         )
         self.lstm = nn.LSTM(
             input_size=input_size,
-            #input_size=output_channels,
+            # input_size=output_channels,
             hidden_size=hidden_size,
-            num_layers=n_layers
+            num_layers=n_layers,
         )
         self.dropout = nn.Dropout(dropout_rate)
         self.distribution_output = NormalOutput(dim=out_size)
         self.parameter_projection = self.distribution_output.get_parameter_projection(1)
         self.target_shape = self.distribution_output.event_shape
-        #logging.info(f"hidden_size:{hidden_size}")
+        # logging.info(f"hidden_size:{hidden_size}")
         logging.info(f"target_shape:{self.target_shape}")
         self.lin = nn.Linear(hidden_size, self.out_values)
         self.relu = nn.ReLU()
@@ -145,33 +176,40 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
     def output_params(self, dec_output):
         return self.parameter_projection(dec_output[:, -1:])
 
-    
     @torch.jit.ignore
-    def output_distribution(self, params, loc=None, scale=None, trailing_n=None) -> torch.distributions.Distribution:
+    def output_distribution(
+        self, params, loc=None, scale=None, trailing_n=None
+    ) -> torch.distributions.Distribution:
         sliced_params = params
         if trailing_n is not None:
             sliced_params = [p[:, -trailing_n:] for p in params]
-        #logging.info(f"sliced_params:{type(sliced_params)}")
-        return self.distribution_output.distribution(torch.stack([sliced_params[0], sliced_params[1]], dim=-1), loc=loc, scale=scale)
+        # logging.info(f"sliced_params:{type(sliced_params)}")
+        return self.distribution_output.distribution(
+            torch.stack([sliced_params[0], sliced_params[1]], dim=-1),
+            loc=loc,
+            scale=scale,
+        )
 
-    def forward(self, X,
+    def forward(
+        self,
+        X,
         future_values: Optional[torch.Tensor] = None,
         output_hidden_states: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         use_cache: Optional[bool] = None,
-        return_dict: Optional[bool] = None) -> Union[Seq2SeqTSModelOutput, Tuple]:
-
+        return_dict: Optional[bool] = None,
+    ) -> Union[Seq2SeqTSModelOutput, Tuple]:
         past_values = X
         past_observed_mask = torch.ones_like(past_values)
         _, loc, scale = self.scaler(past_values, past_observed_mask)
         logging.info(f"loc:{loc.shape}")
         logging.info(f"scale:{scale.shape}")
-        #logging.info(f"X:{X.shape}")
-        #logging.info(f"future_values:{future_values.shape}")
-        #logging.info(f"loc:{loc.shape}")
-        #logging.info(f"before scale:{past_values}")
+        # logging.info(f"X:{X.shape}")
+        # logging.info(f"future_values:{future_values.shape}")
+        # logging.info(f"loc:{loc.shape}")
+        # logging.info(f"before scale:{past_values}")
         inputs = (past_values - loc) / scale
-        #logging.info(f"after scale:{inputs}")
+        # logging.info(f"after scale:{inputs}")
         logging.info(f"inputs_after_scale:{inputs.shape}")
         inputs = self.cov1d(inputs).squeeze()
         logging.info(f"inputs_after_cov1d:{inputs.shape}")
@@ -189,13 +227,15 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         params = self.output_params(hidden_state)  # outputs.last_hidden_state
         logging.info(f"params0:{params[0]}")
         logging.info(f"params1:{params[1]}")
-        distribution = self.output_distribution(params, loc=loc, scale=scale, trailing_n=2)
-        prediction_loss = None        
+        distribution = self.output_distribution(
+            params, loc=loc, scale=scale, trailing_n=2
+        )
+        prediction_loss = None
         logging.info(f"distribution:{distribution}")
         if future_values is not None:
-            #logging.info(f"future_values:{future_values}")
+            # logging.info(f"future_values:{future_values}")
             logging.info(f"before future_values:{future_values.shape}")
-            future_values = (future_values - loc[:,3,:]) / scale[:,3,:]
+            future_values = (future_values - loc[:, 3, :]) / scale[:, 3, :]
             logging.info(f"scaled future_values:{future_values.shape}")
             loss = self.criterion(distribution, future_values)
 
@@ -209,7 +249,7 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
                 loss_weights, _ = future_observed_mask.min(dim=-1, keepdim=False)
 
             prediction_loss = weighted_average(loss, weights=loss_weights)
-                
+
         return Seq2SeqTSPredictionOutput(
             params=params,
             loc=loc,
@@ -221,25 +261,25 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
     def compute_loss(self, y_hat, y):
         loss = self.criterion(y_hat, y)
         return loss
-    
+
     def training_step(self, batch, batch_idx):
         x, y = batch
-        output = self.forward(x, return_dict= True, future_values=y)
+        output = self.forward(x, return_dict=True, future_values=y)
         loss = output.loss
-        self.log('train_loss', loss)
+        self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        output = self.forward(x, return_dict= True, future_values=y)
+        output = self.forward(x, return_dict=True, future_values=y)
         loss = output.loss
-        self.log('val_loss', loss)
+        self.log("val_loss", loss)
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        output = self.forward(x, return_dict= True, future_values=y)
+        output = self.forward(x, return_dict=True, future_values=y)
         loss = output.loss
-        self.log('test_loss', loss)
+        self.log("test_loss", loss)
 
     def test_epoch_end(self, test_step_outputs):  # args are defined as part of pl API
         dummy_input = torch.zeros(self.hparams["in_dims"], device=self.device)
@@ -248,12 +288,10 @@ class AttentionEmbeddingLSTM(pl.LightningModule):
         artifact = wandb.Artifact(name="model.ckpt", type="model")
         artifact.add_file(model_filename)
         wandb.log_artifact(artifact)
-    
+
     def configure_optimizers(self):
-        #optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         optimizer = torch.optim.Adam(self.parameters(), lr=0.005)
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
         return [optimizer], [lr_scheduler]
-        #return optimizer
-
-
+        # return optimizer

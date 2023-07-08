@@ -5,9 +5,25 @@ import logging
 import numpy as np
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.tuner import Tuner
-from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet, PatchTstTransformer, PatchTstTftTransformer, PatchTftSupervised
+from pytorch_forecasting import (
+    Baseline,
+    TemporalFusionTransformer,
+    TimeSeriesDataSet,
+    PatchTstTransformer,
+    PatchTstTftTransformer,
+    PatchTftSupervised,
+)
 from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
-from pytorch_forecasting.metrics import MAE, MAPE, MASE, MAPCSE, RMSE, SMAPE, PoissonLoss, QuantileLoss
+from pytorch_forecasting.metrics import (
+    MAE,
+    MAPE,
+    MASE,
+    MAPCSE,
+    RMSE,
+    SMAPE,
+    PoissonLoss,
+    QuantileLoss,
+)
 from pytorch_forecasting.utils import create_mask, detach, to_list
 import plotly.graph_objects as go
 import PIL
@@ -16,9 +32,10 @@ from timeseries_transformer import TimeSeriesTFT
 import torch
 import wandb
 
+
 def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
-    wandb_logger = WandbLogger(project='ATS', log_model=True)
-    trainer_kwargs = {'logger':wandb_logger}
+    wandb_logger = WandbLogger(project="ATS", log_model=True)
+    trainer_kwargs = {"logger": wandb_logger}
     raw_predictions = model.predict(
         data_loader,
         mode="raw",
