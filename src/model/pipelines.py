@@ -200,20 +200,19 @@ class PatchTftSupervisedPipeline(Pipeline):
         self.init_env()
 
     def init_env(self):
+        self.train_start_date = datetime.datetime.strptime(self.config.job.train_start_date,"%Y-%m-%d")
         self.test_start_date = datetime.datetime.strptime(self.config.job.test_start_date,"%Y-%m-%d")
         self.test_end_date = datetime.datetime.strptime(self.config.job.test_end_date,"%Y-%m-%d")
         self.max_lags = self.config.job.max_lags
         if self.config.job.mode == "train":
             self.train_start_date = datetime.datetime.strptime(self.config.job.train_start_date,"%Y-%m-%d")
         elif self.config.job.mode == "test":
-            if not self.config.job.data_start_date:
             self.data_start_date = self.test_start_date - datetime.timedelta(days=self.max_lags)
             self.market_cal = mcal.get_calendar(self.config.job.market)
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         logging.info(f"head:{self.heads}, targets:{self.targets}")
-        if self.config.job.mode == "train":
-            start_date = self.train_start_date
-        else:
+        start_date = self.train_start_date
+        if not start_date:
             start_date = self.data_start_date
         logging.info(f"start_date:{start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}")
         self.data_module = model_utils.get_data_module(self.config,
@@ -266,7 +265,6 @@ class PatchTftSupervisedPipeline(Pipeline):
                     continue
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
-                #logging.info(f"new_data:{new_data}")
                 train_dataset.add_new_data(new_data)
                 new_prediction_data = train_dataset.filter(lambda x: (x.time_idx_last == last_time_idx))
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
