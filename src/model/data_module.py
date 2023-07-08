@@ -199,7 +199,7 @@ class LSTMDataModule(pl.LightningDataModule):
 
 
 class TimeSeriesDataModule(pl.LightningDataModule):
-    def __init__(self, config, train_data, eval_data, target):
+    def __init__(self, config, train_data, eval_data, target, simulation_mode = False):
         super().__init__()
         self.train_data = train_data.dropna()
         self.eval_data = eval_data.dropna()
@@ -243,6 +243,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             },
             # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
             add_relative_time_idx=config.features.add_relative_time_idx,
+            simulation_mode=simulation_mode
         )
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128

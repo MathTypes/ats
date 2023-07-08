@@ -5,6 +5,7 @@ import logging
 from math import ceil
 import os
 from pathlib import Path
+import pytz
 import time
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import warnings
@@ -417,6 +418,12 @@ def get_heads_and_targets(config):
     return head_dict, targets
 
 
+def utc_to_nyse_time(utc_time, interval_minutes):
+    utc_time = time_util.round_up(utc_time, interval_minutes)
+    return datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
+                             utc_time.hour, utc_time.minute, utc_time.second,
+                             0, tzinfo=pytz.timezone('America/New_York'))
+    
 def get_data_module(
     config,
     base_dir,
@@ -426,6 +433,7 @@ def get_data_module(
     targets,
     model_tickers,
     time_interval,
+    simulation_mode = False
 ):
     start = time.time()
     train_data_vec = []
@@ -442,24 +450,35 @@ def get_data_module(
         ticker_train_data = ticker_train_data.set_index("new_idx")
         train_data_vec.append(ticker_train_data)
     raw_data = pd.concat(train_data_vec)
+    raw_data = raw_data.sort_values(["ticker", "time"])
+    raw_data['close_back_cumsum'] = raw_data.groupby(['ticker'])['close_back'].cumsum()
+    raw_data['volume_back_cumsum'] = raw_data.groupby(['ticker'])['volume_back'].cumsum()
     g = raw_data.groupby(["ticker"], observed=True)
+    logging.info(f"raw_data: {raw_data.iloc[:3]}")
     raw_data["close_high_21"] = g["close_back"].transform(add_highs, width=21)
     raw_data["close_low_21"] = g["close_back"].transform(add_lows, width=21)
     raw_data["close_high_51"] = g["close_back"].transform(add_highs, width=51)
     raw_data["close_low_51"] = g["close_back"].transform(add_lows, width=51)
     raw_data["close_high_201"] = g["close_back"].transform(add_highs, width=201)
     raw_data["close_low_201"] = g["close_back"].transform(add_lows, width=201)
-    # logging.info(f"raw_data before filtering: {len(raw_data)}")
+    raw_data.time = raw_data.time.apply(utc_to_nyse_time, config.job.time_interval_minutes)
+    raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
+    logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
+    train_start_timestamp = train_start_date.timestamp()
+    test_start_timestamp = test_start_date.timestamp()
+    test_end_timestamp = test_end_date.timestamp()
     train_data = raw_data[
-        (raw_data.time >= train_start_date) & (raw_data.time < test_start_date)
+        (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
     ]
     # logging.info(f"train_data: {len(train_data)}")
     train_data = raw_data[
-        (raw_data.time >= train_start_date) & (raw_data.time < test_start_date)
+        (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
     ]
     eval_data = raw_data[
-        (raw_data.time >= test_start_date) & (raw_data.time < test_end_date)
+        (raw_data.timestamp >= test_start_timestamp) & (raw_data.timestamp < test_end_timestamp)
     ]
+    logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
+    logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
     logging.info(f"eval_data: {len(eval_data)}")
     train_data = train_data.sort_values(["ticker", "time"])
     eval_data = eval_data.sort_values(["ticker", "time"])

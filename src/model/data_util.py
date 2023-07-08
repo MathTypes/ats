@@ -207,20 +207,13 @@ class Preprocessor:
         df["time"] = df.index
         df["cum_volume"] = df.volume.cumsum()
         df["cum_dv"] = df.dv.cumsum()
-        # logging.info(f"df:{df.head()}")
         df_pct_back = df[["close", "volume", "dv"]].pct_change(periods=1)
         df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
         df = df.join(df_pct_back, rsuffix="_back").join(df_pct_forward, rsuffix="_fwd")
-        # df = roll_time_series(df, column_id="ticker", column_sort="time")
         df["month"] = df.time.dt.month  # categories have be strings
         df["year"] = df.time.dt.year  # categories have be strings
         df["hour_of_day"] = df.time.apply(lambda x: x.hour)
         df["day_of_week"] = df.time.apply(lambda x: x.dayofweek)
         df["day_of_month"] = df.time.apply(lambda x: x.day)
-        # df["week_of_month"] = df.time.apply(lambda x:x.isocalendar().week_of_month)
-        # df["week_of_year"] = df.time.apply(lambda x:x.isocalendar().week)
-        # df["date"] = df.est_time
-        # logging.info(f"df:{df.head()}")
-        # logging.info(f"df:{df.describe()}")
         df = df.dropna()
         return df

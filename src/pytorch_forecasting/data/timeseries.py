@@ -222,6 +222,7 @@ class TimeSeriesDataSet(Dataset):
         scalers: Dict[str, Union[StandardScaler, RobustScaler, TorchNormalizer, EncoderNormalizer]] = {},
         randomize_length: Union[None, Tuple[float, float], bool] = False,
         predict_mode: bool = False,
+        simulation_mode: bool = False,
     ):
         """
         Timeseries dataset holding data for models.
@@ -393,6 +394,7 @@ class TimeSeriesDataSet(Dataset):
         self.last_prediction_idx = data[self.time_idx].max()
         self.constant_fill_strategy = {} if len(constant_fill_strategy) == 0 else constant_fill_strategy
         self.predict_mode = predict_mode
+        self.simulation_mode = simulation_mode
         self.allow_missing_timesteps = allow_missing_timesteps
         self.target_normalizer = target_normalizer
         #logging.info(f"target_normalizer:{self.target_normalizer}")
@@ -418,10 +420,11 @@ class TimeSeriesDataSet(Dataset):
         # JJ: disable target normalizer
         self._set_target_normalizer(data)
 
-        self.preprocess_data(data)
+        data = self.preprocess_data(data)
+        if not simulation_mode:
+            self.transform_data(data)
 
     def preprocess_data(self, data : pd.DataFrame):
-        data["timestamp"] = data.time.apply(lambda x:x.timestamp())
         data = data.sort_values(self.group_ids + [self.time_idx])
         g = data.groupby(self.group_ids, observed=True)
         # reduce return to bring down loss
@@ -433,14 +436,16 @@ class TimeSeriesDataSet(Dataset):
           data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()
 
         #logging.info(f"preprocess data: {data.iloc[-3:]}")
-        data = data.dropna()
+        #data = data.dropna()
         # Needs to keep raw_data so that we can transform newly arrived data. This is 
         # required because of the lagged feature transformation requires raw data.
         self.raw_data = data
 
         # overwrite values
         self.reset_overwrite_values()
+        return data
 
+    def transform_data(self, data : pd.DataFrame):
         for target in self.target_names:
             assert (
                 target not in self.time_varying_known_reals
@@ -2837,7 +2842,8 @@ class TimeSeriesDataSet(Dataset):
     def add_new_data(self, new_data: pd.DataFrame):
         self.raw_data = pd.concat([self.raw_data, new_data])
         #logging.info(f"full_data:{self.raw_data.iloc[-2:]}")
-        self.preprocess_data(self.raw_data)
+        data = self.preprocess_data(self.raw_data)
+        self.transform_data(data)
     
     def __getitem__(self, idx: int) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
         """

@@ -898,8 +898,6 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else:
                 position_output = torch.squeeze(position_output, dim=-1)
             output = [output, position_output]
-        #logging.info(f"output:{output.shape}")
-        #logging.info(f"position_output:{position_output.shape}")
         
         return self.to_network_output(
             prediction=self.transform_output(output,

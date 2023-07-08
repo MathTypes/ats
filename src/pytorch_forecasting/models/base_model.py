@@ -59,6 +59,7 @@ import torch.nn as nn
 from torch.nn.utils import rnn
 from torch.optim.lr_scheduler import LambdaLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
+from torchmetrics import Metric as LightningMetric
 from tqdm.autonotebook import tqdm
 import wandb
 import yaml
@@ -250,25 +251,6 @@ class PredictCallback(BasePredictionWriter):
                 raise ValueError(
                     f"If a tuple is specified, the first element must be 'raw' - got {self.mode[0]} instead"
                 )
-           # prediction = pl_module.to_prediction([loss, {"prediction":out}], **self.mode_kwargs)
-            #logging.info(f"post to_prediction:{prediction}")
-            # mask non-predictions
-           # if isinstance(prediction, (list, tuple)):
-           #     prediction = [
-           #         o.masked_fill(nan_mask, torch.tensor(float("nan"))) if o.dtype == torch.float else o for o in prediction
-           #     ]
-           # elif prediction.dtype == torch.float:  # only floats can be filled with nans
-           #     prediction = prediction.masked_fill(nan_mask, torch.tensor(float("nan")))
-            #logging.info(f"done to_prediction:{prediction}")
-           # quantiles = pl_module.to_quantiles({"prediction":out}, **self.mode_kwargs)
-           # # mask non-predictions
-           # if isinstance(quantiles, (list, tuple)):
-           #     quantiles = [
-           #         o.masked_fill(nan_mask.unsqueeze(-1), torch.tensor(float("nan"))) if o.dtype == torch.float else o
-           #         for o in quantiles
-           #     ]
-           # elif quantiles.dtype == torch.float:
-           #     quantiles = quantiles.masked_fill(nan_mask.unsqueeze(-1), torch.tensor(float("nan")))
         elif self.mode == "prediction":
             out = pl_module.to_prediction(out, **self.mode_kwargs)
             # mask non-predictions
@@ -297,10 +279,6 @@ class PredictCallback(BasePredictionWriter):
 
         self._output.append(out)
         out = dict(output=out)
-        #logging.info(f"before to_prediction:{prediction}")
-        #out["pred"] = prediction
-        #out["quantile"] = quantiles
-        #logging.info(f"post out:{out}")
         
         if self.return_x:
             self._x_list.append(x)
@@ -317,7 +295,6 @@ class PredictCallback(BasePredictionWriter):
 
         if isinstance(out, dict):
             out = Prediction(**out)
-        #logging.info(f"post dict:{out}")
         # write to disk
         if self.output_dir is not None:
             super().on_predict_batch_end(trainer, pl_module, out, batch, batch_idx, dataloader_idx)
@@ -1449,8 +1426,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 out = Metric.to_prediction(self.loss, out["prediction"])
         else:
             #logging.info(f"before prediction:{out}, {type(out)}")
-            #if isinstance(out, (Tuple)):
-            #    out = out[1]
+            # Added to address the issue where loss is first element
+            if isinstance(out, (tuple)):
+                #logging.info(f"{type(out[0])}")
+                if isinstance(out[0], Dict):
+                    out = out[1]
             try:
                 #traceback.print_stack()
                 #logging.info(f"use metrics:{out}")

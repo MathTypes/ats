@@ -1,4 +1,5 @@
 import datetime
+from dateutil import parser
 from io import BytesIO
 import logging
 
@@ -239,23 +240,24 @@ class PatchTftSupervisedPipeline(Pipeline):
     def init_env(self):
         self.train_start_date = datetime.datetime.strptime(
             self.config.job.train_start_date, "%Y-%m-%d"
-        )
+        ).replace(tzinfo=datetime.timezone.utc)
         self.test_start_date = datetime.datetime.strptime(
             self.config.job.test_start_date, "%Y-%m-%d"
-        )
+        ).replace(tzinfo=datetime.timezone.utc)
         self.test_end_date = datetime.datetime.strptime(
             self.config.job.test_end_date, "%Y-%m-%d"
-        )
+        ).replace(tzinfo=datetime.timezone.utc)
         self.max_lags = self.config.job.max_lags
         if self.config.job.mode == "train":
             self.train_start_date = datetime.datetime.strptime(
                 self.config.job.train_start_date, "%Y-%m-%d"
-            )
+            ).replace(tzinfo=datetime.timezone.utc)
         elif self.config.job.mode == "test":
             self.data_start_date = self.test_start_date - datetime.timedelta(
                 days=self.max_lags
             )
             self.market_cal = mcal.get_calendar(self.config.job.market)
+        logging.info(f"train_start_date:{self.train_start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}")
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         logging.info(f"head:{self.heads}, targets:{self.targets}")
         start_date = self.train_start_date
@@ -273,6 +275,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             self.targets,
             self.config.dataset.model_tickers,
             self.config.dataset.time_interval,
+            simulation_mode=True
         )
 
     def create_model(self, checkpoint):
@@ -300,7 +303,8 @@ class PatchTftSupervisedPipeline(Pipeline):
         train_data = self.data_module.train_data
         future_data = self.data_module.eval_data
 
-        logging.info(f"future_data:{future_data.iloc[:1]}")
+        logging.info(f"train_data:{train_data.iloc[-2:]}")
+        logging.info(f"future_data:{future_data.iloc[:2]}")
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         last_time_idx = train_data.iloc[-1]["time_idx"]
         for test_date in test_dates:
@@ -316,7 +320,6 @@ class PatchTftSupervisedPipeline(Pipeline):
                 # 1. prepare prediction with latest prices
                 # 2. run inference to get returns and new positions
                 # 3. update PNL and positions
-                logging.info(f"running step {nyc_time}")
                 new_data = future_data[
                     (future_data.timestamp == nyc_time.timestamp())
                     & (future_data.ticker == "ES")
@@ -325,19 +328,31 @@ class PatchTftSupervisedPipeline(Pipeline):
                     continue
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
+                logging.info(f"running step {nyc_time}, new_data:{new_data}")
                 train_dataset.add_new_data(new_data)
+                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
                 new_prediction_data = train_dataset.filter(
                     lambda x: (x.time_idx_last == last_time_idx)
                 )
-                # logging.info(f"new_prediction_data:{new_prediction_data}")
+                #logging.info(f"new_prediction_data:{new_prediction_data}")
                 new_raw_predictions = self.model.predict(
                     new_prediction_data,
                     mode="raw",
                     return_x=True,
+                    #return_y=True,
                     trainer_kwargs=trainer_kwargs,
                 )
-                position = new_raw_predictions.output.prediction[1]
-                logging.info(f"new_position:{position}")
+                #logging.info(f"new_raw_predictions:{new_raw_predictions}")
+                prediction_kwargs = {}
+                y_hats = to_list(
+                    self.model.to_prediction(
+                        new_raw_predictions.output, **prediction_kwargs
+                    ))
+                #logging.info(f"y_hats:{y_hats}")
+                #logging.info(f"y:{new_raw_predictions.y}")
+                # TODO: figure out how come position becomes first output
+                position, prediction = y_hats
+                logging.info(f"new_position:{position}, prediction:{prediction}")
             logging.info(f"eod {test_date}")
 
     def eval_model(self):

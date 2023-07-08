@@ -1,9 +1,11 @@
 device: cuda
 mode: test
+retrain_model_before_test_start: False
 data_start_date: 2008-01-01
 train_start_date: 2008-01-01
-test_start_date: 2010-01-14
-test_end_date: 2010-05-20
+test_start_date: 2010-01-01
+test_end_date: 2011-01-01
+time_interval_minutes: 30
 max_lags: 365
 workers: 8
 max_epochs: 2
@@ -11,5 +13,5 @@ log_mode: All
 eval_batches: 2
 log_example_eval_every_n_epochs: 5
 tag: default
-checkpoint:
+checkpoint: /home/ubuntu/ats/src/model/data/lightning/models/epoch=1-step=24-v18.ckpt
 market: NYSE
