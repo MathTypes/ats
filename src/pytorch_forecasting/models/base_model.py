@@ -634,7 +634,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"multiloss:{new_kwargs}")
         elif "output_size" not in kwargs:
             new_kwargs["output_size"] = get_output_size(dataset.target_normalizer, loss)
-        logging.info(f"new_kwatgs:{new_kwargs}")
+        #logging.info(f"new_kwatgs:{new_kwargs}")
         #logging.info(f"loss:{loss}")
         #exit(0)
         return new_kwargs
@@ -662,7 +662,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
 
     def predict_step(self, batch, batch_idx):
-        logging.info(f"predict_step:{batch}")
+        #logging.info(f"predict_step:{batch}")
         predict_kwargs = {}
         predict_callbacks = [c for c in self.trainer.callbacks if isinstance(c, PredictCallback)]
         if predict_callbacks:
@@ -670,9 +670,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
           predict_kwargs = predict_callback.predict_kwargs
         x, y = batch
         log, out = self.step(x, y, batch_idx, **predict_kwargs)
-        logging.info(f"log:{log}, out:{out}")
+        #logging.info(f"log:{log}, out:{out}")
         # return out
-        traceback.print_stack()
+        #traceback.print_stack()
         return log, out  # need to return output to be able to use predict callback
 
     def validation_step(self, batch, batch_idx):
@@ -1533,8 +1533,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 prediction tuple with fields ``prediction``, ``x``, ``y``, ``index`` and ``decoder_lengths``
         """
         # convert to dataloader
-        logging.info(f"output_dir:{output_dir}, trainer_kwargs:{trainer_kwargs}")
-        traceback.print_stack()
+        #logging.info(f"output_dir:{output_dir}, trainer_kwargs:{trainer_kwargs}")
+        #traceback.print_stack()
         if isinstance(data, pd.DataFrame):
             data = TimeSeriesDataSet.from_parameters(self.dataset_parameters, data, predict=True)
         if isinstance(data, TimeSeriesDataSet):
@@ -1571,7 +1571,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         ), "fast_dev_run should be passed as argument to predict and not in trainer_kwargs"
         log_level_lighting = logging.getLogger("lightning").getEffectiveLevel()
         log_level_pytorch_lightning = logging.getLogger("pytorch_lightning").getEffectiveLevel()
-        traceback.print_stack()
+        #traceback.print_stack()
         logging.getLogger("lightning").setLevel(logging.WARNING)
         logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
         #logging.info(f"trainer_kwargs:{trainer_kwargs}")

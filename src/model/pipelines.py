@@ -1,11 +1,22 @@
+from collections import defaultdict
 import datetime
 from dateutil import parser
 from io import BytesIO
 import logging
 
+import pandas as pd
 import pandas_market_calendars as mcal
 import numpy as np
-
+from empyrical import (
+    sharpe_ratio,
+    calmar_ratio,
+    sortino_ratio,
+    max_drawdown,
+    downside_risk,
+    annual_return,
+    annual_volatility,
+    # cum_returns,
+)
 # find optimal learning rate
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.tuner import Tuner
@@ -318,6 +329,14 @@ class PatchTftSupervisedPipeline(Pipeline):
         last_data_time = None
         position_map = {}
         prediction_map = {}
+        last_position_map = {} 
+        last_px_map = {}
+        last_data = train_data.iloc[-1]
+        logging.info(f"last_data:{last_data}")
+        last_px_map[last_data.ticker] = last_data.close
+        logging.info(f"initial_last_px_map:{last_px_map}")
+        last_position_map = defaultdict(lambda:0,last_position_map)
+        pnl_df = pd.DataFrame(columns = ["ticker","timestamp","px","last_px","pos","pnl"])
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -327,7 +346,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             max_prediction_length = self.config.model.prediction_length
             for utc_time in time_range:
                 nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
-                logging.info(f"looking up nyc_time:{nyc_time}")
+                #logging.info(f"looking up nyc_time:{nyc_time}")
                 # 1. prepare prediction with latest prices
                 # 2. run inference to get returns and new positions
                 # 3. update PNL and positions
@@ -340,11 +359,12 @@ class PatchTftSupervisedPipeline(Pipeline):
                         continue
                     else:
                         logging.info(f"data is too stale, now:{nyc_time}, last_data_time:{last_data_time}")
-                        exit(0)
+                        #exit(0)
+                        continue
                 last_data_time = nyc_time
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
-                logging.info(f"running step {nyc_time}, new_data:{new_data}")
+                #logging.info(f"running step {nyc_time}, new_data:{new_data}")
                 train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
                 #logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}, last_time_idex={last_time_idx}")
                 new_prediction_data = train_dataset.filter(
@@ -353,33 +373,63 @@ class PatchTftSupervisedPipeline(Pipeline):
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
                 logging.info(f"index:{train_dataset.index.iloc[-5:]}")
                 trainer_kwargs = {"logger": wandb_logger}
-                logging.info(f"trainer_kwargs:{trainer_kwargs}")
+                #logging.info(f"trainer_kwargs:{trainer_kwargs}")
                 new_raw_predictions = self.model.predict(
                     new_prediction_data,
                     mode="raw",
                     return_x=True,
                     batch_size=1,
-                    #return_y=True,
                     trainer_kwargs=trainer_kwargs,
                 )
                 if isinstance(new_raw_predictions, (list)) and len(new_raw_predictions)<1:
                     logging.info(f"no prediction")
                     continue
-                logging.info(f"new_raw_predictions:{new_raw_predictions}")
+                #logging.info(f"new_raw_predictions:{new_raw_predictions}")
                 prediction_kwargs = {}
                 y_hats = to_list(
                     self.model.to_prediction(
                         new_raw_predictions.output, **prediction_kwargs
                     ))
+                prediction, position = y_hats
                 #logging.info(f"y_hats:{y_hats}")
                 #logging.info(f"y:{new_raw_predictions.y}")
-                prediction, position = y_hats
-                prediction_map[nyc_time] = prediction
-                position_map[nyc_time] = position
-                logging.info(f"new_position:{position}, prediction:{prediction}")
-            logging.info(f"predictions:{prediction_map}")
-            logging.info(f"positions:{position_map}")
+                new_data_row = new_data.iloc[0]
+                ticker = new_data_row.ticker
+                px = new_data_row.close
+                last_position = last_position_map[ticker]
+                last_px = last_px_map[ticker]
+                pnl_delta = last_position * (px - last_px)
+                new_position = position[0][0].item()
+                df2 = {'ticker': ticker, 'timestamp': new_data_row.timestamp,
+                       'px': px, 'last_px' : last_px,
+                       'pos': new_position,
+                       'pnl':pnl_delta}
+                logging.info(f"new_df:{df2}")
+                pnl_df = pnl_df.append(df2, ignore_index = True)
+                last_position_map[ticker] = new_position
+                last_px_map[ticker] = px
+
+                logging.info(f"last_position_map:{last_position_map}")
+                logging.info(f"last_px_map:{last_px_map}")
+                #logging.info(f"new_position:{position}, prediction:{prediction}")
             logging.info(f"eod {test_date}")
+        stats = self.compute_stats(pnl_df.pnl)
+        logging.info(f"pnl:{pnl_df}")
+        logging.info(f"stats:{stats}")
+
+    def compute_stats(self, srs : pd.DataFrame, metric_suffix = ""):
+        return {
+            f"annual_return{metric_suffix}": annual_return(srs),
+            f"annual_volatility{metric_suffix}": annual_volatility(srs),
+            f"sharpe_ratio{metric_suffix}": sharpe_ratio(srs),
+            f"downside_risk{metric_suffix}": downside_risk(srs),
+            f"sortino_ratio{metric_suffix}": sortino_ratio(srs),
+            f"max_drawdown{metric_suffix}": -max_drawdown(srs),
+            f"calmar_ratio{metric_suffix}": calmar_ratio(srs),
+            f"perc_pos_return{metric_suffix}": len(srs[srs > 0.0]) / len(srs),
+            f"profit_loss_ratio{metric_suffix}": np.mean(srs[srs > 0.0])
+            / np.mean(np.abs(srs[srs < 0.0])),
+        }
 
     def eval_model(self):
         # self.data_module = nhits.get_data_module(self.config)
