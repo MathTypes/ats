@@ -9,7 +9,7 @@ def init_logging():
     #logging.info(f"log_file_path:{log_file_path}")
     #logging.config.fileConfig(log_file_path)
     logging.basicConfig(
-        format="%(asctime)s,%(msecs)03d %(levelname)-8s %(name)s[%(module)s:%(filename)s:%(lineno)d] %(message)s",
+        format="[%(filename)s:%(lineno)s - %(funcName)20s()] %(asctime)s,%(msecs)03d %(levelname)-8s %(name)s[%(module)s:%(filename)s:%(lineno)d] %(message)s",
         datefmt="%Y-%m-%d:%H:%M:%S",
         level=logging.INFO,
     )

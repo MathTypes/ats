@@ -421,7 +421,7 @@ class TimeSeriesDataSet(Dataset):
         self._set_target_normalizer(data)
 
         data = self.preprocess_data(data)
-        logging.info(f"data:{data.iloc[-10:]}m simulation_mode:{simulation_mode}")
+        #logging.info(f"data:{data.iloc[-10:]}m simulation_mode:{simulation_mode}")
         if not simulation_mode:
             self.transform_data(data)
 
@@ -429,7 +429,7 @@ class TimeSeriesDataSet(Dataset):
         data = data.sort_values(self.group_ids + [self.time_idx])
         #g = data.groupby(self.group_ids, observed=True)
         # reduce return to bring down loss
-        logging.info(f"data:{data.iloc[-3:]}")
+        #logging.info(f"data:{data.iloc[-3:]}")
         #logging.info(f"data:{data.describe()}")
         data_dup = data[data.index.duplicated()]
         if not data_dup.empty:
@@ -2852,9 +2852,9 @@ class TimeSeriesDataSet(Dataset):
 
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes):
         self.raw_data = pd.concat([self.raw_data, new_data])
-        logging.info(f"new_full_data_before_add_derived_features:{self.raw_data.iloc[-3:]}")
+        #logging.info(f"new_full_data_before_add_derived_features:{self.raw_data.iloc[-3:]}")
         self.raw_data = data_util.add_derived_features(self.raw_data, interval_minutes)
-        logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
+        #logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
         data = self.preprocess_data(self.raw_data)
         self.transform_data(data)
     

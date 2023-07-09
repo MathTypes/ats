@@ -325,7 +325,6 @@ class PatchTftSupervisedPipeline(Pipeline):
             logging.info(f"sod {test_date}")
             time_range = mcal.date_range(schedule, frequency="30M")
             max_prediction_length = self.config.model.prediction_length
-            trainer_kwargs = {"logger": wandb_logger}
             for utc_time in time_range:
                 nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
                 logging.info(f"looking up nyc_time:{nyc_time}")
@@ -340,22 +339,26 @@ class PatchTftSupervisedPipeline(Pipeline):
                     if last_data_time is None or nyc_time < last_data_time + datetime.timedelta(minutes=self.config.dataset.max_stale_minutes):
                         continue
                     else:
-                        logging.info("data is too stale, now:{nyc_time}, last_data_time:{last_data_time}")
+                        logging.info(f"data is too stale, now:{nyc_time}, last_data_time:{last_data_time}")
                         exit(0)
                 last_data_time = nyc_time
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
                 logging.info(f"running step {nyc_time}, new_data:{new_data}")
                 train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
-                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}, last_time_idex={last_time_idx}")
+                #logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}, last_time_idex={last_time_idx}")
                 new_prediction_data = train_dataset.filter(
                     lambda x: (x.time_idx_last == last_time_idx)
                 )
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
+                logging.info(f"index:{train_dataset.index.iloc[-5:]}")
+                trainer_kwargs = {"logger": wandb_logger}
+                logging.info(f"trainer_kwargs:{trainer_kwargs}")
                 new_raw_predictions = self.model.predict(
                     new_prediction_data,
                     mode="raw",
                     return_x=True,
+                    batch_size=1,
                     #return_y=True,
                     trainer_kwargs=trainer_kwargs,
                 )

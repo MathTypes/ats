@@ -241,6 +241,7 @@ class PredictCallback(BasePredictionWriter):
         lengths = x["decoder_lengths"]
 
         nan_mask = create_mask(lengths.max(), lengths)
+        #logging.info(f"mode:{self.mode}")
         if isinstance(self.mode, (tuple, list)):
             if self.mode[0] == "raw":
                 out = out[self.mode[1]]
@@ -293,6 +294,7 @@ class PredictCallback(BasePredictionWriter):
             self._y.append(batch[1])
             out["y"] = self._y[-1]
 
+        #logging.info(f"final out:{out}, output_dir:{self.output_dir}")
         if isinstance(out, dict):
             out = Prediction(**out)
         # write to disk
@@ -300,15 +302,18 @@ class PredictCallback(BasePredictionWriter):
             super().on_predict_batch_end(trainer, pl_module, out, batch, batch_idx, dataloader_idx)
 
     def write_on_batch_end(self, trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx):
+        #traceback.print_stack()
         torch.save(prediction, os.path.join(self.output_dir, f"predictions_{batch_idx}.pt"))
         self._reset_data()
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
+        traceback.print_stack()
         torch.save(predictions, os.path.join(self.output_dir, "predictions.pt"))
         self._reset_data()
 
     def on_predict_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         output = self._output
+        #logging.info(f"predict_epoch_end, output:{len(output)}")
         if len(output) > 0:
             # concatenate output (of different batches)
             if isinstance(self.mode, (tuple, list)) or self.mode != "raw":
@@ -322,6 +327,7 @@ class PredictCallback(BasePredictionWriter):
                     output = _torch_cat_na(output)
             elif self.mode == "raw":
                 output = _concatenate_output(output)
+                #logging.info(f"after concate:{output}")
 
             # if len(output) > 0:
             # generate output
@@ -342,9 +348,11 @@ class PredictCallback(BasePredictionWriter):
                     weight = concat_sequences([yi[1] for yi in self._y])
                 y = y.reshape(len(self._y), -1)
                 output["y"] = (y, weight)
+            #logging.info(f"result before prediction:{output}")
             if isinstance(output, dict):
                 output = Prediction(**output)  # save for later writing or outputting
             self._result = output
+            #logging.info(f"result:{self._result}")
 
             # write to disk
             if self.interval.on_epoch:
@@ -654,6 +662,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
 
     def predict_step(self, batch, batch_idx):
+        logging.info(f"predict_step:{batch}")
         predict_kwargs = {}
         predict_callbacks = [c for c in self.trainer.callbacks if isinstance(c, PredictCallback)]
         if predict_callbacks:
@@ -661,7 +670,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
           predict_kwargs = predict_callback.predict_kwargs
         x, y = batch
         log, out = self.step(x, y, batch_idx, **predict_kwargs)
+        logging.info(f"log:{log}, out:{out}")
         # return out
+        traceback.print_stack()
         return log, out  # need to return output to be able to use predict callback
 
     def validation_step(self, batch, batch_idx):
@@ -1522,6 +1533,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 prediction tuple with fields ``prediction``, ``x``, ``y``, ``index`` and ``decoder_lengths``
         """
         # convert to dataloader
+        logging.info(f"output_dir:{output_dir}, trainer_kwargs:{trainer_kwargs}")
+        traceback.print_stack()
         if isinstance(data, pd.DataFrame):
             data = TimeSeriesDataSet.from_parameters(self.dataset_parameters, data, predict=True)
         if isinstance(data, TimeSeriesDataSet):
@@ -1552,18 +1565,21 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         trainer_kwargs.setdefault("callbacks", trainer_kwargs.get("callbacks", []) + [predict_callback])
         trainer_kwargs.setdefault("enable_progress_bar", False)
         trainer_kwargs.setdefault("inference_mode", False)
+        #logging.info(f"before_trainer_kwargs:{trainer_kwargs}")
         assert (
             "fast_dev_run" not in trainer_kwargs
         ), "fast_dev_run should be passed as argument to predict and not in trainer_kwargs"
         log_level_lighting = logging.getLogger("lightning").getEffectiveLevel()
         log_level_pytorch_lightning = logging.getLogger("pytorch_lightning").getEffectiveLevel()
+        traceback.print_stack()
         logging.getLogger("lightning").setLevel(logging.WARNING)
         logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
+        #logging.info(f"trainer_kwargs:{trainer_kwargs}")
         trainer = Trainer(fast_dev_run=fast_dev_run, **trainer_kwargs)
         trainer.predict(self, dataloader)
         logging.getLogger("lightning").setLevel(log_level_lighting)
         logging.getLogger("pytorch_lightning").setLevel(log_level_pytorch_lightning)
-
+        #logging.info(f"predict_callback:{predict_callback.result}")
         return predict_callback.result
 
     def predict_dependency(
