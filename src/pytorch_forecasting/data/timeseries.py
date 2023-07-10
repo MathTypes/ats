@@ -349,6 +349,8 @@ class TimeSeriesDataSet(Dataset):
                 prediction samples and everthing previous up to ``max_encoder_length`` samples as encoder samples.
         """
         super().__init__()
+        assert(min_encoder_length == max_encoder_length), "max encoder length must be equal to min encoder length"
+        assert(min_prediction_length == max_prediction_length), "max prediction length must be equal to min prediction length"
         self.max_encoder_length = max_encoder_length
         assert isinstance(self.max_encoder_length, int), "max encoder length must be integer"
         if min_encoder_length is None:
@@ -1778,12 +1780,14 @@ class TimeSeriesDataSet(Dataset):
         if isinstance(self.target_normalizer, str) and self.target_normalizer == "auto":
             normalizers = []
             for target in self.target_names:
+                logging.info(f"target:{target}")
                 if data[target].dtype.kind != "f":  # category
                     normalizers.append(NaNLabelEncoder())
                     if self.add_target_scales:
                         warnings.warn("Target scales will be only added for continous targets", UserWarning)
                 else:
                     data_positive = (data[target] > 0).all()
+                    logging.info(f"data_positive:{data_positive}")
                     if data_positive:
                         if data[target].skew() > 2.5:
                             transformer = "log"
@@ -1795,8 +1799,6 @@ class TimeSeriesDataSet(Dataset):
                         normalizers.append(EncoderNormalizer(transformation=transformer))
                     else:
                         normalizers.append(GroupNormalizer(transformation=transformer))
-            #logging.info(f"normailizer:{normalizers}")
-            #exit(0)
             if self.multi_target:
                 self.target_normalizer = MultiNormalizer(normalizers)
             else:
@@ -1971,11 +1973,9 @@ class TimeSeriesDataSet(Dataset):
             try:
                 check_is_fitted(self.target_normalizer)
             except NotFittedError:
-                #logging.info(f"fitting target, {self.target_normalizer}")
                 if isinstance(self.target_normalizer, EncoderNormalizer):
                     self.target_normalizer.fit(data[self.target])
                 elif isinstance(self.target_normalizer, (GroupNormalizer, MultiNormalizer)):
-                    #logging.info(f"self.target:{self.target}, {type(self.target)}")
                     self.target_normalizer.fit(data[self.target], data)
                 else:
                     self.target_normalizer.fit(data[self.target])
@@ -1993,15 +1993,14 @@ class TimeSeriesDataSet(Dataset):
                 copy_kwargs = {name: getattr(self.target_normalizer, name) for name in common_init_args}
                 normalizer = GroupNormalizer(groups=self.group_ids, **copy_kwargs)
                 data[self.target], scales = normalizer.fit_transform(data[self.target], data, return_norm=True)
-                #logging.info(f"encoder normalizr scales:{scales}")
+
 
             elif isinstance(self.target_normalizer, GroupNormalizer):
                 data[self.target], scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-                #logging.info(f"group normalizr scales:{scales}")
+
 
             elif isinstance(self.target_normalizer, MultiNormalizer):
                 transformed, scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-                #logging.info(f"multi normalizr scales:{scales}")
 
                 for idx, target in enumerate(self.target_names):
                     data[target] = transformed[idx]
@@ -2012,7 +2011,7 @@ class TimeSeriesDataSet(Dataset):
 
             elif isinstance(self.target_normalizer, NaNLabelEncoder):
                 data[self.target] = self.target_normalizer.transform(data[self.target])
-                #logging.info(f"nan label normalizr scales:{scales}")
+                logging.info(f"nan label normalizr scales:{scales}")
                 # overwrite target because it requires encoding (continuous targets should not be normalized)
                 data[f"__target__{self.target}"] = data[self.target]
                 scales = None
@@ -2020,7 +2019,6 @@ class TimeSeriesDataSet(Dataset):
             else:
                 data[self.target], scales = self.target_normalizer.transform(data[self.target], return_norm=True)
                 #logging.info(f"default normalizr scales:{scales}")
-
             # add target scales
             if self.add_target_scales:
                 #logging.info(f"does not expect add_target_scales")

@@ -291,8 +291,19 @@ class PredictCallback(BasePredictionWriter):
             self._decode_lenghts.append(lengths)
             out["decoder_lengths"] = self._decode_lenghts[-1]
         if self.return_y:
-            self._y.append(batch[1])
+            y = batch[1]
+            #logging.info(f"y:{y}, {type(y)}")
+            
+            if isinstance(y, (List)):
+                y = y[0]
+            # TODO: In case there are multiple targets, only
+            # return the first one.
+            if isinstance(y, (List)):
+                y = y[0]
+            self._y.append(y)
             out["y"] = self._y[-1]
+            #logging.info(f"out['y']:{out['y']}, {type(out['y'])}")
+            
 
         #logging.info(f"final out:{out}, output_dir:{self.output_dir}")
         if isinstance(out, dict):
@@ -340,13 +351,17 @@ class PredictCallback(BasePredictionWriter):
             if self.return_decoder_lengths:
                 output["decoder_lengths"] = torch.cat(self._decode_lenghts, dim=0)
             if self.return_y:
-                y = concat_sequences([yi[0] for yi in self._y])
+                logging.info(f"self._y:{self._y[0].shape}")
+                #y = concat_sequences([yi[0] for yi in self._y])
+                #y = concat_sequences([yi for yi in self._y])
+                y = torch.cat([yi for yi in self._y], dim=0)
                 #logging.info(f"self._y:{self._y[-1][0].shape}")
-                if self._y[-1][1] is None:
-                    weight = None
-                else:
-                    weight = concat_sequences([yi[1] for yi in self._y])
-                y = y.reshape(len(self._y), -1)
+                # TODO: fix the issue where weight is disabled
+                #if self._y[-1][1] is None:
+                weight = None
+                #else:
+                #    weight = concat_sequences([yi[1] for yi in self._y])
+                #y = y.reshape(len(self._y), -1)
                 output["y"] = (y, weight)
             #logging.info(f"result before prediction:{output}")
             if isinstance(output, dict):
@@ -1115,15 +1130,25 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         #    out = out[1]
         y_hats = to_list(self.to_prediction(out, **prediction_kwargs))
         y_quantiles = to_list(self.to_quantiles(out, **quantiles_kwargs))
-
+        #logging.info(f"draw_mode:{draw_mode}, y_hats:{y_hats}, row={row}, col={col}")
         fig = ax
         if fig == None:
             fig = make_subplots()
         # for each target, plot
         figs = []
+        index = 0
         for y_hat, y_quantile, encoder_target, decoder_target in zip(
             y_hats, y_quantiles, encoder_targets, decoder_targets
         ):
+            # TODO: fix this hack where we plot each target in different
+            # figure so that they have different scale.
+            if draw_mode == "pred_pos":
+                if index == 0:
+                    continue
+            if draw_mode in ["pred", "pred_cum"]:
+                if index > 0:
+                    continue
+            index += 1
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
             if draw_mode == "pred_cum":
                 #logging.info(f"before cumsum: y_all:{y_all}")
@@ -1174,28 +1199,38 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             plotter = go.Scatter
             if len(x_obs) > 0:
                 #plot = plotter(x=x_obs, y=y[-max_context:-n_pred], name="observed" if draw_mode=="pred" else None, line=dict(color=obs_color))
-                plot = plotter(x=x_time[-max_context:-n_pred], y=y[-max_context:-n_pred], name="observed" if draw_mode=="pred" else None, line=dict(color=obs_color), showlegend=False)
+                plot = plotter(x=x_time[-max_context:-n_pred], y=y[-max_context:-n_pred],
+                               name="observed" if draw_mode=="pred" else None,
+                               line=dict(color=obs_color), showlegend=False)
                 fig.add_trace(plot, row=row, col=col)
 
             # plot observed prediction
             if True:
             #if show_future_observed:
-                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:], name="fut_observed" if draw_mode=="pred" else None, line=dict(color=obs_color), showlegend=False), row=row, col=col)
+                fig.add_trace(plotter(x=x_pred, y=y[-n_pred:],
+                                      name="fut_observed" if draw_mode=="pred" else None,
+                                      line=dict(color=obs_color), showlegend=False), row=row, col=col)
 
             # plot prediction
-            fig.add_trace(plotter(x=x_pred, y=y_hat, name="predicted" if draw_mode=="pred" else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
+            fig.add_trace(plotter(x=x_pred, y=y_hat,
+                                  name="predicted" if draw_mode=="pred" else None,
+                                  line=dict(color=pred_color), showlegend=False), row=row, col=col)
 
             # plot predicted quantiles
-            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2], name="quantile mean" if draw_mode=="pred" else None, line=dict(color=pred_color), showlegend=False), row=row, col=col)
+            fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2],
+                                  name="quantile mean" if draw_mode=="pred" else None,
+                                  line=dict(color=pred_color), showlegend=False), row=row, col=col)
             quantile_colors = ["red", "purple", "magenta"]
             quantiles = [0.02, 0.1, 0.25]
             for i in range(y_quantile.shape[1] // 2):
                 if len(x_pred) > 1:
                     fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, i],
-                                             fill='tonexty', mode='none', name=f"quantile {(1-quantiles[i]):.2f}" if draw_mode=="pred" else None,
+                                             fill='tonexty', mode='none',
+                                             name=f"quantile {(1-quantiles[i]):.2f}" if draw_mode=="pred" else None,
                                              fillcolor=quantile_colors[i], opacity=0.5, showlegend=False), row=row, col=col)
                     idx = y_quantile.shape[1]-(i+1)
-                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1], name=f"quantile {quantiles[i]:.2f}" if draw_mode=="pred" else None,
+                    fig.add_trace(go.Scatter(x=x_pred, y=y_quantile[:, -i - 1],
+                                             name=f"quantile {quantiles[i]:.2f}" if draw_mode=="pred" else None,
                                              fill='tonexty', # fill area between trace0 and trace1
                                              mode='none', fillcolor=quantile_colors[i], opacity=0.5, showlegend=False), row=row, col=col)
                 else:
@@ -1440,7 +1475,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             # Added to address the issue where loss is first element
             if isinstance(out, (tuple)):
                 #logging.info(f"{type(out[0])}")
-                if isinstance(out[0], Dict):
+                if isinstance(out[0], Dict) or out[0] is None:
                     out = out[1]
             try:
                 #traceback.print_stack()
@@ -2200,7 +2235,9 @@ class AutoRegressiveBaseModel(BaseModel):
         else:
             prediction = prediction_parameters
         # normalize prediction prediction
+        #logging.info(f"prediction:{prediction}, target_scale:{target_scale}")
         normalized_prediction = self.output_transformer.transform(prediction, target_scale=target_scale)
+        #logging.info(f"normalized_prediction:{normalized_prediction}")
         if isinstance(normalized_prediction, list):
             input_target = torch.cat(normalized_prediction, dim=-1)
         else:

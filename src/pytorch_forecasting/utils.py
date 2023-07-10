@@ -247,9 +247,12 @@ def concat_sequences(
     if isinstance(sequences[0], rnn.PackedSequence):
         return rnn.pack_sequence(sequences, enforce_sorted=False)
     elif isinstance(sequences[0], torch.Tensor):
-        #logging.info(f"{[s.shape for s in sequences]}")
+        logging.info(f"{[s.shape for s in sequences]}")
         return torch.cat(sequences, dim=1)
     elif isinstance(sequences[0], (tuple, list)):
+        logging.info(f"len(sequences[0]):{len(sequences[0])}, len(sequences):{len(sequences)}")
+        len_seq = [[sequences[ii][i].shape for ii in range(len(sequences))] for i in range(len(sequences[0]))]
+        logging.info(f"len_seq:{len_seq}")
         return tuple(
             concat_sequences([sequences[ii][i] for ii in range(len(sequences))]) for i in range(len(sequences[0]))
         )

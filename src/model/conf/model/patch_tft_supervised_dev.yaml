@@ -1,11 +1,11 @@
 hidden_size: 8
-prediction_length: 16
+prediction_length: 4
 context_length: 32
-patch_len: 8
-stride: 4
+patch_len: 2
+stride: 1
 d_model: 8
-train_batch_size: 128
-eval_batch_size: 32
+train_batch_size: 4096
+eval_batch_size: 1024
 learning_rate: 0.02
 attn_heads : 4
 attn_dropout: 0.1

@@ -80,8 +80,12 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             self.val_x_batch.append(val_x)
             self.val_y_batch.append(val_y)
             self.indices_batch.append(indices)
-        eval_data = data_module.eval_data
-        self.matched_eval_data = eval_data
+        self.validation = data_module.validation
+        self.matched_eval_data = data_module.eval_data
+        self.returns_target_name = self.validation.target_names[0]
+        transformer = self.validation.get_transformer(self.returns_target_name)
+        logging.info(f"transformer:{transformer}")
+
 
     def on_train_end(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
@@ -145,7 +149,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             if isinstance(y_close, list):
                 y_close = y_close[0]
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
-            logging.info(f"y_close_cum_sum:{y_close_cum_sum.shape}")
+            #logging.info(f"y_close_cum_sum:{y_close_cum_sum.shape}")
             for idx in range(len(y_close_cum_sum)):
                 # TODO: fix [0] hack to deal with multiple target
                 if self.target_size > 1:
@@ -164,6 +168,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 dm = train_data_row["time"]
                 dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
                 y_close_cum_sum_row = y_close_cum_sum[idx]
+                y_close_row = y_close[idx]
                 train_data_rows = self.matched_eval_data[
                     (
                         self.matched_eval_data.time_idx
@@ -174,6 +179,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                         < index.time_idx + self.config.model.prediction_length
                     )
                 ]
+                #logging.info(f"index:{index}, train_data:{train_data_row}")
+                #logging.info(f"y_close_cum_sum_row:{y_close_cum_sum_row}")
+                #logging.info(f"y_close_row:{y_close_row}")
+                #logging.info(f"train_data_rows:{train_data_rows}")
                 fig = go.Figure(
                     data=go.Ohlc(
                         x=train_data_rows["time"],
@@ -246,11 +255,11 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 self.data_table_ref.data[idx][8],  # price image
                 self.data_table_ref.data[idx][9],  # act_max_close_pct
                 self.data_table_ref.data[idx][10],  # act_min_close_pct
-                self.data_table_ref.data[idx][11],  # close_back_cumsum,
+                self.data_table_ref.data[idx][11],  # close_back_cumsum, base
                 self.data_table_ref.data[idx][12],  # time_sr,
                 pred[0],  # pred_time_idx
-                pred[1] - self.data_table_ref.data[idx][10],  # pred_close_pct_max
-                pred[2] - self.data_table_ref.data[idx][10],  # pred_close_pct_min
+                pred[1] - self.data_table_ref.data[idx][11],  # pred_close_pct_max
+                pred[2] - self.data_table_ref.data[idx][11],  # pred_close_pct_min
                 pred[3],  # img
                 pred[1]
                 - self.data_table_ref.data[idx][11]
@@ -308,7 +317,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             predictions = self.pl_module.to_prediction(out, **prediction_kwargs)
             # logging.info(f"predictions:{predictions}")
             y_hats = to_list(predictions)[0]
-            # logging.info(f"yhats:{len(y_hats)}")
             y_hats_cum = torch.cumsum(y_hats, dim=-1)
             y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[
                 0
@@ -356,6 +364,15 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     autosize=False,
                     width=1500,
                     height=800,
+                    yaxis=dict(
+                        side="right",
+                    ),
+                    legend=dict(
+                        yanchor="top",
+                        y=0.99,
+                        xanchor="left",
+                        x=0.01
+                    )
                 )
                 fig.update_xaxes(
                     rangebreaks=[
@@ -380,7 +397,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     ax=fig,
                     row=1,
                     col=1,
-                    draw_mode="pred",
+                    draw_mode="pred_cum",
                     x_time=x_time,
                 )
                 self.pl_module.plot_prediction(
@@ -390,7 +407,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     ax=fig,
                     row=2,
                     col=1,
-                    draw_mode="pred_cum",
+                    draw_mode="pred_pos",
                     x_time=x_time,
                 )
                 interpretation = {}

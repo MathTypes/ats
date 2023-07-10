@@ -221,11 +221,11 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         # target_normalizer=GroupNormalizer(
         #    groups=["ticker"], transformation="softplus"
         # ),  # use softplus and normalize by group
-        if isinstance(target, (typing.Set, typing.List)):
-            normalizer_list = [
-                EncoderNormalizer(transformation="relu") for i in range(len(target))
-            ]
-            target_normalizer = MultiNormalizer(normalizer_list)
+        #if isinstance(target, (typing.Set, typing.List)):
+        #    normalizer_list = [
+        #        EncoderNormalizer(transformation="relu") for i in range(len(target))
+        #    ]
+        #    target_normalizer = MultiNormalizer(normalizer_list)
         time_varying_known_reals = config.features.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)
@@ -263,6 +263,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         eval_data_size = (
             int(len(self.eval_data) / self.eval_batch_size) * self.eval_batch_size
         )
+        logging.info(f"eval_data_size:{eval_data_size}")
         self.eval_data = self.eval_data[:eval_data_size]
         self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
         self.test = TimeSeriesDataSet.from_dataset(self.training, self.test_data, simulation_mode=simulation_mode)
@@ -285,15 +286,15 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         return train_dataloader
 
     def val_dataloader(self):
-        logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
+        #logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
         # train = True is the hack to randomly sample from time series from different ticker.
         val_dataloader = self.validation.to_dataloader(
             train=False,
             batch_size=self.eval_batch_size,
-            num_workers=4,
-            # batch_sampler="synchronized",
+            num_workers=20,
+            batch_sampler="synchronized",
             pin_memory=True,
-            drop_last=True,
+            drop_last=False,
         )
         return val_dataloader
 

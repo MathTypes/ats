@@ -71,6 +71,8 @@ def my_app(cfg: DictConfig) -> None:
         # train model until test start
         pipe.create_trainer()
         pipe.create_model(cfg.job.checkpoint)
+        if cfg.job.tune_learning_rate:
+            pipe.set_learning_rate()
         if cfg.job.retrain_model_before_test_start:
             pipe.train_model()
         pipe.test_model()

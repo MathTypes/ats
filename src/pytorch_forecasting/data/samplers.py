@@ -167,5 +167,10 @@ class TimeSynchronizedBatchSampler(GroupedSampler):
         last_time = data_source.data["time"][index["index_end"].to_numpy()].numpy()
         decoder_lengths = data_source.calculate_decoder_length(last_time, index.sequence_length)
         first_prediction_time = index.time + index.sequence_length - decoder_lengths + 1
-        groups = pd.RangeIndex(0, len(index.index)).groupby(first_prediction_time)
+        # TODO: synchronized sampler allows drop last. Since all first_predicition_time is different,
+        # we end up with batch_size=1 for all batches. Group them by 256
+        groups = pd.RangeIndex(0, len(index.index)).groupby(first_prediction_time // 32)
+        #groups = pd.RangeIndex(0, len(index.index)).groupby(first_prediction_time//1024)
         return groups
+
+

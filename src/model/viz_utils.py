@@ -1,6 +1,7 @@
 import datetime
 from io import BytesIO
 import logging
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 from lightning.pytorch.loggers import WandbLogger
@@ -48,13 +49,18 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     prediction_kwargs = {}
     y_hats = to_list(
         model.to("cuda:0").to_prediction(
-            [None, raw_predictions.output], **prediction_kwargs
-        )
-    )[0]
+            raw_predictions.output, **prediction_kwargs)
+    )
+    logging.info(f"y_hats[0].shape:{y_hats[0].shape}, raw_predictions.y:{raw_predictions.y[0].shape}")
+    #if isinstance(y_hats, (Tuple)):
+    # yhats: [returns, position]
+    y_hats = y_hats[0]
     mean_losses = metrics(y_hats, raw_predictions.y).mean(1)
     indices = mean_losses.argsort(descending=True)  # sort losses
+    logging.info(f"indices:{indices}")
     matched_eval_data = eval_data
     x = raw_predictions.x
+    logging.info(f"x:{x['encoder_cont'].shape}")
     y_close = raw_predictions.y[0]
     y_close_cum_sum = torch.cumsum(y_close, dim=-1)
     y_hats_cum_sum = torch.cumsum(y_hats, dim=-1)
@@ -83,12 +89,19 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     ]
     data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
     day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
-    for idx in range(top_k):
-        idx = indices[idx]
-        context_length = len(x["encoder_target"][idx])
+    logging.info(f"x['encoder_target']:{x['encoder_target'][0].shape}")
+    interp_output = model.interpret_output(
+        detach(raw_predictions.output),
+        reduction="none",
+        attention_prediction_horizon=0,  # attention only for first prediction horizon
+    )
+    for k_idx in range(top_k):
+        idx = indices[k_idx]
+        logging.info(f"k_idx:{k_idx}, idx:{idx}")
+        # With multi-target, we have two encoder_targets.
+        context_length = len(x["encoder_target"][0][idx])
         prediction_length = len(x["decoder_time_idx"][idx])
         decoder_time_idx = int(x["decoder_time_idx"][idx][0].cpu().detach().numpy())
-        y_close_cum_sum_row = y_close_cum_sum[idx]
         train_data_row = matched_eval_data[
             matched_eval_data.time_idx == decoder_time_idx
         ].iloc[0]
@@ -99,13 +112,22 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
             & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
         ]
         x_time = train_data_rows["time"]
-        # logging.info(f"xtime:{x_time}")
+        #y_close = train_data_rows["close_back"][-prediction_length:]
+        #logging.info(f"xtime:{x_time}, y_close:{y_close}, y_close_cum_row:{y_close_cum_row}")
         fig = make_subplots(
             rows=2,
             cols=3,
             specs=[
-                [{"secondary_y": True}, {"secondary_y": True}, {"secondary_y": True}],
-                [{"secondary_y": True}, {"secondary_y": True}, {"secondary_y": True}],
+                [
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                ],
+                [
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                ],
             ],
         )
         fig.update_layout(
@@ -129,14 +151,39 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         fig.update_layout(title=prediction_date_time, font=dict(size=20))
         model.plot_prediction(
             raw_predictions.x,
-            (None, raw_predictions.output),
+            raw_predictions.output,
             idx=idx,
-            # add_loss_to_title=SMAPE(quantiles=self.model.loss.quantiles),
             ax=fig,
             row=1,
             col=1,
             draw_mode="pred_cum",
             x_time=x_time,
+        )
+        model.plot_prediction(
+            raw_predictions.x,
+            raw_predictions.output,
+            idx=idx,
+            ax=fig,
+            row=2,
+            col=1,
+            draw_mode="pred_pos",
+            x_time=x_time,
+        )
+        interpretation = {}
+        for name in interp_output.keys():
+            if interp_output[name].dim() > 1:
+                interpretation[name] = interp_output[name][idx]
+            else:
+                interpretation[name] = interp_output[name]
+        model.plot_interpretation(
+            interpretation,
+            ax=fig,
+            cells=[
+                {"row": 1, "col": 2},
+                {"row": 2, "col": 2},
+                {"row": 1, "col": 3},
+                {"row": 2, "col": 3},
+            ],
         )
 
         img_bytes = fig.to_image(format="png")  # kaleido library
@@ -145,6 +192,7 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
 
         y_hat = y_hats[idx]
         y_hat_cum = y_hats_cum_sum[idx]
+        y_close_cum_row = y_close_cum_sum[idx]
         img = wandb.Image(im)
         fig = go.Figure(
             data=go.Ohlc(
@@ -175,8 +223,10 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         im = PIL.Image.open(BytesIO(img_bytes))
         img = wandb.Image(im)
         base = 0
-        y_max = torch.max(y_close_cum_sum_row) - base
-        y_min = torch.min(y_close_cum_sum_row) - base
+        y_max = torch.max(y_close_cum_row) - base
+        y_min = torch.min(y_close_cum_row) - base
+        #y_max = np.max(y_close_cum_sum)
+        #y_min = np.min(y_close_cum_sum)
         pred_max = torch.max(y_hat_cum)
         pred_min = torch.min(y_hat_cum)
         data_table.add_data(
