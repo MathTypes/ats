@@ -288,11 +288,12 @@ class TimeSeriesDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         #logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
         # train = True is the hack to randomly sample from time series from different ticker.
+        logging.info(f"eval_batch_size:{self.eval_batch_size}")
         val_dataloader = self.validation.to_dataloader(
-            train=False,
+            train=True,
             batch_size=self.eval_batch_size,
             num_workers=20,
-            batch_sampler="synchronized",
+            #batch_sampler="synchronized",
             pin_memory=True,
             drop_last=False,
         )
