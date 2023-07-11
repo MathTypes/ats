@@ -87,6 +87,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.returns_target_name = self.validation.target_names[0]
         transformer = self.validation.get_transformer(self.returns_target_name)
         logging.info(f"transformer:{transformer}")
+        self.data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pred_viz", type="pred_viz")
 
 
     def on_train_end(
@@ -147,10 +148,34 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def add_model_predictions(self, epoch, logs=None):
         if epoch % self.every_n_epochs:
             return
-
+        column_names = [
+            "ticker",
+            "time",
+            "time_idx",
+            "day_of_week",
+            "hour_of_day",
+            "year",
+            "month",
+            "day_of_month",
+            "price_img",
+            "act_close_pct_max",
+            "act_close_pct_min",
+            "close_back_cumsum",
+            "time_str",
+            "pred_time_idx",
+            "pred_close_pct_max",
+            "pred_close_pct_min",
+            "img",
+            "error_max",
+            "error_min",
+            "rmse",
+            "mae",
+        ]
+        data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
         preds = []
         device = self.pl_module.device
         for batch_idx in range(self.num_samples):
+            logging.info(f"add prediction for batch:{batch_idx}")
             x = self.val_x_batch[batch_idx]
             y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
@@ -160,14 +185,12 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             if isinstance(y_close, list):
                 y_close = y_close[0]
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
-            # logging.info(f"x_before:{x['encoder_target']}")
             x = {
                 key: [v.to(device) for v in val]
                 if isinstance(val, list)
                 else val.to(device)
                 for key, val in x.items()
             }
-            # logging.info(f"x_after:{x}")
             y = [
                 [v.to(device) for v in val]
                 if isinstance(val, list)
@@ -208,15 +231,18 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 reduction="none",
                 attention_prediction_horizon=0,  # attention only for first prediction horizon
             )
+            cnt = 0
             for idx in range(len(y_hats)):
                 y_hat = y_hats[idx]
                 y_hat_cum = y_hats_cum[idx]
                 y_hat_cum_max = torch.max(y_hat_cum)
                 y_hat_cum_min = torch.min(y_hat_cum)
                 index = indices.iloc[idx]
+                #logging.info(f"index:{index}")
                 train_data_row = self.matched_eval_data[
                     self.matched_eval_data.time_idx == index.time_idx
                 ].iloc[0]
+                #logging.info(f"train_data_row:{train_data_row}")
                 dm = train_data_row["time"]
                 dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
                 y_close_cum_sum_row = y_close_cum_sum[idx]
@@ -226,7 +252,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 if not (abs(y_hat_cum_max) > 0.01 or abs(y_hat_cum_min) > 0.01 or
                         abs(y_close_cum_max) > 0.01 or abs(y_close_cum_min) > 0.01):
                     continue
-
+                cnt += 1
                 train_data_rows = self.matched_eval_data[
                     (
                         self.matched_eval_data.time_idx
@@ -237,6 +263,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                         < index.time_idx + self.config.model.prediction_length
                     )
                 ]
+                #logging.info(f"train_data:rows:{train_data_rows}")
                 if self.target_size > 1:
                     context_length = len(x["encoder_target"][0][idx])
                 else:
@@ -271,13 +298,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     + dm_str
                     + " "
                     + day_of_week_map[train_data_row["day_of_week"]]
+                    + " " + str(train_data_row["close"])
                 )
                 fig.update_layout(title=prediction_date_time, font=dict(size=20))
                 fig.update_xaxes(
                     rangebreaks=[
                         dict(bounds=["sat", "mon"]),  # hide weekends
                         dict(
-                            bounds=[17, 4], pattern="hour"
+                            bounds=[17, 2], pattern="hour"
                         ),  # hide hours outside of 4am-5pm
                     ],
                 )
@@ -366,29 +394,36 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 img_bytes = fig.to_image(format="png")  # kaleido library
                 im = PIL.Image.open(BytesIO(img_bytes))
                 img = wandb.Image(im)
-                preds.append(
-                    [
-                        train_data_row["ticker"],  # 0 ticker
-                        dm,  # 1 time
-                        train_data_row["time_idx"],  # 2 time_idx
-                        train_data_row["day_of_week"],  # 3 day of week
-                        train_data_row["hour_of_day"],  # 4 hour of day
-                        train_data_row["year"],  # 5 year
-                        train_data_row["month"],  # 6 month
-                        train_data_row["day_of_month"],  # 7 day_of_month
-                        wandb.Image(raw_im),  # 8 image
-                        # np.argmax(label, axis=-1)
-                        y_close_cum_max,  # 9 max
-                        y_close_cum_min,  # 10 min
-                        0,  # 11 close_back_cusum
-                        dm_str,  # 12
-                        decoder_time_idx,
-                        y_hat_cum_max,
-                        y_hat_cum_min,
-                        img,
-                        rmse[idx],
-                        mae[idx],
-                    ]
+                data_table.add_data(
+                    train_data_row["ticker"],  # 0 ticker
+                    dm,  # 1 time
+                    train_data_row["time_idx"],  # 2 time_idx
+                    train_data_row["day_of_week"],  # 3 day of week
+                    train_data_row["hour_of_day"],  # 4 hour of day
+                    train_data_row["year"],  # 5 year
+                    train_data_row["month"],  # 6 month
+                    train_data_row["day_of_month"],  # 7 day_of_month
+                    wandb.Image(raw_im),  # 8 image
+                    # np.argmax(label, axis=-1)
+                    y_close_cum_max,  # 9 max
+                    y_close_cum_min,  # 10 min
+                    0,  # 11 close_back_cusum
+                    dm_str,  # 12
+                    decoder_time_idx,
+                    y_hat_cum_max,
+                    y_hat_cum_min,
+                    img,
+                    y_hat_cum_max-y_close_cum_max,
+                    y_hat_cum_min-y_close_cum_min,
+                    rmse[idx],
+                    mae[idx],
                 )
+            logging.info(f"added {cnt} examples")
         # logging.info(f"preds:{len(preds)}")
-        return preds
+        self.data_artifact.add(data_table, "eval_data")
+        # Calling `use_artifact` uploads the data to W&B.
+        assert wandb.run is not None
+        wandb.run.use_artifact(self.data_artifact)
+        #data_artifact.wait()
+        
+        return []

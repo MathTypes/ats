@@ -430,6 +430,7 @@ def get_data_module(
         train_data_vec.append(ticker_train_data)
     raw_data = pd.concat(train_data_vec)
     raw_data = data_util.add_derived_features(raw_data, config.job.time_interval_minutes)
+    #raw_data = raw_data.sort(["ticker", "time_idx"])
     logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
     train_start_timestamp = train_start_date.timestamp()
     eval_start_timestamp = eval_start_date.timestamp()

@@ -1,4 +1,5 @@
 import datetime
+import functools
 import logging
 import os
 
@@ -14,11 +15,23 @@ from mom_trans.classical_strategies import (
     calc_daily_vol,
     calc_vol_scaled_returns,
 )
+import pandas_market_calendars as mcal
 from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
 from util import time_util
 
+
 VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
+
+@functools.lru_cache(maxsize=None)
+def get_open_time(cal, x_date):
+    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=5))
+    return schedule.market_open[0].timestamp()
+
+@functools.lru_cache(maxsize=None)
+def get_close_time(cal, x_date):
+    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=5))
+    return schedule.market_close[0].timestamp()
 
 def utc_to_nyse_time(utc_time, interval_minutes):
     utc_time = time_util.round_up(utc_time, interval_minutes)
@@ -33,6 +46,33 @@ def utc_to_nyse_time(utc_time, interval_minutes):
     #                             tzinfo=pytz.timezone('America/New_York'))
     return nyc_time
     
+
+def compute_open_time(x, cal):
+    #logging.info(f"x:{x}, {type(x)}")
+    try:
+        x = datetime.datetime.fromtimestamp(x)
+        return int(get_open_time(cal, x.date()))
+    except Exception as e:
+        logging.info(f"can not compute open for {x}, {e}")
+        return x
+
+def compute_close_time(x, cal):
+    # logging.info(f"x:{x}, {type(x)}")
+    try:
+        x = datetime.datetime.fromtimestamp(x)
+        return int(get_close_time(cal, x.date()))
+    except Exception as e:
+        logging.info(f"can not compute open for {x}, {e}")
+        return x
+
+def compute_next_open_time(x, cal):
+    try:
+        x = datetime.datetime.fromtimestamp(x)
+        x_date = x.date() + time.timedelta(days=1)
+        return int(get_close_time(cal, x_date))
+    except Exception as e:
+        logging.info(f"can not compute open for {x}, {e}")
+        return x
 
 def compute_minutes_after_daily_close(x):
     # logging.info(f"x:{x}, {type(x)}")
@@ -140,7 +180,8 @@ def get_processed_data(
     ds = ds.sort_index()
     ds = ds[~ds.index.duplicated(keep="first")]
     # logging.info(f"ds before filter:{ds.head()}")
-    ds = ds[(ds.hour_of_day > 4) & (ds.hour_of_day < 17)]
+    # Filter out between london open until new york close
+    ds = ds[(ds.hour_of_day > 1) & (ds.hour_of_day < 17)]
     # logging.info(f"ds after filter:{ds.head()}")
     # Need to recompute close_back after filtering
     ds = ds.drop(columns=["close_back", "volume_back", "dv_back"])
@@ -154,6 +195,7 @@ def get_processed_data(
     ds["daily_vol"] = calc_daily_vol(ds["daily_returns"])
     ds["week_of_year"] = ds.index.isocalendar().week
     ds["month_of_year"] = ds.index.month
+    
     ds["minutes_after_daily_close"] = ds.time.apply(
         lambda x: compute_minutes_after_daily_close(x)
     )
@@ -211,10 +253,7 @@ def add_lows(df_cumsum, df_time, width):
     return df_low
 
 def ticker_transform(raw_data):
-    #logging.info(f"raw_data:{raw_data.iloc[:2]}")
-    #raw_data = raw_data.drop(columns=["time_dix"])
-    #raw_data = raw_data.insert(0, 'time_idx', range(0, len(raw_data)))
-    raw_data["time_idx"] = range(0, len(raw_data))
+    #raw_data = raw_data.sort_values(["timestamp"])
     raw_data["cum_volume"] = raw_data.volume.cumsum()
     raw_data["cum_dv"] = raw_data.dv.cumsum()
     df_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
@@ -246,26 +285,44 @@ def ticker_transform(raw_data):
     raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
     return raw_data
 
+def time_diff(row, base_col, diff_col):
+    return row[diff_col] - row[base_col]
+
 def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
     raw_data = raw_data.reset_index()
     # TODO: the original time comes from aggregated time is UTC, but actually
     # has New York time in it.
     raw_data["time"] = raw_data.time.apply(utc_to_nyse_time, interval_minutes=interval_minutes)
     raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
+    raw_data = raw_data.reset_index()
+    raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
+    raw_data = raw_data.set_index("new_idx")
+    raw_data = raw_data.sort_index()
+    
+    cal = mcal.get_calendar("NYSE")
+    lse_cal = mcal.get_calendar("LSE")
+    raw_data["new_york_open_time"] = raw_data.timestamp.apply(compute_open_time, cal=cal)
+    raw_data["new_york_close_time"] = raw_data.timestamp.apply(compute_close_time, cal=cal)
+    raw_data["london_open_time"] = raw_data.timestamp.apply(compute_open_time, cal=lse_cal)
+    raw_data["london_close_time"] = raw_data.timestamp.apply(compute_close_time, cal=lse_cal)
+    raw_data['time_to_new_york_open'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="new_york_open_time")
+    raw_data['time_to_new_york_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="new_york_close_time")
+    raw_data['time_to_london_open'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="london_open_time")
+    raw_data['time_to_london_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="london_close_time")
+    logging.info(f"done with open/close")
     raw_data["month"] = raw_data.time.dt.month  # categories have be strings
     raw_data["year"] = raw_data.time.dt.year  # categories have be strings
     raw_data["hour_of_day"] = raw_data.time.apply(lambda x: x.hour)
     raw_data["day_of_week"] = raw_data.time.apply(lambda x: x.dayofweek)
     raw_data["day_of_month"] = raw_data.time.apply(lambda x: x.day)
-    raw_data["new_idx"] = raw_data.apply(
-        lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
-    raw_data = raw_data.set_index("new_idx")
-    raw_data = raw_data.sort_values(["ticker", "time"])
     #logging.info(f"raw_data: {raw_data.iloc[:3]}")
     new_features = raw_data.groupby(["ticker"])['volume','dv','close','timestamp'].apply(ticker_transform)
     raw_data = raw_data.join(new_features, rsuffix="_back")
     # Drop duplicae columns
     raw_data = raw_data.loc[:,~raw_data.columns.duplicated()]
+    # time_idx needs to be globally unique. It is ok for it to be not in order
+    # across tickers.
+    raw_data["time_idx"] = range(0, len(raw_data))
     #logging.info(f"raw_data: {raw_data.iloc[-5:]}")
     #raw_data = raw_data.dropna()
     return raw_data

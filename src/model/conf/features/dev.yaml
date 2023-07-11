@@ -1,5 +1,5 @@
 static_categoricals: ["ticker"]
-time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month"]
+time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month","time_to_new_york_open", "time_to_new_york_close", "time_to_london_open", "time_to_london_open","time_to_london_close"]
 
 # _ff comes from past while _bf comes from future. Features should only use past and label should use futures
 time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_21_ff", "close_low_21_ff", "close_high_51_ff", "close_low_51_ff", "close_low_201_ff", "close_high_201_ff", "macd_8_24", "macd_16_48", "macd_32_96"]
