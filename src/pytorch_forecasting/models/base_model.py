@@ -1144,9 +1144,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             # figure so that they have different scale.
             if draw_mode == "pred_pos":
                 if index == 0:
+                    index += 1
                     continue
             if draw_mode in ["pred", "pred_cum"]:
                 if index > 0:
+                    index += 1
                     continue
             index += 1
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])

@@ -87,7 +87,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.returns_target_name = self.validation.target_names[0]
         transformer = self.validation.get_transformer(self.returns_target_name)
         logging.info(f"transformer:{transformer}")
-        self.data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pred_viz", type="pred_viz")
 
 
     def on_train_end(
@@ -148,6 +147,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def add_model_predictions(self, epoch, logs=None):
         if epoch % self.every_n_epochs:
             return
+        data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pred_viz", type="pred_viz")
         column_names = [
             "ticker",
             "time",
@@ -420,10 +420,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 )
             logging.info(f"added {cnt} examples")
         # logging.info(f"preds:{len(preds)}")
-        self.data_artifact.add(data_table, "eval_data")
+        data_artifact.add(data_table, "eval_data")
         # Calling `use_artifact` uploads the data to W&B.
         assert wandb.run is not None
-        wandb.run.use_artifact(self.data_artifact)
+        wandb.run.use_artifact(data_artifact)
         #data_artifact.wait()
         
         return []
