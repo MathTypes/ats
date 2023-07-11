@@ -28,12 +28,14 @@ def pull_futures_sample_data(ticker: str, asset_type: str) -> pd.DataFrame:
     names = ["Time", "Open", "High", "Low", "Close", "Volume"]
     if asset_type in ["FUT"]:
         file_path = os.path.join(
-            "/Users/alex/git_repo/ats/src/model/futures",
+            os.getcwd(),
+            "futures",
             f"{ticker}_1min_continuous_adjusted.txt",
         )
     else:
         file_path = os.path.join(
-            "/Users/alex/git_repo/ats/src/model/data/stock",
+            os.getcwd(),
+            "data/stock",
             f"{ticker}_full_1min_adjsplitdiv.txt",
         )
     read_options = csv.ReadOptions(column_names=names, skip_rows=1)
@@ -48,7 +50,8 @@ def pull_futures_sample_data(ticker: str, asset_type: str) -> pd.DataFrame:
 asset_type = sys.argv[1]
 ticker = sys.argv[2]
 file_path = os.path.join(
-    "/Users/alex/git_repo/ats/src/model/data/token", asset_type, "30min", ticker
+    os.getcwd(),
+    "data/token", asset_type, "30min", ticker
 )
 if os.path.exists(file_path):
     exit(0)
