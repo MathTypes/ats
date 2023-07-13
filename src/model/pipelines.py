@@ -241,6 +241,33 @@ class PatchTstTftPipeline(Pipeline):
         pass
 
 
+class TftParams(object):
+    """Esta clase contiene los parametros necesarios del modelo"""
+    def __init__(self):
+        self.BATCH_SIZE = 16
+        self.NUM_EPOCHS = 120
+        self.LEARNING_RATE = 0.0016879719644926218
+        self.PATIENCE = 30
+        self.DROPOUT = 0.12717796990901462
+        self.HIDDEN_LAYER_SIZE = 99
+        self.EMBEDDING_DIMENSION = 79
+        self.NUM_LSTM_LAYERS = 2
+        self.NUM_ATTENTION_HEADS = 1
+        self.QUANTILES = [0.1, 0.5, 0.9]
+        self.GRADIENT_CLIP_VAL = 0.01002874085767653
+    
+        self.ENCODER_LEN_MIN = 252 #1 anio
+        self.ENCODER_LEN_MAX = 252 #1 anio
+        self.DECODER_LEN = 63 # 1 trimestre
+        self.TIME_IDX = 'Time_idx'
+        self.TARGET = ['Close', 'Volume']
+        self.GROUP_ID = ["Ticker"]
+        self.STATIC_CATEGORICALS = ["Ticker"]
+        self.TIME_KNOW_CATEGORICALS = ['Date_day', 'Date_month', 'Date_day_week', 'Date_day_year']
+        self.TIME_KNOW_REALS = ['Time_idx']
+        self.TIME_UNKNOW_CATEGORICALS = []
+        self.TIME_UNKNOW_REALS = ["Close", "Open", "Volume"]
+
 class PatchTftSupervisedPipeline(Pipeline):
     def __init__(self, dataset="fut", config=None):
         super().__init__(config)
@@ -307,12 +334,31 @@ class PatchTftSupervisedPipeline(Pipeline):
         self.model = self.model.to(self.device, non_blocking=True)
 
     def tune_model(self, study_name):
-        # self.data_module = nhits.get_data_module(self.config)
-        # self.model = nhits.get_model(self.config, self.data_module)
-        # self.trainer = nhits.get_trainer(self.config, self.data_module)
-        # self.model = self.model.to(self.device, non_blocking=True)
-        # nhits.run_tune(config, study_name)
-        pass
+        opt = optuna.create_study(direction="minimize",
+                                  pruner=optuna.pruners.SuccessiveHalvingPruner(),
+                                  study_name='tft_study')
+        kwargs = {"loss": QuantileLoss(quantiles=TftParams().QUANTILES)}
+        study = optimize_hyperparameters(
+            self.data_module.train_dataloader,
+            self.data_module.val_dataloader,
+            model_path="optuna_test",
+            n_trials=20,
+            max_epochs=1,
+            gradient_clip_val_range=(0.01, 1.0),
+            hidden_size_range=(8, 128),
+            hidden_continuous_size_range=(8, 128),
+            attention_head_size_range=(1, 4),
+            learning_rate_range=(0.001, 0.1),
+            dropout_range=(0.1, 0.3),
+            trainer_kwargs=dict(limit_train_batches=30, #accelerator='gpu', devices=-1,
+                                callbacks=[]),
+            reduce_on_plateau_patience=4,
+            use_learning_rate_finder=False,
+            study=opt, 
+            timeout=60*60*2, #2 horas
+            **kwargs
+        )
+        print('best_trial', study.best_trial.params)
 
     def test_model(self):
         test_dates = self.market_cal.valid_days(

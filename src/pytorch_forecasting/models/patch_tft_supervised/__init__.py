@@ -648,7 +648,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         rec_loss = torch.mean(torch.mean(self.MSE(output[0], y[0][0]), dim=-1))
         return series_loss, prior_loss, rec_loss
     
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, batch_idx, **kwargs):
         x, y = batch
         opt = self.optimizers()
         opt.zero_grad()
@@ -671,7 +671,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             self.manual_backward(loss1, retain_graph=True)
             self.manual_backward(loss2)
         else:
-            log, loss = self.compute_loss(outputs.prediction, y)
+            log, loss = self.compute_loss(outputs.prediction, y, x, **kwargs)
             self.manual_backward(loss)
         # clip gradients
         self.clip_gradients(opt, gradient_clip_val=0.5, gradient_clip_algorithm="norm")

@@ -811,10 +811,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         else:
             new_kwargs = {k:v for k,v in kwargs.items() if k not in ["nolog"]} 
             out = self(x, **new_kwargs)
-        log, loss = self.compute_loss(out, x)
+        log, loss = self.compute_loss(out, y, x, **kwargs)
         return log, out
 
-    def compute_loss(out, x):
+    def compute_loss(self, out, y, x, **kwargs):
         if self.training and len(self.hparams.monotone_constaints) > 0:
             prediction = out["prediction"]
             #logger.info(f"x:{x}, out:{out}, y:{y}")

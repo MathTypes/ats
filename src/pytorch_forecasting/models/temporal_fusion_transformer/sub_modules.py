@@ -417,7 +417,7 @@ class ScaledDotProductAttention(nn.Module):
         _, S, _, D = v.shape
 
         attn = torch.einsum("blhe,bshe->bhls", q, k)
-        logging.info(f"attn after einsum:{attn.shape}")
+        #logging.info(f"attn after einsum:{attn.shape}")
         #if self.mask:
         #    if attn_mask is None:
         #        attn_mask = TriangularCausalMask(B, L, device=queries.device)
