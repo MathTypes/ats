@@ -200,6 +200,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 for val in y
             ]
             kwargs = {"nolog": True}
+            #logging.info(f"x:{x.device}")
+            #logging.info(f"y:{y.device}")
+            #logging.info(f"self.pl_module:{self.pl_module.device}")
             log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
             # logging.info(f"out:{out}")
             prediction_kwargs = {"reduction": None}

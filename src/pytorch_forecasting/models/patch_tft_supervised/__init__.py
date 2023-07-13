@@ -245,6 +245,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             causal_attention: bool = True,
             logging_metrics: nn.ModuleList = None,
             loss_per_head: Dict = None,
+            generate_anomaly: bool = False,
             **kwargs,
     ):
         """
@@ -316,6 +317,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 Defaults to nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE()]).
             **kwargs: additional arguments to :py:class:`~BaseModel`.
         """
+        # Important: This property activates manual optimization.
         if logging_metrics is None:
             logging_metrics = nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE()])
         if loss is None:
@@ -327,6 +329,12 @@ class PatchTftSupervised(BaseModelWithCovariates):
         assert isinstance(loss, LightningMetric), "Loss has to be a PyTorch Lightning `Metric`"
         #logging.info(f"kwargs:{kwargs}")
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
+
+        self.automatic_optimization = False
+        self.generate_anomaly = generate_anomaly
+        self.MSE = nn.MSELoss(reduction='none')
+        self.KL = nn.KLDivLoss(reduction='none')
+        
         #logging.info(f"after hparams:{self.hparams}")
         self.d_model = d_model
         self.skipped_patch = int(patch_len/stride - 1)
@@ -365,6 +373,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
             # features become d_model.
             name: self.d_model * self.input_embeddings.output_size[name] for name in self.hparams.static_categoricals
         }
+        # TODO: make this a hparam
+        self.k = 3
         #logging.info(f"static_input_sizes:{static_input_sizes}")
         #exit(0)
         static_input_sizes.update(
@@ -559,6 +569,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             self.head = ClassificationHead(self.n_vars, d_model, target_dim, head_dropout)
         # attention for long-range processing
         self.multihead_attn = InterpretableMultiHeadAttention(
+            windows_size=prediction_num_patch,
             #d_model=self.hparams.hidden_size, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
             d_model=d_model, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
         )
@@ -609,7 +620,63 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"output_layer:{self.output_layer}")
         #logging.info(f"position_output_layer:{self.position_output_layer}")
 
+    def _get_AssociationDiscrepancy(self, series, prior):
+        # prior: [4096, 4, 4, 3, 3]
+        # series: [4096, 3, 4]
+        # P: [batch_size, layer_num, windows_size, windows_size] : [4096, 4, 3, 3]
+        # S: [batch_size, layer_num, windows_size, windows_size]
+        P = torch.mean(prior, dim=3)
+        S = torch.mean(series, dim=3)
+        logging.info(f"series:{series.shape}, prior:{prior.shape}, P:{P.shape}, S:{S.shape}")
+        # R: [batch_size, layer_num, windows_size]
+        R = torch.sum(self.KL(P, S), dim=-1) + torch.sum(self.KL(S, P), dim=-1)
 
+        # R: [batch_size, windows_size]
+        R = torch.mean(R, dim=1)
+        return R
+
+    def _get_loss(self, y, output, series, prior):
+        # Need to divide prior by row , or KL can be negative
+        prior = prior / torch.unsqueeze(torch.sum(prior, dim=-1), dim=-1)
+
+        # detach() create new Tensor，but point to original tensor and requires_grad=false
+        series_loss = torch.mean(torch.abs(self._get_AssociationDiscrepancy(series, prior.detach())))
+        prior_loss = torch.mean(torch.abs(self._get_AssociationDiscrepancy(series.detach(), prior)))
+        logging.info(f"output:{output[0].shape}")
+        logging.info(f"y:{y[0][0].shape}")
+        # first y is returns and second one is position
+        rec_loss = torch.mean(torch.mean(self.MSE(output[0], y[0][0]), dim=-1))
+        return series_loss, prior_loss, rec_loss
+    
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        opt = self.optimizers()
+        opt.zero_grad()
+        ## self(x) is the same as calling self.forward(x)
+        outputs = self(x)
+        logging.info(f"outputs:{outputs['prediction'][0].shape}")
+        
+        # output: [batch_size, windows_size, feature_dim]
+        # series: [batch_size, layer_num, head_num, windows_size, windows_size]
+        # prior: [batch_size, layer_num, head_num, windows_size, windows_size]
+        #series = torch.concat([outputs.encoder_attention, outputs.decoder_attention], dim=-1)
+        #logging.info(f"outputs.attn_output:{outputs.attn_series.shape}, priors:{outputs.attn_priors.shape}")
+        if self.generate_anomaly:
+            series_loss, prior_loss, rec_loss = self._get_loss(y, outputs.prediction, outputs.attn_series,
+                                                               outputs.attn_priors)
+            #logging.info(f"series_loss:{series_loss}, prior_loss:{prior_loss}, rec_loss:{rec_loss}")
+            loss1 = rec_loss + self.k * prior_loss
+            loss2 = rec_loss - self.k * series_loss
+        
+            self.manual_backward(loss1, retain_graph=True)
+            self.manual_backward(loss2)
+        else:
+            log, loss = self.compute_loss(outputs.prediction, y)
+            self.manual_backward(loss)
+        # clip gradients
+        self.clip_gradients(opt, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+        opt.step()
+        
     def n_head_targets(self, head) -> int:
         """
         Number of targets to forecast.
@@ -851,13 +918,14 @@ class PatchTftSupervised(BaseModelWithCovariates):
         )
 
         # Attention
-        attn_output, attn_output_weights = self.multihead_attn(
+        attn_output, attn_output_weights, priors, sigmas = self.multihead_attn(
             q=attn_input[:, new_encoder_length:],  # query only for predictions
             k=attn_input,
             v=attn_input,
             mask=self.get_attention_mask(encoder_lengths=encoder_lengths, decoder_lengths=decoder_lengths),
         )
-        #logging.info(f"attn_output:{attn_output.shape}, attn_input:{attn_input.shape}")
+        raw_attn_output = attn_output
+        #logging.info(f"attn_output:{attn_output.shape}, attn_input:{attn_input.shape}, priors:{priors.shape}")
         # skip connection over attention
         attn_output = self.post_attn_gate_norm(attn_output, attn_input[:, new_encoder_length:])
 
@@ -909,6 +977,9 @@ class PatchTftSupervised(BaseModelWithCovariates):
             decoder_variables=decoder_sparse_weights,
             decoder_lengths=decoder_lengths,
             encoder_lengths=encoder_lengths,
+            attn_series=attn_output_weights, # series
+            attn_priors=priors,
+            sigmas=sigmas,
         )
 
     def on_fit_end(self):

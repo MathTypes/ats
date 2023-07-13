@@ -1,0 +1,6 @@
+defaults:
+ - dataset: future_intg
+ - features: dev
+ - optimizer: adam
+ - model: patch_tft_supervised_anomaly_intg
+ - job: test_intg

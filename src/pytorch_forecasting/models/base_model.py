@@ -64,6 +64,7 @@ from tqdm.autonotebook import tqdm
 import wandb
 import yaml
 
+from loss import MultiLossWithUncertaintyWeight
 
 # todo: compile models
 
@@ -318,7 +319,7 @@ class PredictCallback(BasePredictionWriter):
         self._reset_data()
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
-        traceback.print_stack()
+        #traceback.print_stack()
         torch.save(predictions, os.path.join(self.output_dir, "predictions.pt"))
         self._reset_data()
 
@@ -777,7 +778,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 ``on_epoch_end`` hook and the second entry is the model's output.
         """
         # pack y sequence if different encoder lengths exist
-        #logger.info(f"kwargs:{kwargs}, batch_idx:{batch_idx}")
+        #traceback.print_stack()
+        #logger.info(f"step kwargs:{kwargs}, batch_idx:{batch_idx}")
         #logger.info(f"y:{y}")
         if (x["decoder_lengths"] < x["decoder_lengths"].max()).any():
             if isinstance(y[0], (list, tuple)):
@@ -806,6 +808,14 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 "`torch.backends.cudnn.flags(enable=False)`"
             )
             out = self(x, **kwargs)
+        else:
+            new_kwargs = {k:v for k,v in kwargs.items() if k not in ["nolog"]} 
+            out = self(x, **new_kwargs)
+        log, loss = self.compute_loss(out, x)
+        return log, out
+
+    def compute_loss(out, x):
+        if self.training and len(self.hparams.monotone_constaints) > 0:
             prediction = out["prediction"]
             #logger.info(f"x:{x}, out:{out}, y:{y}")
             #exit(0)
@@ -839,7 +849,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             # for smoothness of loss function
             monotinicity_loss = 10 * torch.pow(monotinicity_loss, 2)
             if not self.predicting:
-                if isinstance(self.loss, (MASE, MultiLoss)):
+                if isinstance(self.loss, (MASE, MultiLoss, MultiLossWithUncertaintyWeight)):
                     loss = self.loss(
                         prediction, y, encoder_target=x["encoder_target"], encoder_lengths=x["encoder_lengths"]
                     )
@@ -860,7 +870,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #if isinstance(self.loss, (MASE, MultiLoss)):
                 # TODO: figure out how we can pass encoder_target to losses under
                 # MultiLoss.
-                if isinstance(self.loss, (MASE)):
+                if isinstance(self.loss, (MASE, MultiLossWithUncertaintyWeight)):
                     mase_kwargs = dict(encoder_target=x["encoder_target"], encoder_lengths=x["encoder_lengths"])
                     loss = self.loss(prediction, y, **mase_kwargs)
                 else:
@@ -877,8 +887,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 batch_size=len(x["decoder_target"]),
             )
         log = {"loss": loss, "n_samples": x["decoder_lengths"].size(0)}
-        return log, out
-
+        return log, loss
+    
     def compute_metrics(
         self,
         x: Dict[str, torch.Tensor],

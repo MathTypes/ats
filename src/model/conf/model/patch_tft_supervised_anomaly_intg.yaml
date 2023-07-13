@@ -1,0 +1,26 @@
+hidden_size: 4
+prediction_length: 16
+context_length: 16
+patch_len: 8
+stride: 4
+d_model: 20
+train_batch_size: 4096
+eval_batch_size: 512
+learning_rate: 0.02
+attn_heads : 4
+attn_dropout: 0.1
+multitask: True
+heads:
+  - returns_prediction
+  - position_optimization
+returns_prediction:
+  loss_name: MASE # MASE does not work as we need to pass encoder_target through MultiLoss
+  target: "close_back"
+  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+position_optimization:
+  loss_name: SharpeLoss
+  # TODO: figure out how to allow multi loss when same targets are
+  # used in different heads.
+  target: "close_back_cumsum"
+  logging_metrics: []
+name: patch_tft_supervised
