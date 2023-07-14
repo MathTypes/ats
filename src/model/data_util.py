@@ -242,7 +242,7 @@ def add_highs(df_cumsum, df_time, width):
     df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
-    df_low["time_high_ff"] = df_low["time_high"].ffill()
+    df_high["time_high_ff"] = df_high["time_high"].ffill()
     return df_high
 
 def add_lows(df_cumsum, df_time, width):
