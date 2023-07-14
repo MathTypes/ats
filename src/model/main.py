@@ -62,8 +62,7 @@ def my_app(cfg: DictConfig) -> None:
         pipe.train_model()
         # pipe.test_model()
     elif cfg.job.mode == "tune":
-        config["n_trials"] = cfg.job.n_trials
-        pipe.tune_model(config, cfg.job.study_name)
+        pipe.tune_model(run_id)
     elif cfg.job.mode == "eval":
         pipe.create_model(cfg.job.checkpoint)
         pipe.eval_model()

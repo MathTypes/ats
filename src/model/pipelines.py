@@ -20,6 +20,7 @@ from empyrical import (
 # find optimal learning rate
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.tuner import Tuner
+import optuna
 from pytorch_forecasting import (
     Baseline,
     TemporalFusionTransformer,
@@ -40,6 +41,9 @@ from pytorch_forecasting.metrics import (
     QuantileLoss,
 )
 from pytorch_forecasting.utils import create_mask, detach, to_list
+from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
+    optimize_hyperparameters,
+)
 import pytz
 import plotly.graph_objects as go
 import PIL
@@ -333,10 +337,11 @@ class PatchTftSupervisedPipeline(Pipeline):
             self.model = self.model.load_from_checkpoint(checkpoint)
         self.model = self.model.to(self.device, non_blocking=True)
 
-    def tune_model(self, study_name):
+    def tune_model(self, run_id):
+        study_name = f"tft_study_{run_id}"
         opt = optuna.create_study(direction="minimize",
                                   pruner=optuna.pruners.SuccessiveHalvingPruner(),
-                                  study_name='tft_study')
+                                  study_name=study_name)
         kwargs = {"loss": QuantileLoss(quantiles=TftParams().QUANTILES)}
         study = optimize_hyperparameters(
             self.data_module.train_dataloader,
@@ -350,7 +355,8 @@ class PatchTftSupervisedPipeline(Pipeline):
             attention_head_size_range=(1, 4),
             learning_rate_range=(0.001, 0.1),
             dropout_range=(0.1, 0.3),
-            trainer_kwargs=dict(limit_train_batches=30, #accelerator='gpu', devices=-1,
+            trainer_kwargs=dict(limit_train_batches=30,
+                                accelerator='gpu', devices=-1,
                                 callbacks=[]),
             reduce_on_plateau_patience=4,
             use_learning_rate_finder=False,
