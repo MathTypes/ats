@@ -306,7 +306,8 @@ class SharpeLoss(MultiHorizonMetric):
         #logging.info(f"y_pred:{y_pred}, {y_pred.shape}")
         #logging.info(f"target:{target}, {target.shape}")
         # TODO: pass base to compute return for first interval
-        returns = torch.diff(target)
+        #returns = torch.diff(target)
+        returns = target
         #logging.info(f"returns:{returns}, {returns.shape}")
         captured_returns = y_pred[...,1:] * returns
         mean_returns = torch.mean(captured_returns)

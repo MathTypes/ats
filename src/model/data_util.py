@@ -8,8 +8,9 @@ import pandas as pd
 from pyarrow import csv
 import pytz
 import ray
+import ta
 
-from mom_trans.classical_strategies import (
+from model.mom_trans.classical_strategies import (
     MACDStrategy,
     calc_returns,
     calc_daily_vol,
@@ -181,7 +182,7 @@ def get_processed_data(
     ds = ds[~ds.index.duplicated(keep="first")]
     # logging.info(f"ds before filter:{ds.head()}")
     # Filter out between london open until new york close
-    ds = ds[(ds.hour_of_day > 1) & (ds.hour_of_day < 17)]
+    #ds = ds[(ds.hour_of_day > 1) & (ds.hour_of_day < 17)]
     # logging.info(f"ds after filter:{ds.head()}")
     # Need to recompute close_back after filtering
     ds = ds.drop(columns=["close_back", "volume_back", "dv_back"])
@@ -283,6 +284,24 @@ def ticker_transform(raw_data):
     df = add_lows(close_back_cumsum, timestamp, width=201)
     raw_data["close_low_201_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
+
+    # Compute RSI
+    raw_data["rsi"] = ta.momentum.RSIIndicator(close=raw_data["close"]).rsi()
+
+    # Compute MACD
+    macd = ta.trend.MACD(close=raw_data["close"])
+    raw_data["macd"] = macd.macd()
+    raw_data["macd_signal"] = macd.macd_signal()
+
+    # Compute Bollinger Bands
+    bollinger = ta.volatility.BollingerBands(close=raw_data["close"])
+    raw_data["bb_high"] = bollinger.bollinger_hband()
+    raw_data["bb_low"] = bollinger.bollinger_lband()
+
+    # Compute Moving Averages
+    raw_data["sma_50"] = ta.trend.SMAIndicator(close=raw_data["close"], window=50).sma_indicator()
+    raw_data["sma_200"] = ta.trend.SMAIndicator(close=raw_data["close"], window=200).sma_indicator()
+
     return raw_data
 
 def time_diff(row, base_col, diff_col):

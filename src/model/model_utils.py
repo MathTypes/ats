@@ -1,5 +1,6 @@
 # Usage
 import copy
+import concurrent
 import datetime
 import logging
 from math import ceil
@@ -62,7 +63,7 @@ from wandb.keras import WandbMetricsLogger
 
 from data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
 from datasets import generate_stock_returns
-import data_util
+from model import data_util
 from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
 from loss import MultiLossWithUncertaintyWeight
 import nhits_tuner
@@ -364,18 +365,23 @@ def get_input_dirs(config):
     return input_dirs
 
 
+@ray.remote
 def get_input_for_ticker(
     base_dir, start_date, end_date, ticker, asset_type, time_interval
 ):
     try:
+        from model import data_util
+        logging.info(f"reading from base_dir:{base_dir}, ticker:{ticker}")
         all_data = data_util.get_processed_data(
             base_dir, start_date, end_date, ticker, asset_type, time_interval
         )
         all_data = all_data.replace([np.inf, -np.inf], np.nan)
         all_data = all_data.dropna()
         all_data = all_data.drop(columns=["time_idx"])
+        #logging.info(f"all_data:all_data.head()")
         return all_data
     except Exception as e:
+        print(f"can not get input for {ticker}, {e}")
         logging.info(f"can not get input for {ticker}, {e}")
         return None
 
@@ -416,11 +422,18 @@ def get_data_module(
 ):
     start = time.time()
     train_data_vec = []
+    refs = []
     for ticker in model_tickers:
         # logging.info(f"get_input_for base_dir:{base_dir}, start_date:{train_start_date}, end_date:{test_end_date}, ticker:{ticker}")
-        ticker_train_data = get_input_for_ticker(
+        ticker_train_data = get_input_for_ticker.remote(
             base_dir, train_start_date, test_end_date, ticker, "FUT", time_interval
         )
+        refs.append(ticker_train_data)
+    all_results = ray.get(refs)
+    for result in all_results:
+        #logging.info(f"result:{result}")
+        ticker_train_data = result
+        #logging.info(f"ticker_train_data:{ticker_train_data.head()}")
         if ticker_train_data is None or ticker_train_data.empty:
             continue
         ticker_train_data["new_idx"] = ticker_train_data.apply(

@@ -242,7 +242,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             max_encoder_length=context_length,
             min_prediction_length=prediction_length,
             max_prediction_length=prediction_length,
-            allow_missing_timesteps=False,
+            allow_missing_timesteps=True,
             target_normalizer=target_normalizer,
             lags=config.features.lags,
             static_categoricals=config.features.static_categoricals,

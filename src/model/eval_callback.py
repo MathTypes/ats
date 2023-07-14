@@ -176,12 +176,11 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         device = self.pl_module.device
         for batch_idx in range(self.num_samples):
             logging.info(f"add prediction for batch:{batch_idx}")
-            x = self.val_x_batch[batch_idx]
-            y = self.val_y_batch[batch_idx]
+            orig_x = self.val_x_batch[batch_idx]
+            orig_y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
-            y_close = y[0]
+            y_close = orig_y[0]
             # TODO: fix following hack to deal with multiple targets                                                                                     
-            # logging.info(f"y_close_cum_sum:{type(y_close_cum_sum)}")                                                                                   
             if isinstance(y_close, list):
                 y_close = y_close[0]
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
@@ -189,7 +188,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 key: [v.to(device) for v in val]
                 if isinstance(val, list)
                 else val.to(device)
-                for key, val in x.items()
+                for key, val in orig_x.items()
             }
             y = [
                 [v.to(device) for v in val]
@@ -197,7 +196,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 else val.to(device)
                 if val is not None
                 else None
-                for val in y
+                for val in orig_y
             ]
             kwargs = {"nolog": True}
             #logging.info(f"x:{x.device}")
@@ -307,9 +306,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 fig.update_xaxes(
                     rangebreaks=[
                         dict(bounds=["sat", "mon"]),  # hide weekends
-                        dict(
-                            bounds=[17, 2], pattern="hour"
-                        ),  # hide hours outside of 4am-5pm
+                        #dict(
+                        #    bounds=[17, 2], pattern="hour"
+                            #),  # hide hours outside of 4am-5pm
                     ],
                 )
                 img_bytes = fig.to_image(format="png")  # kaleido library
@@ -348,9 +347,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 fig.update_xaxes(
                     rangebreaks=[
                         dict(bounds=["sat", "mon"]),  # hide weekends
-                        dict(
-                            bounds=[17, 4], pattern="hour"
-                        ),  # hide hours outside of 4am-5pm
+                        #dict(
+                        #    bounds=[17, 4], pattern="hour"
+                            #),  # hide hours outside of 4am-5pm
                     ],
                 )
                 prediction_date_time = (
@@ -421,6 +420,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     rmse[idx],
                     mae[idx],
                 )
+            del x
+            del y
+            torch.cuda.empty_cache()
             logging.info(f"added {cnt} examples")
         # logging.info(f"preds:{len(preds)}")
         data_artifact.add(data_table, "eval_data")

@@ -574,6 +574,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
             d_model=d_model, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
         )
         self.position_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
+        self.anomaly_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
+        self.min_max_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
         self.post_attn_gate_norm = GateAddNorm(
             #self.hparams.hidden_size, dropout=self.hparams.dropout, trainable_add=False
             d_model, dropout=self.hparams.dropout, trainable_add=False
@@ -593,14 +595,19 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"n_vars:{self.n_vars}, head_nf:{self.head_nf}, target_dim:{target_dim}")
         self.flatten_head = Flatten_Head(self.individual, self.n_vars, self.prediction_num_patch, self.head_nf, target_dim, head_dropout=head_dropout)
                 
-
         output_size = self.hparams.output_size
         returns_output_size = None
         position_output_size = None
+        min_max_output_size = None
+        anomaly_returns_output_size = None
         if isinstance(output_size, Dict):
             returns_output_size = output_size["returns_prediction"]
             if "position_optimization" in output_size:
                 position_output_size = output_size["position_optimization"]
+            if "min_max" in output_size:
+                min_max_output_size = output_size["min_max"]
+            if "anomaly_returns" in output_size:
+                anomaly_returns_output_size = output_size["anomaly_returns"]
         #logging.info(f"returns_output_size:{returns_output_size}")
         #logging.info(f"position_output_size:{position_output_size}")
         if self.n_head_targets(head="returns_prediction") > 1:  # if to run with multiple targets
@@ -617,6 +624,22 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 )
             else:
                 self.position_output_layer = nn.Linear(d_model, position_output_size)
+        self.anomaly_returns_output_layer = None
+        if anomaly_returns_output_size:
+            if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
+                self.anomaly_returns_output_layer = nn.ModuleList(
+                    [nn.Linear(d_model, output_size) for output_size in anomaly_returns_output_size]
+                )
+            else:
+                self.anomaly_returns_output_layer = nn.Linear(d_model, anomaly_returns_output_size)
+        self.min_max_output_layer = None
+        if min_max_output_size:
+            if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
+                self.min_max_output_layer = nn.ModuleList(
+                    [nn.Linear(d_model, output_size) for output_size in min_max_output_size]
+                )
+            else:
+                self.min_max_output_layer = nn.Linear(d_model, min_max_output_size)
         #logging.info(f"output_layer:{self.output_layer}")
         #logging.info(f"position_output_layer:{self.position_output_layer}")
 
@@ -949,11 +972,23 @@ class PatchTftSupervised(BaseModelWithCovariates):
         else:
             output = self.output_layer(embedding)
         position_output = None
+        anomaly_returns_output = None
+        min_max_output = None
         if self.position_output_layer:
             if self.n_head_targets(head="position_optimization") > 1:  # if to run with multiple targets
                 position_output = [output_layer(embedding) for output_layer in self.position_output_layer]
             else:
                 position_output = self.position_output_layer(embedding)
+        if self.anomaly_returns_output_layer:
+            if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
+                anomaly_returns_output = [output_layer(embedding) for output_layer in self.anomaly_returns_output_layer]
+            else:
+                anomaly_returns_output = self.anomaly_returns_output_layer(embedding)
+        if self.min_max_output_layer:
+            if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
+                min_max_output = [output_layer(embedding) for output_layer in self.min_max_output_layer]
+            else:
+                min_max_output = self.min_max_output_layer(embedding)
         # Remove last dimension if it is 1
         #logging.info(f"output before squeeze:{output[0].shape}, {output[1].shape}")
         if isinstance(output, List):
@@ -966,6 +1001,18 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else:
                 position_output = torch.squeeze(position_output, dim=-1)
             output = [output, position_output]
+        if anomaly_returns_output is not None:
+            if isinstance(anomaly_returns_output, List):
+                anomaly_returns_output = [ torch.squeeze(val, dim=-1) for val in anomaly_returns_output]
+            else:
+                anomaly_returns_output = torch.squeeze(anomaly_returns_output, dim=-1)
+            output = [output, anomaly_returns_output]
+        if min_max_output is not None:
+            if isinstance(min_max_output, List):
+                min_max_output = [ torch.squeeze(val, dim=-1) for val in min_max_output]
+            else:
+                min_max_output = torch.squeeze(min_max_output, dim=-1)
+            output = [output, min_max_output]
         
         return self.to_network_output(
             prediction=self.transform_output(output,
