@@ -242,6 +242,7 @@ def add_highs(df_cumsum, df_time, width):
     df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
+    df_low["time_high_ff"] = df_low["time_high"].ffill()
     return df_high
 
 def add_lows(df_cumsum, df_time, width):
@@ -251,6 +252,7 @@ def add_lows(df_cumsum, df_time, width):
     df_low = df_cumsum.to_frame(name="close_cumsum").join(low).join(low_time)
     df_low["close_cumsum_low_ff"] = df_low["close_cumsum_low"].ffill()
     df_low["close_cumsum_low_bf"] = df_low["close_cumsum_low"].bfill()
+    df_low["time_low_ff"] = df_low["time_low"].ffill()
     return df_low
 
 def ticker_transform(raw_data):
@@ -269,21 +271,27 @@ def ticker_transform(raw_data):
     df = add_highs(close_back_cumsum, timestamp, width=21)
     raw_data["close_high_21_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_21_bf"] = df["close_cumsum_high_bf"]
+    raw_data["time_high_21_ff"] = df["time_high_ff"]
     df = add_lows(close_back_cumsum, timestamp, width=21)
     raw_data["close_low_21_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_21_bf"] = df["close_cumsum_low_bf"]
+    raw_data["time_low_21_ff"] = df["time_low_ff"]
     df = add_highs(close_back_cumsum, timestamp, width=51)
     raw_data["close_high_51_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_51_bf"] = df["close_cumsum_high_bf"]
+    raw_data["time_high_51_ff"] = df["time_high_ff"]
     df = add_lows(close_back_cumsum, timestamp, width=51)
     raw_data["close_low_51_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_51_bf"] = df["close_cumsum_low_bf"]
+    raw_data["time_low_51_ff"] = df["time_low_ff"]
     df = add_highs(close_back_cumsum, timestamp, width=201)
     raw_data["close_high_201_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_201_bf"] = df["close_cumsum_high_bf"]
+    raw_data["time_high_201_ff"] = df["time_high_ff"]
     df = add_lows(close_back_cumsum, timestamp, width=201)
     raw_data["close_low_201_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
+    raw_data["time_low_201_ff"] = df["time_low_ff"]
 
     # Compute RSI
     raw_data["rsi"] = ta.momentum.RSIIndicator(close=raw_data["close"]).rsi()
@@ -328,6 +336,7 @@ def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
     raw_data['time_to_new_york_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="new_york_close_time")
     raw_data['time_to_london_open'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="london_open_time")
     raw_data['time_to_london_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="london_close_time")
+
     logging.info(f"done with open/close")
     raw_data["month"] = raw_data.time.dt.month  # categories have be strings
     raw_data["year"] = raw_data.time.dt.year  # categories have be strings
@@ -337,6 +346,13 @@ def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
     #logging.info(f"raw_data: {raw_data.iloc[:3]}")
     new_features = raw_data.groupby(["ticker"])['volume','dv','close','timestamp'].apply(ticker_transform)
     raw_data = raw_data.join(new_features, rsuffix="_back")
+    raw_data['time_to_high_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_21_ff")
+    raw_data['time_to_low_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_21_ff")
+    raw_data['time_to_high_51_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_51_ff")
+    raw_data['time_to_low_51_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_51_ff")
+    raw_data['time_to_high_201_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_201_ff")
+    raw_data['time_to_low_201_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_201_ff")
+    logging.info(f"raw_data:{raw_data.iloc[:5]}")
     # Drop duplicae columns
     raw_data = raw_data.loc[:,~raw_data.columns.duplicated()]
     # time_idx needs to be globally unique. It is ok for it to be not in order

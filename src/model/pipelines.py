@@ -344,8 +344,8 @@ class PatchTftSupervisedPipeline(Pipeline):
                                   study_name=study_name)
         kwargs = {"loss": QuantileLoss(quantiles=TftParams().QUANTILES)}
         study = optimize_hyperparameters(
-            self.data_module.train_dataloader,
-            self.data_module.val_dataloader,
+            self.data_module.train_dataloader(),
+            self.data_module.val_dataloader(),
             model_path="optuna_test",
             n_trials=20,
             max_epochs=1,
