@@ -1,5 +1,5 @@
 static_categoricals: ["ticker"]
 time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month"]
-time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51", "close_low_201", "close_high_201", "macd_8_24", "macd_16_48", "macd_32_96"]
+time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_21", "close_low_21", "close_high_51", "close_low_51", "close_low_201", "close_high_201", "macd_8_24", "macd_16_48", "macd_32_96", "macd", "macd_signal", "bb_high", ""bb_low", "sma_50", "sma_200"]
 lags: {"close_high_21":[21], "close_low_21":[21], "close_high_51":[51], "close_low_51":[51], "close_back_cumsum":[1], "close_low_201":[201], "close_high_201":[201], "close":[1], "high":[1], "low":[1], "open":[1], "volume_back":[1], "close_back":[1], "macd_8_24":[1], "macd_16_48":[1], "macd_32_96":[1],}
 add_relative_time_idx: True

@@ -12,9 +12,10 @@ attn_dropout: 0.1
 multitask: True
 heads:
   - returns_prediction
-  - position_optimization
+#  - position_optimization
 returns_prediction:
-  loss_name: MQF2DistributionLoss
+  #loss_name: MQF2DistributionLoss
+  loss_name: QuantileLoss
   target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 position_optimization:
