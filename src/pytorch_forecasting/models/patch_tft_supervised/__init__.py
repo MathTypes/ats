@@ -5,6 +5,7 @@ from copy import copy
 import logging
 from typing import Dict, List, Tuple, Union, Optional, Callable
 
+import cvxpy as cp
 from matplotlib import pyplot as plt
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -109,6 +110,7 @@ class Patch(nn.Module):
         self.n_vars = c_in
         self.patch_len = patch_len
         self.d_model = d_model
+        logging.info(f"seq_len:{seq_len}, stride:{stride}, num_patch:{num_patch}, patch_len:{patch_len}, tgt_len:{tgt_len}")
         self.shared_embedding = shared_embedding        
         #logging.info(f"seq_len:{seq_len}, stride:{stride}, num_patch:{num_patch}")
         # Input encoding: projection of feature vectors onto a d-dim vector space
@@ -670,14 +672,52 @@ class PatchTftSupervised(BaseModelWithCovariates):
         # first y is returns and second one is position
         rec_loss = torch.mean(torch.mean(self.MSE(output[0], y[0][0]), dim=-1))
         return series_loss, prior_loss, rec_loss
-    
+
+    def predict_step(self, batch, batch_idx):
+        #logging.info(f"predict_step:{batch}")
+        predict_kwargs = {}
+        predict_callbacks = [c for c in self.trainer.callbacks if isinstance(c, PredictCallback)]
+        if predict_callbacks:
+          predict_callback = predict_callbacks[0]
+          predict_kwargs = predict_callback.predict_kwargs
+        x, y = batch
+        log, out = self.step(x, y, batch_idx, **predict_kwargs)
+        #logging.info(f"log:{log}, out:{out}")
+        # return out
+        #traceback.print_stack()
+        return log, out  # need to return output to be able to use predict callback
+
+    def maximize_trade_constrain_downside(self, bid_price, offer_price, da_validate,
+                                          rt_validate, percentile, max_loss, gamma):
+        bid_return = (da_validate <= bid_price) * (rt_validate - da_validate)
+        offer_return = (offer_price < da_validate) * (da_validate - rt_validate)                                                  
+        
+        weights1 = cp.Variable(bid_return.mean(axis=0).shape)
+        weights2 = cp.Variable(offer_return.mean(axis=0).shape)
+        
+        objective = cp.Maximize(weights1* bid_return.mean(axis=0)+ weights2* offer_return.mean(axis=0))        
+        nsamples = round(bid_return.shape[0]*self.percentile)
+        
+        portfolio_rets = weights1*bid_return.T + weights2*offer_return.T
+        wors_hour = cp.sum_smallest(portfolio_rets, nsamples)/nsamples
+          
+        constraints = [wors_hour>=max_loss, weights1>=0, weights2>=0,
+                       cp.norm(weights2, self.l_norm) <= self.gamma,
+                       cp.norm(weights1, self.l_norm) <= self.gamma]
+        
+        problem = cp.Problem(objective, constraints)
+        problem.solve()
+
+        return weights1.value.round(4).ravel(), bid_return, weights2.value.round(4).ravel(), offer_return, problem.value
+
+            
     def training_step(self, batch, batch_idx, **kwargs):
         x, y = batch
         opt = self.optimizers()
         opt.zero_grad()
         ## self(x) is the same as calling self.forward(x)
         outputs = self(x)
-        logging.info(f"outputs:{outputs['prediction'][0].shape}")
+        #logging.info(f"outputs:{outputs['prediction'][0].shape}")
         
         # output: [batch_size, windows_size, feature_dim]
         # series: [batch_size, layer_num, head_num, windows_size, windows_size]

@@ -8,7 +8,7 @@ from typing import Any, Dict, Tuple, Union
 
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.tuner import Tuner
 import numpy as np
 import optuna
@@ -46,7 +46,7 @@ def optimize_hyperparameters(
     hidden_size_range: Tuple[int, int] = (16, 265),
     hidden_continuous_size_range: Tuple[int, int] = (8, 64),
     attention_head_size_range: Tuple[int, int] = (1, 4),
-    d_model_range: Tuple[int, int] = (4, 265),
+    d_model_range: Tuple[int, int] = (4, 16),
     stride_range: Tuple[int, int] = (1, 4),
     dropout_range: Tuple[float, float] = (0.1, 0.3),
     learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
@@ -127,18 +127,18 @@ def optimize_hyperparameters(
         )
 
         learning_rate_callback = LearningRateMonitor()
-        logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
+        #logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
         gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
+        wandb_logger = WandbLogger(project="ATS", log_model=True)
         default_trainer_kwargs = dict(
             accelerator="auto",
             max_epochs=max_epochs,
-            gradient_clip_val=gradient_clip_val,
             callbacks=[
                 learning_rate_callback,
                 checkpoint_callback,
                 PyTorchLightningPruningCallbackAdjusted(trial, monitor="val_loss"),
             ],
-            logger=logger,
+            logger=wandb_logger,
             enable_progress_bar=optuna_verbose < optuna.logging.INFO,
             enable_model_summary=[False, True][optuna_verbose < optuna.logging.INFO],
         )
@@ -148,8 +148,8 @@ def optimize_hyperparameters(
         )
 
         # create model
-        prediction_length = 16
-        context_length = 320
+        prediction_length = train_dataloaders.dataset.max_prediction_length
+        context_length = train_dataloaders.dataset.max_encoder_length
         stride = trial.suggest_int("stride", *stride_range)
         patch_len = 2 * stride
         d_model = trial.suggest_int("d_model", *d_model_range)
@@ -185,9 +185,9 @@ def optimize_hyperparameters(
             d_model=d_model,
             dropout=trial.suggest_uniform("dropout", *dropout_range),
             hidden_size=hidden_size,
-            # number of attention heads. Set to up to 4 for large datasets                                                                                              
+            # number of attention heads. Set to up to 4 for large dataset
             n_heads=attn_heads,
-            attn_dropout=attn_dropout,  # between 0.1 and 0.3 are good values                                                                              
+            attn_dropout=attn_dropout,  # between 0.1 and 0.3 are good values
             optimizer="Ranger",
             output_size=output_size_dict,
         )

@@ -487,7 +487,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         attn_input = self.static_enrichment(
             lstm_output, self.expand_static_context(static_context_enrichment, timesteps)
         )
-        logging.info(f"attn_input:{attn_input.shape}")
+        logging.info(f"attn_input:{attn_input.shape}, encoder_lengths:{encoder_lengths}, decoder_lengths:{decoder_lengths}")
 
         # Attention
         attn_output, attn_output_weights = self.multihead_attn(

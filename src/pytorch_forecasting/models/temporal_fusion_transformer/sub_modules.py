@@ -429,6 +429,7 @@ class ScaledDotProductAttention(nn.Module):
             dimension = torch.as_tensor(k.size(-1), dtype=attn.dtype, device=attn.device).sqrt()
             attn = attn / dimension
 
+        #logging.info(f"sigma before transpose:{sigma.shape}")
         sigma = sigma.transpose(1, 2)  # B L H ->  B H L [ 512, 4, 3]
         sigma = torch.sigmoid(sigma * 5) + 1e-5
         sigma = torch.pow(3, sigma) - 1
@@ -442,6 +443,7 @@ class ScaledDotProductAttention(nn.Module):
         if mask is not None:
             #logging.info(f"mask.shape:{mask.shape}")
             _MASKING_VALUE = -1e+9 if attn.dtype == torch.float32 else -1e+4
+            #logging.info(f"attn:{attn.shape}, mask:{mask.shape}")
             attn = attn.masked_fill(mask, _MASKING_VALUE)
 
         attn = self.softmax(attn)
