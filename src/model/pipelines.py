@@ -346,6 +346,9 @@ class PatchTftSupervisedPipeline(Pipeline):
         study = optimize_hyperparameters(
             self.data_module.train_dataloader(),
             self.data_module.val_dataloader(),
+            self.heads,
+            self.targets,
+            self.device,
             model_path="optuna_test",
             n_trials=20,
             max_epochs=1,

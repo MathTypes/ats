@@ -91,6 +91,8 @@ def create_loss(loss_name, device, prediction_length=None, hidden_size=None):
         loss = MAPCSE()
     if loss_name == "MQF2DistributionLoss":
         loss = MQF2DistributionLoss(prediction_length=prediction_length)
+    if loss_name == "QuantileLoss":
+        loss = QuantileLoss()
     loss = loss.to(device)
     return loss
 

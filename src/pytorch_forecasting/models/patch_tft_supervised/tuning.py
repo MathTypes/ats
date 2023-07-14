@@ -24,6 +24,8 @@ from pytorch_forecasting.metrics import QuantileLoss
 
 optuna_logger = logging.getLogger("optuna")
 
+from loss import MultiLossWithUncertaintyWeight
+import model_utils
 
 # need to inherit from callback for this to work
 class PyTorchLightningPruningCallbackAdjusted(pl.Callback, PyTorchLightningPruningCallback):
@@ -33,6 +35,9 @@ class PyTorchLightningPruningCallbackAdjusted(pl.Callback, PyTorchLightningPruni
 def optimize_hyperparameters(
     train_dataloaders: DataLoader,
     val_dataloaders: DataLoader,
+    heads,
+    targets,
+    device,
     model_path: str,
     max_epochs: int = 20,
     n_trials: int = 100,
@@ -41,6 +46,8 @@ def optimize_hyperparameters(
     hidden_size_range: Tuple[int, int] = (16, 265),
     hidden_continuous_size_range: Tuple[int, int] = (8, 64),
     attention_head_size_range: Tuple[int, int] = (1, 4),
+    d_model_range: Tuple[int, int] = (4, 265),
+    stride_range: Tuple[int, int] = (1, 4),
     dropout_range: Tuple[float, float] = (0.1, 0.3),
     learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
     use_learning_rate_finder: bool = True,
@@ -141,26 +148,52 @@ def optimize_hyperparameters(
         )
 
         # create model
+        prediction_length = 16
+        context_length = 320
+        stride = trial.suggest_int("stride", *stride_range)
+        patch_len = 2 * stride
+        d_model = trial.suggest_int("d_model", *d_model_range)
+        num_patch = (max(context_length, patch_len) - patch_len) // stride + 1
+        prediction_num_patch = (max(prediction_length, patch_len) - patch_len) // stride + 1
         hidden_size = trial.suggest_int("hidden_size", *hidden_size_range, log=True)
-        kwargs["loss"] = copy.deepcopy(loss)
+        loss = None
+        attn_heads = 4
+        attn_dropout = 0.1
+        output_size_dict = {}
+        if True:
+            loss_per_head = model_utils.create_loss_per_head(heads, device, prediction_length)
+            losses = []
+            for name, l in loss_per_head.items():
+                losses.append(l["loss"])
+                output_size_dict[name] = model_utils.get_output_size(l["loss"])
+            if len(losses) > 1:
+                loss = MultiLossWithUncertaintyWeight(losses)
+            else:
+                loss = losses[0]
+        else:
+            # TODO implement single task loss
+            pass
         model = PatchTftSupervised.from_dataset(
             train_dataloaders.dataset,
+            patch_len=patch_len,
+            stride=stride,
+            num_patch=num_patch,
+            prediction_num_patch=prediction_num_patch,
+            loss=loss,
+            loss_per_head=loss_per_head,
+            learning_rate=0.03,
+            d_model=d_model,
             dropout=trial.suggest_uniform("dropout", *dropout_range),
             hidden_size=hidden_size,
-            hidden_continuous_size=trial.suggest_int(
-                "hidden_continuous_size",
-                hidden_continuous_size_range[0],
-                min(hidden_continuous_size_range[1], hidden_size),
-                log=True,
-            ),
-            attention_head_size=trial.suggest_int("attention_head_size", *attention_head_size_range),
-            log_interval=-1,
-            **kwargs,
+            # number of attention heads. Set to up to 4 for large datasets                                                                                              
+            n_heads=attn_heads,
+            attn_dropout=attn_dropout,  # between 0.1 and 0.3 are good values                                                                              
+            optimizer="Ranger",
+            output_size=output_size_dict,
         )
         # find good learning rate
         if use_learning_rate_finder:
             lr_trainer = pl.Trainer(
-                gradient_clip_val=gradient_clip_val,
                 accelerator="auto",
                 logger=False,
                 enable_progress_bar=False,
