@@ -41,7 +41,7 @@ from pytorch_forecasting.metrics import (
     QuantileLoss,
 )
 from pytorch_forecasting.utils import create_mask, detach, to_list
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
+from pytorch_forecasting.models.patch_tft_supervised.tuning import (
     optimize_hyperparameters,
 )
 import pytz
