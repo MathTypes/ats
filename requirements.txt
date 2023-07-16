@@ -450,7 +450,7 @@ shortuuid==1.0.9
 simplejson==3.18.4
 six==1.16.0
 #sklearn==0.0.post1
-scikit-learn
+#scikit-learn
 #sklearn-crfsuite==0.3.6
 smart-open==6.3.0
 smmap==5.0.0
