@@ -1,11 +1,11 @@
 hidden_size: 20
 prediction_length: 16
-context_length: 320
+context_length: 640
 patch_len: 2
 stride: 1
 d_model: 6
 train_batch_size: 256
-eval_batch_size: 32
+eval_batch_size: 128
 learning_rate: 0.095
 attn_heads : 4
 attn_dropout: 0.1
@@ -14,8 +14,8 @@ heads:
   - returns_prediction
   #- position_optimization
 returns_prediction:
-  #loss_name: MQF2DistributionLoss
-  loss_name: "SMAPE"
+  loss_name: MQF2DistributionLoss
+  #loss_name: "SMAPE"
   target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 position_optimization:
