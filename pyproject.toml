@@ -1,6 +1,6 @@
 
 [tool.poetry]
-name = "ats"
+name = "src"
 version = "0.1.0"
 description = ""
 authors = ["Jianjun Chen <jianjun00@gmail.com>"]
@@ -10,7 +10,7 @@ readme = "README.md"
 python = "^3.8"
 
 [project]
-name = "ats"
+name = "src"
 version = "0.0.1"
 authors = [
   { name="Johnny Chen", email="johnnychen762@gmail.com" },
