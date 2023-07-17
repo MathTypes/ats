@@ -335,6 +335,8 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         learning_rate=config.model.learning_rate,
         d_model=d_model,  # most important hyperparameter apart from learning rate
         hidden_size=config.model.hidden_size,
+        n_layers=config.model.n_layers,
+        lstm_layers=config.model.lstm_layers,
         # number of attention heads. Set to up to 4 for large datasets
         n_heads=config.model.attn_heads,
         attn_dropout=config.model.attn_dropout,  # between 0.1 and 0.3 are good values
