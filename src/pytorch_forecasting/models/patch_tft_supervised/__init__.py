@@ -5,7 +5,6 @@ from copy import copy
 import logging
 from typing import Dict, List, Tuple, Union, Optional, Callable
 
-import cvxpy as cp
 from matplotlib import pyplot as plt
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -659,44 +658,6 @@ class PatchTftSupervised(BaseModelWithCovariates):
         rec_loss = torch.mean(torch.mean(self.MSE(output[0], y[0][0]), dim=-1))
         return series_loss, prior_loss, rec_loss
 
-    def predict_step(self, batch, batch_idx):
-        #logging.info(f"predict_step:{batch}")
-        predict_kwargs = {}
-        predict_callbacks = [c for c in self.trainer.callbacks if isinstance(c, PredictCallback)]
-        if predict_callbacks:
-          predict_callback = predict_callbacks[0]
-          predict_kwargs = predict_callback.predict_kwargs
-        x, y = batch
-        log, out = self.step(x, y, batch_idx, **predict_kwargs)
-        #logging.info(f"log:{log}, out:{out}")
-        # return out
-        #traceback.print_stack()
-        return log, out  # need to return output to be able to use predict callback
-
-    def maximize_trade_constrain_downside(self, bid_price, offer_price, da_validate,
-                                          rt_validate, percentile, max_loss, gamma):
-        bid_return = (da_validate <= bid_price) * (rt_validate - da_validate)
-        offer_return = (offer_price < da_validate) * (da_validate - rt_validate)                                                  
-        
-        weights1 = cp.Variable(bid_return.mean(axis=0).shape)
-        weights2 = cp.Variable(offer_return.mean(axis=0).shape)
-        
-        objective = cp.Maximize(weights1* bid_return.mean(axis=0)+ weights2* offer_return.mean(axis=0))        
-        nsamples = round(bid_return.shape[0]*self.percentile)
-        
-        portfolio_rets = weights1*bid_return.T + weights2*offer_return.T
-        wors_hour = cp.sum_smallest(portfolio_rets, nsamples)/nsamples
-          
-        constraints = [wors_hour>=max_loss, weights1>=0, weights2>=0,
-                       cp.norm(weights2, self.l_norm) <= self.gamma,
-                       cp.norm(weights1, self.l_norm) <= self.gamma]
-        
-        problem = cp.Problem(objective, constraints)
-        problem.solve()
-
-        return weights1.value.round(4).ravel(), bid_return, weights2.value.round(4).ravel(), offer_return, problem.value
-
-            
     def training_step(self, batch, batch_idx, **kwargs):
         x, y = batch
         opt = self.optimizers()
@@ -973,6 +934,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             v=attn_input,
             mask=self.get_attention_mask(encoder_lengths=encoder_lengths, decoder_lengths=decoder_lengths),
         )
+        #logging.info(f"attn_output_weights:{attn_output_weights}, {attn_output_weights.shape}")
         raw_attn_output = attn_output
         #logging.info(f"attn_output:{attn_output.shape}, attn_input:{attn_input.shape}, priors:{priors.shape}")
         # skip connection over attention

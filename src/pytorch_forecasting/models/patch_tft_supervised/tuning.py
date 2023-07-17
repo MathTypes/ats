@@ -46,6 +46,8 @@ def optimize_hyperparameters(
     hidden_size_range: Tuple[int, int] = (16, 265),
     hidden_continuous_size_range: Tuple[int, int] = (8, 64),
     attention_head_size_range: Tuple[int, int] = (1, 4),
+    n_layer_range: Tuple[int, int] = (2, 8),
+    lstm_layer_range: Tuple[int, int] = (2, 8),
     d_model_range: Tuple[int, int] = (4, 16),
     stride_range: Tuple[int, int] = (1, 4),
     dropout_range: Tuple[float, float] = (0.1, 0.3),
@@ -151,6 +153,8 @@ def optimize_hyperparameters(
         prediction_length = train_dataloaders.dataset.max_prediction_length
         context_length = train_dataloaders.dataset.max_encoder_length
         stride = trial.suggest_int("stride", *stride_range)
+        n_layers = trial.suggest_int("n_layers", *n_layers_range)
+        lstm_layers = trial.suggest_int("lstm_layers", *lstm_layers_range)
         patch_len = 2 * stride
         d_model = trial.suggest_int("d_model", *d_model_range)
         num_patch = (max(context_length, patch_len) - patch_len) // stride + 1
@@ -180,6 +184,8 @@ def optimize_hyperparameters(
             num_patch=num_patch,
             prediction_num_patch=prediction_num_patch,
             loss=loss,
+            n_layers=n_layers,
+            lstm_layers=lstm_layers,
             loss_per_head=loss_per_head,
             learning_rate=0.03,
             d_model=d_model,
