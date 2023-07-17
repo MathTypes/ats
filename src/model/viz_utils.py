@@ -33,6 +33,7 @@ from timeseries_transformer import TimeSeriesTFT
 import torch
 import wandb
 
+day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
 def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     wandb_logger = WandbLogger(project="ATS", log_model=True)
@@ -48,11 +49,12 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     prediction_kwargs = {"reduction": None}
     prediction_kwargs = {}
     y_hats = to_list(
-        model.to("cuda:0").to_prediction(
-            raw_predictions.output, **prediction_kwargs)
+        model.to("cuda:0").to_prediction(raw_predictions.output, **prediction_kwargs)
     )
-    logging.info(f"y_hats[0].shape:{y_hats[0].shape}, raw_predictions.y:{raw_predictions.y[0].shape}")
-    #if isinstance(y_hats, (Tuple)):
+    logging.info(
+        f"y_hats[0].shape:{y_hats[0].shape}, raw_predictions.y:{raw_predictions.y[0].shape}"
+    )
+    # if isinstance(y_hats, (Tuple)):
     # yhats: [returns, position]
     y_hats = y_hats[0]
     mean_losses = metrics(y_hats, raw_predictions.y).mean(1)
@@ -112,8 +114,8 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
             & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
         ]
         x_time = train_data_rows["time"]
-        #y_close = train_data_rows["close_back"][-prediction_length:]
-        #logging.info(f"xtime:{x_time}, y_close:{y_close}, y_close_cum_row:{y_close_cum_row}")
+        # y_close = train_data_rows["close_back"][-prediction_length:]
+        # logging.info(f"xtime:{x_time}, y_close:{y_close}, y_close_cum_row:{y_close_cum_row}")
         fig = make_subplots(
             rows=2,
             cols=3,
@@ -225,8 +227,8 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         base = 0
         y_max = torch.max(y_close_cum_row) - base
         y_min = torch.min(y_close_cum_row) - base
-        #y_max = np.max(y_close_cum_sum)
-        #y_min = np.min(y_close_cum_sum)
+        # y_max = np.max(y_close_cum_sum)
+        # y_min = np.min(y_close_cum_sum)
         pred_max = torch.max(y_hat_cum)
         pred_min = torch.min(y_hat_cum)
         data_table.add_data(
@@ -254,3 +256,188 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
             0,  # 18
         )
     return data_table
+
+
+def add_viz_row(y_hats, y_hats_cum, indices, matched_eval_data, x, data_table, config, pl_module, out):
+    y_hat = y_hats[idx]
+    y_hat_cum = y_hats_cum[idx]
+    y_hat_cum_max = torch.max(y_hat_cum)
+    y_hat_cum_min = torch.min(y_hat_cum)
+    index = indices.iloc[idx]
+    # logging.info(f"index:{index}")
+    train_data_row = matched_eval_data[
+        matched_eval_data.time_idx == index.time_idx
+    ].iloc[0]
+    # logging.info(f"train_data_row:{train_data_row}")
+    dm = train_data_row["time"]
+    dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
+    y_close_cum_sum_row = y_close_cum_sum[idx]
+    y_close_row = y_close[idx]
+    y_close_cum_max = torch.max(y_close_cum_sum_row)
+    y_close_cum_min = torch.min(y_close_cum_sum_row)
+    if not (
+        abs(y_hat_cum_max) > 0.01
+        or abs(y_hat_cum_min) > 0.01
+        or abs(y_close_cum_max) > 0.01
+        or abs(y_close_cum_min) > 0.01
+    ):
+        return
+    cnt += 1
+    train_data_rows = matched_eval_data[
+        (
+            matched_eval_data.time_idx
+            >= index.time_idx - config.model.context_length
+        )
+        & (
+            matched_eval_data.time_idx
+            < index.time_idx + config.model.prediction_length
+        )
+    ]
+    # logging.info(f"train_data:rows:{train_data_rows}")
+    if self.target_size > 1:
+        context_length = len(x["encoder_target"][0][idx])
+    else:
+        context_length = len(x["encoder_target"][idx])
+    prediction_length = len(x["decoder_time_idx"][idx])
+    decoder_time_idx = x["decoder_time_idx"][idx][0].cpu().detach().numpy()
+    x_time = matched_eval_data[
+        (matched_eval_data.time_idx >= decoder_time_idx - context_length)
+        & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
+    ]["time"]
+    # logging.info(f"x_time:{x_time}")
+    fig = go.Figure(
+        data=go.Ohlc(
+            x=train_data_rows["time"],
+            open=train_data_rows["open"],
+            high=train_data_rows["high"],
+            low=train_data_rows["low"],
+            close=train_data_rows["close"],
+        )
+    )
+    # add a bar at prediction time
+    fig.update(layout_xaxis_rangeslider_visible=False)
+    prediction_date_time = (
+        train_data_row["ticker"]
+        + " "
+        + dm_str
+        + " "
+        + day_of_week_map[train_data_row["day_of_week"]]
+        + " "
+        + str(train_data_row["close"])
+    )
+    fig.update_layout(title=prediction_date_time, font=dict(size=20))
+    fig.update_xaxes(
+        rangebreaks=[
+            dict(bounds=["sat", "mon"]),  # hide weekends
+            # dict(
+            #    bounds=[17, 2], pattern="hour"
+            # ),  # hide hours outside of 4am-5pm
+        ],
+    )
+    img_bytes = fig.to_image(format="png")  # kaleido library
+    raw_im = PIL.Image.open(BytesIO(img_bytes))
+
+    fig = make_subplots(
+        rows=2,
+        cols=3,
+        specs=[
+            [
+                {"secondary_y": True},
+                {"secondary_y": True},
+                {"secondary_y": True},
+            ],
+            [
+                {"secondary_y": True},
+                {"secondary_y": True},
+                {"secondary_y": True},
+            ],
+        ],
+    )
+    fig.update_layout(
+        autosize=False,
+        width=1500,
+        height=800,
+        yaxis=dict(
+            side="right",
+        ),
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+    )
+    fig.update_xaxes(
+        rangebreaks=[
+            dict(bounds=["sat", "mon"]),  # hide weekends
+            # dict(
+            #    bounds=[17, 4], pattern="hour"
+            # ),  # hide hours outside of 4am-5pm
+        ],
+    )
+    prediction_date_time = (
+        train_data_row["ticker"]
+        + " "
+        + dm_str
+        + " "
+        + day_of_week_map[train_data_row["day_of_week"]]
+    )
+    fig.update_layout(title=prediction_date_time, font=dict(size=20))
+    pl_module.plot_prediction(
+        x,
+        out,
+        idx=idx,
+        ax=fig,
+        row=1,
+        col=1,
+        draw_mode="pred_cum",
+        x_time=x_time,
+    )
+    pl_module.plot_prediction(
+        x,
+        out,
+        idx=idx,
+        ax=fig,
+        row=2,
+        col=1,
+        draw_mode="pred_pos",
+        x_time=x_time,
+    )
+    interpretation = {}
+    for name in interp_output.keys():
+        if interp_output[name].dim() > 1:
+            interpretation[name] = interp_output[name][idx]
+        else:
+            interpretation[name] = interp_output[name]
+    pl_module.plot_interpretation(
+        interpretation,
+        ax=fig,
+        cells=[
+            {"row": 1, "col": 2},
+            {"row": 2, "col": 2},
+            {"row": 1, "col": 3},
+            {"row": 2, "col": 3},
+        ],
+    )
+    img_bytes = fig.to_image(format="png")  # kaleido library
+    im = PIL.Image.open(BytesIO(img_bytes))
+    img = wandb.Image(im)
+    data_table.add_data(
+        train_data_row["ticker"],  # 0 ticker
+        dm,  # 1 time
+        train_data_row["time_idx"],  # 2 time_idx
+        train_data_row["day_of_week"],  # 3 day of week
+        train_data_row["hour_of_day"],  # 4 hour of day
+        train_data_row["year"],  # 5 year
+        train_data_row["month"],  # 6 month
+        train_data_row["day_of_month"],  # 7 day_of_month
+        wandb.Image(raw_im),  # 8 image
+        # np.argmax(label, axis=-1)
+        y_close_cum_max,  # 9 max
+        y_close_cum_min,  # 10 min
+        0,  # 11 close_back_cusum
+        dm_str,  # 12
+        decoder_time_idx,
+        y_hat_cum_max,
+        y_hat_cum_min,
+        img,
+        y_hat_cum_max - y_close_cum_max,
+        y_hat_cum_min - y_close_cum_min,
+        rmse[idx],
+        mae[idx],
+    )
