@@ -235,9 +235,11 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             )
             cnt = 0
             for idx in range(len(y_hats)):
-                viz_utils.add_viz_row(y_hats, y_hats_cum, self.indices,
-                                      self.matched_eval_data, x, data_table,
-                                      self.config, self.pl_module, out)
+                if viz_utils.add_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
+                                         self.matched_eval_data, x, data_table,
+                                         self.config, self.pl_module, out, self.target_size,
+                                         interp_output, rmse, mae):
+                    cnt+=1
             del x
             del y
             torch.cuda.empty_cache()

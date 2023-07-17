@@ -258,7 +258,9 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     return data_table
 
 
-def add_viz_row(y_hats, y_hats_cum, indices, matched_eval_data, x, data_table, config, pl_module, out):
+def add_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
+                matched_eval_data, x, data_table, config, pl_module,
+                out, target_size, interp_output, rmse, mae):
     y_hat = y_hats[idx]
     y_hat_cum = y_hats_cum[idx]
     y_hat_cum_max = torch.max(y_hat_cum)
@@ -281,8 +283,7 @@ def add_viz_row(y_hats, y_hats_cum, indices, matched_eval_data, x, data_table, c
         or abs(y_close_cum_max) > 0.01
         or abs(y_close_cum_min) > 0.01
     ):
-        return
-    cnt += 1
+        return False
     train_data_rows = matched_eval_data[
         (
             matched_eval_data.time_idx
@@ -294,7 +295,7 @@ def add_viz_row(y_hats, y_hats_cum, indices, matched_eval_data, x, data_table, c
         )
     ]
     # logging.info(f"train_data:rows:{train_data_rows}")
-    if self.target_size > 1:
+    if target_size > 1:
         context_length = len(x["encoder_target"][0][idx])
     else:
         context_length = len(x["encoder_target"][idx])
@@ -441,3 +442,4 @@ def add_viz_row(y_hats, y_hats_cum, indices, matched_eval_data, x, data_table, c
         rmse[idx],
         mae[idx],
     )
+    return True
