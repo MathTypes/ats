@@ -391,15 +391,9 @@ class PositionalEncoder(torch.nn.Module):
             x = x + pe
             return x
 
-
 class ScaledDotProductAttention(nn.Module):
-    def __init__(self, win_size, dropout: float = None, scale: bool = True):
+    def __init__(self, dropout: float = None, scale: bool = True):
         super(ScaledDotProductAttention, self).__init__()
-        self.window_size = win_size
-        self.distances = torch.zeros((win_size, win_size)).cuda()
-        for i in range(win_size):
-            for j in range(win_size):
-                self.distances[i][j] = abs(i - j)
         if dropout is not None:
             self.dropout = nn.Dropout(p=dropout)
         else:
@@ -407,70 +401,39 @@ class ScaledDotProductAttention(nn.Module):
         self.softmax = nn.Softmax(dim=2)
         self.scale = scale
 
-    def forward(self, q, k, v, sigma, mask=None):
-        #logging.info(f"queries:{q.shape}, key:{k.shape}, values:{v.shape}, sigma:{sigma.shape}, mask:{mask.shape}")
-        # queries:torch.Size([512, 3, 4, 5]),
-        # key:torch.Size([512, 6, 4, 5]),
-        # values:torch.Size([512, 6, 4, 5]),
-        # sigma:torch.Size([512, 3, 4])
-        B, L, H, E = q.shape
-        _, S, _, D = v.shape
+    def forward(self, q, k, v, mask=None):
+        attn = torch.bmm(q, k.permute(0, 2, 1))  # query-key overlap
 
-        attn = torch.einsum("blhe,bshe->bhls", q, k)
-        #logging.info(f"attn after einsum:{attn.shape}")
-        #if self.mask:
-        #    if attn_mask is None:
-        #        attn_mask = TriangularCausalMask(B, L, device=queries.device)
-        #    scores.masked_fill_(attn_mask.mask, -np.inf)
-        #attn = scale * scores
-        
-        #attn = torch.bmm(q, k.permute(0, 2, 1))  # query-key overlap
         if self.scale:
             dimension = torch.as_tensor(k.size(-1), dtype=attn.dtype, device=attn.device).sqrt()
             attn = attn / dimension
 
-        #logging.info(f"sigma before transpose:{sigma.shape}")
-        sigma = sigma.transpose(1, 2)  # B L H ->  B H L [ 512, 4, 3]
-        sigma = torch.sigmoid(sigma * 5) + 1e-5
-        sigma = torch.pow(3, sigma) - 1
-        sigma = sigma.unsqueeze(-1).repeat(1, 1, 1, self.window_size)  # B H L L
-        mask = mask.unsqueeze(1).repeat(1, H, 1, 1) # B H L S
-        #logging.info(f"sigma after unsqueeze:{sigma.shape}")
-        prior = self.distances.unsqueeze(0).unsqueeze(0).repeat(sigma.shape[0], sigma.shape[1], 1, 1).cuda()
-        prior = 1.0 / (math.sqrt(2 * math.pi) * sigma) * torch.exp(-prior ** 2 / 2 / (sigma ** 2))
-        #logging.info(f"prior after unsqueeze: {prior.shape}")
-        #logging.info(f"attn.shape:{attn.shape}")
         if mask is not None:
-            #logging.info(f"mask.shape:{mask.shape}")
             _MASKING_VALUE = -1e+9 if attn.dtype == torch.float32 else -1e+4
-            #logging.info(f"attn:{attn.shape}, mask:{mask.shape}")
             attn = attn.masked_fill(mask, _MASKING_VALUE)
-
         attn = self.softmax(attn)
-        #logging.info(f"attn:{attn.shape}")
+
         if self.dropout is not None:
             attn = self.dropout(attn)
-        output = torch.einsum("bhls,bshd->blhd", attn, v)
-        #output = torch.bmm(attn, v) # only works for dim=3
-        return output.contiguous(), attn, prior, sigma
-
+        output = torch.bmm(attn, v)
+        return output, attn
 
 class InterpretableMultiHeadAttention(nn.Module):
-    def __init__(self, windows_size, n_head: int, d_model: int, dropout: float = 0.0):
+    def __init__(self, n_head: int, d_model: int, dropout: float = 0.0,
+                 windows_size: int = 0):
         super(InterpretableMultiHeadAttention, self).__init__()
 
         self.n_head = n_head
         self.d_model = d_model
         self.d_k = self.d_q = self.d_v = d_model // n_head
-        #logging.info(f"d_k:{self.d_k}, d_model:{d_model}, n_head:{n_head}")
         self.dropout = nn.Dropout(p=dropout)
-        self.query_projection = nn.Linear(d_model, self.d_k * n_head)
-        self.key_projection = nn.Linear(d_model, self.d_k * n_head)
-        self.value_projection = nn.Linear(d_model, self.d_v * n_head)
-        self.sigma_projection = nn.Linear(d_model, self.n_head)
-        
-        self.attention = ScaledDotProductAttention(win_size=windows_size)
-        self.out_projection = nn.Linear(self.d_v * n_head, d_model)
+
+        self.v_layer = nn.Linear(self.d_model, self.d_v)
+        self.q_layers = nn.ModuleList([nn.Linear(self.d_model, self.d_q) for _ in range(self.n_head)])
+        self.k_layers = nn.ModuleList([nn.Linear(self.d_model, self.d_k) for _ in range(self.n_head)])
+        self.attention = ScaledDotProductAttention()
+        self.w_h = nn.Linear(self.d_v, self.d_model, bias=False)
+
         self.init_weights()
 
     def init_weights(self):
@@ -481,25 +444,22 @@ class InterpretableMultiHeadAttention(nn.Module):
                 torch.nn.init.zeros_(p)
 
     def forward(self, q, k, v, mask=None) -> Tuple[torch.Tensor, torch.Tensor]:
-        #[batch_size, window_size, d_model]
-        #logging.info(f"q:{q.shape}, k:{k.shape}, v:{v.shape}")
-        B, L, H = q.shape
-        _, S, _ = k.shape
-        H = self.n_head
-        x = q
-        queries = self.query_projection(q).view(B, L, H, -1)
-        keys = self.key_projection(k).view(B, S, H, -1)
-        values = self.value_projection(v).view(B, S, H, -1)
-        sigma = self.sigma_projection(x).view(B, L, H)
+        heads = []
+        attns = []
+        vs = self.v_layer(v)
+        for i in range(self.n_head):
+            qs = self.q_layers[i](q)
+            ks = self.k_layers[i](k)
+            head, attn = self.attention(qs, ks, vs, mask)
+            head_dropout = self.dropout(head)
+            heads.append(head_dropout)
+            attns.append(attn)
 
-        out, series, prior, sigma = self.attention(
-            queries,
-            keys,
-            values,
-            sigma,
-            mask
-        )
-        out = out.view(B, L, -1)
+        head = torch.stack(heads, dim=2) if self.n_head > 1 else heads[0]
+        attn = torch.stack(attns, dim=2)
 
-        return self.out_projection(out), series, prior, sigma
+        outputs = torch.mean(head, dim=2) if self.n_head > 1 else head
+        outputs = self.w_h(outputs)
+        outputs = self.dropout(outputs)
 
+        return outputs, attn, None, None

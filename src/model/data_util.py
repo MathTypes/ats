@@ -185,46 +185,6 @@ def get_processed_data(
     #ds = ds[(ds.hour_of_day > 1) & (ds.hour_of_day < 17)]
     # logging.info(f"ds after filter:{ds.head()}")
     # Need to recompute close_back after filtering
-    ds = ds.drop(columns=["close_back", "volume_back", "dv_back"])
-    # winsorize using rolling 5X standard deviations to remove outliers
-    ewm = ds["close"].ewm(halflife=HALFLIFE_WINSORISE)
-    means = ewm.mean()
-    stds = ewm.std()
-    ds["close"] = np.minimum(ds["close"], means + VOL_THRESHOLD * stds)
-    ds["close"] = np.maximum(ds["close"], means - VOL_THRESHOLD * stds)
-    ds["daily_returns"] = calc_returns(ds["close"])
-    ds["daily_vol"] = calc_daily_vol(ds["daily_returns"])
-    ds["week_of_year"] = ds.index.isocalendar().week
-    ds["month_of_year"] = ds.index.month
-    
-    ds["minutes_after_daily_close"] = ds.time.apply(
-        lambda x: compute_minutes_after_daily_close(x)
-    )
-    ds["minutes_to_daily_close"] = ds.time.apply(
-        lambda x: compute_minutes_to_daily_close(x)
-    )
-    ds["days_to_weekly_close"] = ds.time.apply(
-        lambda x: compute_days_to_weekly_close(x)
-    )
-    ds["days_to_monthly_close"] = ds.time.apply(
-        lambda x: compute_days_to_monthly_close(x)
-    )
-    ds["days_to_quarterly_close"] = ds.time.apply(
-        lambda x: compute_days_to_quarterly_close(x)
-    )
-    ds["days_to_option_expiration"] = ds.time.apply(
-        lambda x: compute_days_to_option_exipiration(x)
-    )
-
-    trend_combinations = [(8, 24), (16, 48), (32, 96)]
-    for short_window, long_window in trend_combinations:
-        ds[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
-            ds["close"], short_window, long_window
-        )
-
-    ds_pct_back = ds[["close", "volume", "dv"]].pct_change(periods=1)
-    # df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
-    ds = ds.join(ds_pct_back, rsuffix="_back")
     ds_dup = ds[ds.index.duplicated()]
     if not ds_dup.empty:
         logging.info(f"ds_dup:{ds_dup}")
@@ -325,7 +285,59 @@ def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
     raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
     raw_data = raw_data.set_index("new_idx")
     raw_data = raw_data.sort_index()
+
+    raw_data = raw_data.drop(columns=["close_back", "volume_back", "dv_back", "close_fwd",
+                                      "volume_fwd", "dv_fwd", "cum_volume", "cum_dv"])
+    ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
+    means = ewm.mean()
+    stds = ewm.std()
+    raw_data["close"] = np.minimum(raw_data["close"], means + VOL_THRESHOLD * stds)
+    raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
+
+    logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
+    new_features = raw_data.groupby(["ticker"])[['volume','dv','close','timestamp']].apply(ticker_transform)
+    raw_data = raw_data.join(new_features, rsuffix="_ticker")
+    raw_data.reset_index(drop = True, inplace = True)
+    raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
+    raw_data = raw_data.set_index("new_idx")
+    raw_data = raw_data.sort_index()
+    logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
+
+    # winsorize using rolling 5X standard deviations to remove outliers
+    raw_data["daily_returns"] = calc_returns(raw_data["close"])
+    raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
+    raw_data["week_of_year"] = raw_data["time"].apply(lambda x : x.isocalendar()[1])
+    raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)
     
+    raw_data["minutes_after_daily_close"] = raw_data.time.apply(
+        lambda x: compute_minutes_after_daily_close(x)
+    )
+    raw_data["minutes_to_daily_close"] = raw_data.time.apply(
+        lambda x: compute_minutes_to_daily_close(x)
+    )
+    raw_data["days_to_weekly_close"] = raw_data.time.apply(
+        lambda x: compute_days_to_weekly_close(x)
+    )
+    raw_data["days_to_monthly_close"] = raw_data.time.apply(
+        lambda x: compute_days_to_monthly_close(x)
+    )
+    raw_data["days_to_quarterly_close"] = raw_data.time.apply(
+        lambda x: compute_days_to_quarterly_close(x)
+    )
+    raw_data["days_to_option_expiration"] = raw_data.time.apply(
+        lambda x: compute_days_to_option_exipiration(x)
+    )
+
+    trend_combinations = [(8, 24), (16, 48), (32, 96)]
+    for short_window, long_window in trend_combinations:
+        raw_data[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
+            raw_data["close"], short_window, long_window
+        )
+
+    #ds_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
+    # df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
+    #raw_data = raw_data.join(ds_pct_back, rsuffix="_back")
+   
     cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(compute_open_time, cal=cal)
@@ -343,9 +355,6 @@ def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
     raw_data["hour_of_day"] = raw_data.time.apply(lambda x: x.hour)
     raw_data["day_of_week"] = raw_data.time.apply(lambda x: x.dayofweek)
     raw_data["day_of_month"] = raw_data.time.apply(lambda x: x.day)
-    #logging.info(f"raw_data: {raw_data.iloc[:3]}")
-    new_features = raw_data.groupby(["ticker"])['volume','dv','close','timestamp'].apply(ticker_transform)
-    raw_data = raw_data.join(new_features, rsuffix="_back")
     raw_data['time_to_high_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_21_ff")
     raw_data['time_to_low_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_21_ff")
     raw_data['time_to_high_51_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_51_ff")

@@ -55,6 +55,7 @@ import wandb
 from data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
 from models import AttentionEmbeddingLSTM
 import model_utils
+from prediction import prediction_utils
 from utils import Pipeline
 import viz_utils
 
@@ -425,27 +426,14 @@ class PatchTftSupervisedPipeline(Pipeline):
                 new_prediction_data = train_dataset.filter(
                     lambda x: (x.time_idx_last == last_time_idx)
                 )
-                #logging.info(f"new_prediction_data:{new_prediction_data}")
-                logging.info(f"index:{train_dataset.index.iloc[-5:]}")
-                trainer_kwargs = {"logger": wandb_logger}
-                #logging.info(f"trainer_kwargs:{trainer_kwargs}")
-                new_raw_predictions = self.model.predict(
-                    new_prediction_data,
-                    mode="raw",
-                    return_x=True,
-                    batch_size=1,
-                    trainer_kwargs=trainer_kwargs,
-                )
-                if isinstance(new_raw_predictions, (list)) and len(new_raw_predictions)<1:
-                    logging.info(f"no prediction")
-                    continue
-                #logging.info(f"new_raw_predictions:{new_raw_predictions}")
-                prediction_kwargs = {}
-                y_hats = to_list(
-                    self.model.to_prediction(
-                        new_raw_predictions.output, **prediction_kwargs
-                    ))
-                prediction, position = y_hats
+                # new_prediction_data is the last encoder_data, we need to add decoder_data based on
+                # known features or lagged unknown features
+                prediction, y_quantiles = prediciton_utils.predict(self.model, new_prediction_data, wandb_logger)
+                #prediction, position = y_hats
+                logging.info(f"prediction:{prediction}")
+                #y_quantiles = to_list(self.model.to_quantiles(new_raw_predictions.output,
+                #                                              **quantiles_kwargs))[0]
+                logging.info(f"y_quantiles:{y_quantiles}")
                 #logging.info(f"y_hats:{y_hats}")
                 #logging.info(f"y:{new_raw_predictions.y}")
                 new_data_row = new_data.iloc[0]
