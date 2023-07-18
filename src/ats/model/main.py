@@ -1,11 +1,13 @@
 import argparse
 import datetime
-import hydra
 import logging
+from pathlib import Path
+import sys
+
+import hydra
 import numpy as np
 from omegaconf import DictConfig
 import pandas as pd
-from pathlib import Path
 from pipelines import (
     TFTPipeline,
     AttentionEmbeddingLSTMPipeline,
@@ -20,10 +22,10 @@ import ray
 import torch
 import wandb
 from ray.util.dask import enable_dask_on_ray
-from utils import count_parameters
-from util import config_utils
-from util import logging_utils
-import sys
+
+from ats.model.utils import count_parameters
+from ats.util import config_utils
+from ats.util import logging_utils
 
 RESULTS_PATH = Path("results")
 

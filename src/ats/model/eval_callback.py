@@ -15,7 +15,8 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 import torch
 import wandb
 from wandb.keras import WandbEvalCallback
-from model import viz_utils
+
+from ats.model import viz_utils
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 

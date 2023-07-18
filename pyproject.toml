@@ -4,7 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["Jianjun Chen <jianjun00@gmail.com>"]
 readme = "README.md"
-packages = [{include = "ats", from = "src"}]
+packages = [
+	 {include = "ats", from = "src"},
+	 {include = "pytorch_forecasting", from = "src"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"

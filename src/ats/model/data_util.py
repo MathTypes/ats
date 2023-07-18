@@ -10,15 +10,16 @@ import pytz
 import ray
 import ta
 
-from model.mom_trans.classical_strategies import (
+import pandas_market_calendars as mcal
+from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
+
+from ats.model.mom_trans.classical_strategies import (
     MACDStrategy,
     calc_returns,
     calc_daily_vol,
     calc_vol_scaled_returns,
 )
-import pandas_market_calendars as mcal
-from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
-from util import time_util
+from ats.util import time_util
 
 
 VOL_THRESHOLD = 5  # multiple to winsorise by

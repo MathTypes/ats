@@ -61,15 +61,15 @@ from torch import nn
 import wandb
 from wandb.keras import WandbMetricsLogger
 
-from data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
-from datasets import generate_stock_returns
-from model import data_util
-from log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
-from loss import MultiLossWithUncertaintyWeight
-import nhits_tuner
-from util import logging_utils
-from util import config_utils
-from util import time_util
+from ats.model.data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
+from ats.model.datasets import generate_stock_returns
+from ats.model import data_util
+from ats.model.log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
+from ats.model.loss import MultiLossWithUncertaintyWeight
+from ats.model import nhits_tuner
+from ats.util import logging_utils
+from ats.util import config_utils
+from ats.util import time_util
 
 
 def create_loss(loss_name, device, prediction_length=None, hidden_size=None):

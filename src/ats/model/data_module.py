@@ -11,9 +11,6 @@ from datasets import (
     tabular_to_sliding_dataset,
 )
 from omegaconf import OmegaConf
-from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
-import timeseries_dataset
-import timeseries_utils
 from pytorch_forecasting.data.encoders import (
     EncoderNormalizer,
     GroupNormalizer,
@@ -23,6 +20,10 @@ from pytorch_forecasting.data.encoders import (
 )
 from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
+from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
+
+from ats.model import timeseries_dataset
+from ats.model import timeseries_utils
 
 eval_batch_size = 10
 

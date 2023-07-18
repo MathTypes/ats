@@ -26,15 +26,7 @@ import pytz
 import plotly.graph_objects as go
 import PIL
 from plotly.subplots import make_subplots
-from timeseries_transformer import TimeSeriesTFT
-import torch
-import wandb
-
-from ats.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
-from ats.models import AttentionEmbeddingLSTM
-import ats.model_utils
-from ats.prediction import prediction_utils
-from ats.pytorch_forecasting import (
+from pytorch_forecasting import (
     Baseline,
     TemporalFusionTransformer,
     TimeSeriesDataSet,
@@ -42,8 +34,8 @@ from ats.pytorch_forecasting import (
     PatchTstTftTransformer,
     PatchTftSupervised,
 )
-from ats.pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
-from ats.pytorch_forecasting.metrics import (
+from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
+from pytorch_forecasting.metrics import (
     MAE,
     MAPE,
     MASE,
@@ -53,12 +45,20 @@ from ats.pytorch_forecasting.metrics import (
     PoissonLoss,
     QuantileLoss,
 )
-from ats.pytorch_forecasting.utils import create_mask, detach, to_list
-from ats.pytorch_forecasting.models.patch_tft_supervised.tuning import (
+from pytorch_forecasting.utils import create_mask, detach, to_list
+from pytorch_forecasting.models.patch_tft_supervised.tuning import (
     optimize_hyperparameters,
 )
-from ats.utils import Pipeline
-import ats.viz_utils
+from timeseries_transformer import TimeSeriesTFT
+import torch
+import wandb
+
+from ats.model.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
+from ats.model.models import AttentionEmbeddingLSTM
+import ats.model.model_utils
+from ats.prediction import prediction_utils
+from ats.model.model.utils import Pipeline
+from ats.model import viz_utils
 
 torch.manual_seed(0)
 np.random.seed(0)
