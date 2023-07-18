@@ -55,9 +55,9 @@ import wandb
 
 from ats.model.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
 from ats.model.models import AttentionEmbeddingLSTM
-import ats.model.model_utils
+from ats.model import model_utils
 from ats.prediction import prediction_utils
-from ats.model.model.utils import Pipeline
+from ats.model.utils import Pipeline
 from ats.model import viz_utils
 
 torch.manual_seed(0)

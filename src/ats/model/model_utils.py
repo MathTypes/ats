@@ -374,7 +374,7 @@ def get_input_for_ticker(
     base_dir, start_date, end_date, ticker, asset_type, time_interval
 ):
     try:
-        from model import data_util
+        from ats.model import data_util
         logging.info(f"reading from base_dir:{base_dir}, ticker:{ticker}")
         all_data = data_util.get_processed_data(
             base_dir, start_date, end_date, ticker, asset_type, time_interval
