@@ -39,26 +39,4 @@ jobs:
           coverage run --source=src -m pytest tests
           coverage lcov -o coverage.lcov
           
-      - name: coveralls parallel
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.github_token }}
-          flag-name: test_${{matrix.os}}_${{matrix.python-version}}
-          parallel: true
-          path-to-lcov: coverage.lcov
-
-  report_coverage:
-    if: ${{ always() }}
-    needs: run_tests
-    runs-on: ubuntu-latest
-
-    steps:  
-      - uses: actions/checkout@v3
-      
-      - name: coveralls finalize
-        id: coveralls_finalize
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{secrets.github_token}}
-          parallel-finished: true
-          path-to-lcov: coverage.lcov
+   
