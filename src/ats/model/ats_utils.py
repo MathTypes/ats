@@ -18,14 +18,13 @@ import numpy as np
 import pandas as pd
 import torch
 
-from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
-from pytorch_forecasting.data import GroupNormalizer
-from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
+from ats.pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
+from ats.pytorch_forecasting.data import GroupNormalizer
+from ats.pytorch_forecasting.data.examples import get_stallion_data
+from ats.pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
+from ats.pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
     optimize_hyperparameters,
 )
-
-from pytorch_forecasting.data.examples import get_stallion_data
 
 data = get_stallion_data()
 
