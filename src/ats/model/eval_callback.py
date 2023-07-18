@@ -243,6 +243,16 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     cnt+=1
             del x
             del y
+            del y_raws
+            del interp_output
+            del predictions
+            del y_hats_cum
+            del y_quantiles
+            del y_close_cum_sum
+            del log
+            del out
+            del y_hats
+            del result
             torch.cuda.empty_cache()
             logging.info(f"added {cnt} examples")
         # logging.info(f"preds:{len(preds)}")

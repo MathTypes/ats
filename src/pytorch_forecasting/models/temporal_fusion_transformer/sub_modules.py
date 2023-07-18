@@ -392,8 +392,13 @@ class PositionalEncoder(torch.nn.Module):
             return x
 
 class ScaledDotProductAttention(nn.Module):
-    def __init__(self, dropout: float = None, scale: bool = True):
+    def __init__(self, win_size, dropout: float = None, scale: bool = True):
         super(ScaledDotProductAttention, self).__init__()
+        self.window_size = win_size
+        self.distances = torch.zeros((win_size, win_size)).cuda()
+        for i in range(win_size):
+            for j in range(win_size):
+                self.distances[i][j] = abs(i - j)
         if dropout is not None:
             self.dropout = nn.Dropout(p=dropout)
         else:
@@ -401,22 +406,39 @@ class ScaledDotProductAttention(nn.Module):
         self.softmax = nn.Softmax(dim=2)
         self.scale = scale
 
-    def forward(self, q, k, v, mask=None):
+    def forward(self, q, k, v, sigma, mask=None):
+        # q: [B, L, E]
+        # k: [B, S, E]
+        # v: [B, S, E]
+        # q.shape:torch.Size([256, 3, 2]), k:torch.Size([256, 34, 2]), v:torch.Size([256, 34, 2])
+        logging.info(f"q.shape:{q.shape}, k:{k.shape}, v:{v.shape}, sigma:{sigma.shape}")
         attn = torch.bmm(q, k.permute(0, 2, 1))  # query-key overlap
 
         if self.scale:
             dimension = torch.as_tensor(k.size(-1), dtype=attn.dtype, device=attn.device).sqrt()
             attn = attn / dimension
-
+        # sigma: [B, L]
+        #sigma = sigma.transpose(1, 2)  # B L H ->  B H L [ 512, 4, 3]
+        sigma = torch.sigmoid(sigma * 5) + 1e-5
+        sigma = torch.pow(3, sigma) - 1
+        #sigma = sigma.unsqueeze(-1).repeat(1, 1, 1, self.window_size)  # B H L L
+        sigma = sigma.repeat(1, 1, self.window_size)  # B L L
+        #logging.info(f"sigma:{sigma.shape}")
+        prior = self.distances.unsqueeze(0).repeat(sigma.shape[0], 1, 1).cuda()
+        #logging.info(f"sigma:{sigma.shape}, prior:{prior.shape}")
+        prior = 1.0 / (math.sqrt(2 * math.pi) * sigma) * torch.exp(-prior ** 2 / 2 / (sigma ** 2))
+        #logging.info(f"prior after unsqueeze: {prior.shape}")
+        
         if mask is not None:
             _MASKING_VALUE = -1e+9 if attn.dtype == torch.float32 else -1e+4
             attn = attn.masked_fill(mask, _MASKING_VALUE)
+
         attn = self.softmax(attn)
 
         if self.dropout is not None:
             attn = self.dropout(attn)
         output = torch.bmm(attn, v)
-        return output, attn
+        return output, attn, prior, sigma
 
 class InterpretableMultiHeadAttention(nn.Module):
     def __init__(self, n_head: int, d_model: int, dropout: float = 0.0,
@@ -431,7 +453,8 @@ class InterpretableMultiHeadAttention(nn.Module):
         self.v_layer = nn.Linear(self.d_model, self.d_v)
         self.q_layers = nn.ModuleList([nn.Linear(self.d_model, self.d_q) for _ in range(self.n_head)])
         self.k_layers = nn.ModuleList([nn.Linear(self.d_model, self.d_k) for _ in range(self.n_head)])
-        self.attention = ScaledDotProductAttention()
+        self.sigma_layers = nn.ModuleList([nn.Linear(self.d_model, 1) for _ in range(self.n_head)])
+        self.attention = ScaledDotProductAttention(win_size=windows_size)
         self.w_h = nn.Linear(self.d_v, self.d_model, bias=False)
 
         self.init_weights()
@@ -444,22 +467,36 @@ class InterpretableMultiHeadAttention(nn.Module):
                 torch.nn.init.zeros_(p)
 
     def forward(self, q, k, v, mask=None) -> Tuple[torch.Tensor, torch.Tensor]:
+        # q: [B, L, d_model]
+        # k: [B, S, d_model]
+        # v: [B, S, d_model]
+        # q:torch.Size([256, 3, 8]), k:torch.Size([256, 34, 8]), v:torch.Size([256, 34, 8])
+        #logging.info(f"q:{q.shape}, k:{k.shape}, v:{v.shape}")
         heads = []
         attns = []
+        priors = []
+        sigmas = []
         vs = self.v_layer(v)
         for i in range(self.n_head):
             qs = self.q_layers[i](q)
             ks = self.k_layers[i](k)
-            head, attn = self.attention(qs, ks, vs, mask)
+            sigma = self.sigma_layers[i](q)
+            head, attn, prior, sigma = self.attention(qs, ks, vs, sigma, mask)
             head_dropout = self.dropout(head)
             heads.append(head_dropout)
             attns.append(attn)
+            sigmas.append(sigma)
+            priors.append(prior)
 
         head = torch.stack(heads, dim=2) if self.n_head > 1 else heads[0]
+        sigma = torch.stack(sigmas, dim=2) if self.n_head > 1 else sigmas[0]
+        prior = torch.stack(priors, dim=2) if self.n_head > 1 else priors[0]
         attn = torch.stack(attns, dim=2)
 
         outputs = torch.mean(head, dim=2) if self.n_head > 1 else head
+        sigma = torch.mean(sigma, dim=2) if self.n_head > 1 else sigma
+        prior = torch.mean(prior, dim=2) if self.n_head > 1 else prior
         outputs = self.w_h(outputs)
         outputs = self.dropout(outputs)
 
-        return outputs, attn, None, None
+        return outputs, attn, prior, sigma

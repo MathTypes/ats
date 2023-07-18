@@ -421,9 +421,9 @@ class PatchTftSupervisedPipeline(Pipeline):
                 last_data_time = nyc_time
                 last_time_idx += 1
                 new_data["time_idx"] = last_time_idx
-                #logging.info(f"running step {nyc_time}, new_data:{new_data}")
+                logging.info(f"running step {nyc_time}, new_data:{new_data}")
                 train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
-                #logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}, last_time_idex={last_time_idx}")
+                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}, last_time_idex={last_time_idx}")
                 new_prediction_data = train_dataset.filter(
                     lambda x: (x.time_idx_last == last_time_idx)
                 )
