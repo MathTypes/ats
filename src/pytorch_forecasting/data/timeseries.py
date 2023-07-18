@@ -36,7 +36,7 @@ from torch.nn.utils import rnn
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import Sampler, SequentialSampler
 
-import data_util
+from ats.model import data_util
 
 def _find_end_indices(diffs: np.ndarray, max_lengths: np.ndarray, min_length: int) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -440,9 +440,9 @@ class TimeSeriesDataSet(Dataset):
         data_bad = data[data['close_back']<-0.2]
         if not data_bad.empty:
             logging.info(f"data with large negative return:{data_bad.head()}")
-        if "ticker" in data.columns:
-          data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
-          data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()
+        #if "ticker" in data.columns:
+        #  data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
+        #  data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()
 
         #logging.info(f"preprocess data: {data.iloc[-3:]}")
         #data = data.dropna()
@@ -904,7 +904,7 @@ class TimeSeriesDataSet(Dataset):
 
         # encode after fitting
         for name in self.reals:
-            #logging.info(f"encode name:{name}")
+            logging.info(f"encode name:{name}")
             # targets are handled separately
             transformer = self.get_transformer(name)
             if (
@@ -2317,7 +2317,7 @@ class TimeSeriesDataSet(Dataset):
 
         # reals
         elif name in self.reals:
-            #logging.info(f"tranform {name}, {values}")
+            logging.info(f"tranform {name}")
             if isinstance(transformer, GroupNormalizer):
                 return transform(values, data, **kwargs)
             elif isinstance(transformer, EncoderNormalizer):
