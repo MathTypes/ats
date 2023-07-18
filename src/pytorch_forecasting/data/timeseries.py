@@ -745,12 +745,15 @@ class TimeSeriesDataSet(Dataset):
             pd.DataFrame: pre-processed dataframe
         """
         # add lags to data
+        #logging.info(f"lags:{self.lags}")
         for name in self.lags:
             # todo: add support for variable groups
             assert (
                 name not in self.variable_groups
             ), f"lagged variables that are in {self.variable_groups} are not supported yet"
+            #logging.info(f"add lagged:{name}")
             for lagged_name, lag in self._get_lagged_names(name).items():
+                #logging.info(f"set lag: lagged_name:{lagged_name}")
                 data[lagged_name] = data.groupby(self.group_ids, observed=True)[name].shift(lag)
 
         # encode group ids - this encoding
@@ -795,11 +798,13 @@ class TimeSeriesDataSet(Dataset):
         # encode them
         for name in dict.fromkeys(group_ids_to_encode + self.flat_categoricals):
             # targets and its lagged versions are handled separetely
+            #logging.info(f"checking :{name}")
             if name not in self.target_names and name not in self.lagged_targets:
                 #logging.info(f"transorm:{name}")
                 data[name] = self.transform_values(
                     name, data[name], inverse=False, ignore_na=name in self.lagged_variables
                 )
+        #logging.info(f"data:{data.iloc[:4]}")
         # save special variables
         assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
         data["__time_idx__"] = data[self.time_idx]  # save unscaled

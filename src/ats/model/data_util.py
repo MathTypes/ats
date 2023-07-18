@@ -295,14 +295,14 @@ def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
     raw_data["close"] = np.minimum(raw_data["close"], means + VOL_THRESHOLD * stds)
     raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
 
-    logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
+    #logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
     new_features = raw_data.groupby(["ticker"])[['volume','dv','close','timestamp']].apply(ticker_transform)
     raw_data = raw_data.join(new_features, rsuffix="_ticker")
     raw_data.reset_index(drop = True, inplace = True)
     raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
     raw_data = raw_data.set_index("new_idx")
     raw_data = raw_data.sort_index()
-    logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
+    #logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
 
     # winsorize using rolling 5X standard deviations to remove outliers
     raw_data["daily_returns"] = calc_returns(raw_data["close"])
@@ -362,13 +362,13 @@ def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
     raw_data['time_to_low_51_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_51_ff")
     raw_data['time_to_high_201_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_201_ff")
     raw_data['time_to_low_201_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_201_ff")
-    logging.info(f"raw_data:{raw_data.iloc[:5]}")
+    #logging.info(f"raw_data:{raw_data.iloc[:5]}")
     # Drop duplicae columns
     raw_data = raw_data.loc[:,~raw_data.columns.duplicated()]
     # time_idx needs to be globally unique. It is ok for it to be not in order
     # across tickers.
     raw_data["time_idx"] = range(0, len(raw_data))
-    #logging.info(f"raw_data: {raw_data.iloc[-5:]}")
+    logging.info(f"raw_data: {raw_data.iloc[-5:]}")
     #raw_data = raw_data.dropna()
     return raw_data
 
