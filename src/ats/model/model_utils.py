@@ -58,9 +58,9 @@ import wandb
 from wandb.keras import WandbMetricsLogger
 
 from ats.calendar import market_time
+from ats.market_data import data_util
 from ats.model.data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
 from ats.model.datasets import generate_stock_returns
-from ats.model import data_util
 from ats.model.log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
 from ats.model.loss import MultiLossWithUncertaintyWeight
 from ats.model import nhits_tuner

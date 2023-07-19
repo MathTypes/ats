@@ -36,7 +36,7 @@ from torch.nn.utils import rnn
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import Sampler, SequentialSampler
 
-from ats.model import data_util
+from ats.market_data import data_util
 
 def _find_end_indices(diffs: np.ndarray, max_lengths: np.ndarray, min_length: int) -> Tuple[np.ndarray, np.ndarray]:
     """
