@@ -1,6 +1,7 @@
 import pandas as pd
-from util import config_utils
-from util import logging_utils
+
+from ats.util import config_utils
+from ats.util import logging_utils
 
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
