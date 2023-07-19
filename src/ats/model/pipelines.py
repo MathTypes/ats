@@ -53,6 +53,7 @@ from timeseries_transformer import TimeSeriesTFT
 import torch
 import wandb
 
+from ats.calendar import market_time
 from ats.model.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
 from ats.model.models import AttentionEmbeddingLSTM
 from ats.model import model_utils
@@ -394,47 +395,62 @@ class PatchTftSupervisedPipeline(Pipeline):
         logging.info(f"initial_last_px_map:{last_px_map}")
         last_position_map = defaultdict(lambda:0,last_position_map)
         pnl_df = pd.DataFrame(columns = ["ticker","timestamp","px","last_px","pos","pnl"])
+        max_prediction_length = self.config.model.prediction_length
+        first_update = True
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
             )
             logging.info(f"sod {test_date}")
             time_range = mcal.date_range(schedule, frequency="30M")
-            max_prediction_length = self.config.model.prediction_length
             for utc_time in time_range:
-                nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
-                #logging.info(f"looking up nyc_time:{nyc_time}")
-                # 1. prepare prediction with latest prices
-                # 2. run inference to get returns and new positions
-                # 3. update PNL and positions
-                new_data = future_data[
-                    (future_data.timestamp == nyc_time.timestamp())
-                    & (future_data.ticker == "ES")
-                ]
+                # prediction is at current time, so we need max_prediction_length + 1.
+                trading_times = market_time.get_next_trading_times(
+                    self.market_cal, "30M", utc_time, max_prediction_length+1)
+                predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
+                logging.info(f"trading_times:{trading_times}")
+                if first_update:
+                    logging.info(f"future_data:{future_data.iloc[-2]}")
+                    new_data = future_data[
+                        (future_data.timestamp>=trading_times[0])
+                        & (future_data.timestamp<=trading_times[-1])
+                        & (future_data.ticker == "ES")
+                    ]
+                    first_update = False
+                else:
+                    new_data = future_data[
+                        (future_data.timestamp==trading_times[-1])
+                        & (future_data.ticker == "ES")
+                    ]
+                logging.info(f"new_data:{new_data}")
                 if new_data.empty:
-                    if last_data_time is None or nyc_time < last_data_time + datetime.timedelta(minutes=self.config.dataset.max_stale_minutes):
+                    if (last_data_time is None or predict_nyc_time < last_data_time +
+                        datetime.timedelta(minutes=self.config.dataset.max_stale_minutes)):
                         continue
                     else:
-                        logging.info(f"data is too stale, now:{nyc_time}, last_data_time:{last_data_time}")
-                        #exit(0)
+                        logging.info(f"data is too stale, now:{predict_nyc_time}, last_data_time:{last_data_time}")
                         continue
-                last_data_time = nyc_time
+                last_data_time = predict_nyc_time
                 last_time_idx += 1
-                new_data["time_idx"] = last_time_idx
-                logging.info(f"running step {nyc_time}, new_data:{new_data}")
+                new_data["time_idx"] = range(last_time_idx, last_time_idx + len(new_data))
+                logging.info(f"running step {predict_nyc_time}, new_data:{new_data}")
                 train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
-                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}, last_time_idex={last_time_idx}")
+                predict_time_idx = self.data_module.train_data[self.data_module.train_data.timestamp==predict_nyc_time.timestamp()]["time_idx"]
+                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
+                logging.info(f"last_time_idex={last_time_idx}, predict_time_idx:{predict_time_idx}")
                 new_prediction_data = train_dataset.filter(
-                    lambda x: (x.time_idx_last == last_time_idx)
+                    lambda x: (x.time_idx_last == predict_time_idx)
                 )
                 # new_prediction_data is the last encoder_data, we need to add decoder_data based on
                 # known features or lagged unknown features
-                prediction, y_quantiles = prediciton_utils.predict(self.model, new_prediction_data, wandb_logger)
+                logging.info(f"new_prediction_data:{new_prediction_data}")
+                prediction, y_quantiles = prediction_utils.predict(self.model, new_prediction_data, wandb_logger)
                 #prediction, position = y_hats
                 logging.info(f"prediction:{prediction}")
                 #y_quantiles = to_list(self.model.to_quantiles(new_raw_predictions.output,
                 #                                              **quantiles_kwargs))[0]
                 logging.info(f"y_quantiles:{y_quantiles}")
+                exit(0)
                 #logging.info(f"y_hats:{y_hats}")
                 #logging.info(f"y:{new_raw_predictions.y}")
                 new_data_row = new_data.iloc[0]

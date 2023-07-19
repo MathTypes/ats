@@ -909,7 +909,7 @@ class TimeSeriesDataSet(Dataset):
 
         # encode after fitting
         for name in self.reals:
-            logging.info(f"encode name:{name}")
+            #logging.info(f"encode name:{name}")
             # targets are handled separately
             transformer = self.get_transformer(name)
             if (
@@ -2322,7 +2322,7 @@ class TimeSeriesDataSet(Dataset):
 
         # reals
         elif name in self.reals:
-            logging.info(f"tranform {name}")
+            #logging.info(f"tranform {name}")
             if isinstance(transformer, GroupNormalizer):
                 return transform(values, data, **kwargs)
             elif isinstance(transformer, EncoderNormalizer):
@@ -2854,10 +2854,17 @@ class TimeSeriesDataSet(Dataset):
         return decoder_length
 
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes):
-        self.raw_data = pd.concat([self.raw_data, new_data])
-        #logging.info(f"new_full_data_before_add_derived_features:{self.raw_data.iloc[-3:]}")
-        self.raw_data = data_util.add_derived_features(self.raw_data, interval_minutes)
-        #logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
+        #self.raw_data = pd.concat([self.raw_data, new_data])
+        logging.info(f"adding new_data:{new_data}")
+        self.raw_data[self.raw_data.time_idx.isin(new_data.time_idx)] = new_data
+        logging.info(f"new_full_data_before_add_group_features:{self.raw_data.iloc[-3:]}")
+        self.raw_data = data_util.add_group_features(self.raw_data, interval_minutes)
+        new_raw_data = self.raw_data[self.raw_data.time_idx.isin(new_data.time_idx)]
+        logging.info(f"new_raw_data:{new_raw_data}")
+        new_raw_data = data_util.add_example_level_features(new_raw_data)
+        self.raw_data[self.raw_data.time_idx.isin(new_data.time_idx)] = new_raw_data
+        logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
+        self.raw_data = self.raw_data.ffill().dropna()
         data = self.preprocess_data(self.raw_data)
         self.transform_data(data)
     

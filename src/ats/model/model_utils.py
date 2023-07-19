@@ -61,6 +61,7 @@ from torch import nn
 import wandb
 from wandb.keras import WandbMetricsLogger
 
+from ats.calendar import market_time
 from ats.model.data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
 from ats.model.datasets import generate_stock_returns
 from ats.model import data_util
@@ -446,7 +447,22 @@ def get_data_module(
         ticker_train_data = ticker_train_data.set_index("new_idx")
         train_data_vec.append(ticker_train_data)
     raw_data = pd.concat(train_data_vec)
-    raw_data = data_util.add_derived_features(raw_data, config.job.time_interval_minutes)
+    # TODO: the original time comes from aggregated time is UTC, but actually
+    # has New York time in it.
+    raw_data["time"] = raw_data.time.apply(market_time.utc_to_nyse_time,
+                                           interval_minutes=config.job.time_interval_minutes)
+    raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
+    # Do not use what are in serialized files as we need to recompute across different months.
+    raw_data = raw_data.drop(columns=["close_back", "volume_back", "dv_back", "close_fwd",
+                                      "volume_fwd", "dv_fwd", "cum_volume", "cum_dv"])
+    raw_data = raw_data.reset_index()
+    raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
+    raw_data = raw_data.set_index("new_idx")
+    raw_data = raw_data.sort_index()
+    raw_data["time_idx"] = range(0, len(raw_data))
+
+    raw_data = data_util.add_group_features(raw_data, config.job.time_interval_minutes)
+    raw_data = data_util.add_example_level_features(raw_data)
     #raw_data = raw_data.sort(["ticker", "time_idx"])
     logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
     train_start_timestamp = train_start_date.timestamp()

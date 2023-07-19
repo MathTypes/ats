@@ -13,6 +13,7 @@ import ta
 import pandas_market_calendars as mcal
 from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
 
+from ats.calendar import market_time
 from ats.model.mom_trans.classical_strategies import (
     MACDStrategy,
     calc_returns,
@@ -24,57 +25,6 @@ from ats.util import time_util
 
 VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
-
-@functools.lru_cache(maxsize=None)
-def get_open_time(cal, x_date):
-    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=5))
-    return schedule.market_open[0].timestamp()
-
-@functools.lru_cache(maxsize=None)
-def get_close_time(cal, x_date):
-    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=5))
-    return schedule.market_close[0].timestamp()
-
-def utc_to_nyse_time(utc_time, interval_minutes):
-    utc_time = time_util.round_up(utc_time, interval_minutes)
-    nyc_time = pytz.timezone('America/New_York').localize(
-        datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
-                          utc_time.hour, utc_time.minute))
-    # Do not use following.
-    # See https://stackoverflow.com/questions/18541051/datetime-and-timezone-conversion-with-pytz-mind-blowing-behaviour
-    # why datetime(..., tzinfo) does not work.
-    #nyc_time = datetime.datetime(utc_time.year, utc_time.month, utc_time.day,
-    #                             utc_time.hour, utc_time.minute,
-    #                             tzinfo=pytz.timezone('America/New_York'))
-    return nyc_time
-    
-
-def compute_open_time(x, cal):
-    #logging.info(f"x:{x}, {type(x)}")
-    try:
-        x = datetime.datetime.fromtimestamp(x)
-        return int(get_open_time(cal, x.date()))
-    except Exception as e:
-        logging.info(f"can not compute open for {x}, {e}")
-        return x
-
-def compute_close_time(x, cal):
-    # logging.info(f"x:{x}, {type(x)}")
-    try:
-        x = datetime.datetime.fromtimestamp(x)
-        return int(get_close_time(cal, x.date()))
-    except Exception as e:
-        logging.info(f"can not compute open for {x}, {e}")
-        return x
-
-def compute_next_open_time(x, cal):
-    try:
-        x = datetime.datetime.fromtimestamp(x)
-        x_date = x.date() + time.timedelta(days=1)
-        return int(get_close_time(cal, x_date))
-    except Exception as e:
-        logging.info(f"can not compute open for {x}, {e}")
-        return x
 
 def compute_minutes_after_daily_close(x):
     # logging.info(f"x:{x}, {type(x)}")
@@ -218,6 +168,11 @@ def add_lows(df_cumsum, df_time, width):
 
 def ticker_transform(raw_data):
     #raw_data = raw_data.sort_values(["timestamp"])
+    ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
+    means = ewm.mean()
+    stds = ewm.std()
+    raw_data["close"] = np.minimum(raw_data["close"], means + VOL_THRESHOLD * stds)
+    raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
     raw_data["cum_volume"] = raw_data.volume.cumsum()
     raw_data["cum_dv"] = raw_data.dv.cumsum()
     df_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
@@ -276,37 +231,49 @@ def ticker_transform(raw_data):
 def time_diff(row, base_col, diff_col):
     return row[diff_col] - row[base_col]
 
-def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
-    raw_data = raw_data.reset_index()
-    # TODO: the original time comes from aggregated time is UTC, but actually
-    # has New York time in it.
-    raw_data["time"] = raw_data.time.apply(utc_to_nyse_time, interval_minutes=interval_minutes)
-    raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
-    raw_data = raw_data.reset_index()
-    raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
-    raw_data = raw_data.set_index("new_idx")
-    raw_data = raw_data.sort_index()
-
-    raw_data = raw_data.drop(columns=["close_back", "volume_back", "dv_back", "close_fwd",
-                                      "volume_fwd", "dv_fwd", "cum_volume", "cum_dv"])
-    ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
-    means = ewm.mean()
-    stds = ewm.std()
-    raw_data["close"] = np.minimum(raw_data["close"], means + VOL_THRESHOLD * stds)
-    raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
-
-    #logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
+def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
+    logging.info(f"raw_data: {raw_data.iloc[:4]}, columns:{raw_data.columns}")
+    for column in ["close_back", "volume_back", "dv_back", "close_fwd",
+                   "volume_fwd", "dv_fwd", "cum_volume", "cum_dv",
+                   'close_back_cumsum', 'volume_back_cumsum', 'close_high_21_ff',
+                   'time_high_21_ff', 'close_low_21_ff', 'time_low_21_ff',
+                   'close_high_51_ff', 'time_high_51_ff', 'close_low_51_ff',
+                   'time_low_51_ff', 'close_high_201_ff', 'time_high_201_ff',
+                   'close_low_201_ff', 'time_low_201_ff', 'rsi', 'macd', 'macd_signal',
+                   'bb_high', 'bb_low', 'sma_50', 'sma_200', 'close_high_21_bf',
+                   'close_low_21_bf', 'close_high_51_bf', 'close_low_51_bf',
+                   'close_high_201_bf', 'close_low_201_bf']:
+        if column in raw_data.columns:
+            raw_data = raw_data.drop(columns=[column])    
     new_features = raw_data.groupby(["ticker"])[['volume','dv','close','timestamp']].apply(ticker_transform)
-    raw_data = raw_data.join(new_features, rsuffix="_ticker")
-    raw_data.reset_index(drop = True, inplace = True)
-    raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
-    raw_data = raw_data.set_index("new_idx")
-    raw_data = raw_data.sort_index()
+    logging.info(f"new_features:{new_features.columns}")
+    new_features = new_features.drop(columns=['volume','dv','close','timestamp'])
+    raw_data = raw_data.join(new_features)
+    #raw_data.reset_index(drop = True, inplace = True)
+    #raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
+    #raw_data = raw_data.set_index("new_idx")
+    #raw_data = raw_data.sort_index()
     #logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
 
     # winsorize using rolling 5X standard deviations to remove outliers
     raw_data["daily_returns"] = calc_returns(raw_data["close"])
     raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
+    trend_combinations = [(8, 24), (16, 48), (32, 96)]
+    for short_window, long_window in trend_combinations:
+        raw_data[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
+            raw_data["close"], short_window, long_window
+        )
+
+    # Drop duplicae columns
+    #raw_data = raw_data.loc[:,~raw_data.columns.duplicated()]
+    # time_idx needs to be globally unique. It is ok for it to be not in order
+    # across tickers.
+    #raw_data["time_idx"] = range(0, len(raw_data))
+    logging.info(f"raw_data: {raw_data.iloc[-5:]}")
+    #raw_data = raw_data.dropna()
+    return raw_data
+
+def add_example_level_features(raw_data : pd.DataFrame):
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x : x.isocalendar()[1])
     raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)
     
@@ -329,47 +296,29 @@ def add_derived_features(raw_data : pd.DataFrame, interval_minutes):
         lambda x: compute_days_to_option_exipiration(x)
     )
 
-    trend_combinations = [(8, 24), (16, 48), (32, 96)]
-    for short_window, long_window in trend_combinations:
-        raw_data[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
-            raw_data["close"], short_window, long_window
-        )
-
-    #ds_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
-    # df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
-    #raw_data = raw_data.join(ds_pct_back, rsuffix="_back")
-   
     cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
-    raw_data["new_york_open_time"] = raw_data.timestamp.apply(compute_open_time, cal=cal)
-    raw_data["new_york_close_time"] = raw_data.timestamp.apply(compute_close_time, cal=cal)
-    raw_data["london_open_time"] = raw_data.timestamp.apply(compute_open_time, cal=lse_cal)
-    raw_data["london_close_time"] = raw_data.timestamp.apply(compute_close_time, cal=lse_cal)
+    raw_data["new_york_open_time"] = raw_data.timestamp.apply(market_time.compute_open_time, cal=cal)
+    raw_data["new_york_close_time"] = raw_data.timestamp.apply(market_time.compute_close_time, cal=cal)
+    raw_data["london_open_time"] = raw_data.timestamp.apply(market_time.compute_open_time, cal=lse_cal)
+    raw_data["london_close_time"] = raw_data.timestamp.apply(market_time.compute_close_time, cal=lse_cal)
     raw_data['time_to_new_york_open'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="new_york_open_time")
     raw_data['time_to_new_york_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="new_york_close_time")
     raw_data['time_to_london_open'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="london_open_time")
     raw_data['time_to_london_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="london_close_time")
-
-    logging.info(f"done with open/close")
     raw_data["month"] = raw_data.time.dt.month  # categories have be strings
     raw_data["year"] = raw_data.time.dt.year  # categories have be strings
     raw_data["hour_of_day"] = raw_data.time.apply(lambda x: x.hour)
     raw_data["day_of_week"] = raw_data.time.apply(lambda x: x.dayofweek)
     raw_data["day_of_month"] = raw_data.time.apply(lambda x: x.day)
+    # TODO: use business time instead of calendar time. this changes a lot
+    # during new year.
     raw_data['time_to_high_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_21_ff")
     raw_data['time_to_low_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_21_ff")
     raw_data['time_to_high_51_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_51_ff")
     raw_data['time_to_low_51_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_51_ff")
     raw_data['time_to_high_201_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_201_ff")
     raw_data['time_to_low_201_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_201_ff")
-    #logging.info(f"raw_data:{raw_data.iloc[:5]}")
-    # Drop duplicae columns
-    raw_data = raw_data.loc[:,~raw_data.columns.duplicated()]
-    # time_idx needs to be globally unique. It is ok for it to be not in order
-    # across tickers.
-    raw_data["time_idx"] = range(0, len(raw_data))
-    logging.info(f"raw_data: {raw_data.iloc[-5:]}")
-    #raw_data = raw_data.dropna()
     return raw_data
 
 class Preprocessor:

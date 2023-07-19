@@ -1260,7 +1260,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
             #go.set_xlabel("Time index")
             figs.append(fig)
-
+        del y_hats
+        del y_quantiles
         # return multiple of target is a list, otherwise return single figure
         if isinstance(x["encoder_target"], (tuple, list)):
             return figs
