@@ -398,6 +398,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         first_update = True
         initial_positions = torch.tensor([0])
         optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
+                                             sigma=config.trading.sigma,
                                              initial_positions=initial_positions)
         data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pnl_viz", type="pnl_viz")
         column_names = [
@@ -472,7 +473,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
                 logging.info(f"last_time_idex={last_time_idx}, predict_time_idx:{predict_time_idx}")
                 filtered_dataset = train_dataset.filter(lambda x: (x.time_idx_last == predict_time_idx))
-                x, y = next(iter(filtered_dataset))
+                x, y = next(iter(filtered_dataset.to_dataloader(train=False,batch_size=1)))
                 logging.info(f"x:{x}, y:{y}")
                 # new_prediction_data is the last encoder_data, we need to add decoder_data based on
                 # known features or lagged unknown features
@@ -491,29 +492,30 @@ class PatchTftSupervisedPipeline(Pipeline):
                 min_fcst = torch.min(cum_min_y_quantiles)
                 max_fcst = torch.max(cum_max_y_quantiles)
                 logging.info(f"min_fcst:{min_fcst}, max_fcst:{max_fcst}")
-                min_neg_fcst = torch.minimum(min_fcst, torch.tensor(0)).unsqueeze(0).numpy()
-                max_pos_fcst = torch.maximum(max_fcst, torch.tensor(0)).unsqueeze(0).numpy()
+                min_neg_fcst = torch.minimum(min_fcst, torch.tensor(0)).unsqueeze(0).detach().numpy()
+                max_pos_fcst = torch.maximum(max_fcst, torch.tensor(0)).unsqueeze(0).detach().numpy()
                 logging.info(f"returns_fcst:{returns_fcst}, min_neg_fcst:{min_neg_fcst}, max_pos_fcst:{max_pos_fcst}")
                 new_positions, ret, val  = optimizer.optimize(returns_fcst, min_neg_fcst, max_pos_fcst)
                 logging.info(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
                 y_hats_cum = torch.cumsum(y_hats, dim=-1)
                 y_close = y[0]
                 y_close_cum_sum = torch.cumsum(y_close, dim=-1)
+                logging.info(f"x:{x}")
                 indices = train_dataset.x_to_index(x)
                 matched_data = train_dataset.raw_data
                 logging.info(f"indices:{indices}")
-                rmse = 0
-                mae = 0
+                rmse = [0]
+                mae = [0]
                 interp_output = self.model.interpret_output(
                     detach(out),
                     reduction="none",
                     attention_prediction_horizon=0,  # attention only for first prediction horizon
                 )
                 logging.info(f"interp_output:{interp_output}")
-                row = viz_utils.add_viz_row(0, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
-                                            matched_data, x, data_table,
-                                            self.config, self.model, out, target_size,
-                                            interp_output, rmse, mae)
+                row = viz_utils.create_viz_row(0, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
+                                               matched_data, x, data_table,
+                                               self.config, self.model, out, target_size,
+                                               interp_output, rmse, mae)
                 new_data_row = new_data.iloc[0]
                 ticker = new_data_row.ticker
                 px = new_data_row.close

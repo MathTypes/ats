@@ -4,3 +4,4 @@ defaults:
  - optimizer: adam
  - model: patch_tft_supervised_dev
  - job: test_dev
+ - trading: dev
