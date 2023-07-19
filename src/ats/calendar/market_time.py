@@ -64,6 +64,8 @@ def get_next_trading_times(cal, interval, now, k):
     results = []
     for utc_time in time_range:
         nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
+        if nyc_time<now:
+            continue
         results.append(nyc_time.timestamp())
         if len(results) >= k:
             break
