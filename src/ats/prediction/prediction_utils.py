@@ -23,7 +23,7 @@ def predict(model, new_prediction_data, wandb_logger):
         batch_size=1,
         trainer_kwargs=trainer_kwargs,
     )
-    logging.info(f"new_raw_predictions:{new_raw_predictions}")
+    #logging.info(f"new_raw_predictions:{new_raw_predictions}")
     if isinstance(new_raw_predictions, (list)) and len(new_raw_predictions) < 1:
         logging.info(f"no prediction")
         return None, None
@@ -38,15 +38,15 @@ def predict(model, new_prediction_data, wandb_logger):
     y_hats = to_list(
         model.to_prediction(output, **prediction_kwargs)
     )
-    logging.info(f"y_hats:{y_hats}")
+    #logging.info(f"y_hats:{y_hats}")
     prediction = y_hats
-    logging.info(f"prediction:{prediction}")
+    #logging.info(f"prediction:{prediction}")
     quantiles_kwargs = {}
     y_quantiles = to_list(
         model.to_quantiles(output, **quantiles_kwargs)
     )[0]
     del new_raw_predictions
-    logging.info(f"y_quantiles:{y_quantiles}")
+    #logging.info(f"y_quantiles:{y_quantiles}")
     # logging.info(f"y_hats:{y_hats}")
     # logging.info(f"y:{new_raw_predictions.y}")
     return prediction, y_quantiles, output

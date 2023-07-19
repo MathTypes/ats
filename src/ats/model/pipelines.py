@@ -398,7 +398,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         first_update = True
         initial_positions = torch.tensor([0])
         optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
-                                             sigma=config.trading.sigma,
+                                             sigma=self.config.trading.sigma,
                                              initial_positions=initial_positions)
         data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pnl_viz", type="pnl_viz")
         column_names = [
@@ -435,14 +435,14 @@ class PatchTftSupervisedPipeline(Pipeline):
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
             )
-            logging.info(f"sod {test_date}")
             time_range = mcal.date_range(schedule, frequency="30M")
+            logging.info(f"sod {test_date}, schedule:{time_range}")
             for utc_time in time_range:
                 # prediction is at current time, so we need max_prediction_length + 1.
                 trading_times = market_time.get_next_trading_times(
                     self.market_cal, "30M", utc_time, max_prediction_length+1)
                 predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
-                logging.info(f"trading_times:{trading_times}")
+                logging.info(f"utc_time:{utc_time}, trading_times:{trading_times}")
                 if first_update:
                     logging.info(f"future_data:{future_data.iloc[:3]}")
                     new_data = future_data[
@@ -470,11 +470,11 @@ class PatchTftSupervisedPipeline(Pipeline):
                 logging.info(f"running step {predict_nyc_time}, new_data:{new_data}")
                 train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
                 predict_time_idx = new_data.time_idx.max()
-                logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
+                #logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
                 logging.info(f"last_time_idex={last_time_idx}, predict_time_idx:{predict_time_idx}")
                 filtered_dataset = train_dataset.filter(lambda x: (x.time_idx_last == predict_time_idx))
                 x, y = next(iter(filtered_dataset.to_dataloader(train=False,batch_size=1)))
-                logging.info(f"x:{x}, y:{y}")
+                #logging.info(f"x:{x}, y:{y}")
                 # new_prediction_data is the last encoder_data, we need to add decoder_data based on
                 # known features or lagged unknown features
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
@@ -500,7 +500,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 y_hats_cum = torch.cumsum(y_hats, dim=-1)
                 y_close = y[0]
                 y_close_cum_sum = torch.cumsum(y_close, dim=-1)
-                logging.info(f"x:{x}")
+                #logging.info(f"x:{x}")
                 indices = train_dataset.x_to_index(x)
                 matched_data = train_dataset.raw_data
                 logging.info(f"indices:{indices}")
@@ -534,7 +534,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 if row:
                     data_table.add_data(
                         row["ticker"],  # 0 ticker
-                        row["time"],  # 1 time
+                        row["dm"],  # 1 time
                         row["time_idx"],  # 2 time_idx
                         row["day_of_week"],  # 3 day of week
                         row["hour_of_day"],  # 4 hour of day

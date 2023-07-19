@@ -470,6 +470,7 @@ class TimeSeriesDataSet(Dataset):
             ), "relative_time_idx is a protected column and must not be present in data"
             if "relative_time_idx" not in self.time_varying_known_reals and "relative_time_idx" not in self.reals:
                 self.time_varying_known_reals.append("relative_time_idx")
+            logging.info(f"data:{data.iloc[-2:]}")
             data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
 
         # add decoder length to static real variables
@@ -2016,7 +2017,7 @@ class TimeSeriesDataSet(Dataset):
 
             elif isinstance(self.target_normalizer, NaNLabelEncoder):
                 data[self.target] = self.target_normalizer.transform(data[self.target])
-                logging.info(f"nan label normalizr scales:{scales}")
+                #logging.info(f"nan label normalizr scales:{scales}")
                 # overwrite target because it requires encoding (continuous targets should not be normalized)
                 data[f"__target__{self.target}"] = data[self.target]
                 scales = None
@@ -2855,7 +2856,7 @@ class TimeSeriesDataSet(Dataset):
 
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes):
         #self.raw_data = pd.concat([self.raw_data, new_data])
-        logging.info(f"adding new_data:{new_data}")
+        #logging.info(f"adding new_data:{new_data}")
         for index, row in new_data.iterrows():
             idx = self.raw_data[self.raw_data.time_idx==row["time_idx"]].index
             logging.info(f"index:{idx}")
@@ -2866,16 +2867,21 @@ class TimeSeriesDataSet(Dataset):
                                       row["time"], row["timestamp"], row["ticker"], row["series_idx"], row["time_idx"]]
             else:
                 self.raw_data.loc[len(self.raw_data.index)] = row
-        logging.info(f"new_full_data_before_add_group_features:{self.raw_data.iloc[-5:]}")
+        #logging.info(f"new_full_data_before_add_group_features:{self.raw_data.iloc[-5:]}")
         self.raw_data = data_util.add_group_features(self.raw_data, interval_minutes)
         # This assumes we only have single ticker per timeseries dataset.
         new_data_idx = self.raw_data.time_idx.isin(new_data.time_idx)
         new_raw_data = self.raw_data[new_data_idx]
         logging.info(f"new_raw_data:{new_raw_data}")
         new_raw_data = data_util.add_example_level_features(new_raw_data)
+        logging.info(f"new_raw_data after adding example level features:{new_raw_data}")
         self.raw_data[new_data_idx] = new_raw_data
+        logging.info(f"new_full_data_before_ffill:{self.raw_data.iloc[-3:]}")
+        self.raw_data = self.raw_data.ffill()
+        logging.info(f"new_full_data_before_dropna:{self.raw_data.iloc[-3:]}")
+        self.raw_data = self.raw_data.fillna(0)
+        #self.raw_data = self.raw_data.dropna()
         logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
-        self.raw_data = self.raw_data.ffill().dropna()
         data = self.preprocess_data(self.raw_data)
         self.transform_data(data)
     
