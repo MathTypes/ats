@@ -280,6 +280,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         # Calling `use_artifact` uploads the data to W&B.
         assert wandb.run is not None
         wandb.run.use_artifact(data_artifact)
+        del data_table
         #data_artifact.wait()
         
         return []

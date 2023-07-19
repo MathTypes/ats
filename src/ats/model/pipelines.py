@@ -396,7 +396,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         pnl_df = pd.DataFrame(columns = ["ticker","timestamp","px","last_px","pos","pnl"])
         max_prediction_length = self.config.model.prediction_length
         first_update = True
-        initial_positions = torch.tensor([0, 0])
+        initial_positions = torch.tensor([0])
         optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
                                              initial_positions=initial_positions)
         data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pnl_viz", type="pnl_viz")
@@ -482,11 +482,20 @@ class PatchTftSupervisedPipeline(Pipeline):
                 if isinstance(y_hats, list):
                     y_hats = y_hats[0]
                 returns_fcst = y_hats.numpy()
-                min_neg_fcst = torch.minimum(torch.min(torch.cumsum(torch.min(y_quantiles, dim=2), dim=1)), 0)
-                max_pos_fcst = torch.maximum(torch.max(torch.cumsum(torch.max(y_quantiles, dim=2), dim=1)), 0)
-                logging.info(f"returns_fcst:{returns_fcst}, y_quantiles_min:{y_quantiles_min}, y_quantiles_max:{y_quantiles_max}")
+                min_y_quantiles = y_quantiles[:,:,0]
+                max_y_quantiles = y_quantiles[:,:,-1]
+                logging.info(f"min_y_quantiles:{min_y_quantiles}, max_y_quantiles:{max_y_quantiles}")
+                cum_min_y_quantiles = torch.cumsum(min_y_quantiles, 1)
+                cum_max_y_quantiles = torch.cumsum(max_y_quantiles, 1)
+                logging.info(f"cum_min_y_quantiles:{cum_min_y_quantiles}, cum_max_y_quantiles:{cum_max_y_quantiles}")
+                min_fcst = torch.min(cum_min_y_quantiles)
+                max_fcst = torch.max(cum_max_y_quantiles)
+                logging.info(f"min_fcst:{min_fcst}, max_fcst:{max_fcst}")
+                min_neg_fcst = torch.minimum(min_fcst, torch.tensor(0)).unsqueeze(0).numpy()
+                max_pos_fcst = torch.maximum(max_fcst, torch.tensor(0)).unsqueeze(0).numpy()
+                logging.info(f"returns_fcst:{returns_fcst}, min_neg_fcst:{min_neg_fcst}, max_pos_fcst:{max_pos_fcst}")
                 new_positions, ret, val  = optimizer.optimize(returns_fcst, min_neg_fcst, max_pos_fcst)
-
+                logging.info(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
                 y_hats_cum = torch.cumsum(y_hats, dim=-1)
                 y_close = y[0]
                 y_close_cum_sum = torch.cumsum(y_close, dim=-1)
@@ -500,6 +509,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                     reduction="none",
                     attention_prediction_horizon=0,  # attention only for first prediction horizon
                 )
+                logging.info(f"interp_output:{interp_output}")
                 row = viz_utils.add_viz_row(0, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
                                             matched_data, x, data_table,
                                             self.config, self.model, out, target_size,

@@ -14,7 +14,7 @@ def predict(model, new_prediction_data, wandb_logger):
     # cpu.
     device = torch.device('cpu')
     model.to(device)
-    logging.info(f"model:{model}, device:{model.device}")
+    #logging.info(f"model:{model}, device:{model.device}")
     device = model.device
     new_raw_predictions = model.predict(
         new_prediction_data,
@@ -45,9 +45,8 @@ def predict(model, new_prediction_data, wandb_logger):
     y_quantiles = to_list(
         model.to_quantiles(output, **quantiles_kwargs)
     )[0]
-    del output
     del new_raw_predictions
     logging.info(f"y_quantiles:{y_quantiles}")
     # logging.info(f"y_hats:{y_hats}")
     # logging.info(f"y:{new_raw_predictions.y}")
-    return prediction, y_quantiles
+    return prediction, y_quantiles, output
