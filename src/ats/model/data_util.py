@@ -232,7 +232,7 @@ def time_diff(row, base_col, diff_col):
     return row[diff_col] - row[base_col]
 
 def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
-    logging.info(f"raw_data: {raw_data.iloc[:4]}, columns:{raw_data.columns}")
+    #logging.info(f"raw_data: {raw_data.iloc[:4]}, columns:{raw_data.columns}")
     for column in ["close_back", "volume_back", "dv_back", "close_fwd",
                    "volume_fwd", "dv_fwd", "cum_volume", "cum_dv",
                    'close_back_cumsum', 'volume_back_cumsum', 'close_high_21_ff',
@@ -246,7 +246,7 @@ def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])    
     new_features = raw_data.groupby(["ticker"])[['volume','dv','close','timestamp']].apply(ticker_transform)
-    logging.info(f"new_features:{new_features.columns}")
+    #logging.info(f"new_features:{new_features.columns}")
     new_features = new_features.drop(columns=['volume','dv','close','timestamp'])
     raw_data = raw_data.join(new_features)
     #raw_data.reset_index(drop = True, inplace = True)
@@ -269,7 +269,7 @@ def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
     # time_idx needs to be globally unique. It is ok for it to be not in order
     # across tickers.
     #raw_data["time_idx"] = range(0, len(raw_data))
-    logging.info(f"raw_data: {raw_data.iloc[-5:]}")
+    #logging.info(f"raw_data: {raw_data.iloc[-5:]}")
     #raw_data = raw_data.dropna()
     return raw_data
 

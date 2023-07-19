@@ -2856,13 +2856,21 @@ class TimeSeriesDataSet(Dataset):
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes):
         #self.raw_data = pd.concat([self.raw_data, new_data])
         logging.info(f"adding new_data:{new_data}")
-        self.raw_data[self.raw_data.time_idx.isin(new_data.time_idx)] = new_data
-        logging.info(f"new_full_data_before_add_group_features:{self.raw_data.iloc[-3:]}")
+        for index, row in new_data.iterrows():
+            idx = self.raw_data[self.raw_data.time_idx==row["time_idx"]].index
+            logging.info(f"index:{idx}")
+            if not idx.empty:
+                self.raw_data.loc[idx] = row
+            else:
+                self.raw_data.loc[len(self.raw_data.index)] = row
+        logging.info(f"new_full_data_before_add_group_features:{self.raw_data.iloc[-5:]}")
         self.raw_data = data_util.add_group_features(self.raw_data, interval_minutes)
-        new_raw_data = self.raw_data[self.raw_data.time_idx.isin(new_data.time_idx)]
+        # This assumes we only have single ticker per timeseries dataset.
+        new_data_idx = self.raw_data.time_idx.isin(new_data.time_idx)
+        new_raw_data = self.raw_data[new_data_idx]
         logging.info(f"new_raw_data:{new_raw_data}")
         new_raw_data = data_util.add_example_level_features(new_raw_data)
-        self.raw_data[self.raw_data.time_idx.isin(new_data.time_idx)] = new_raw_data
+        self.raw_data[new_data_idx] = new_raw_data
         logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
         self.raw_data = self.raw_data.ffill().dropna()
         data = self.preprocess_data(self.raw_data)

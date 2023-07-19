@@ -410,7 +410,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
                 logging.info(f"trading_times:{trading_times}")
                 if first_update:
-                    logging.info(f"future_data:{future_data.iloc[-2]}")
+                    logging.info(f"future_data:{future_data.iloc[:3]}")
                     new_data = future_data[
                         (future_data.timestamp>=trading_times[0])
                         & (future_data.timestamp<=trading_times[-1])
@@ -435,16 +435,15 @@ class PatchTftSupervisedPipeline(Pipeline):
                 new_data["time_idx"] = range(last_time_idx, last_time_idx + len(new_data))
                 logging.info(f"running step {predict_nyc_time}, new_data:{new_data}")
                 train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
-                predict_time_idx = self.data_module.train_data[self.data_module.train_data.timestamp==predict_nyc_time.timestamp()]["time_idx"]
+                predict_time_idx = new_data.time_idx.max()
                 logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
                 logging.info(f"last_time_idex={last_time_idx}, predict_time_idx:{predict_time_idx}")
-                new_prediction_data = train_dataset.filter(
-                    lambda x: (x.time_idx_last == predict_time_idx)
-                )
+                new_prediction_data = train_dataset.filter(lambda x: (x.time_idx_last == predict_time_idx))
                 # new_prediction_data is the last encoder_data, we need to add decoder_data based on
                 # known features or lagged unknown features
-                logging.info(f"new_prediction_data:{new_prediction_data}")
-                prediction, y_quantiles = prediction_utils.predict(self.model, new_prediction_data, wandb_logger)
+                #logging.info(f"new_prediction_data:{new_prediction_data}")
+                prediction, y_quantiles = prediction_utils.predict(self.model,
+                                                                   new_prediction_data, wandb_logger)
                 #prediction, position = y_hats
                 logging.info(f"prediction:{prediction}")
                 #y_quantiles = to_list(self.model.to_quantiles(new_raw_predictions.output,

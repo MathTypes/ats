@@ -411,7 +411,7 @@ class ScaledDotProductAttention(nn.Module):
         # k: [B, S, E]
         # v: [B, S, E]
         # q.shape:torch.Size([256, 3, 2]), k:torch.Size([256, 34, 2]), v:torch.Size([256, 34, 2])
-        logging.info(f"q.shape:{q.shape}, k:{k.shape}, v:{v.shape}, sigma:{sigma.shape}")
+        #logging.info(f"q.shape:{q.shape}, k:{k.shape}, v:{v.shape}, sigma:{sigma.shape}")
         attn = torch.bmm(q, k.permute(0, 2, 1))  # query-key overlap
 
         if self.scale:

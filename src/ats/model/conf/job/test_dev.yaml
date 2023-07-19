@@ -15,8 +15,7 @@ log_mode: All
 eval_batches: 5
 log_example_eval_every_n_epochs: 1
 tag: default
-#checkpoint: /home/ubuntu/ats/src/model/data/lightning/models/epoch\=2-step\=270.ckpt
-checkpoint:
+checkpoint: /home/ubuntu/ats/model/test_dev.ckpt
 market: NYSE
 tune_learning_rate: False
 num_tune_iter: 20
