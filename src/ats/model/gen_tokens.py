@@ -2,10 +2,8 @@
 #   PYTHONPATH=.. python3 gen_tokens.py ES FUT
 #
 from math import log
-from datetime import datetime, timezone, timedelta
 import logging
 import os
-from typing import List
 import sys
 
 import numpy as np

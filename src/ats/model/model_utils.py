@@ -1,14 +1,10 @@
 # Usage
-import copy
-import concurrent
-import datetime
 import logging
 from math import ceil
 import os
-from pathlib import Path
 import pytz
 import time
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
+from typing import List
 import warnings
 
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
@@ -122,7 +118,6 @@ def create_loss_per_head(heads, device, prediction_length):
 
 def get_loss(config, prediction_length=None, hidden_size=None):
     target_size = 1
-    is_multi_target = False
     if not prediction_length:
         prediction_length = config.model.prediction_length
     # logging.info(f"prediction_length:{prediction_length}")
@@ -130,7 +125,6 @@ def get_loss(config, prediction_length=None, hidden_size=None):
         target = OmegaConf.to_object(config.model.target)
         logging.info(f"target:{target}")
         target_size = len(target)
-        is_multi_target = True
         loss_name = OmegaConf.to_object(config.model.loss_name)
         losses = []
         for i in range(target_size):
@@ -146,9 +140,9 @@ def get_loss(config, prediction_length=None, hidden_size=None):
 
 
 def get_nhits_model(config, data_module, loss):
-    device = config.job.device
+    config.job.device
     training = data_module.training
-    max_prediction_length = config.model.prediction_length
+    config.model.prediction_length
     # configure network and trainer
     # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
@@ -172,9 +166,9 @@ def get_nhits_model(config, data_module, loss):
 
 
 def get_tft_model(config, data_module):
-    device = config.job.device
+    config.job.device
     training = data_module.training
-    max_prediction_length = config.model.prediction_length
+    config.model.prediction_length
     # configure network and trainer
     pl.seed_everything(42)
     loss = get_loss(config)
@@ -198,9 +192,9 @@ def get_tft_model(config, data_module):
 
 
 def get_patch_tst_model(config, data_module):
-    device = config.job.device
+    config.job.device
     training = data_module.training
-    prediction_length = config.model.prediction_length
+    config.model.prediction_length
     context_length = config.model.context_length
     patch_len = config.model.patch_len
     stride = config.model.stride
@@ -234,7 +228,7 @@ def get_patch_tst_model(config, data_module):
 
 
 def get_patch_tst_tft_model(config, data_module):
-    device = config.job.device
+    config.job.device
     training = data_module.training
     prediction_length = config.model.prediction_length
     context_length = config.model.context_length
@@ -358,7 +352,6 @@ def run_tune(study_name, config):
 
 def get_input_dirs(config):
     base_dir = "data/FUT/30min_rsp/ES"
-    Input_dirs = []
     for cur_date in time_util.monthlist(config["start_date"], config["end_date"]):
         for_date = cur_date[0]
         date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
@@ -492,7 +485,7 @@ def get_data_module(
     test_data = test_data.sort_values(["ticker", "time"])
     #train_data.insert(0, "time_idx", range(0, len(train_data)))
     #eval_data.insert(0, "time_idx", range(0, len(eval_data)))
-    data_loading_time = time.time() - start
+    time.time() - start
     # logging.info(f"train_data:{train_data[:100]}")
     # logging.info(f"eval_data:{eval_data[:100]}")
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding
@@ -526,7 +519,7 @@ def run_train(config, net, trainer, data_module):
     # load the best model according to the validation loss
     # (given that we use early stopping, this is not necessarily the last epoch)
     best_model_path = trainer.checkpoint_callback.best_model_path
-    best_model = NHiTS.load_from_checkpoint(best_model_path).to(device)
+    NHiTS.load_from_checkpoint(best_model_path).to(device)
     logging.info(f"best_model_path:{best_model_path}")
 
 

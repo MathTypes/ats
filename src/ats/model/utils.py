@@ -1,4 +1,3 @@
-import datetime
 import logging
 from pathlib import Path
 
@@ -18,7 +17,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset, Sampler
-from typing import List
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -136,7 +134,7 @@ class Pipeline:
             self.model.hparams.learning_rate = suggested_learning_rate
 
     def create_trainer(self):
-        config = self.config
+        self.config
         checkpoint_callback = ModelCheckpoint(
             dirpath=MODELS_DIR, monitor="val_loss", save_top_k=1, verbose=True
         )
@@ -199,9 +197,7 @@ from typing import Type
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset, Sampler
-from typing import List
 import pandas as pd
-from datetime import datetime
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -218,7 +214,6 @@ class NormalizationIdentity:
         hist_value: torch.Tensor [batch, series, time steps]
             Historical data which can be used in the normalization.
         """
-        pass
 
     def normalize(self, value: torch.Tensor) -> torch.Tensor:
         """

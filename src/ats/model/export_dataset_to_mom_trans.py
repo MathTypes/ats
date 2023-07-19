@@ -127,7 +127,7 @@ def import_data(
 
     # LABEL ENCODING FOR NEWS CALLENDAR
     le = preprocessing.LabelEncoder()
-    categoricals_ = le.fit(df["ALL_econ_cal"].values)
+    le.fit(df["ALL_econ_cal"].values)
     df["ALL_econ_cal_lab"] = le.transform(df["ALL_econ_cal"].values)
     # print(df)
 

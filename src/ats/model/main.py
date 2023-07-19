@@ -1,8 +1,6 @@
-import argparse
 import datetime
 import logging
 from pathlib import Path
-import sys
 
 import hydra
 import numpy as np
@@ -38,7 +36,6 @@ def my_app(cfg: DictConfig) -> None:
     )
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
-    datasets = ["stock_returns"]
     pipelines = {
         "attention": AttentionEmbeddingLSTMPipeline,
         "tft": TemporalFusionTransformerPipeline,
@@ -51,8 +48,8 @@ def my_app(cfg: DictConfig) -> None:
     logging.info(f"cfg:{cfg}, dir(cfg)")
     ray.init()
     enable_dask_on_ray()
-    prediction_length = cfg["model"]["prediction_length"]
-    context_length = cfg["model"]["context_length"]
+    cfg["model"]["prediction_length"]
+    cfg["model"]["context_length"]
     wandb.config = cfg
     pipe = pipelines[cfg.model.name](dataset="FUT", config=cfg)
     if cfg.job.mode == "train":

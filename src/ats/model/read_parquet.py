@@ -1,4 +1,3 @@
-import sys
 import pandas as pd
 from util import config_utils
 from util import logging_utils

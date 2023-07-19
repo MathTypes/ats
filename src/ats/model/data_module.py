@@ -1,10 +1,8 @@
 # import pytorch_lightning as pl
-import traceback
 import lightning.pytorch as pl
 import torch
 import logging
 from torch.utils.data import DataLoader
-import typing
 from datasets import (
     generate_stock_tokens,
     generate_stock_returns,

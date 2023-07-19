@@ -1,10 +1,8 @@
 from io import BytesIO
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import logging
 from omegaconf import OmegaConf
 import PIL
 import pandas as pd
-from typing import Any, Dict, Optional, Set
 import torch
 from wandb.keras import WandbEvalCallback
 import wandb
@@ -74,7 +72,7 @@ class TestEvalCallback(Callback):
         logging.info(f"trainer:current_epoch: {trainer.current_epoch}")
         if trainer.current_epoch % self.every_n_epochs:
             return
-        device = self.pl_module.device
+        self.pl_module.device
         for batch_idx in range(self.num_samples):
             x = self.val_x_batch[batch_idx]
             y = self.val_y_batch[batch_idx]
@@ -85,8 +83,8 @@ class TestEvalCallback(Callback):
             result = self.pl_module.compute_metrics(
                 x, y, out, prediction_kwargs=prediction_kwargs
             )
-            rmse = result["train_RMSE"].cpu().detach().numpy()
-            mae = result["train_MAE"].cpu().detach().numpy()
+            result["train_RMSE"].cpu().detach().numpy()
+            result["train_MAE"].cpu().detach().numpy()
             y_raws = to_list(out["prediction"])[
                 0
             ]  # raw predictions - used for calculating loss
@@ -116,7 +114,7 @@ class TestEvalCallback(Callback):
                 fig.update_layout(title=prediction_date_time)
                 img_bytes = fig.to_image(format="png")  # kaleido library
                 im = PIL.Image.open(BytesIO(img_bytes))
-                decoder_time_idx = x["decoder_time_idx"][idx][-1]
-                y_hat = y_hats[idx]
-                y_raw = y_raws[idx]
-                img = wandb.Image(im)
+                x["decoder_time_idx"][idx][-1]
+                y_hats[idx]
+                y_raws[idx]
+                wandb.Image(im)

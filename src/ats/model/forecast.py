@@ -6,8 +6,6 @@ warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 os.chdir("../../..")
 
-import copy
-from pathlib import Path
 import warnings
 
 import lightning.pytorch as pl

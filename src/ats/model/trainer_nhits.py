@@ -9,11 +9,8 @@ import datetime
 
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 import matplotlib as mpl
-import copy
-from pathlib import Path
 import warnings
 import pyarrow.dataset as pds
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -49,7 +46,7 @@ from util import time_util
 
 
 def get_model(config, training):
-    device = config["device"]
+    config["device"]
     max_prediction_length = config["max_prediction_length"]
     # configure network and trainer
     # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")

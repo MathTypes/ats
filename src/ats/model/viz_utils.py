@@ -1,7 +1,6 @@
 import datetime
 from io import BytesIO
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 from lightning.pytorch.loggers import WandbLogger
@@ -192,10 +191,10 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         im = PIL.Image.open(BytesIO(img_bytes))
         pred_img = wandb.Image(im)
 
-        y_hat = y_hats[idx]
+        y_hats[idx]
         y_hat_cum = y_hats_cum_sum[idx]
         y_close_cum_row = y_close_cum_sum[idx]
-        img = wandb.Image(im)
+        wandb.Image(im)
         fig = go.Figure(
             data=go.Ohlc(
                 x=train_data_rows["time"],
@@ -223,7 +222,7 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         )
         img_bytes = fig.to_image(format="png")  # kaleido library
         im = PIL.Image.open(BytesIO(img_bytes))
-        img = wandb.Image(im)
+        wandb.Image(im)
         base = 0
         y_max = torch.max(y_close_cum_row) - base
         y_min = torch.min(y_close_cum_row) - base
@@ -258,10 +257,10 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     return data_table
 
 
-def add_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
+def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
                 matched_eval_data, x, data_table, config, pl_module,
                 out, target_size, interp_output, rmse, mae):
-    y_hat = y_hats[idx]
+    y_hats[idx]
     y_hat_cum = y_hats_cum[idx]
     y_hat_cum_max = torch.max(y_hat_cum)
     y_hat_cum_min = torch.min(y_hat_cum)
@@ -274,7 +273,7 @@ def add_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
     dm = train_data_row["time"]
     dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
     y_close_cum_sum_row = y_close_cum_sum[idx]
-    y_close_row = y_close[idx]
+    y_close[idx]
     y_close_cum_max = torch.max(y_close_cum_sum_row)
     y_close_cum_min = torch.min(y_close_cum_sum_row)
     if not (
@@ -283,7 +282,7 @@ def add_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
         or abs(y_close_cum_max) > 0.01
         or abs(y_close_cum_min) > 0.01
     ):
-        return False
+        return {}
     train_data_rows = matched_eval_data[
         (
             matched_eval_data.time_idx
@@ -418,28 +417,26 @@ def add_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
     img_bytes = fig.to_image(format="png")  # kaleido library
     im = PIL.Image.open(BytesIO(img_bytes))
     img = wandb.Image(im)
-    data_table.add_data(
-        train_data_row["ticker"],  # 0 ticker
-        dm,  # 1 time
-        train_data_row["time_idx"],  # 2 time_idx
-        train_data_row["day_of_week"],  # 3 day of week
-        train_data_row["hour_of_day"],  # 4 hour of day
-        train_data_row["year"],  # 5 year
-        train_data_row["month"],  # 6 month
-        train_data_row["day_of_month"],  # 7 day_of_month
-        wandb.Image(raw_im),  # 8 image
-        # np.argmax(label, axis=-1)
-        y_close_cum_max,  # 9 max
-        y_close_cum_min,  # 10 min
-        0,  # 11 close_back_cusum
-        dm_str,  # 12
-        decoder_time_idx,
-        y_hat_cum_max,
-        y_hat_cum_min,
-        img,
-        y_hat_cum_max - y_close_cum_max,
-        y_hat_cum_min - y_close_cum_min,
-        rmse[idx],
-        mae[idx],
-    )
-    return True
+    return {
+        "ticker":train_data_row["ticker"],  # 0 ticker
+        "dm":dm,  # 1 time
+        "time_idx":train_data_row["time_idx"],  # 2 time_idx
+        "day_of_week":train_data_row["day_of_week"],  # 3 day of week
+        "hour_of_day":train_data_row["hour_of_day"],  # 4 hour of day
+        "year":train_data_row["year"],  # 5 year
+        "month":train_data_row["month"],  # 6 month
+        "day_of_month":train_data_row["day_of_month"],  # 7 day_of_month
+        "image":wandb.Image(raw_im),  # 8 image
+        "y_close_cum_max":y_close_cum_max,  # 9 max
+        "y_close_cum_min":y_close_cum_min,  # 10 min
+        "close_back_cumsum":0,  # 11 close_back_cusum
+        "dm_str":dm_str,  # 12
+        "decoder_time_idx":decoder_time_idx,
+        "y_hat_cum_max":y_hat_cum_max,
+        "y_hat_cum_min":y_hat_cum_min,
+        "pred_img":img,
+        "error_cum_max":y_hat_cum_max - y_close_cum_max,
+        "error_cum_min":y_hat_cum_min - y_close_cum_min,
+        "rmse":rmse[idx],
+        "mae":mae[idx],
+    }

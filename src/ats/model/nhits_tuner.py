@@ -11,7 +11,6 @@ from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.tuner import Tuner
 import numpy as np
-import random
 import optuna
 from optuna.integration import PyTorchLightningPruningCallback
 from optuna.integration.wandb import WeightsAndBiasesCallback
@@ -100,7 +99,7 @@ def optimize_hyperparameters(
         optuna.Study: optuna study results
     """
     model_path = config["model_path"]
-    max_epochs = config["max_epochs"]
+    config["max_epochs"]
     n_trials = config["n_trials"]
     logging_level = {
         None: optuna.logging.get_verbosity(),
@@ -124,7 +123,7 @@ def optimize_hyperparameters(
             monitor="val_loss",
         )
 
-        learning_rate_callback = LearningRateMonitor()
+        LearningRateMonitor()
         # logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
         # default_trainer_kwargs = dict(
         #    accelerator="auto",

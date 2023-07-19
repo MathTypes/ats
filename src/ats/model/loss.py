@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 from pytorch_forecasting.metrics import MultiLoss

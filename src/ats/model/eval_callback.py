@@ -1,7 +1,5 @@
-import datetime
-from io import BytesIO
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Any, List
 
 import numpy as np
 from omegaconf import OmegaConf
@@ -173,7 +171,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             "mae",
         ]
         data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
-        preds = []
         device = self.pl_module.device
         for batch_idx in range(self.num_samples):
             logging.info(f"add prediction for batch:{batch_idx}")
@@ -236,10 +233,33 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             )
             cnt = 0
             for idx in range(len(y_hats)):
-                if viz_utils.add_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
-                                         self.matched_eval_data, x, data_table,
-                                         self.config, self.pl_module, out, self.target_size,
-                                         interp_output, rmse, mae):
+                row = viz_utils.create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
+                                               self.matched_eval_data, x, self.config, self.pl_module, out,
+                                               self.target_size, interp_output, rmse, mae)
+                if row:
+                    data_table.add_data(
+                        row["ticker"],  # 0 ticker
+                        row["time"],  # 1 time
+                        row["time_idx"],  # 2 time_idx
+                        row["day_of_week"],  # 3 day of week
+                        row["hour_of_day"],  # 4 hour of day
+                        row["year"],  # 5 year
+                        row["month"],  # 6 month
+                        row["day_of_month"],  # 7 day_of_month
+                        row["image"],  # 8 image
+                        row["y_close_cum_max"],  # 9 max
+                        row["y_close_cum_min"],  # 10 min
+                        row["close_back_cumsum"],  # 11 close_back_cusum
+                        row["dm_str"],  # 12
+                        row["decoder_time_idx"],
+                        row["y_hat_cum_max"],
+                        row["y_hat_cum_min"],
+                        row["pred_img"],
+                        row["error_cum_max"],
+                        row["error_cum_min"],
+                        row["rmse"],
+                        row["mae"],
+                    )
                     cnt+=1
             del x
             del y

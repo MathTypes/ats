@@ -1,5 +1,4 @@
 import datetime
-import functools
 import logging
 import os
 
@@ -116,7 +115,6 @@ def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_inte
             input_dirs.extend(files)
         except:
             logging.warn(f"can not find files under {date_dir}")
-            pass
     # logging.info(f"reading files:{input_dirs}")
     return input_dirs
 

@@ -1,5 +1,4 @@
-from typing import List, Optional, Tuple, Union
-import statistics
+from typing import Optional, Tuple, Union
 import torch
 import logging
 import torch.nn as nn

@@ -17,7 +17,6 @@
 from typing import List, Optional, Union
 
 from ...configuration_utils import PretrainedConfig
-import logging
 
 
 TIME_SERIES_TRANSFORMER_PRETRAINED_CONFIG_ARCHIVE_MAP = {

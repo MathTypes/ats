@@ -7,7 +7,6 @@ from dateutil import tz
 from datetime import datetime
 from tqdm import tqdm
 from sklearn import preprocessing
-import argparse
 
 # set pandas display options
 pd.set_option("display.max_rows", 500)
@@ -992,7 +991,7 @@ def Import_Economic_Calendar(df, folder: str, freq: str):  # , ax: str
 
     # LABEL ENCODING FOR NEWS CALLENDAR
     le = preprocessing.LabelEncoder()
-    categoricals_ = le.fit(df["ALL_econ_cal"].values)
+    le.fit(df["ALL_econ_cal"].values)
     df["ALL_econ_cal_lab"] = le.transform(df["ALL_econ_cal"].values)
     print("Import_Economic_Calendar is complete:")
     return df

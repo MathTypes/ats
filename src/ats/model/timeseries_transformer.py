@@ -5,7 +5,6 @@ from torch import nn, Tensor
 import positional_encoder as pe
 import torch.nn.functional as F
 import timeseries_utils
-import logging
 import inference
 
 

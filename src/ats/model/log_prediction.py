@@ -1,4 +1,3 @@
-import io
 from PIL import Image
 from datetime import datetime
 import logging
@@ -88,7 +87,7 @@ class LogPredictionsCallback(Callback):
                 tgt_y = torch.from_numpy(np.stack(tgt_y_vec))
                 times = torch.from_numpy(np.stack(time_vec)).squeeze(-1)
                 if pl_module.batch_first == False:
-                    shape_before = src.shape
+                    src.shape
                     src = src.permute(1, 0, 2)
                     times = times.permute(1, 0)
                     if tgt_y.dim() == 3:
@@ -243,9 +242,9 @@ class LSTMLogPredictionsCallback(Callback):
                 pred = preds[i * 4 + j].cpu()
                 y = val_labels[i * 4 + j].cpu()
                 # times = val_times[i*4+j].cpu()
-                open = x[0]
-                high = x[1]
-                low = x[2]
+                x[0]
+                x[1]
+                x[2]
                 close = x[3]
                 pred_close = pred[3]
                 # logging.info(f"pred_close:{pred_close.shape}")
@@ -331,9 +330,9 @@ class TSLogPredictionsCallback(Callback):
                 pred = preds[i * 4 + j].cpu()
                 y = val_labels[i * 4 + j].cpu()
                 # times = val_times[i*4+j].cpu()
-                open = x[0]
-                high = x[1]
-                low = x[2]
+                x[0]
+                x[1]
+                x[2]
                 close = x[3]
                 pred_close = pred[3]
                 # logging.info(f"pred_close:{pred_close.shape}")

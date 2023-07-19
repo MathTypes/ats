@@ -1,7 +1,7 @@
 from collections import defaultdict
+from typing import List
 import datetime
 from dateutil import parser
-from io import BytesIO
 import logging
 
 import pandas as pd
@@ -386,8 +386,6 @@ class PatchTftSupervisedPipeline(Pipeline):
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         last_time_idx = train_data.iloc[-1]["time_idx"]
         last_data_time = None
-        position_map = {}
-        prediction_map = {}
         last_position_map = {} 
         last_px_map = {}
         last_data = train_data.iloc[-1]
@@ -401,6 +399,37 @@ class PatchTftSupervisedPipeline(Pipeline):
         initial_positions = torch.tensor([0, 0])
         optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
                                              initial_positions=initial_positions)
+        data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pnl_viz", type="pnl_viz")
+        column_names = [
+            "ticker",
+            "time",
+            "time_idx",
+            "day_of_week",
+            "hour_of_day",
+            "year",
+            "month",
+            "day_of_month",
+            "price_img",
+            "act_close_pct_max",
+            "act_close_pct_min",
+            "close_back_cumsum",
+            "time_str",
+            "pred_time_idx",
+            "pred_close_pct_max",
+            "pred_close_pct_min",
+            "img",
+            "error_max",
+            "error_min",
+            "rmse",
+            "mae",
+            "initial_pos",
+            "new_pos",
+            "delta_pos",
+            "current_px",
+            "pnl",
+        ]
+        data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
+        target_size = len(self.targets) if isinstance(self.targets, List) else 1
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -442,18 +471,39 @@ class PatchTftSupervisedPipeline(Pipeline):
                 predict_time_idx = new_data.time_idx.max()
                 logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
                 logging.info(f"last_time_idex={last_time_idx}, predict_time_idx:{predict_time_idx}")
-                new_prediction_data = train_dataset.filter(lambda x: (x.time_idx_last == predict_time_idx))
+                filtered_dataset = train_dataset.filter(lambda x: (x.time_idx_last == predict_time_idx))
+                x, y = next(iter(filtered_dataset))
+                logging.info(f"x:{x}, y:{y}")
                 # new_prediction_data is the last encoder_data, we need to add decoder_data based on
                 # known features or lagged unknown features
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
-                prediction, y_quantiles = prediction_utils.predict(self.model,
-                                                                   new_prediction_data, wandb_logger)
-                returns_fcst = prediction.numpy()
+                y_hats, y_quantiles, out = prediction_utils.predict(self.model, filtered_dataset, wandb_logger)
+                logging.info(f"y_hats:{y_hats}")
+                if isinstance(y_hats, list):
+                    y_hats = y_hats[0]
+                returns_fcst = y_hats.numpy()
                 min_neg_fcst = torch.minimum(torch.min(torch.cumsum(torch.min(y_quantiles, dim=2), dim=1)), 0)
                 max_pos_fcst = torch.maximum(torch.max(torch.cumsum(torch.max(y_quantiles, dim=2), dim=1)), 0)
                 logging.info(f"returns_fcst:{returns_fcst}, y_quantiles_min:{y_quantiles_min}, y_quantiles_max:{y_quantiles_max}")
                 new_positions, ret, val  = optimizer.optimize(returns_fcst, min_neg_fcst, max_pos_fcst)
-                
+
+                y_hats_cum = torch.cumsum(y_hats, dim=-1)
+                y_close = y[0]
+                y_close_cum_sum = torch.cumsum(y_close, dim=-1)
+                indices = train_dataset.x_to_index(x)
+                matched_data = train_dataset.raw_data
+                logging.info(f"indices:{indices}")
+                rmse = 0
+                mae = 0
+                interp_output = self.model.interpret_output(
+                    detach(out),
+                    reduction="none",
+                    attention_prediction_horizon=0,  # attention only for first prediction horizon
+                )
+                row = viz_utils.add_viz_row(0, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
+                                            matched_data, x, data_table,
+                                            self.config, self.model, out, target_size,
+                                            interp_output, rmse, mae)
                 new_data_row = new_data.iloc[0]
                 ticker = new_data_row.ticker
                 px = new_data_row.close
@@ -469,12 +519,44 @@ class PatchTftSupervisedPipeline(Pipeline):
                 pnl_df = pnl_df.append(df2, ignore_index = True)
                 last_position_map[ticker] = new_position
                 last_px_map[ticker] = px
-
+                if row:
+                    data_table.add_data(
+                        row["ticker"],  # 0 ticker
+                        row["time"],  # 1 time
+                        row["time_idx"],  # 2 time_idx
+                        row["day_of_week"],  # 3 day of week
+                        row["hour_of_day"],  # 4 hour of day
+                        row["year"],  # 5 year
+                        row["month"],  # 6 month
+                        row["day_of_month"],  # 7 day_of_month
+                        row["image"],  # 8 image
+                        row["y_close_cum_max"],  # 9 max
+                        row["y_close_cum_min"],  # 10 min
+                        row["close_back_cumsum"],  # 11 close_back_cusum
+                        row["dm_str"],  # 12
+                        row["decoder_time_idx"],
+                        row["y_hat_cum_max"],
+                        row["y_hat_cum_min"],
+                        row["pred_img"],
+                        row["error_cum_max"],
+                        row["error_cum_min"],
+                        row["rmse"],
+                        row["mae"],
+                        last_position,
+                        new_position,
+                        new_position-last_position,
+                        px,
+                        pnl_delta
+                    )
                 logging.info(f"last_position_map:{last_position_map}")
                 logging.info(f"last_px_map:{last_px_map}")
                 #logging.info(f"new_position:{position}, prediction:{prediction}")
             logging.info(f"eod {test_date}")
         stats = self.compute_stats(pnl_df.pnl)
+        data_artifact.add(data_table, "eval_data")
+        # Calling `use_artifact` uploads the data to W&B.
+        assert wandb.run is not None
+        wandb.run.use_artifact(data_artifact)
         logging.info(f"pnl:{pnl_df}")
         logging.info(f"stats:{stats}")
 
