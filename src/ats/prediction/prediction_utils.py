@@ -1,14 +1,20 @@
 import logging
 
 from pytorch_forecasting.utils import create_mask, detach, to_list
-
+import torch
 
 def predict(model, new_prediction_data, wandb_logger):
     # logging.info(f"new_prediction_data:{new_prediction_data}")
     #logging.info(f"index:{train_dataset.index.iloc[-5:]}")
     trainer_kwargs = {"logger": wandb_logger}
     # logging.info(f"trainer_kwargs:{trainer_kwargs}")
-    model = model.to("cuda:0")
+    # TODO: it is not clear why to_prediction fails complaining
+    # about tensors on cpu even with to("cuda:0"). Maybe
+    # something is going on with sampling ops which is placed on
+    # cpu.
+    device = torch.device('cpu')
+    model.to(device)
+    logging.info(f"model:{model}, device:{model.device}")
     device = model.device
     new_raw_predictions = model.predict(
         new_prediction_data,
@@ -32,8 +38,10 @@ def predict(model, new_prediction_data, wandb_logger):
     y_hats = to_list(
         model.to_prediction(output, **prediction_kwargs)
     )
-    prediction, position = y_hats
+    logging.info(f"y_hats:{y_hats}")
+    prediction = y_hats
     logging.info(f"prediction:{prediction}")
+    quantiles_kwargs = {}
     y_quantiles = to_list(
         model.to_quantiles(output, **quantiles_kwargs)
     )[0]

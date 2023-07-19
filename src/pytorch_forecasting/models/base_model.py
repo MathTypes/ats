@@ -1492,7 +1492,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     out = out[1]
             try:
                 #traceback.print_stack()
-                #logging.info(f"use metrics:{out}")
+                logging.info(f"use metrics:{out['prediction']}")
+                #logging.info(f"loss:{self.loss}")
                 out = self.loss.to_prediction(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
                 #logging.info(f"to_prediction_out:{out}")

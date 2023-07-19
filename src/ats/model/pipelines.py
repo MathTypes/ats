@@ -60,6 +60,7 @@ from ats.model import model_utils
 from ats.prediction import prediction_utils
 from ats.model.utils import Pipeline
 from ats.model import viz_utils
+from ats.optimizer import position_utils
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -397,6 +398,9 @@ class PatchTftSupervisedPipeline(Pipeline):
         pnl_df = pd.DataFrame(columns = ["ticker","timestamp","px","last_px","pos","pnl"])
         max_prediction_length = self.config.model.prediction_length
         first_update = True
+        initial_positions = torch.tensor([0, 0])
+        optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
+                                             initial_positions=initial_positions)
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -444,21 +448,19 @@ class PatchTftSupervisedPipeline(Pipeline):
                 #logging.info(f"new_prediction_data:{new_prediction_data}")
                 prediction, y_quantiles = prediction_utils.predict(self.model,
                                                                    new_prediction_data, wandb_logger)
-                #prediction, position = y_hats
-                logging.info(f"prediction:{prediction}")
-                #y_quantiles = to_list(self.model.to_quantiles(new_raw_predictions.output,
-                #                                              **quantiles_kwargs))[0]
-                logging.info(f"y_quantiles:{y_quantiles}")
-                exit(0)
-                #logging.info(f"y_hats:{y_hats}")
-                #logging.info(f"y:{new_raw_predictions.y}")
+                returns_fcst = prediction.numpy()
+                min_neg_fcst = torch.minimum(torch.min(torch.cumsum(torch.min(y_quantiles, dim=2), dim=1)), 0)
+                max_pos_fcst = torch.maximum(torch.max(torch.cumsum(torch.max(y_quantiles, dim=2), dim=1)), 0)
+                logging.info(f"returns_fcst:{returns_fcst}, y_quantiles_min:{y_quantiles_min}, y_quantiles_max:{y_quantiles_max}")
+                new_positions, ret, val  = optimizer.optimize(returns_fcst, min_neg_fcst, max_pos_fcst)
+                
                 new_data_row = new_data.iloc[0]
                 ticker = new_data_row.ticker
                 px = new_data_row.close
                 last_position = last_position_map[ticker]
                 last_px = last_px_map[ticker]
                 pnl_delta = last_position * (px - last_px)
-                new_position = position[0][0].item()
+                new_position = new_positions[0]
                 df2 = {'ticker': ticker, 'timestamp': new_data_row.timestamp,
                        'px': px, 'last_px' : last_px,
                        'pos': new_position,
