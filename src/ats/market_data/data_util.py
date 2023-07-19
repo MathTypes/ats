@@ -176,7 +176,6 @@ def ticker_transform(raw_data):
     df_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
     df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
     raw_data = raw_data.join(df_pct_back, rsuffix="_back").join(df_pct_forward, rsuffix="_fwd")
-
     raw_data['close_back_cumsum'] = raw_data['close_back'].cumsum()
     raw_data['volume_back_cumsum'] = raw_data['volume_back'].cumsum()
 
