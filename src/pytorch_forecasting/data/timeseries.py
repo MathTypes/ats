@@ -2860,7 +2860,10 @@ class TimeSeriesDataSet(Dataset):
             idx = self.raw_data[self.raw_data.time_idx==row["time_idx"]].index
             logging.info(f"index:{idx}")
             if not idx.empty:
-                self.raw_data.loc[idx] = row
+                self.raw_data.loc[idx,
+                                  ["open", "close", "high", "low", "volume", "dv", "time", "timestamp", "ticker", "series_idx", "time_idx"]] = [
+                                      row["open"], row["close"], row["high"], row["low"], row["volume"], row["dv"],
+                                      row["time"], row["timestamp"], row["ticker"], row["series_idx"], row["time_idx"]]
             else:
                 self.raw_data.loc[len(self.raw_data.index)] = row
         logging.info(f"new_full_data_before_add_group_features:{self.raw_data.iloc[-5:]}")
