@@ -1,0 +1,88 @@
+~id~realtime_start~realtime_end~name~press_release~link~notes
+9~9~2008-12-01~2008-12-01~Advance Monthly Sales for Retail and Food Services~True~http://www.census.gov/svsd/www/advtable.html~
+10~10~2008-12-01~2008-12-01~Consumer Price Index~True~http://www.bls.gov/cpi/~
+11~11~2008-12-01~2008-12-01~Employment Cost Index~True~http://www.bls.gov/ncs/ect~
+13~13~2008-12-01~2008-12-01~G.17 Industrial Production and Capacity Utilization~True~http://www.federalreserve.gov/releases/g17/~
+14~14~2008-12-01~2008-12-01~G.19 Consumer Credit~True~http://www.federalreserve.gov/releases/g19/~
+15~15~2008-12-01~2008-12-01~G.5 Foreign Exchange Rates~True~http://www.federalreserve.gov/releases/g5/~
+17~17~2008-12-01~2008-12-01~H.10 Foreign Exchange Rates~True~http://www.federalreserve.gov/releases/h10/~
+18~18~2008-12-01~2008-12-01~H.15 Selected Interest Rates~True~http://www.federalreserve.gov/releases/h15/~
+19~19~2008-12-01~2008-12-01~H.3 Aggregate Reserves of Depository Institutions and the Monetary Base~True~http://www.federalreserve.gov/releases/h3/~The Board of Governors discontinued the H.3 statistical release on September 17, 2020. For more information, please see the announcement posted on August 20, 2020 (https://www.federalreserve.gov/feeds/h3.html).
+20~20~2008-12-01~2008-12-01~H.4.1 Factors Affecting Reserve Balances~True~http://www.federalreserve.gov/releases/h41/~
+21~21~2008-12-01~2008-12-01~H.6 Money Stock Measures~True~http://www.federalreserve.gov/releases/h6/~
+22~22~2008-12-01~2008-12-01~H.8 Assets and Liabilities of Commercial Banks in the United States~True~http://www.federalreserve.gov/releases/h8/~
+25~25~2008-12-01~2008-12-01~Manufacturing and Trade Inventories and Sales~True~http://www.census.gov/mtis/www/mtis.html~"The Manufacturing and Trade Inventories and Sales estimates are based on data from three surveys: the Monthly Retail Trade Survey, the Monthly Wholesale Trade Survey, and the Manufacturers’ Shipments, Inventories, and Orders Survey. Data for the wholesale and manufacturing sectors are unrevised from the most recent Monthly Wholesale Trade Report and the Full Report on Manufacturers’ Shipments, Inventories and orders. Data from the Retail sector is revised and presented in more detail from the most recent Advance Economic Indicators Report. For more information on these surveys see the links at: www.census.gov/retail/, www.census.gov/wholesale/, and www.census.gov/manufacturing/m3/.
+Description of the survey as provided by the Census, https://census.gov/mtis/www/data/pdf/mtis_current.pdf."
+27~27~2008-12-01~2008-12-01~New Residential Construction~True~http://www.census.gov/construction/nrc/~
+46~46~2008-12-01~2008-12-01~Producer Price Index~True~http://www.bls.gov/ppi/~
+47~47~2008-12-01~2008-12-01~Productivity and Costs~True~http://www.bls.gov/lpc/~
+49~49~2008-12-01~2008-12-01~U.S. International Transactions~True~https://www.bea.gov/data/intl-trade-investment/international-transactions~
+50~50~2008-12-01~2008-12-01~Employment Situation~True~http://www.bls.gov/ces/~
+51~51~2008-12-01~2008-12-01~U.S. International Trade in Goods and Services~True~https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html~
+52~52~2008-12-01~2008-12-01~Z.1 Flow of Funds Accounts of the United States~True~http://www.federalreserve.gov/releases/z1/~
+53~53~2008-12-01~2008-12-01~Gross Domestic Product~True~http://www.bea.gov/national/index.htm~
+54~54~2008-12-01~2008-12-01~Personal Income and Outlays~True~https://www.bea.gov/data/income-saving/personal-income~
+55~55~2008-12-01~2008-12-01~Reports of Condition and Income for All Insured U.S. Commercial Banks~True~https://cdr.ffiec.gov/public/~
+59~59~2008-12-01~2008-12-01~National Population Estimates~False~http://www.census.gov/popest/~
+61~61~2008-12-01~2008-12-01~Money Zero Maturity (MZM)~False~http://research.stlouisfed.org/publications/mt/~
+62~62~2008-12-01~2008-12-01~Monetary Services Index (MSI)~False~https://research.stlouisfed.org/msi/~
+63~63~2008-12-01~2008-12-01~M2 Related Series~False~http://research.stlouisfed.org/publications/mt/~
+64~64~2008-12-01~2008-12-01~Long-Term U.S. Treasury Securities - Market Yield~False~~
+70~70~2008-12-01~2008-12-01~Monthly Treasury Inflation-Indexed Securities~False~~
+71~71~2008-12-01~2008-12-01~Weekly Treasury Inflation-Indexed Securities~False~~
+72~72~2008-12-01~2008-12-01~Daily Treasury Inflation-Indexed Securities~False~~
+78~78~2008-12-01~2008-12-01~St. Louis Monthly Reserves and Monetary Base~False~http://research.stlouisfed.org/publications/mt/~
+79~79~2008-12-01~2008-12-01~St. Louis Bi-Weekly Reserves and Monetary Base~False~http://research.stlouisfed.org/publications/usfd/~
+80~80~2008-12-01~2008-12-01~Treasury Bulletin~True~http://www.fiscal.treasury.gov/fsreports/rpt/treasBulletin/treasBulletin_home.htm~
+81~81~2008-12-01~2008-12-01~Fiscal Year Budget Data~False~https://www.whitehouse.gov/omb/historical-tables/~
+82~82~2008-12-01~2008-12-01~Economic Report of the President~True~https://www.gpo.gov/fdsys/browse/collection.action?collectionCode=ERP~
+87~87~2008-12-01~2008-12-01~Transitional Euro Country Exchange Rates~False~~
+89~89~2008-12-01~2008-12-01~Household Debt Service and Financial Obligations Ratios~True~http://www.federalreserve.gov/releases/housedebt/default.htm~
+91~91~2008-12-01~2008-12-01~Surveys of Consumers~True~http://www.sca.isr.umich.edu/~
+92~92~2008-12-01~2008-12-01~Selected Real Retail Sales Series~False~~
+93~93~2008-12-01~2008-12-01~Supplemental Estimates, Motor Vehicles~True~https://www.bea.gov/data/gdp/gross-domestic-product#collapse86~
+94~94~2008-12-01~2008-12-01~Survey of Secondary Market Prices and Yields, and Interest Rates for Home Loans~True~~
+95~95~2008-12-01~2008-12-01~Manufacturer's Shipments, Inventories, and Orders (M3) Survey~True~http://www.census.gov/indicator/www/m3/~
+97~97~2008-12-01~2008-12-01~New Residential Sales~True~http://www.census.gov/construction/nrs/~
+99~99~2008-12-01~2008-12-01~Budget and Economic Outlook~True~http://www.cbo.gov/topics/budget/budget-and-economic-outlook~
+100~100~2008-12-01~2008-12-01~Seasonal Credit Rate~False~https://www.frbdiscountwindow.org/Home/Pages/Discount-Rates/Historical-Discount-Rates~
+101~101~2008-12-01~2008-12-01~FOMC Press Release~True~http://www.federalreserve.gov/fomc/~
+102~102~2008-12-01~2008-12-01~Wall Street Journal~True~http://online.wsj.com/public/us~
+103~103~2008-12-01~2008-12-01~Discount Rate Meeting Minutes~True~http://www.federalreserve.gov/monetarypolicy/discountrate.htm~
+104~104~2008-12-01~2008-12-01~Federal Reserve Bulletin~True~https://www.federalreserve.gov/publications/bulletin.htm~
+105~105~2008-12-01~2008-12-01~St. Louis Weekly Reserves and Monetary Base~False~http://research.stlouisfed.org/publications/usfd/~
+107~107~2008-12-01~2008-12-01~Multifactor Productivity Trends in Manufacturing~True~http://www.bls.gov/mfp~
+109~109~2008-12-01~2008-12-01~State Coincident Indexes~True~https://www.philadelphiafed.org/surveys-and-data/regional-economic-analysis/state-coincident-indexes~
+110~110~2008-12-01~2008-12-01~State Personal Income (Quarterly)~True~https://www.bea.gov/data/income-saving/personal-income-by-state~
+111~111~2008-12-01~2008-12-01~Annual Estimates of the Population of Metropolitan and Micropolitan Statistical Areas~False~http://www.census.gov/popest/~
+112~112~2008-12-01~2008-12-01~Regional and State Employment and Unemployment~True~http://www.bls.gov/sae~
+113~113~2008-12-01~2008-12-01~Metropolitan Area Employment and Unemployment~True~http://www.bls.gov/sae/~
+116~116~2008-12-01~2008-12-01~Unemployment in States and Local Areas (all other areas)~False~http://www.bls.gov/lau/home.htm~The Local Area Unemployment Statistics release include monthly and annual-average estimates of civilian labor force, employed people, unemployed people, and unemployment rates for different geographies. These data are based on the Current Population Survey (CPS), the household survey that is the source of the national unemployment rate. For more details, see the frequently asked questions here: https://www.bls.gov/lau/laufaq.htm.
+118~118~2008-12-01~2008-12-01~Annual Estimates of the Population for the U.S. and States, and for Puerto Rico~False~http://www.census.gov/popest/~
+119~119~2008-12-01~2008-12-01~Annual Estimates of the Population for Counties~False~http://www.census.gov/popest/~
+121~121~2008-12-01~2008-12-01~H.6 Historical Data~False~http://www.federalreserve.gov/releases/h6/hist/~
+122~122~2008-12-01~2008-12-01~H.4.1 Factors Affecting Reserve Balances (data not included in press release)~False~~
+131~131~2008-12-01~2008-12-01~G.13 Selected Interest Rates~True~http://federalreserve.gov/releases/g13/~With the issue dated January 8, 2002 (containing data for December 2001), the Federal Reserve ceased publication of the monthly G.13 statistical release.  Monthly interest rates continue to be available on the H.15 release.
+138~138~2008-12-01~2008-12-01~BEA Regions Employment and Unemployment~False~~
+139~139~2008-12-01~2008-12-01~Metropolitan Area Per Capita Personal Income~False~http://bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm~
+140~140~2008-12-01~2008-12-01~Gross Domestic Product (GDP) by State~True~https://www.bea.gov/data/gdp/gdp-state~
+143~143~2008-12-01~2008-12-01~State Government Tax Collections~False~https://www.census.gov/programs-surveys/stc.html~
+144~144~2008-12-01~2008-12-01~Residential Vacancies and Homeownership Annual Statistics~False~http://www.census.gov/housing/hvs/~
+148~148~2008-12-01~2008-12-01~Housing Units Authorized By Building Permits~False~https://www.census.gov/construction/bps/~
+151~151~2008-12-01~2008-12-01~State Per Capita Personal Income~False~https://www.bea.gov/data/income-saving/personal-income-by-state~
+152~152~2008-12-01~2008-12-01~Health Insurance Coverage~False~https://www.census.gov/data/tables/time-series/demo/health-insurance/historical-series/hib.html~
+153~153~2008-12-01~2008-12-01~BEA Regions Health Insurance Coverage~False~http://www.census.gov/data/tables/time-series/demo/health-insurance/historical-series/hib.html~
+165~165~2008-12-01~2008-12-01~Australian Foreign Exchange Transactions~False~~
+166~166~2008-12-01~2008-12-01~German Foreign Exchange Intervention~False~~
+167~167~2008-12-01~2008-12-01~Italian Foreign Exchange Intervention~False~~
+168~168~2008-12-01~2008-12-01~Swiss Foreign Exchange Intervention~False~~
+169~169~2008-12-01~2008-12-01~Turkish Foreign Exchange Intervention~False~~
+170~170~2008-12-01~2008-12-01~U.S. Foreign Exchange Intervention~False~~
+171~171~2008-12-01~2008-12-01~House Price Index~False~http://www.fhfa.gov/DataTools/Downloads/Pages/House-Price-Index.aspx~
+172~172~2008-12-01~2008-12-01~Japan Foreign Exchange Intervention~False~http://www.mof.go.jp/english/international_policy/reference/feio/~
+173~173~2008-12-01~2008-12-01~BEA Regions Housing Units Authorized By Building Permits~False~https://www.census.gov/construction/bps/~
+250~250~2008-12-01~2008-12-01~Regional and State Employment and Unemployment (Seasonally Adjusted)~False~http://www.bls.gov/sae~Bureau of Labor Statistics data that is seasonally adjusted by the Federal Reserve Bank of St. Louis.
+257~257~2008-12-01~2008-12-01~NBER Macrohistory Database~False~http://www.nber.org/macrohistory/~
+323~323~2008-12-01~2008-12-01~Trimmed Mean PCE Inflation Rate~True~http://www.dallasfed.org/research/pce/~The Trimmed Mean PCE inflation rate is an alternative measure of core inflation in the price index for personal consumption expenditures (PCE). It is calculated by staff at the Dallas Fed, using data from the Bureau of Economic Analysis (BEA).
+326~326~2008-12-01~2008-12-01~Summary of Economic Projections~False~http://www.federalreserve.gov/monetarypolicy/fomccalendars.htm~
+396~396~2008-12-01~2008-12-01~G.17.2 Retail Instalment Credit at Furniture and Household Appliance Stores~True~~

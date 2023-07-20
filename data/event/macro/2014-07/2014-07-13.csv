@@ -1,0 +1,225 @@
+~id~realtime_start~realtime_end~name~press_release~link~notes
+9~9~2014-07-13~2014-07-13~Advance Monthly Sales for Retail and Food Services~True~http://www.census.gov/retail/~"The U.S. Census Bureau conducts the Advance Monthly Retail Trade and Food Services Survey to provide an early estimate of monthly sales by kind of business for retail and food service firms located in the United States. Each month, questionnaires are mailed to a probability sample of approximately 4,700 employer firms selected from the larger Monthly Retail Trade Survey. Advance sales estimates are computed using a link relative estimator. For each detailed industry, we compute a ratio of current-to previous month weighted sales using data from units for which we have obtained usable responses for both the current and previous month. For each detailed industry, the advance total sales estimates for the current month is computed by multiplying this ratio by the preliminary sales estimate for the previous month (derived from the larger MRTS) at the appropriate industry level. Total estimates for broader industries are computed as the sum of the detailed industry estimates. The link relative estimate is used because imputation is not performed for most nonrespondents in MARTS. For a limited number of nonresponding companies that have influential effects on the estimates, sales may be estimated based on historical performance of that company. The monthly estimates are benchmarked to the annual survey estimates from the Annual Retail Trade Survey once available. The estimates are adjusted for seasonal variation and holiday and trading day differences. Additional information on MARTS and MRTS can be found on the Census Bureau website at: www.census.gov/retail.
+Description of the survey as provided by the Census, https://census.gov/retail/marts/www/marts_current.pdf"
+10~10~2014-07-13~2014-07-13~Consumer Price Index~True~http://www.bls.gov/cpi/~
+11~11~2014-07-13~2014-07-13~Employment Cost Index~True~http://www.bls.gov/ncs/ect~
+13~13~2014-07-13~2014-07-13~G.17 Industrial Production and Capacity Utilization~True~http://www.federalreserve.gov/releases/g17/~
+14~14~2014-07-13~2014-07-13~G.19 Consumer Credit~True~http://www.federalreserve.gov/releases/g19/~
+15~15~2014-07-13~2014-07-13~G.5 Foreign Exchange Rates~True~http://www.federalreserve.gov/releases/g5/~
+17~17~2014-07-13~2014-07-13~H.10 Foreign Exchange Rates~True~http://www.federalreserve.gov/releases/h10/~
+18~18~2014-07-13~2014-07-13~H.15 Selected Interest Rates~True~http://www.federalreserve.gov/releases/h15/~
+19~19~2014-07-13~2014-07-13~H.3 Aggregate Reserves of Depository Institutions and the Monetary Base~True~http://www.federalreserve.gov/releases/h3/~The Board of Governors discontinued the H.3 statistical release on September 17, 2020. For more information, please see the announcement posted on August 20, 2020 (https://www.federalreserve.gov/feeds/h3.html).
+20~20~2014-07-13~2014-07-13~H.4.1 Factors Affecting Reserve Balances~True~http://www.federalreserve.gov/releases/h41/~
+21~21~2014-07-13~2014-07-13~H.6 Money Stock Measures~True~http://www.federalreserve.gov/releases/h6/~
+22~22~2014-07-13~2014-07-13~H.8 Assets and Liabilities of Commercial Banks in the United States~True~http://www.federalreserve.gov/releases/h8/~
+25~25~2014-07-13~2014-07-13~Manufacturing and Trade Inventories and Sales~True~http://www.census.gov/mtis/www/mtis.html~"The Manufacturing and Trade Inventories and Sales estimates are based on data from three surveys: the Monthly Retail Trade Survey, the Monthly Wholesale Trade Survey, and the Manufacturers’ Shipments, Inventories, and Orders Survey. Data for the wholesale and manufacturing sectors are unrevised from the most recent Monthly Wholesale Trade Report and the Full Report on Manufacturers’ Shipments, Inventories and orders. Data from the Retail sector is revised and presented in more detail from the most recent Advance Economic Indicators Report. For more information on these surveys see the links at: www.census.gov/retail/, www.census.gov/wholesale/, and www.census.gov/manufacturing/m3/.
+Description of the survey as provided by the Census, https://census.gov/mtis/www/data/pdf/mtis_current.pdf."
+27~27~2014-07-13~2014-07-13~New Residential Construction~True~http://www.census.gov/construction/nrc/~
+46~46~2014-07-13~2014-07-13~Producer Price Index~True~http://www.bls.gov/ppi/~
+47~47~2014-07-13~2014-07-13~Productivity and Costs~True~http://www.bls.gov/lpc/~
+49~49~2014-07-13~2014-07-13~U.S. International Transactions~True~https://www.bea.gov/data/intl-trade-investment/international-transactions~
+50~50~2014-07-13~2014-07-13~Employment Situation~True~http://www.bls.gov/ces/~
+51~51~2014-07-13~2014-07-13~U.S. International Trade in Goods and Services~True~https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html~
+52~52~2014-07-13~2014-07-13~Z.1 Financial Accounts of the United States~True~http://www.federalreserve.gov/releases/z1/~"The Financial Accounts (formerly known as the Flow of Funds accounts)  are a set of financial accounts used to track the sources and uses of funds by sector. They are a component of a system of macroeconomic accounts including the National Income and Product accounts (NIPA) and balance of payments accounts, all of which serve as a comprehensive set of information on the economy’s performance.(1) Some important inferences that can be drawn from the Financial accounts are the financial strength of a given sector, new economic trends, changes in the composition of wealth, and development of new financial instruments over time.(1)
+Sectors are compiled into three categories: households, nonfinancial businesses, and banks. The sources of funds for a sector are its internal funds (savings from income after consumption) and external funds (loans from banks and other financial intermediaries). (1) Funds for a given sector are used for its investments in physical and financial assets. Dividing sources and uses of funds into two categories helps the staff of the Federal Reserve System pay particular attention to external sources of funds and financial uses of funds.(2) One example is whether households are borrowing more from banks—or in other words, whether household debt is rising. Another example might be whether banks are using more of their funds to provide loans to consumers. Transactions within a sector are not shown in the accounts; however, transactions between sectors are.(2) Monitoring the external flows of funds provides insights into a sector’s health and the performance of the economy as a whole. 
+Data for the Financial accounts are compiled from a large number of reports and publications, including regulatory reports such as those submitted by banks, tax filings, and surveys conducted by the Federal Reserve System.(2) The Financial accounts are published quarterly as a set of tables in the Federal Reserve’s Z.1 statistical release.
+(1)	Teplin, Albert M. “The U.S. Flow of Funds Accounts and Their Uses.” Federal Reserve Bulletin, July 2001; http://www.federalreserve.gov/pubs/bulletin/2001/0701lead.pdf.
+(2)	Board of Governors of the Federal Reserve System. “Guide to the Flow of Funds Accounts.” 2000, http://www.federalreserve.gov/apps/fof/."
+53~53~2014-07-13~2014-07-13~Gross Domestic Product~True~https://www.bea.gov/data/gdp/gross-domestic-product~
+54~54~2014-07-13~2014-07-13~Personal Income and Outlays~True~https://www.bea.gov/data/income-saving/personal-income~
+55~55~2014-07-13~2014-07-13~Reports of Condition and Income for All Insured U.S. Commercial Banks~True~https://cdr.ffiec.gov/public/~
+59~59~2014-07-13~2014-07-13~National Population Estimates~False~http://www.census.gov/popest/~
+61~61~2014-07-13~2014-07-13~Money Zero Maturity (MZM)~False~http://research.stlouisfed.org/publications/mt/~
+62~62~2014-07-13~2014-07-13~Monetary Services Index (MSI)~False~https://research.stlouisfed.org/msi/~
+63~63~2014-07-13~2014-07-13~M2 Related Series~False~http://research.stlouisfed.org/publications/mt/~
+64~64~2014-07-13~2014-07-13~Long-Term U.S. Treasury Securities - Market Yield~False~~
+70~70~2014-07-13~2014-07-13~Monthly Treasury Inflation-Indexed Securities~False~~
+71~71~2014-07-13~2014-07-13~Weekly Treasury Inflation-Indexed Securities~False~~
+72~72~2014-07-13~2014-07-13~Daily Treasury Inflation-Indexed Securities~False~~
+78~78~2014-07-13~2014-07-13~St. Louis Monthly Reserves and Monetary Base~False~http://research.stlouisfed.org/publications/mt/~
+79~79~2014-07-13~2014-07-13~St. Louis Bi-Weekly Reserves and Monetary Base~False~http://research.stlouisfed.org/publications/usfd/~
+80~80~2014-07-13~2014-07-13~Treasury Bulletin~True~http://www.fiscal.treasury.gov/fsreports/rpt/treasBulletin/treasBulletin_home.htm~
+81~81~2014-07-13~2014-07-13~Fiscal Year Budget Data~False~https://www.whitehouse.gov/omb/historical-tables/~
+82~82~2014-07-13~2014-07-13~Economic Report of the President~True~https://www.gpo.gov/fdsys/browse/collection.action?collectionCode=ERP~
+86~86~2014-07-13~2014-07-13~Commercial Paper~True~http://www.federalreserve.gov/releases/cp/~
+87~87~2014-07-13~2014-07-13~Transitional Euro Country Exchange Rates~False~~
+89~89~2014-07-13~2014-07-13~Household Debt Service and Financial Obligations Ratios~True~http://www.federalreserve.gov/releases/housedebt/default.htm~
+91~91~2014-07-13~2014-07-13~Surveys of Consumers~True~http://www.sca.isr.umich.edu/~
+92~92~2014-07-13~2014-07-13~Selected Real Retail Sales Series~False~~
+93~93~2014-07-13~2014-07-13~Supplemental Estimates, Motor Vehicles~True~https://www.bea.gov/data/gdp/gross-domestic-product#collapse86~
+94~94~2014-07-13~2014-07-13~Survey of Secondary Market Prices and Yields, and Interest Rates for Home Loans~True~~
+95~95~2014-07-13~2014-07-13~Manufacturer's Shipments, Inventories, and Orders (M3) Survey~True~http://www.census.gov/indicator/www/m3/~
+97~97~2014-07-13~2014-07-13~New Residential Sales~True~http://www.census.gov/construction/nrs/~
+99~99~2014-07-13~2014-07-13~Budget and Economic Outlook~True~http://www.cbo.gov/topics/budget/budget-and-economic-outlook~
+100~100~2014-07-13~2014-07-13~Seasonal Credit Rate~False~https://www.frbdiscountwindow.org/Home/Pages/Discount-Rates/Historical-Discount-Rates~
+101~101~2014-07-13~2014-07-13~FOMC Press Release~True~http://www.federalreserve.gov/fomc/~
+102~102~2014-07-13~2014-07-13~Wall Street Journal~True~http://online.wsj.com/public/us~
+103~103~2014-07-13~2014-07-13~Discount Rate Meeting Minutes~True~http://www.federalreserve.gov/monetarypolicy/discountrate.htm~
+104~104~2014-07-13~2014-07-13~Federal Reserve Bulletin~True~https://www.federalreserve.gov/publications/bulletin.htm~
+105~105~2014-07-13~2014-07-13~St. Louis Weekly Reserves and Monetary Base~False~http://research.stlouisfed.org/publications/usfd/~
+106~106~2014-07-13~2014-07-13~M2 Own Rate~False~~
+107~107~2014-07-13~2014-07-13~Multifactor Productivity Trends in Manufacturing~True~http://www.bls.gov/mfp~
+109~109~2014-07-13~2014-07-13~State Coincident Indexes~True~https://www.philadelphiafed.org/surveys-and-data/regional-economic-analysis/state-coincident-indexes~
+110~110~2014-07-13~2014-07-13~State Personal Income (Quarterly)~True~https://www.bea.gov/data/income-saving/personal-income-by-state~
+111~111~2014-07-13~2014-07-13~Annual Estimates of the Population of Metropolitan and Micropolitan Statistical Areas~False~http://www.census.gov/popest/~
+112~112~2014-07-13~2014-07-13~Regional and State Employment and Unemployment~True~http://www.bls.gov/sae~
+113~113~2014-07-13~2014-07-13~Metropolitan Area Employment and Unemployment~True~http://www.bls.gov/sae/~
+116~116~2014-07-13~2014-07-13~Unemployment in States and Local Areas (all other areas)~False~http://www.bls.gov/lau/home.htm~The Local Area Unemployment Statistics release include monthly and annual-average estimates of civilian labor force, employed people, unemployed people, and unemployment rates for different geographies. These data are based on the Current Population Survey (CPS), the household survey that is the source of the national unemployment rate. For more details, see the frequently asked questions here: https://www.bls.gov/lau/laufaq.htm.
+118~118~2014-07-13~2014-07-13~Annual Estimates of the Population for the U.S. and States, and for Puerto Rico~False~http://www.census.gov/popest/~
+119~119~2014-07-13~2014-07-13~Annual Estimates of the Population for Counties~False~http://www.census.gov/popest/~
+121~121~2014-07-13~2014-07-13~H.6 Historical Data~False~http://www.federalreserve.gov/releases/h6/hist/~
+122~122~2014-07-13~2014-07-13~H.4.1 Factors Affecting Reserve Balances (data not included in press release)~False~~
+131~131~2014-07-13~2014-07-13~G.13 Selected Interest Rates~True~http://federalreserve.gov/releases/g13/~With the issue dated January 8, 2002 (containing data for December 2001), the Federal Reserve ceased publication of the monthly G.13 statistical release.  Monthly interest rates continue to be available on the H.15 release.
+138~138~2014-07-13~2014-07-13~BEA Regions Employment and Unemployment~False~~
+139~139~2014-07-13~2014-07-13~Metropolitan Area Per Capita Personal Income~False~http://bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm~
+140~140~2014-07-13~2014-07-13~Gross Domestic Product (GDP) by State~True~https://www.bea.gov/data/gdp/gdp-state~
+143~143~2014-07-13~2014-07-13~State Government Tax Collections~False~https://www.census.gov/programs-surveys/stc.html~
+144~144~2014-07-13~2014-07-13~Residential Vacancies and Homeownership Annual Statistics~False~http://www.census.gov/housing/hvs/~
+148~148~2014-07-13~2014-07-13~Housing Units Authorized By Building Permits~False~https://www.census.gov/construction/bps/~
+151~151~2014-07-13~2014-07-13~State Per Capita Personal Income~False~https://www.bea.gov/data/income-saving/personal-income-by-state~
+152~152~2014-07-13~2014-07-13~Health Insurance Coverage~False~https://www.census.gov/data/tables/time-series/demo/health-insurance/historical-series/hib.html~
+153~153~2014-07-13~2014-07-13~BEA Regions Health Insurance Coverage~False~http://www.census.gov/data/tables/time-series/demo/health-insurance/historical-series/hib.html~
+165~165~2014-07-13~2014-07-13~Australian Foreign Exchange Transactions~False~~
+166~166~2014-07-13~2014-07-13~German Foreign Exchange Intervention~False~~
+167~167~2014-07-13~2014-07-13~Italian Foreign Exchange Intervention~False~~
+168~168~2014-07-13~2014-07-13~Swiss Foreign Exchange Intervention~False~~
+169~169~2014-07-13~2014-07-13~Turkish Foreign Exchange Intervention~False~~
+170~170~2014-07-13~2014-07-13~U.S. Foreign Exchange Intervention~False~~
+171~171~2014-07-13~2014-07-13~House Price Index~False~http://www.fhfa.gov/DataTools/Downloads/Pages/House-Price-Index.aspx~
+172~172~2014-07-13~2014-07-13~Japan Foreign Exchange Intervention~False~http://www.mof.go.jp/english/international_policy/reference/feio/~
+173~173~2014-07-13~2014-07-13~BEA Regions Housing Units Authorized By Building Permits~False~https://www.census.gov/construction/bps/~
+175~175~2014-07-13~2014-07-13~Local Area Personal Income~True~https://www.bea.gov/data/income-saving/personal-income-county-metro-and-other-areas~
+178~178~2014-07-13~2014-07-13~Mexican Foreign Exchange Intervention~False~~
+179~179~2014-07-13~2014-07-13~Quarterly Retail E-Commerce Sales~True~http://www.census.gov/mrts/www/ecomm.html~Link to the survey provided by the Census https://census.gov/retail/mrts/www/data/pdf/ec_current.pdf
+180~180~2014-07-13~2014-07-13~Unemployment Insurance Weekly Claims Report~True~http://www.dol.gov/ui/data.pdf~
+183~183~2014-07-13~2014-07-13~Gasoline and Diesel Fuel Update~False~http://www.eia.gov/petroleum/gasdiesel/~
+185~185~2014-07-13~2014-07-13~Interest on Required Balances and Excess Balances~False~http://www.federalreserve.gov/monetarypolicy/reqresbalances.htm~
+186~186~2014-07-13~2014-07-13~G.5A Foreign Exchange Rates~True~http://www.federalreserve.gov/releases/g5a/~
+187~187~2014-07-13~2014-07-13~St. Louis Fed Financial Stress Index~False~~"To obtain detailed information regarding the construction of the St. Louis Financial Stress Index, please see the online appendix at
+https://files.stlouisfed.org/files/htdocs/publications/net/NETJan2010Appendix.pdf"
+188~188~2014-07-13~2014-07-13~U.S. Import and Export Price Indexes~True~http://www.bls.gov/mxp/~
+190~190~2014-07-13~2014-07-13~Primary Mortgage Market Survey~True~http://www.freddiemac.com/pmms/~
+191~191~2014-07-13~2014-07-13~Senior Loan Officer Opinion Survey on Bank Lending Practices~True~http://www.federalreserve.gov/boarddocs/SnLoanSurvey/~For further information, please refer to the Board of Governors of the Federal Reserve System's Senior Loan Officer Opinion Survey on Bank Lending Practices release, online at http://www.federalreserve.gov/boarddocs/SnLoanSurvey/.
+192~192~2014-07-13~2014-07-13~Job Openings and Labor Turnover~True~http://www.bls.gov/jlt/~
+193~193~2014-07-13~2014-07-13~Money Velocity~False~~
+194~194~2014-07-13~2014-07-13~ADP National Employment Report~True~http://www.adpemploymentreport.com/~
+196~196~2014-07-13~2014-07-13~Wilshire Indexes~False~http://www.wilshire.com/Indexes/~
+198~198~2014-07-13~2014-07-13~Kansas City Financial Stress Index~True~https://www.kansascityfed.org/data-and-trends/kansas-city-financial-stress-index/~
+199~199~2014-07-13~2014-07-13~S&P/Case-Shiller Home Price Indices~True~https://us.spindices.com/index-family/sp-corelogic-case-shiller/sp-corelogic-case-shiller-composite~
+200~200~2014-07-13~2014-07-13~CBOE Market Statistics~False~http://www.cboe.com/data/mktstat.aspx~
+201~201~2014-07-13~2014-07-13~International Indexes of Consumer Prices~False~http://www.bls.gov/fls/intl_consumer_prices.htm~
+202~202~2014-07-13~2014-07-13~International Unemployment Rates and Employment Indexes~False~http://www.bls.gov/fls/intl_unemployment_rates_monthly.htm~
+203~203~2014-07-13~2014-07-13~International Comparisons of Annual Labor Force Statistics~False~http://www.bls.gov/fls/flscomparelf.htm~
+204~204~2014-07-13~2014-07-13~International Comparisons of GDP per Capita and per Hour~True~http://www.bls.gov/fls/intl_gdp_capita_gdp_hour.htm~
+205~205~2014-07-13~2014-07-13~Main Economic Indicators~False~http://www.oecd-ilibrary.org/economics/data/main-economic-indicators/main-economic-indicators-complete-database_data-00052-en~
+206~206~2014-07-13~2014-07-13~Quarterly National Accounts~False~http://www.oecd-ilibrary.org/economics/data/oecd-national-accounts-statistics_na-data-en~
+208~208~2014-07-13~2014-07-13~State Leading Indexes~True~https://www.philadelphiafed.org/research-and-data/regional-economy/indexes/leading/~The leading index for each state predicts the six-month growth rate of the state’s coincident index. In addition to the coincident index, the models include other variables that lead the economy: state-level housing permits (1 to 4 units), state initial unemployment insurance claims, delivery times from the Institute for Supply Management (ISM) manufacturing survey, and the interest rate spread between the 10-year Treasury bond and the 3-month Treasury bill.
+209~209~2014-07-13~2014-07-13~BofA Merrill Lynch~False~http://www.mlindex.ml.com/gispublic/default.asp~
+212~212~2014-07-13~2014-07-13~Spot Prices~False~http://www.eia.doe.gov/dnav/pet/pet_pri_spt_s1_d.htm~
+216~216~2014-07-13~2014-07-13~E.2 Survey of Terms of Business Lending~True~http://www.federalreserve.gov/releases/e2/~These data are collected during the middle month of each quarter and are released in the middle of the succeeding month.
+219~219~2014-07-13~2014-07-13~Chicago Fed National Activity Index~True~https://www.chicagofed.org/research/data/cfnai/current-data~
+221~221~2014-07-13~2014-07-13~Chicago Fed National Financial Conditions Index~False~https://www.chicagofed.org/publications/nfci/index~
+225~225~2014-07-13~2014-07-13~Quarterly New One-Family Home Sales by Price and Financing~False~https://www.census.gov/construction/nrs/index.html~
+228~228~2014-07-13~2014-07-13~Quarterly Starts and Completions by Purpose and Design~False~http://www.census.gov/construction/nrc/pdf/quarterly_starts_completions.pdf~
+229~229~2014-07-13~2014-07-13~Construction Spending~True~http://www.census.gov/construction/c30/c30index.html~
+230~230~2014-07-13~2014-07-13~International Comparisons of Manufacturing Productivity and Unit Labor Cost Trends~True~http://www.bls.gov/ilc/#productivity~
+231~231~2014-07-13~2014-07-13~Charge-Off and Delinquency Rates on Loans and Leases at Commercial Banks~True~http://www.federalreserve.gov/releases/chargeoff/default.htm~
+234~234~2014-07-13~2014-07-13~World Development Indicators~False~https://datacatalog.worldbank.org/search/dataset/0037712~The primary World Bank collection of development indicators, compiled from officially-recognized international sources. It presents the most current and accurate global development data available, and includes national, regional and global estimates.
+238~238~2014-07-13~2014-07-13~Financial Soundness Indicators~False~http://data.imf.org/?sk=9F855EAE-C765-405E-9C9A-A9DC2C1FEE47~"The Financial Soundness Indicators (FSIs) were developed by the IMF, together with the international community, with the aim of supporting macroprudential analysis and assessing strengths and vulnerabilities of financial systems.
+ 
+The website, hosted by the Statistics Department of the IMF, disseminates data and metadata on selected FSIs provided by participating countries. For a description of the various FSIs, as well as the consolidation basis, consolidation adjustments, and accounting rules followed, please refer to the “Concepts and Definitions” document (http://data.imf.org/?sk=9F855EAE-C765-405E-9C9A-A9DC2C1FEE47). The Statistics Department will steadily increase the number of countries reporting FSIs for dissemination on this site.
+
+Reporting countries compile FSI data presented on this website by using different methodologies, which may also vary for different points in time for the same country. Users are advised to consult the accompanying metadata (http://data.imf.org/?sk=9F855EAE-C765-405E-9C9A-A9DC2C1FEE47) to conduct more meaningful cross-country comparisons or to assess the evolution of a given FSI for any of the countries."
+239~239~2014-07-13~2014-07-13~International Financial Statistics~False~http://www.imf.org/external/data.htm~
+240~240~2014-07-13~2014-07-13~World Economic Outlook~False~http://www.imf.org/external/ns/cs.aspx?id=28~"The World Economic Outlook (WEO) database is created during the biannual WEO exercise, which begins in January and June of each year and results in the April and September WEO publication. Selected series from the publication are available in a database format.
+
+See also, the World Economic Outlook Reports (http://www.imf.org/external/ns/cs.aspx?id=29)."
+242~242~2014-07-13~2014-07-13~Recession Indicators Series~False~http://www.oecd.org/std/leading-indicators/oecdcompositeleadingindicatorsreferenceturningpointsandcomponentseries.htm~"These time series are an interpretation of US Business Cycle Expansions and Contractions data provided by The National Bureau of Economic Research (NBER) at http://www.nber.org/cycles/cyclesmain.html and Organisation of Economic Development (OECD) Composite Leading Indicators: Reference Turning Points and Component Series data provided by the OECD at http://www.oecd.org/std/leading-indicators/oecdcompositeleadingindicatorsreferenceturningpointsandcomponentseries.htm. Our time series are composed of dummy variables that represent periods of expansion and recession. The NBER identifies months and quarters, while the OECD identifies months, of turning points without designating a date within the period that turning points occurred. The dummy variable adopts an arbitrary convention that the turning point occurred at a specific date within the period. The arbitrary convention does not reflect any judgment on this issue by the NBER's Business Cycle Dating Committee or the OECD. A value of 1 is a recessionary period, while a value of 0 is an expansionary period.
+
+The recession shading data that we provide initially comes from the source as a list of dates that are either an economic peak or trough. We interpret dates into recession shading data using one of three arbitrary methods. All of our recession shading data is available using all three interpretations. The period between a peak and trough is always shaded as a recession. The peak and trough are collectively extrema. Depending on the application, the extrema, both individually and collectively, may be included in the recession period in whole or in part. In situations where a portion of a period is included in the recession, the whole period is deemed to be included in the recession period. 
+
+The first interpretation, known as the midpoint method, is to show a recession from the midpoint of the peak through the midpoint of the trough for monthly and quarterly data. For daily data, the recession begins on the 15th of the month of the peak and ends on the 15th of the month of the trough. Daily data is a disaggregation of monthly data. For monthly and quarterly data, the entire peak and trough periods are included in the recession shading. This method shows the maximum number of periods as a recession for monthly and quarterly data. The Federal Reserve Bank of St. Louis uses this method in its own publications.
+
+The second interpretation, known as the trough method, is to show a recession from the period following the peak through the trough (i.e. the peak is not included in the recession shading, but the trough is). For daily data, the recession begins on the first day of the first month following the peak and ends on the last day of the month of the trough. Daily data is a disaggregation of monthly data. The trough method is used when displaying data on FRED graphs.
+
+The third interpretation, known as the peak method, is to show a recession from the period of the peak to the trough (i.e. the peak is included in the recession shading, but the trough is not). For daily data, the recession begins on the first day of the month of the peak and ends on the last day of the month preceding the trough. Daily data is a disaggregation of monthly data."
+245~245~2014-07-13~2014-07-13~Summary Measures of the Foreign Exchange Value of the Dollar~True~http://www.federalreserve.gov/releases/h10/summary/default.htm~
+246~246~2014-07-13~2014-07-13~Housing Units Authorized By Building Permits (Seasonally Adjusted)~False~http://www.census.gov/construction/bps/~Census data seasonally adjusted by the Federal Reserve Bank of Saint Louis.
+249~249~2014-07-13~2014-07-13~Income, Poverty, and Health Insurance Coverage in the United States~True~http://www.census.gov/hhes/www/income/income.html~Data come from the Income, Poverty, and Health Insurance Coverage in the United States Release from the Census Bureau.
+250~250~2014-07-13~2014-07-13~Regional and State Employment and Unemployment (Seasonally Adjusted)~False~http://www.bls.gov/sae~Bureau of Labor Statistics data that is seasonally adjusted by the Federal Reserve Bank of St. Louis.
+251~251~2014-07-13~2014-07-13~Harmonized Indices of Consumer Prices (HICP)~False~https://ec.europa.eu/eurostat/web/hicp~
+254~254~2014-07-13~2014-07-13~Travel Volume Trends~False~http://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm~
+257~257~2014-07-13~2014-07-13~NBER Macrohistory Database~False~http://www.nber.org/macrohistory/~
+258~258~2014-07-13~2014-07-13~Penn World Table 7.1~False~http://www.rug.nl/research/ggdc/data/pwt/pwt-7.1~
+260~260~2014-07-13~2014-07-13~CredAbility Consumer Distress Index~False~http://www.clearpoint.org/resource-center/consumer-distress-index/~
+261~261~2014-07-13~2014-07-13~U.S. Recession Probabilities~True~https://jeremypiger.com/recession_probs/~
+262~262~2014-07-13~2014-07-13~Failures and Assistance Transactions~False~https://banks.data.fdic.gov/explore/failures?aggReport=detail&displayFields=NAME%2CCERT%2CFIN%2CCITYST%2CFAILDATE%2CSAVR%2CRESTYPE%2CCOST%2CRESTYPE1%2CCHCLASS1%2CQBFDEP%2CQBFASSET&endFailYear=2021&sortField=FAILDATE&sortOrder=desc&startFailYear=2012~
+263~263~2014-07-13~2014-07-13~Debt to Gross Domestic Product Ratios~False~~These series are constructed using debt, deficit, and nominal GDP series.
+264~264~2014-07-13~2014-07-13~Weekly U.S. and State Bond Prices, 1855-1865~False~~"The data collection consists of weekly observations of bond prices for U.S. and state bonds from January 1855 through November 1865. The data are drawn from the “Notes on the Money Market” section of The Bankers’ Magazine and Statistical Register; due to limitations of the magazine, The New York Times’ summary of daily trading on the New York Stock Exchange was used to complete each series in the best possible manner.
+
+For a more thorough explanation of the collection as well as how it is understood in a historical context, see:
+Dwyer, G.P, Jr., R.W. Hafer and W.E. Weber. (1999) “Weekly U.S. and State Bond Prices, 1855-1865,” Historical Methods (32:1): 37-42."
+266~266~2014-07-13~2014-07-13~Bank of Japan Accounts~True~http://www.boj.or.jp/en/statistics/boj/other/ac/index.htm/~
+267~267~2014-07-13~2014-07-13~National Accounts - GDP (Eurostat)~True~https://ec.europa.eu/eurostat/web/national-accounts~
+268~268~2014-07-13~2014-07-13~United Kingdom Main Aggregates of National Accounts~True~http://www.ons.gov.uk/ons/taxonomy/search/index.html?newquery=*&nscl=Main+Aggregates+of+National+Accounts&nscl-orig=Main+Aggregates+of+National+Accounts&content-type=publicationContentTypes&sortDirection=DESCENDING&sortBy=pubdate~
+269~269~2014-07-13~2014-07-13~National Accounts of Japan~True~http://www.esri.cao.go.jp/en/sna/menu.html~
+270~270~2014-07-13~2014-07-13~Bankstats (Monetary & Financial Statistics)~True~https://www.bankofengland.co.uk/statistics/tables~
+271~271~2014-07-13~2014-07-13~Weekly Financial Statements of the Eurosystem~True~http://www.ecb.int/press/pr/wfs/~
+274~274~2014-07-13~2014-07-13~University of Louisville and Oklahoma State University: LoDI National Index~True~http://uofllogistics.org/?project=the-lodi-index~"The LoDI Index uses linear regression analysis to combine cargo volume data from rail, barge, air, and truck transit, along with various economic factors. The resulting indicator is designed to predict upcoming changes in the level of logistics and distribution activity in the US and is represented by a value between 1 and 100. An index at or above 50 represents a healthy level of activity in the industry
+
+The Greater Louisville and National LoDI Indices were developed by researchers at the University of Louisville. Please contact Dr. Heragu (sunderesh.heragu@okstate.edu), now IE&M Department Head at Oklahoma State University, or Dr. DePuy (depuy@louisville.edu) for additional information."
+275~275~2014-07-13~2014-07-13~Global Financial Development~False~http://data.worldbank.org/data-catalog/global-financial-development~
+279~279~2014-07-13~2014-07-13~Economic Policy Uncertainty~False~http://www.policyuncertainty.com/~
+280~280~2014-07-13~2014-07-13~Cass Freight Index Report~True~http://www.cassinfo.com/Transportation-Expense-Management/Supply-Chain-Analysis/Transportation-Indexes/Cass-Freight-Index.aspx~
+281~281~2014-07-13~2014-07-13~Supplemental Estimates, Underlying Detail Tables~True~https://apps.bea.gov/iTable/index_UD.cfm~
+282~282~2014-07-13~2014-07-13~Supplemental Estimates, Underlying Detail Tables, Spliced Series~False~~
+283~283~2014-07-13~2014-07-13~H.3 Aggregate Reserves of Depository Institutions and the Monetary Base  (data not included in press release)~False~~The Board of Governors discontinued the H.3 statistical release on September 17, 2020. For more information, please see the announcement posted on August 20, 2020 (https://www.federalreserve.gov/feeds/h3.html).
+285~285~2014-07-13~2014-07-13~Penn World Table 8.0~True~http://www.rug.nl/research/ggdc/data/pwt/~
+286~286~2014-07-13~2014-07-13~Federal Recovery Programs and BEA Statistics~True~https://www.bea.gov/recovery~
+287~287~2014-07-13~2014-07-13~Nikkei Indexes~False~http://indexes.nikkei.co.jp/en/nkave/index/profile?idx=nk225~
+288~288~2014-07-13~2014-07-13~Quarterly Services Survey~True~http://www.census.gov/services/~
+289~289~2014-07-13~2014-07-13~Service Annual Survey~True~https://www.census.gov/programs-surveys/sas.html~
+290~290~2014-07-13~2014-07-13~Monthly Wholesale Trade: Sales and Inventories~True~http://www.census.gov/wholesale/index.html~The Census Bureau conducts the Monthly Wholesale Trade Survey (MWTS) to provide national estimates of monthly sales, end-of-month inventories, and inventories-to-sales ratios by kind of business for wholesale firms located in the United States. Specifically, the MWTS covers wholesale merchants who sell goods on their own account and include such businesses as wholesale merchants or jobbers, industrial distributors, exporters, and importers. Sales offices and branches maintained by manufacturing, refining, or mining firms for the purpose of marketing their products are not covered in this report. Also excluded is NAICS Industry Group 4251: Wholesale Electronic Markets and Agents and Brokers. (Description of the survey as provided by the Census, http://www2.census.gov/wholesale/pdf/mwts/currentwhl.pdf)
+292~292~2014-07-13~2014-07-13~Chicago Fed Midwest Manufacturing Index~True~https://www.chicagofed.org/publications/cfmmi/index~The Chicago Fed Midwest Manufacturing Index (CFMMI) is a monthly estimate by major industry of manufacturing output in the Seventh Federal Reserve District states of lllinois, Indiana, Iowa, Michigan and Wisconsin. It is a composite index of 15 manufacturing industries that uses hours worked data to measure monthly changes in regional activity.
+295~295~2014-07-13~2014-07-13~Sticky Wages and Sectoral Labor Comovement~False~http://dx.doi.org/10.1016/j.jedc.2008.08.003~
+296~296~2014-07-13~2014-07-13~Housing Vacancies and Homeownership~True~http://www.census.gov/housing/hvs/~
+298~298~2014-07-13~2014-07-13~Texas Employment Data~True~http://www.dallasfed.org/research/econdata/tx-emp.cfm~
+300~300~2014-07-13~2014-07-13~Mortgage Debt Outstanding~True~http://www.federalreserve.gov/econresdata/releases/mortoutstand/current.htm~
+301~301~2014-07-13~2014-07-13~Real Money Stock Measures~False~~
+302~302~2014-07-13~2014-07-13~Cleveland Financial Stress Index~True~https://www.clevelandfed.org/en/newsroom-and-events/publications/economic-commentary/economic-commentary-archives/2012-economic-commentaries/ec-201204-the-cleveland-financial-stress-index-a-tool-for-monitoring-financial-stability.aspx~"The CFSI is a coincident indicator of systemic stress, where a high value of CFSI indicates high systemic financial stress. Units of CFSI are expressed as standardized differences from the mean (z-scores).
+The CFSI tracks stress in six types of markets: credit markets, equity markets, foreign exchange markets, funding markets, real estate markets, and securitization markets."
+304~304~2014-07-13~2014-07-13~Interest Rate Spreads~False~~
+305~305~2014-07-13~2014-07-13~Swiss National Bank Monthly Statistical Bulletin~True~https://data.snb.ch/en~
+306~306~2014-07-13~2014-07-13~Swiss National Bank Historical Time Series~True~https://www.snb.ch/en/iabout/stat/statrep/statpubdis/id/statpub_histz_arch#t3~"The series in this release are historical data updated on an infrequent basis.
+
+More details about the definitions of the series can be found at http://www.snb.ch/en/mmr/reference/banken_book/source."
+308~308~2014-07-13~2014-07-13~State and Metro Area Employment, Hours, and Earnings~False~http://www.bls.gov/sae/~The Bureau of Labor Statistics (BLS) produces all of the unadjusted series in this release. The BLS only produces a selection of seasonally adjusted data; the remaining series are adjusted by The Federal Reserve Bank of St. Louis. Users of these data will find details of the adjustment method and which institution made the adjustment in the series notes.
+311~311~2014-07-13~2014-07-13~Currency and Coin Services~False~http://www.federalreserve.gov/paymentsystems/coin_data.htm~
+313~313~2014-07-13~2014-07-13~Sticky Price CPI~True~https://www.frbatlanta.org/research/inflationproject/stickyprice/~
+315~315~2014-07-13~2014-07-13~Current Median CPI~True~https://www.clevelandfed.org/indicators-and-data/median-cpi~
+316~316~2014-07-13~2014-07-13~G.20 Finance Companies~True~http://www.federalreserve.gov/releases/g20/~
+317~317~2014-07-13~2014-07-13~Weekly National Rates and Rate Caps~False~http://www.fdic.gov/regulations/resources/rates/index.html~
+319~319~2014-07-13~2014-07-13~BIS Effective Exchange Rate Indices~False~https://www.bis.org/statistics/eer/index.htm~
+320~320~2014-07-13~2014-07-13~Tech Pulse~True~http://www.frbsf.org/economic-research/tech-pulse/~The Tech Pulse Index is a coincidence index of activity in the U.S. information technology sector. The index interpreted as the health of the tech sector. The indicators used to compute the index include investment in IT goods, consumption of personal computers and software, employment in the IT sector, industrial production of the technology sector, and shipments by the technology sector. For further information, please visit the Tech Pulse webpage at the Federal Reserve Bank of San Francisco at: http://www.frbsf.org/economic-research/tech-pulse/ .
+321~321~2014-07-13~2014-07-13~Empire State Manufacturing Survey~True~http://www.newyorkfed.org/survey/empire/empiresurvey_overview.html~"Participants from across the state in a variety of industries respond to a questionnaire and report the change in a variety of indicators from the previous month. Respondents also state the likely direction of these same indicators six months ahead. April 2002 is the first report, although survey data date back to July 2001.
+
+The survey is sent on the first day of each month to the same pool of about 200 manufacturing executives in New York State, typically the president or CEO. About 100 responses are received. Most are completed by the tenth, although surveys are accepted until the fifteenth."
+322~322~2014-07-13~2014-07-13~Business Leaders Survey~True~http://www.newyorkfed.org/survey/business_leaders/bls_overview.html~"The Business Leaders Survey is a monthly survey conducted by the Federal Reserve Bank of New York that asks companies across its District – which includes New York State, Northern New Jersey, and Fairfield County, Connecticut – about recent and expected trends in key business indicators. This survey is designed to parallel the Empire State Manufacturing Survey, though it covers a wider geography and the questions are slightly different. Participants from the service sector respond to a questionnaire and report on a variety of indicators' both in terms of recent and expected changes. While January 2014 is the first published report, survey responses date back to September of 2004 and all historical data are available on our website.
+
+The survey is sent on the first business day of each month to the same pool of about 150 business executives, usually the president or CEO, in the region's service sector. In a typical month, about 100 responses are received by around the tenth of the month when the survey closes.
+
+Respondents come from a wide range of industries outside of the manufacturing sector, with the mix of respondents closely resembling the industry structure of the region. 
+
+The survey's headline index, general business activity, is a distinct question posed on the survey (as opposed to a composite of responses to other questions). Currently, no indexes are seasonally adjusted since none of the series exhibits stable seasonal patterns from a statistical perspective."
+323~323~2014-07-13~2014-07-13~Trimmed Mean PCE Inflation Rate~True~http://www.dallasfed.org/research/pce/~The Trimmed Mean PCE inflation rate is an alternative measure of core inflation in the price index for personal consumption expenditures (PCE). It is calculated by staff at the Dallas Fed, using data from the Bureau of Economic Analysis (BEA).
+325~325~2014-07-13~2014-07-13~Credit to private sector~False~https://www.bis.org/statistics/credtopriv.htm~The BIS has constructed long series on credit to the private non-financial sector for 40 economies, both advanced and emerging. Credit is provided by domestic banks, all other sectors of the economy and non-residents.
+326~326~2014-07-13~2014-07-13~Summary of Economic Projections~False~http://www.federalreserve.gov/monetarypolicy/fomccalendars.htm~
+327~327~2014-07-13~2014-07-13~Debt Securities Statistics~False~https://www.bis.org/statistics/secstats.htm~
+328~328~2014-07-13~2014-07-13~NASDAQ~False~https://www.nasdaq.com/~National Association of Securities Dealers Automated Quotations
+329~329~2014-07-13~2014-07-13~Education Statistics~False~http://data.worldbank.org/data-catalog/ed-stats~
+330~330~2014-07-13~2014-07-13~American Community Survey~False~http://www.census.gov/acs/www/~
+331~331~2014-07-13~2014-07-13~Gross Domestic Product by Industry~True~https://www.bea.gov/data/gdp/gdp-industry~
+333~333~2014-07-13~2014-07-13~Chicago Fed Midwest Economy Index~True~https://www.chicagofed.org/publications/mei/index~The Midwest Economy Index (MEI) is a monthly index designed to measure growth in nonfarm business activity in the Seventh Federal Reserve District. It serves as a regional counterpart to the Chicago Fed National Activity Index.
+334~334~2014-07-13~2014-07-13~Labor Force Status Flows from the Current Population Survey~True~http://www.bls.gov/cps/cps_flows.htm~
+336~336~2014-07-13~2014-07-13~Selected Property Price Series~False~https://www.bis.org/statistics/pp_selected.htm~These selected series have been rebased and are presented at a quarterly frequency and updated on a quarterly basis; where the frequency of the series collected is monthly, the quarterly data are calculated as the average of the monthly observations. In addition to the nominal price series, and their growth rates, the data set includes CPI-deflated versions of the series (and their growth rates).
+396~396~2014-07-13~2014-07-13~G.17.2 Retail Instalment Credit at Furniture and Household Appliance Stores~True~~
