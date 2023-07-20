@@ -1,0 +1,14 @@
+import logging
+
+import requests
+import pandas as pd
+
+from ats.util import logging_utils
+
+if __name__ == "__main__":
+    logging_utils.init_logging()
+    pd.set_option("display.max_columns", None)
+    pd.set_option("display.max_rows", None)
+    url = "https://alfred.stlouisfed.org/releases/calendar?pageID=1&ob=rd&od=asc&rid=&y=2023&m=7&filtergo=Find+Releases"
+    response = requests.get(url).json()
+    logging.info(f"response:{response}")
