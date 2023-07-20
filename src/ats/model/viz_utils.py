@@ -32,6 +32,8 @@ from timeseries_transformer import TimeSeriesTFT
 import torch
 import wandb
 
+from ats.util.profile import profile
+
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
 def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
@@ -257,6 +259,7 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     return data_table
 
 
+@profile
 def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
                 matched_eval_data, x, data_table, config, pl_module,
                 out, target_size, interp_output, rmse, mae):

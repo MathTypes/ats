@@ -144,6 +144,7 @@ def get_processed_data(
     # logging.info(f"ds:{ds.info()}")
     return ds
 
+@profile
 def add_highs(df_cumsum, df_time, width):
     high_idx, _ = find_peaks(df_cumsum, width=width)
     high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
@@ -152,8 +153,12 @@ def add_highs(df_cumsum, df_time, width):
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
     df_high["time_high_ff"] = df_high["time_high"].ffill()
+    del high
+    del high_time
+    del high_idx
     return df_high
 
+@profile
 def add_lows(df_cumsum, df_time, width):
     low_idx, _ = find_peaks(np.negative(df_cumsum), width=width)
     low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
@@ -162,13 +167,18 @@ def add_lows(df_cumsum, df_time, width):
     df_low["close_cumsum_low_ff"] = df_low["close_cumsum_low"].ffill()
     df_low["close_cumsum_low_bf"] = df_low["close_cumsum_low"].bfill()
     df_low["time_low_ff"] = df_low["time_low"].ffill()
+    del low_idx
+    del low
+    del low_time
     return df_low
 
+@profile
 def ticker_transform(raw_data):
     #raw_data = raw_data.sort_values(["timestamp"])
     ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
     means = ewm.mean()
     stds = ewm.std()
+    del ewm
     raw_data["close"] = np.minimum(raw_data["close"], means + VOL_THRESHOLD * stds)
     raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
     raw_data["cum_volume"] = raw_data.volume.cumsum()
@@ -178,7 +188,7 @@ def ticker_transform(raw_data):
     raw_data = raw_data.join(df_pct_back, rsuffix="_back").join(df_pct_forward, rsuffix="_fwd")
     raw_data['close_back_cumsum'] = raw_data['close_back'].cumsum()
     raw_data['volume_back_cumsum'] = raw_data['volume_back'].cumsum()
-
+    
     close_back_cumsum = raw_data['close_back_cumsum']
     timestamp = raw_data['timestamp']
     df = add_highs(close_back_cumsum, timestamp, width=21)
@@ -205,7 +215,7 @@ def ticker_transform(raw_data):
     raw_data["close_low_201_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_201_ff"] = df["time_low_ff"]
-
+    del close_back_cumsum
     # Compute RSI
     raw_data["rsi"] = ta.momentum.RSIIndicator(close=raw_data["close"]).rsi()
 
