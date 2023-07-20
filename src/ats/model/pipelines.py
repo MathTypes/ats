@@ -61,6 +61,8 @@ from ats.prediction import prediction_utils
 from ats.model.utils import Pipeline
 from ats.model import viz_utils
 from ats.optimizer import position_utils
+from ats.util.profile import profile
+from ats.util import trace_utils
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -248,7 +250,6 @@ class PatchTstTftPipeline(Pipeline):
         # nhits.run_tune(config, study_name)
         pass
 
-
 class TftParams(object):
     """Esta clase contiene los parametros necesarios del modelo"""
     def __init__(self):
@@ -381,8 +382,8 @@ class PatchTftSupervisedPipeline(Pipeline):
         train_data = self.data_module.train_data
         future_data = self.data_module.test_data
 
-        logging.info(f"train_data:{train_data.iloc[-2:]}")
-        logging.info(f"future_data:{future_data.iloc[:2]}")
+        #logging.info(f"train_data:{train_data.iloc[-2:]}")
+        #logging.info(f"future_data:{future_data.iloc[:2]}")
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         last_time_idx = train_data.iloc[-1]["time_idx"]
         last_data_time = None
@@ -397,6 +398,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         max_prediction_length = self.config.model.prediction_length
         first_update = True
         initial_positions = torch.tensor([0])
+        logging.info(f"sigma:{self.config.trading.sigma}")
         optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
                                              sigma=self.config.trading.sigma,
                                              initial_positions=initial_positions)
@@ -431,6 +433,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         ]
         data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
         target_size = len(self.targets) if isinstance(self.targets, List) else 1
+        trace_utils.start_trace_malloc()
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -443,6 +446,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                     self.market_cal, "30M", utc_time, max_prediction_length+1)
                 predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
                 logging.info(f"utc_time:{utc_time}, trading_times:{trading_times}")
+                trace_utils.take_snapshot()
                 if first_update:
                     logging.info(f"future_data:{future_data.iloc[:3]}")
                     new_data = future_data[
@@ -467,7 +471,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 last_data_time = predict_nyc_time
                 last_time_idx += 1
                 new_data["time_idx"] = range(last_time_idx, last_time_idx + len(new_data))
-                logging.info(f"running step {predict_nyc_time}, new_data:{new_data}")
+                logging.info(f"running step {predict_nyc_time}")
                 train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
                 predict_time_idx = new_data.time_idx.max()
                 #logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
@@ -485,16 +489,16 @@ class PatchTftSupervisedPipeline(Pipeline):
                 returns_fcst = y_hats.numpy()
                 min_y_quantiles = y_quantiles[:,:,0]
                 max_y_quantiles = y_quantiles[:,:,-1]
-                logging.info(f"min_y_quantiles:{min_y_quantiles}, max_y_quantiles:{max_y_quantiles}")
+                #logging.info(f"min_y_quantiles:{min_y_quantiles}, max_y_quantiles:{max_y_quantiles}")
                 cum_min_y_quantiles = torch.cumsum(min_y_quantiles, 1)
                 cum_max_y_quantiles = torch.cumsum(max_y_quantiles, 1)
-                logging.info(f"cum_min_y_quantiles:{cum_min_y_quantiles}, cum_max_y_quantiles:{cum_max_y_quantiles}")
+                #logging.info(f"cum_min_y_quantiles:{cum_min_y_quantiles}, cum_max_y_quantiles:{cum_max_y_quantiles}")
                 min_fcst = torch.min(cum_min_y_quantiles)
                 max_fcst = torch.max(cum_max_y_quantiles)
-                logging.info(f"min_fcst:{min_fcst}, max_fcst:{max_fcst}")
+                #logging.info(f"min_fcst:{min_fcst}, max_fcst:{max_fcst}")
                 min_neg_fcst = torch.minimum(min_fcst, torch.tensor(0)).unsqueeze(0).detach().numpy()
                 max_pos_fcst = torch.maximum(max_fcst, torch.tensor(0)).unsqueeze(0).detach().numpy()
-                logging.info(f"returns_fcst:{returns_fcst}, min_neg_fcst:{min_neg_fcst}, max_pos_fcst:{max_pos_fcst}")
+                #logging.info(f"returns_fcst:{returns_fcst}, min_neg_fcst:{min_neg_fcst}, max_pos_fcst:{max_pos_fcst}")
                 new_positions, ret, val  = optimizer.optimize(returns_fcst, min_neg_fcst, max_pos_fcst)
                 logging.info(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
                 y_hats_cum = torch.cumsum(y_hats, dim=-1)
@@ -503,7 +507,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 #logging.info(f"x:{x}")
                 indices = train_dataset.x_to_index(x)
                 matched_data = train_dataset.raw_data
-                logging.info(f"indices:{indices}")
+                #logging.info(f"indices:{indices}")
                 rmse = [0]
                 mae = [0]
                 interp_output = self.model.interpret_output(
@@ -511,7 +515,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                     reduction="none",
                     attention_prediction_horizon=0,  # attention only for first prediction horizon
                 )
-                logging.info(f"interp_output:{interp_output}")
+                #logging.info(f"interp_output:{interp_output}")
                 row = viz_utils.create_viz_row(0, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
                                                matched_data, x, data_table,
                                                self.config, self.model, out, target_size,

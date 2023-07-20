@@ -33,8 +33,8 @@ class Optimizer(object):
         buy_risk = cp.sum(min_neg_fcst @ cp.maximum(w,0))
         sell_risk = cp.sum(max_pos_fcst @ cp.minimum(w,0))
         risk = buy_risk + sell_risk
-        logging.info(f"ret:{ret}, risk:{risk}")
         objective = cp.Maximize(ret + self.sigma * risk)
+        logging.info(f"ret:{ret}, risk:{risk}, objective:{objective}")
         #objective = cp.Maximize(ret)
         #wors_hour = cp.sum_smallest(np.dot(np.sum(quantile_returns_fcst), w))
 

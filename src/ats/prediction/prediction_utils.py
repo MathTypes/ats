@@ -3,6 +3,9 @@ import logging
 from pytorch_forecasting.utils import create_mask, detach, to_list
 import torch
 
+from ats.util.profile import profile
+
+@profile
 def predict(model, new_prediction_data, wandb_logger):
     # logging.info(f"new_prediction_data:{new_prediction_data}")
     #logging.info(f"index:{train_dataset.index.iloc[-5:]}")

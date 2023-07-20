@@ -20,7 +20,7 @@ from ats.model.mom_trans.classical_strategies import (
     calc_vol_scaled_returns,
 )
 from ats.util import time_util
-
+from ats.util.profile import profile
 
 VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
@@ -228,6 +228,7 @@ def ticker_transform(raw_data):
 def time_diff(row, base_col, diff_col):
     return row[diff_col] - row[base_col]
 
+@profile
 def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
     #logging.info(f"raw_data: {raw_data.iloc[:4]}, columns:{raw_data.columns}")
     for column in ["close_back", "volume_back", "dv_back", "close_fwd",
@@ -270,6 +271,7 @@ def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
     #raw_data = raw_data.dropna()
     return raw_data
 
+@profile
 def add_example_level_features(raw_data : pd.DataFrame):
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x : x.isocalendar()[1])
     raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)
