@@ -259,10 +259,10 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     return data_table
 
 
-@profile
+#@profile
 def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
-                matched_eval_data, x, data_table, config, pl_module,
-                out, target_size, interp_output, rmse, mae):
+                matched_eval_data, x, config, pl_module,
+                   out, target_size, interp_output, rmse, mae, filter_small=True):
     y_hats[idx]
     y_hat_cum = y_hats_cum[idx]
     y_hat_cum_max = torch.max(y_hat_cum)
@@ -279,7 +279,7 @@ def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
     y_close[idx]
     y_close_cum_max = torch.max(y_close_cum_sum_row)
     y_close_cum_min = torch.min(y_close_cum_sum_row)
-    if not (
+    if filter_small and not (
         abs(y_hat_cum_max) > 0.01
         or abs(y_hat_cum_min) > 0.01
         or abs(y_close_cum_max) > 0.01
@@ -420,7 +420,7 @@ def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
     img_bytes = fig.to_image(format="png")  # kaleido library
     im = PIL.Image.open(BytesIO(img_bytes))
     img = wandb.Image(im)
-    return {
+    row = {
         "ticker":train_data_row["ticker"],  # 0 ticker
         "dm":dm,  # 1 time
         "time_idx":train_data_row["time_idx"],  # 2 time_idx
@@ -443,3 +443,4 @@ def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
         "rmse":rmse[idx],
         "mae":mae[idx],
     }
+    return row

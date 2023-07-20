@@ -62,7 +62,7 @@ from ats.prediction import prediction_utils
 from ats.model.utils import Pipeline
 from ats.model import viz_utils
 from ats.optimizer import position_utils
-from ats.trading import trader
+from ats.trading.trader import Trader
 from ats.util.profile import profile
 from ats.util import trace_utils
 
@@ -435,7 +435,12 @@ class PatchTftSupervisedPipeline(Pipeline):
         ]
         data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
         target_size = len(self.targets) if isinstance(self.targets, List) else 1
-        trace_utils.start_trace_malloc()
+        
+        trader = Trader(self.model, optimizer, wandb_logger, target_size,
+                        future_data, train_dataset, self.config,
+                        last_time_idx, last_data_time,
+                        last_position_map,
+                        last_px_map, self.market_cal)
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -443,11 +448,13 @@ class PatchTftSupervisedPipeline(Pipeline):
             time_range = mcal.date_range(schedule, frequency="30M")
             logging.info(f"sod {test_date}, schedule:{time_range}")
             for utc_time in time_range:
-                row = trader.on_interval(self.model, self.optimizer, wandb_logger, future_data, train_dataset,
-                                         last_date_time, last_time_idx, self.config, last_position_map,
-                                         last_px_map,
-                                         pnl_df, first_update, self.market_cal, utc_time)
+                row = trader.on_interval(utc_time)
+                logging.info(f"got row:{row}")
                 if row:
+                    if first_update:
+                        first_update = False
+
+                    logging.info(f"row:{row}")
                     data_table.add_data(
                         row["ticker"],  # 0 ticker
                         row["dm"],  # 1 time
@@ -470,11 +477,11 @@ class PatchTftSupervisedPipeline(Pipeline):
                         row["error_cum_min"],
                         row["rmse"],
                         row["mae"],
-                        last_position,
-                        new_position,
-                        new_position - last_position,
-                        px,
-                        pnl_delta,
+                        row["last_position"],
+                        row["new_position"],
+                        row["delta_position"],
+                        row["px"],
+                        row["pnl_delta"],
                     )
                 logging.info(f"last_position_map:{last_position_map}")
                 logging.info(f"last_px_map:{last_px_map}")
