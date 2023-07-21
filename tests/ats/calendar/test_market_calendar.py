@@ -10,6 +10,21 @@ import torch
 from ats.calendar import market_time
 from ats.util import logging_utils
 
+def test_open_time_with_date():
+    market_cal = mcal.get_calendar("CME_Equity")
+    # 2009-06-01 is Monday
+    # 2009-06-01 00:00:00+00:00
+    train_start_date = datetime.datetime.strptime(
+        "2009-06-01", "%Y-%m-%d"
+    ).replace(tzinfo=datetime.timezone.utc)
+    logging.error(f"train_start_date:{train_start_date}")
+    open_time = market_time.get_open_time(market_cal, train_start_date)
+    # Sun May 31 2009 15:00:00
+    assert open_time == 1243807200
+    close_time = market_time.get_close_time(market_cal, train_start_date)
+    # Mon Jun 01 2009 14:00:00
+    assert close_time == 1243890000.0
+
 def test_next_trading_times_intraday_cme_equity_30m():
     market_cal = mcal.get_calendar("CME_Equity")
     # Mon Jul 24 2023 05:30:00 PST
