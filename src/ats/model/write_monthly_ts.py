@@ -151,7 +151,6 @@ def process_month(ds, cur_date, freq):
     else:
         logging.error(f"Directory {file_path} already exists, exiting!")
         return
-    ds = ds
     ds.write_parquet(file_path)
 
 
