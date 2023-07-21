@@ -406,22 +406,15 @@ def get_heads_and_targets(config):
     # logging.info(f"head_dict:{head_dict}, targets:{targets}")
     return head_dict, targets
 
-def get_data_module(
-    config,
-    base_dir,
-    env_mgr,
-    targets,
-    model_tickers,
-    time_interval,
-    simulation_mode = False
-):
+def get_data_module(env_mgr, simulation_mode = False):
+    config = env_mgr.config
     start = time.time()
     train_data_vec = []
     refs = []
-    for ticker in model_tickers:
+    for ticker in env_mgr.model_tickers:
         # logging.info(f"get_input_for base_dir:{base_dir}, start_date:{train_start_date}, end_date:{test_end_date}, ticker:{ticker}")
         ticker_train_data = get_input_for_ticker.remote(
-            base_dir, env_mgr.train_start_date, env_mgr.test_end_date, ticker, "FUT", time_interval
+            env_mgr.dataset_base_dir, env_mgr.train_start_date, env_mgr.test_end_date, ticker, "FUT", env_mgr.time_interval
         )
         refs.append(ticker_train_data)
     all_results = ray.get(refs)

@@ -66,6 +66,7 @@ class EnvMgr(object):
             start_date = self.data_start_date
         self.start_date = start_date
         self.end_date = self.test_end_date
+        self.dataset_base_dir = self.config.dateset.base_dir
         logging.info(
             f"start_date:{start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}"
         )

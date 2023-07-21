@@ -286,16 +286,12 @@ class PatchTftSupervisedPipeline(Pipeline):
         self.dataset = dataset
         self.config = config
         self.env_mgr = EnvMgr(config)
-        self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
+        self.heads = self.env_mgr.heads
+        self.targets = self.env_mgr.targets
         logging.info(f"head:{self.heads}, targets:{self.targets}")
 
         self.data_module = model_utils.get_data_module(
-            self.config,
-            self.config.dataset.base_dir,
             self.env_mgr,
-            self.targets,
-            self.config.dataset.model_tickers,
-            self.config.dataset.time_interval,
             simulation_mode=True,
         )
 
