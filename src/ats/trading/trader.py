@@ -1,6 +1,7 @@
 from collections import defaultdict
 import datetime
 import logging
+from typing import List
 
 import pandas as pd
 import pytz

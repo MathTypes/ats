@@ -3,3 +3,5 @@ time_interval: "30min"
 model_tickers: ['ES']
 trading_tickers: ['ES']
 max_stale_minutes: 30
+initial_snapshot: /home/ubuntu/ats/data/snapshot/dev/
+write_snapshot: True

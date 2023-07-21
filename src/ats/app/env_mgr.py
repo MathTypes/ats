@@ -1,6 +1,7 @@
 from collections import defaultdict
 import datetime
 import logging
+from typing import List
 
 import pandas as pd
 import pandas_market_calendars as mcal
@@ -59,14 +60,18 @@ class EnvMgr(object):
             self.data_start_date = self.test_start_date - datetime.timedelta(
                 days=self.max_lags
             )
-            self.market_cal = mcal.get_calendar(self.config.job.market)
+        self.market_cal = mcal.get_calendar(self.config.job.market)
         logging.info(f"train_start_date:{self.train_start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}")
         start_date = self.train_start_date
         if not start_date:
             start_date = self.data_start_date
         self.start_date = start_date
         self.end_date = self.test_end_date
-        self.dataset_base_dir = self.config.dateset.base_dir
+        self.dataset_base_dir = self.config.dataset.base_dir
+        self.model_tickers = self.config.dataset.model_tickers
+        self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
+        self.time_interval = self.config.dataset.time_interval
+        self.target_size = len(self.targets) if isinstance(self.targets, List) else 1
         logging.info(
             f"start_date:{start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}"
         )

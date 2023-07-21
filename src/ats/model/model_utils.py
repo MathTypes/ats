@@ -275,7 +275,6 @@ def get_output_size(loss):
     #    #logging.info(f"normalizer.classes_:{len(normalizer.classes_)}")
     #    return len(normalizer.classes_)
     elif isinstance(loss, DistributionLoss):
-        logging.error(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
         return len(loss.distribution_arguments)
     else:
         return 1  # default to 1
@@ -365,25 +364,6 @@ def get_input_dirs(config):
     return input_dirs
 
 
-@ray.remote
-def get_input_for_ticker(
-    base_dir, start_date, end_date, ticker, asset_type, time_interval
-):
-    try:
-        from ats.market_data import data_util
-        logging.info(f"reading from base_dir:{base_dir}, ticker:{ticker}")
-        all_data = data_util.get_processed_data(
-            base_dir, start_date, end_date, ticker, asset_type, time_interval
-        )
-        all_data = all_data.replace([np.inf, -np.inf], np.nan)
-        all_data = all_data.dropna()
-        all_data = all_data.drop(columns=["time_idx"])
-        #logging.info(f"all_data:all_data.head()")
-        return all_data
-    except Exception as e:
-        print(f"can not get input for {ticker}, {e}")
-        logging.info(f"can not get input for {ticker}, {e}")
-        return None
 
 def get_heads_and_targets(config):
     heads = config.model.heads
@@ -409,43 +389,8 @@ def get_heads_and_targets(config):
 def get_data_module(env_mgr, simulation_mode = False):
     config = env_mgr.config
     start = time.time()
-    train_data_vec = []
-    refs = []
-    for ticker in env_mgr.model_tickers:
-        # logging.info(f"get_input_for base_dir:{base_dir}, start_date:{train_start_date}, end_date:{test_end_date}, ticker:{ticker}")
-        ticker_train_data = get_input_for_ticker.remote(
-            env_mgr.dataset_base_dir, env_mgr.train_start_date, env_mgr.test_end_date, ticker, "FUT", env_mgr.time_interval
-        )
-        refs.append(ticker_train_data)
-    all_results = ray.get(refs)
-    for result in all_results:
-        ticker_train_data = result
-        if ticker_train_data is None or ticker_train_data.empty:
-            continue
-        ticker_train_data["new_idx"] = ticker_train_data.apply(
-            lambda x: x.ticker + "_" + str(x.series_idx), axis=1
-        )
-        ticker_train_data = ticker_train_data.set_index("new_idx")
-        train_data_vec.append(ticker_train_data)
-    raw_data = pd.concat(train_data_vec)
-    # TODO: the original time comes from aggregated time is UTC, but actually
-    # has New York time in it.
-    raw_data["time"] = raw_data.time.apply(market_time.utc_to_nyse_time,
-                                           interval_minutes=config.job.time_interval_minutes)
-    raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
-    # Do not use what are in serialized files as we need to recompute across different months.
-    raw_data = raw_data.drop(columns=["close_back", "volume_back", "dv_back", "close_fwd",
-                                      "volume_fwd", "dv_fwd", "cum_volume", "cum_dv"])
-    raw_data = raw_data.reset_index()
-    raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
-    raw_data = raw_data.set_index("new_idx")
-    raw_data = raw_data.sort_index()
-    raw_data["time_idx"] = range(0, len(raw_data))
-
-    raw_data = data_util.add_group_features(raw_data, config.job.time_interval_minutes)
-    cal = mcal.get_calendar("NYSE")
-    mdr = market_data_mgr.MarketDataMgr(config, cal)
-    raw_data = data_util.add_example_level_features(raw_data, cal, mdr)
+    mdr = market_data_mgr.MarketDataMgr(env_mgr)
+    raw_data = mdr.get_raw_data()
     train_start_timestamp = env_mgr.train_start_date.timestamp()
     eval_start_timestamp = env_mgr.eval_start_date.timestamp()
     eval_end_timestamp = env_mgr.eval_end_date.timestamp()
@@ -487,7 +432,8 @@ def get_data_module(env_mgr, simulation_mode = False):
         "beer_capital",
         "music_fest",
     ]
-    data_module = TimeSeriesDataModule(config, train_data, eval_data, test_data, targets, simulation_mode=simulation_mode)
+    data_module = TimeSeriesDataModule(config, train_data, eval_data, test_data,
+                                       env_mgr.targets, simulation_mode=simulation_mode)
     return data_module
 
 
