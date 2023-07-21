@@ -93,10 +93,10 @@ class MarketDataMgr(object):
         self.macro_data_builder = MacroDataBuilder(self.config)
         self.raw_data = None
 
-    def get_raw_data(self):
+    def get_snapshot(self):
         if "initial_snapshot" in self.config.dataset:
             try:
-                self.raw_data = get_snapshot(self.config.dataset.initial_snapshot)
+                self.raw_data = get_snapshot(self.config.dataset.snapshot)
             except Exception as e:
                 # Will try regenerating when reading fails
                 pass
@@ -139,8 +139,8 @@ class MarketDataMgr(object):
 
         raw_data = data_util.add_group_features(raw_data, self.config.job.time_interval_minutes)
         raw_data = data_util.add_example_level_features(raw_data, self.market_cal, self)
-        if self.config.dataset.write_snapshot and self.config.dataset.initial_snapshot:
+        if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(raw_data)
-            ds.write_parquet(self.config.dataset.initial_snapshot)
+            ds.write_parquet(self.config.dataset.snapshot)
         self.raw_data = raw_data
         return self.raw_data

@@ -129,7 +129,7 @@ def add_highs(df_cumsum, df_time, width):
     df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
-    df_high["time_high_ff"] = df_high["time_high"].ffill()
+    df_high["time_high_ff"] = df_high["time_high"].ffill().fillna(0).astype(int)
     del high
     del high_time
     del high_idx
@@ -144,15 +144,15 @@ def add_lows(df_cumsum, df_time, width):
     df_low = df_cumsum.to_frame(name="close_cumsum").join(low).join(low_time)
     df_low["close_cumsum_low_ff"] = df_low["close_cumsum_low"].ffill()
     df_low["close_cumsum_low_bf"] = df_low["close_cumsum_low"].bfill()
-    df_low["time_low_ff"] = df_low["time_low"].ffill()
+    df_low["time_low_ff"] = df_low["time_low"].ffill().fillna(0).astype(int)
     del low_idx
     del low
     del low_time
     return df_low
 
 
-@profile
-def ticker_transform(raw_data):
+#@profile
+def ticker_transform(raw_data, interval_minutes):
     ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
     means = ewm.mean()
     stds = ewm.std()
@@ -171,27 +171,44 @@ def ticker_transform(raw_data):
 
     close_back_cumsum = raw_data["close_back_cumsum"]
     timestamp = raw_data["timestamp"]
-    df = add_highs(close_back_cumsum, timestamp, width=21)
+    interval_per_day = int(23*60/interval_minutes)
+    df = add_highs(close_back_cumsum, timestamp, width=5*interval_per_day)
+    raw_data["close_high_5_ff"] = df["close_cumsum_high_ff"]
+    raw_data["close_high_5_bf"] = df["close_cumsum_high_bf"]
+    raw_data["time_high_5_ff"] = df["time_high_ff"]
+    df = add_lows(close_back_cumsum, timestamp, width=5*interval_per_day)
+    raw_data["close_low_5_ff"] = df["close_cumsum_low_ff"]
+    raw_data["close_low_5_bf"] = df["close_cumsum_low_bf"]
+    raw_data["time_low_5_ff"] = df["time_low_ff"]
+    df = add_highs(close_back_cumsum, timestamp, width=11*interval_per_day)
+    raw_data["close_high_11_ff"] = df["close_cumsum_high_ff"]
+    raw_data["close_high_11_bf"] = df["close_cumsum_high_bf"]
+    raw_data["time_high_11_ff"] = df["time_high_ff"]
+    df = add_lows(close_back_cumsum, timestamp, width=11*interval_per_day)
+    raw_data["close_low_11_ff"] = df["close_cumsum_low_ff"]
+    raw_data["close_low_11_bf"] = df["close_cumsum_low_bf"]
+    raw_data["time_low_11_ff"] = df["time_low_ff"]
+    df = add_highs(close_back_cumsum, timestamp, width=21*interval_per_day)
     raw_data["close_high_21_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_21_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_21_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=21)
+    df = add_lows(close_back_cumsum, timestamp, width=21*interval_per_day)
     raw_data["close_low_21_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_21_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_21_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=51)
+    df = add_highs(close_back_cumsum, timestamp, width=51*interval_per_day)
     raw_data["close_high_51_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_51_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_51_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=51)
+    df = add_lows(close_back_cumsum, timestamp, width=51*interval_per_day)
     raw_data["close_low_51_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_51_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_51_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=201)
+    df = add_highs(close_back_cumsum, timestamp, width=201*interval_per_day)
     raw_data["close_high_201_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_201_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_201_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=201)
+    df = add_lows(close_back_cumsum, timestamp, width=201*interval_per_day)
     raw_data["close_low_201_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_201_ff"] = df["time_low_ff"]
@@ -267,7 +284,7 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
             raw_data = raw_data.drop(columns=[column])
     new_features = raw_data.groupby(["ticker"])[
         ["volume", "dv", "close", "timestamp"]
-    ].apply(ticker_transform)
+    ].apply(ticker_transform, interval_minutes=interval_minutes)
     # logging.info(f"new_features:{new_features.columns}")
     new_features = new_features.drop(columns=["volume", "dv", "close", "timestamp"])
     raw_data = raw_data.join(new_features)
