@@ -1,0 +1,164 @@
+~release_id~id~realtime_start~realtime_end~title~observation_start~observation_end~frequency~frequency_short~units~units_short~seasonal_adjustment~seasonal_adjustment_short~last_updated~popularity~group_popularity~notes
+ADJBORNS~19~ADJBORNS~2001-01-08~2001-01-08~Adjustment Plus Seasonal Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED)~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:19:55-05~0.0~1.0~Please refer to http://www.frbdiscountwindow.org for further information.
+BOGAMBNS~19~BOGAMBNS~2001-01-08~2001-01-08~Board of Governors Monetary Base, Adjusted for Changes in Reserve Requirements~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:21:06-05~1.0~11.0~
+BOGAMBSL~19~BOGAMBSL~2001-01-08~2001-01-08~Board of Governors Monetary Base, Adjusted for Changes in Reserve Requirements~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2006-04-24 15:21:07-05~11.0~11.0~
+BOGNONBR~19~BOGNONBR~2001-01-08~2001-01-08~Non-Borrowed Reserves of Depository Institutions~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2006-04-24 15:21:24-05~15.0~15.0~By definition, nonborrowed reserves are equal to total reserves minus borrowed reserves. Borrowed reserves are equal to the sum of credit extended through the Federal Reserve's regular discount window programs and credit extended through certain Federal Reserve liquidity facilities. Total borrowings from the Federal Reserve are presented in table 1a of the release. Over much of 2008, in order to maintain a level of total reserves consistent with the Federal Open Market Committee's objective for the federal funds rate, increases in borrowed reserves were offset through a nearly commensurate decrease in nonborrowed reserves, which was accomplished through a reduction in the Federal Reserve's holdings of securities and other assets. The negative level of nonborrowed reserves was an arithmetic result of the fact that borrowings from the Federal Reserve liquidity facilities were larger than total reserves.
+BOGUMBNS~19~BOGUMBNS~2001-01-08~2001-01-08~Board of Governors Monetary Base, Not Adjusted for Changes in Reserve Requirements~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:47-05~1.0~1.0~
+BORROW~19~BORROW~2001-01-08~2001-01-08~Total Borrowings of Depository Institutions from the Federal Reserve~1919-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:07-05~53.0~53.0~Please note break in data in January 2003, due to changes in the discount window borrowing programs. Refer to http://www.frbdiscountwindow.org for further information.
+EXCRESNS~19~EXCRESNS~2001-01-08~2001-01-08~Excess Reserves of Depository Institutions~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2009-01-15 13:42:35-06~35.0~55.0~Amount of funds held by a depository institution in its account at a Federal Reserve Bank in excess of its required reserve balance and its contractual clearing balance. Excess reserves equals total reserves less required reserves.
+EXTENDNS~19~EXTENDNS~2001-01-08~2001-01-08~Extended Credit Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED)~1975-05-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:08-05~1.0~1.0~Please refer to http://www.frbdiscountwindow.org for further information.
+NFORBRES~19~NFORBRES~2001-01-08~2001-01-08~Net Free or Borrowed Reserves of Depository Institutions~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:42-05~4.0~4.0~Please note break in data in January 2003, due to changes in the discount window borrowing programs. Refer to http://www.frbdiscountwindow.org for further information.
+REQRESNS~19~REQRESNS~2001-01-08~2001-01-08~Required Reserves, Not Adjusted for Changes in Reserve Requirements~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2009-01-15 13:41:35-06~42.0~42.0~
+RESBALNS~19~RESBALNS~2001-01-08~2001-01-08~Reserve Balances with Federal Reserve Banks, Not Adjusted for Changes in Reserve Requirements~1950-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:38-05~38.0~40.0~
+SEABORR~19~SEABORR~2001-01-08~2001-01-08~Seasonal Borrowings of Depository Institutions from the Federal Reserve~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:09-05~1.0~1.0~The Federal Reserve's seasonal credit program is designed to assist small depository institutions in managing significant seasonal swings in their loans and deposits. Seasonal credit is available to depository institutions that can demonstrate a clear pattern of recurring intra-yearly swings in funding needs. Eligible institutions are usually located in agricultural or tourist areas. The interest rate applied to seasonal credit is a floating rate based on market rates. Under the seasonal program, borrowers may obtain longer-term funds from the Discount Window during periods of seasonal need so that they can carry fewer liquid assets during the rest of the year and make more funds available for local lending. To become eligible for seasonal credit, an institution must establish a seasonal qualification with its Reserve Bank. An institution that anticipates a possible need for seasonal credit is encouraged to contact its Reserve Bank to ascertain its eligibility and make arrangements in advance. Making arrangements does not obligate the institution to borrow. Critically undercapitalized institutions are not eligible for seasonal credit. Undercapitalized or significantly undercapitalized institutions may be eligible, but only after careful review of their condition and prospects.
+TOTRESNS~19~TOTRESNS~2001-01-08~2001-01-08~Board of Governors Total Reserves, Not Adjusted for Changes in Reserve Requirements~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2009-01-15 13:40:17-06~74.0~74.0~
+TRARR~19~TRARR~2001-01-08~2001-01-08~Board of Governors Total Reserves, Adjusted for Changes in Reserve Requirements~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2006-04-24 15:21:22-05~1.0~1.0~
+VAULT~19~VAULT~2001-01-08~2001-01-08~Vault Cash Used to Satisfy Required Reserves, Not Adjusted for Changes in Reserve Requirements~1959-11-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:21:23-05~3.0~3.0~
+ASBORR~20~ASBORR~2001-01-08~2001-01-08~Adjustment Plus Seasonal Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED)~1986-01-08~2001-01-03~Weekly, Ending Wednesday~W~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:21:16-05~1.0~1.0~Averages of Daily Figures Please refer to http://www.frbdiscountwindow.org for further information.
+TOTBORR~20~TOTBORR~2001-01-08~2001-01-08~Total Borrowings of Depository Institutions from the Federal Reserve~1986-01-08~2001-01-03~Weekly, Ending Wednesday~W~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:21:18-05~46.0~45.0~Averages of daily figures. Please note break in data: Data prior to 1/9/2003 include adjustment, extended, and seasonal credit. Data from 1/9/2003 forward include primary, secondary, and seasonal credit.
+COMPMS~47~COMPMS~2001-01-08~2001-01-08~Manufacturing Sector: Compensation Per Hour~1949-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~1.0~1.0~"Effective February 5, 2004, Productivity and Cost measures for the manufacturing sector
+are now reported using the 2002 North American Industry Classification System (NAICS).
+Because of the reclassification, these measures are not directly comparable with
+manufacturing measures published on or before Dec. 3, 2003.
+
+For further information, please visit the Bureau Of Labor Statistics web
+site at http://www.bls.gov/lpc/home.htm"
+COMPNFB~47~COMPNFB~2001-01-08~2001-01-08~Nonfarm Business Sector: Compensation Per Hour~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~28.0~33.0~"The Productivity and Costs release on August 7, 2003,
+will reflect the June 2003 benchmark revision to payroll
+employment. Since employment is now reported on
+a North American Industry Classification System (NAICS) basis,
+all of the historical data will be revised.
+Changes as a consequence of the move to
+NAICS should not be significant since this release
+carries data at high levels of aggregation."
+COMPRMS~47~COMPRMS~2001-01-08~2001-01-08~Manufacturing Sector: Real Compensation Per Hour~1949-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~4.0~5.0~"Effective February 5, 2004, Productivity and Cost measures for the manufacturing sector
+are now reported using the 2002 North American Industry Classification System (NAICS).
+Because of the reclassification, these measures are not directly comparable with
+manufacturing measures published on or before Dec. 3, 2003.
+
+For further information, please visit the Bureau Of Labor Statistics web
+site at http://www.bls.gov/lpc/home.htm"
+COMPRNFB~47~COMPRNFB~2001-01-08~2001-01-08~Nonfarm Business Sector: Real Compensation Per Hour~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~46.0~50.0~"The Productivity and Costs release on August 7, 2003,
+will reflect the June 2003 benchmark revision to payroll
+employment. Since employment is now reported on
+a North American Industry Classification System (NAICS) basis,
+all of the historical data will be revised.
+Changes as a consequence of the move to
+NAICS should not be significant since this release
+carries data at high levels of aggregation."
+HCOMPBS~47~HCOMPBS~2001-01-08~2001-01-08~Business Sector: Compensation Per Hour~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~7.0~8.0~"The Productivity and Costs release on August 7, 2003,
+will reflect the June 2003 benchmark revision to payroll
+employment. Since employment is now reported on
+a North American Industry Classification System (NAICS) basis,
+all of the historical data will be revised.
+Changes as a consequence of the move to
+NAICS should not be significant since this release
+carries data at high levels of aggregation."
+HOABS~47~HOABS~2001-01-08~2001-01-08~Business Sector: Hours of All Persons~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~3.0~8.0~
+HOAMS~47~HOAMS~2001-01-08~2001-01-08~Manufacturing Sector: Hours of All Persons~1949-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~1.0~2.0~"Effective February 5, 2004, Productivity and Cost measures for the manufacturing sector
+are now reported using the 2002 North American Industry Classification System (NAICS).
+Because of the reclassification, these measures are not directly comparable with
+manufacturing measures published on or before Dec. 3, 2003.
+
+For further information, please visit the Bureau Of Labor Statistics web
+site at http://www.bls.gov/lpc/home.htm"
+HOANBS~47~HOANBS~2001-01-08~2001-01-08~Nonfarm Business Sector: Hours of All Persons~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~36.0~45.0~
+IPDBS~47~IPDBS~2001-01-08~2001-01-08~Business Sector: Implicit Price Deflator~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~1.0~2.0~
+IPDNBS~47~IPDNBS~2001-01-08~2001-01-08~Nonfarm Business Sector: Implicit Price Deflator~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~7.0~8.0~
+OPHMFG~47~OPHMFG~2001-01-08~2001-01-08~Manufacturing Sector: Real Output Per Hour of All Persons~1949-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~26.0~34.0~"Effective February 5, 2004, Productivity and Cost measures for the manufacturing sector
+are now reported using the 2002 North American Industry Classification System (NAICS).
+Because of the reclassification, these measures are not directly comparable with
+manufacturing measures published on or before Dec. 3, 2003.
+
+For further information, please visit the Bureau Of Labor Statistics web
+site at http://www.bls.gov/lpc/home.htm"
+OPHNFB~47~OPHNFB~2001-01-08~2001-01-08~Nonfarm Business Sector: Real Output Per Hour of All Persons~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~68.0~72.0~The Productivity and Costs release on August 7, 2003, will reflect the June 2003 benchmark revision to payroll employment. Since employment is now reported on a North American Industry Classification System (NAICS) basis, all of the historical data will be revised. Changes as a consequence of the move to NAICS should not be significant since this release carries data at high levels of aggregation.
+OPHPBS~47~OPHPBS~2001-01-08~2001-01-08~Business Sector: Real Output Per Hour of All Persons~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~16.0~44.0~The Productivity and Costs release on August 7, 2003, will reflect the June 2003 benchmark revision to payroll employment. Since employment is now reported on a North American Industry Classification System (NAICS) basis, all of the historical data will be revised. Changes as a consequence of the move to NAICS should not be significant since this release carries data at high levels of aggregation.
+OUTBS~47~OUTBS~2001-01-08~2001-01-08~Business Sector: Real Output~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~4.0~4.0~
+OUTMS~47~OUTMS~2001-01-08~2001-01-08~Manufacturing Sector: Real Output~1949-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~45.0~48.0~"Effective February 5, 2004, Productivity and Cost measures for the manufacturing sector
+are now reported using the 2002 North American Industry Classification System (NAICS).
+Because of the reclassification, these measures are not directly comparable with
+manufacturing measures published on or before Dec. 3, 2003.
+
+For further information, please visit the Bureau Of Labor Statistics web
+site at http://www.bls.gov/lpc/home.htm"
+OUTNFB~47~OUTNFB~2001-01-08~2001-01-08~Nonfarm Business Sector: Real Output~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~10.0~11.0~
+RCPHBS~47~RCPHBS~2001-01-08~2001-01-08~Business Sector: Real Compensation Per Hour~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~9.0~11.0~
+ULCBS~47~ULCBS~2001-01-08~2001-01-08~Business Sector: Unit Labor Cost~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~12.0~14.0~
+ULCMFG~47~ULCMFG~2001-01-08~2001-01-08~Manufacturing Sector: Unit Labor Cost~1949-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~35.0~37.0~"Effective February 5, 2004, Productivity and Cost measures for the manufacturing sector
+are now reported using the 2002 North American Industry Classification System (NAICS).
+Because of the reclassification, these measures are not directly comparable with
+manufacturing measures published on or before Dec. 3, 2003.
+
+For further information, please visit the Bureau Of Labor Statistics web
+site at http://www.bls.gov/lpc/home.htm"
+ULCNFB~47~ULCNFB~2001-01-08~2001-01-08~Nonfarm Business Sector: Unit Labor Cost~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~46.0~50.0~The Productivity and Costs release on August 7, 2003, will reflect the June 2003 benchmark revision to payroll employment. Since employment is now reported on a North American Industry Classification System (NAICS) basis, all of the historical data will be revised. Changes as a consequence of the move to NAICS should not be significant since this release carries data at high levels of aggregation.
+UNLPBS~47~UNLPBS~2001-01-08~2001-01-08~Business Sector: Unit Nonlabor Payments~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~3.0~3.0~
+UNLPNBS~47~UNLPNBS~2001-01-08~2001-01-08~Nonfarm Business Sector: Unit Nonlabor Payments~1947-01-01~2000-07-01~Quarterly~Q~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~1.0~1.0~
+BOPBCA~49~BOPBCA~2001-01-08~2001-01-08~Balance on Current Account~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:25-05~6.0~7.0~
+BOPBGS~49~BOPBGS~2001-01-08~2001-01-08~Balance on Goods and Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:25-05~4.0~4.0~
+BOPBII~49~BOPBII~2001-01-08~2001-01-08~Balance on Investment Income~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:25-05~1.0~1.0~
+BOPBM~49~BOPBM~2001-01-08~2001-01-08~Balance on Merchandise Trade~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:18-05~5.0~5.0~
+BOPBSV~49~BOPBSV~2001-01-08~2001-01-08~Balance on Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:26-05~1.0~3.0~
+BOPERR~49~BOPERR~2001-01-08~2001-01-08~Statistical Discrepancy~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:26-05~1.0~1.0~
+BOPG~49~BOPG~2001-01-08~2001-01-08~Unilateral Transfers, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:16-05~3.0~3.0~
+BOPGG~49~BOPGG~2001-01-08~2001-01-08~U.S. Government Grants Excluding Military~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:19-05~1.0~1.0~
+BOPGP~49~BOPGP~2001-01-08~2001-01-08~U.S. Government Pensions and Other Transfers~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:19-05~0.0~1.0~
+BOPGR~49~BOPGR~2001-01-08~2001-01-08~Private Remittances and Other Transfers~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:19-05~1.0~1.0~
+BOPI~49~BOPI~2001-01-08~2001-01-08~Foreign Assets in the U.S.: Net, Capital Inflow {+}~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:17-05~15.0~15.0~
+BOPIO~49~BOPIO~2001-01-08~2001-01-08~Foreign Official Assets in the U.S.: Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:20-05~1.0~1.0~Note that the 1962 Q1 value of 0.000 represents less than +- $500,000.
+BOPIOG~49~BOPIOG~2001-01-08~2001-01-08~Foreign Official Assets in U.S.: U.S. Government Securities~1973-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:26-05~1.0~1.0~
+BOPIOGO~49~BOPIOGO~2001-01-08~2001-01-08~Foreign Official Assets: Other U.S. Government Securities~1962-04-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:34-05~1.0~1.0~
+BOPIOGT~49~BOPIOGT~2001-01-08~2001-01-08~Foreign Official Assets in U.S.: Treasury Securities~1973-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:34-05~1.0~1.0~
+BOPIOL~49~BOPIOL~2001-01-08~2001-01-08~Foreign Official Assets: Other U.S. Government Liabilities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:27-05~1.0~1.0~
+BOPIOO~49~BOPIOO~2001-01-08~2001-01-08~Other Foreign Official Assets~1972-07-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:27-05~0.0~0.0~
+BOPIOU~49~BOPIOU~2001-01-08~2001-01-08~Foreign Official Assets: U.S. Liabilities Reported by U.S. Banks, nie~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:29-05~1.0~1.0~"nie= ""not included elsewhere"
+BOPIP~49~BOPIP~2001-01-08~2001-01-08~Other Foreign Assets in the U.S., Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:20-05~0.0~1.0~
+BOPIPD~49~BOPIPD~2001-01-08~2001-01-08~Other Foreign Assets in the U.S., Net: Direct Investment~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:27-05~1.0~1.0~
+BOPIPF~49~BOPIPF~2001-01-08~2001-01-08~U.S. Liabilities to Unaffiliated Foreigners Reported by U.S. Nonbanks~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:28-05~1.0~1.0~
+BOPIPG~49~BOPIPG~2001-01-08~2001-01-08~Other Foreign Assets in U.S., Net: Government Non-Treasury Securities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:28-05~1.0~1.0~
+BOPIPO~49~BOPIPO~2001-01-08~2001-01-08~Other Foreign Assets in U.S.: U.S. Liabilities Reported by U.S. Banks, nie~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:29-05~1.0~1.0~"nie= ""not included elsewhere"
+BOPIPT~49~BOPIPT~2001-01-08~2001-01-08~Other Foreign Assets in the U.S., Net: U.S. Treasury Securities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:29-05~1.0~1.0~
+BOPM~49~BOPM~2001-01-08~2001-01-08~Imports of Goods, Services, and Income~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:17-05~1.0~1.0~
+BOPMD~49~BOPMD~2001-01-08~2001-01-08~Income Payments on Foreign Direct Investment in U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:20-05~1.0~1.0~
+BOPMG~49~BOPMG~2001-01-08~2001-01-08~U.S. Government Income Payments on Foreign Assets in U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:21-05~0.0~0.0~
+BOPMI~49~BOPMI~2001-01-08~2001-01-08~Income Payments on Foreign Assets in the U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:21-05~1.0~1.0~
+BOPMM~49~BOPMM~2001-01-08~2001-01-08~Imports of Merchandise: Adjusted, Excluding Military~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:22-05~0.0~0.0~
+BOPMP~49~BOPMP~2001-01-08~2001-01-08~Other Private Income Payments on Foreign Assets in U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:22-05~0.0~0.0~
+BOPMSV~49~BOPMSV~2001-01-08~2001-01-08~Imports of Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:30-05~1.0~1.0~
+BOPMSVG~49~BOPMSVG~2001-01-08~2001-01-08~Imports of U.S. Government Miscellaneous Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:35-05~0.0~1.0~
+BOPMSVMT~49~BOPMSVMT~2001-01-08~2001-01-08~Imports of Services: Direct Defense Expenditures~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:40-05~0.0~0.0~
+BOPMSVO~49~BOPMSVO~2001-01-08~2001-01-08~Imports of Other Private Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:35-05~0.0~1.0~
+BOPMSVOT~49~BOPMSVOT~2001-01-08~2001-01-08~Imports of Other Transportation Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:40-05~0.0~1.0~
+BOPMSVP~49~BOPMSVP~2001-01-08~2001-01-08~Imports of Services: Passenger Fares~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:35-05~0.0~1.0~
+BOPMSVR~49~BOPMSVR~2001-01-08~2001-01-08~Imports of Services: Royalties and Licensing Fees~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:36-05~1.0~1.0~
+BOPMSVT~49~BOPMSVT~2001-01-08~2001-01-08~Imports of Services: Travel~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:36-05~1.0~1.0~
+BOPO~49~BOPO~2001-01-08~2001-01-08~U.S. Assets Abroad, Net: Outflow (-)~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:17-05~1.0~1.0~
+BOPOF~49~BOPOF~2001-01-08~2001-01-08~U.S. Reserves of Foreign Currencies~1961-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:22-05~3.0~3.0~
+BOPOG~49~BOPOG~2001-01-08~2001-01-08~U.S. Government Assets Abroad, Excluding Official Reserves, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:23-05~1.0~1.0~
+BOPOGC~49~BOPOGC~2001-01-08~2001-01-08~U.S. Government Assets Abroad, Net: Credits and Other Long-Term Assets~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:30-05~0.0~0.0~
+BOPOGCR~49~BOPOGCR~2001-01-08~2001-01-08~Repayments on U.S. Credits and Other Long-Term Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:36-05~1.0~1.0~
+BOPOGF~49~BOPOGF~2001-01-08~2001-01-08~U.S. Foreign Currency Holdings and Other Short-Term Assets, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:30-05~1.0~1.0~
+BOPOGLD~49~BOPOGLD~2001-01-08~2001-01-08~U.S. Reserve Assets Abroad: Gold~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:37-05~1.0~1.0~
+BOPOIMF~49~BOPOIMF~2001-01-08~2001-01-08~U.S. Reserve Position in the IMF~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:37-05~1.0~1.0~
+BOPOO~49~BOPOO~2001-01-08~2001-01-08~U.S. Official Reserve Assets Abroad, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:23-05~1.0~1.0~
+BOPOP~49~BOPOP~2001-01-08~2001-01-08~U.S. Private Assets Abroad, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:23-05~1.0~1.0~
+BOPOPD~49~BOPOPD~2001-01-08~2001-01-08~U.S. Private Direct Investment Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:31-05~1.0~1.0~
+BOPOPF~49~BOPOPF~2001-01-08~2001-01-08~U.S. Private Assets: Claims on Foreigners Reported by Nonbanks~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:31-05~1.0~1.0~
+BOPOPO~49~BOPOPO~2001-01-08~2001-01-08~U.S. Private Assets: Claims Reported by U.S. Banks, nie~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:31-05~1.0~1.0~"nie= ""not included elsewhere"
+BOPOPS~49~BOPOPS~2001-01-08~2001-01-08~U.S. Private Assets: Foreign Securities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:32-05~1.0~1.0~
+BOPOSDR~49~BOPOSDR~2001-01-08~2001-01-08~U.S. Reserve Assets Abroad: Special Drawing Rights~1970-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:38-05~1.0~1.0~
+BOPX~49~BOPX~2001-01-08~2001-01-08~Exports of Goods, Services and Income~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:18-05~0.0~1.0~
+BOPXM~49~BOPXM~2001-01-08~2001-01-08~Exports of Merchandise: Adjusted, Excluding Military~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:24-05~1.0~1.0~
+BOPXMD~49~BOPXMD~2001-01-08~2001-01-08~Income Receipts on U.S. Direct Investment Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:32-05~1.0~1.0~
+BOPXMG~49~BOPXMG~2001-01-08~2001-01-08~U.S. Government Income Receipts on Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:33-05~1.0~1.0~
+BOPXMP~49~BOPXMP~2001-01-08~2001-01-08~Other Private Income Receipts on U.S. Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:33-05~1.0~1.0~
+BOPXR~49~BOPXR~2001-01-08~2001-01-08~Income Receipts on U.S. Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:24-05~1.0~1.0~
+BOPXSV~49~BOPXSV~2001-01-08~2001-01-08~Exports of Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:33-05~1.0~1.0~
+BOPXSVG~49~BOPXSVG~2001-01-08~2001-01-08~Exports of Services: U.S. Government Miscellaneous~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:38-05~1.0~1.0~
+BOPXSVMT~49~BOPXSVMT~2001-01-08~2001-01-08~Exports of Services: Transfers Under U.S. Military Agency Contracts~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:41-05~0.0~0.0~
+BOPXSVO~49~BOPXSVO~2001-01-08~2001-01-08~Exports of Other Private Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:38-05~0.0~0.0~
+BOPXSVOT~49~BOPXSVOT~2001-01-08~2001-01-08~Exports of Other Transportation Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:42-05~1.0~1.0~
+BOPXSVP~49~BOPXSVP~2001-01-08~2001-01-08~Exports of Services: Passenger Fares~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:39-05~1.0~1.0~
+BOPXSVR~49~BOPXSVR~2001-01-08~2001-01-08~Exports of Services: Royalties and Licensing Fees~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:39-05~1.0~1.0~
+BOPXSVT~49~BOPXSVT~2001-01-08~2001-01-08~Exports of Services: Travel~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:39-05~1.0~1.0~

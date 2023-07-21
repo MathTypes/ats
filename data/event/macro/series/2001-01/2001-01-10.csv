@@ -1,0 +1,780 @@
+~id~realtime_start~realtime_end~title~observation_start~observation_end~frequency~frequency_short~units~units_short~seasonal_adjustment~seasonal_adjustment_short~last_updated~popularity~group_popularity~notes~release_id
+FLEXSC~FLEXSC~2001-01-10~2001-01-10~Eighth District Flexible Rate on Seasonal Credit~1992-01-09~2000-12-28~Biweekly, Beg. of Period~BW~Percent~%~Not Seasonally Adjusted~NSA~2014-06-13 09:11:24-05~11.0~11.0~"Beginning of Period
+
+Seasonal credit is available to help relatively small depository institutions meet regular seasonal needs for funds that arise from a clear pattern of intrayearly movements in their deposits and loans and that cannot be met through special industry lenders. The discount rate on seasonal credit takes into account rates charged by market sources of funds and ordinarily is re-established on the first business day of each two-week reserve maintenance period."~100
+CDC~CDC~2001-01-10~2001-01-10~Rate for Credit Under the Century Date Change Special Liquidity Facility (DISCONTINUED)~1999-10-01~2000-02-02~Not Applicable~NA~Percent~%~Not Seasonally Adjusted~NSA~2000-02-02 00:00:00-06~4.0~4.0~~101
+GASPRICE~GASPRICE~2001-01-10~2001-01-10~Natural Gas Price: Henry Hub, LA~1993-11-01~2000-12-01~Monthly~M~Dollars per Million BTU~$ per Mil. BTU~Not Seasonally Adjusted~NSA~2005-09-30 01:08:59-05~2.0~2.0~"The September 2005 figure is the average of prices from
+September 1 through September 22. Spot prices were not available for
+Henry Hub Natural Gas starting on September 23, 2005, due to Hurricane
+Rita.
+Copyright, 2016, Dow Jones & Company"~102
+OILPRICE~OILPRICE~2001-01-10~2001-01-10~Spot Oil Price: West Texas Intermediate~1946-01-01~2000-12-01~Monthly~M~Dollars per Barrel~$ per Barrel~Not Seasonally Adjusted~NSA~2005-09-30 01:08:59-05~20.0~20.0~"Prior to 1982 equals the posted price.
+
+Copyright, 2016, Dow Jones & Company"~102
+CURRCIR~CURRCIR~2001-01-10~2001-01-10~Currency in Circulation~1986-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:53-05~74.0~74.0~~104
+RSBKCRNS~RSBKCRNS~2001-01-10~2001-01-10~Reserve Bank Credit~1989-04-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:54-05~38.0~38.0~~104
+TREASURY~TREASURY~2001-01-10~2001-01-10~Treasury Deposits with Federal Reserve Banks~1986-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-04-24 15:20:54-05~39.0~39.0~~104
+MFGOPH~MFGOPH~2001-01-10~2001-01-10~Manufacturing Sector: Output Per Hour of All Persons~1949-01-01~1998-01-01~Annual~A~Index 1996=100~Index 1996=100~Not Seasonally Adjusted~NSA~2005-09-30 01:08:59-05~9.0~40.0~The Productivity and Costs release on August 7, 2003, will reflect the June 2003 benchmark revision to payroll employment. Since employment is now reported on a North American Industry Classification System (NAICS) basis, all of the historical data will be revised. Changes as a consequence of the move to NAICS should not be significant since this release carries data at high levels of aggregation.~107
+MFGPROD~MFGPROD~2001-01-10~2001-01-10~Manufacturing Sector: Multifactor Productivity~1949-01-01~1998-01-01~Annual~A~Index 1996=100~Index 1996=100~Not Seasonally Adjusted~NSA~2005-09-30 01:08:59-05~5.0~7.0~The Productivity and Costs release on August 7, 2003, will reflect the June 2003 benchmark revision to payroll employment. Since employment is now reported on a North American Industry Classification System (NAICS) basis, all of the historical data will be revised. Changes as a consequence of the move to NAICS should not be significant since this release carries data at high levels of aggregation.~107
+ECIBEN~ECIBEN~2001-01-10~2001-01-10~Employment Cost Index: Benefits: Private Industry Workers~1980-01-01~2000-07-01~Quarterly~Q~Index Jun 1989=100~Index Jun 1989=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~9.0~9.0~~11
+ECICOM~ECICOM~2001-01-10~2001-01-10~Employment Cost Index: Compensation: Private Industry Workers~1980-01-01~2000-07-01~Quarterly~Q~Index Jun 1989=100~Index Jun 1989=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~3.0~3.0~~11
+ECIWAG~ECIWAG~2001-01-10~2001-01-10~Employment Cost Index: Wages and Salaries: Private Industry Workers~1980-01-01~2000-07-01~Quarterly~Q~Index Jun 1989=100~Index Jun 1989=100~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~69.0~69.0~~11
+INDPRO~INDPRO~2001-01-10~2001-01-10~Industrial Production Index~1921-01-01~2000-11-01~Monthly~M~Index 1992=100~Index 1992=100~Seasonally Adjusted~SA~2008-10-23 13:05:51-05~81.0~82.0~~13
+TCU~TCU~2001-01-10~2001-01-10~Capacity Utilization: Total Industry~1967-01-01~2000-11-01~Monthly~M~Percent of Capacity~% of Capacity~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~69.0~69.0~"Capacity Utilization: Total Industry (TCU) is the percentage of resources used by corporations and factories to produce goods in manufacturing, mining, and electric and gas utilities for all facilities located in the United States (excluding those in U.S. territories).(1) We can also think of capacity utilization as how much capacity is being used from the total available capacity to produce demanded finished products.
+
+Capacity utilization indexes are constructed for 71 industries in manufacturing, 16 in mining, and 2 in utilities. (1) Physical data on capacity utilization are primarily compiled from trade sources and government sources, such as the U.S. Geological Survey and the U.S. Energy Information Administration.(1) When physical data are unavailable, capacity utilization data are compiled from the U.S. Census Bureau’s Quarterly Survey of Plant Capacity Utilization, which provides data for almost 70 percent of total industry capacity.(1) Additionally, the capacity index is developed on a monthly basis, designed to be consistent with the production index.(1)
+According to the Board of Governors of the Federal Reserve System, the capacity index tries to conceptualize the idea of sustainable maximum output, which is defined as the highest level of output a plant can sustain within the confines of its resources. The Board of Governors defines the seasonally adjusted capacity utilization rate as the output index divided by the capacity index. The capacity utilization rate can also implicitly describe how efficiently the factors of production (inputs in the production process) are being used. (1) It sheds light on how much more firms can produce without additional costs. Additionally, this rate gives manufacturers some idea as to how much consumer demand they will be able to meet in the future.
+The Federal Reserve strives to construct a capacity index consistent with time by using different relevant data sources.(1) Developing an index that is reasonable given the time period is the primary aim for this index, but there are still some difficulties. Extensive technological and structural changes have and will continue to occur, affecting the degree of tightness the Federal Reserve index of capacity utilization will represent.(2) In addition, each series of capacity utilization is flawed by commission; therefore, they should be used with caution.(2)
+References
+(1) Board of Governors of the Federal Reserve System. “Industrial Production and Capacity Utilization.” Statistical release G.17;. May 15, 2013.
+(2) Bauer, Paul W. and Deily, Mary E. “A User’s Guide to Capacity- Utilization Measures.” Economic Commentary. Federal Reserve Bank of Cleveland, July 1, 1988; https://www.clevelandfed.org/newsroom-and-events/publications/economic-commentary/economic-commentary-archives/1988-economic-commentaries/ec-19880701-a-users-guide-to-capacity-utilization-measures.aspx."~13
+AAA~AAA~2001-01-10~2001-01-10~Moody's Seasoned Aaa Corporate Bond Yield~1919-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:17-05~80.0~83.0~Averages of daily data. Copyright, 2016, Moody's Investor Services. Reprinted with permission. Moody's tries to include bonds with remaining maturities as close as possible to 30 years. Moody's drops bonds if the remaining life falls below 20 years, if the bond is susceptible to redemption, or if the rating changes.~131
+BA3M~BA3M~2001-01-10~2001-01-10~3-Month Bankers Acceptance Rate (DISCONTINUED)~1941-01-01~2000-06-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:42:44-05~10.0~11.0~Averages of business days, discount basis.~131
+BA6M~BA6M~2001-01-10~2001-01-10~6-Month Bankers Acceptance Rate (DISCONTINUED)~1976-01-01~2000-06-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:42:45-05~1.0~1.0~Averages of business days, discount basis.~131
+BAA~BAA~2001-01-10~2001-01-10~Moody's Seasoned Baa Corporate Bond Yield~1919-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:19-05~68.0~78.0~Averages of daily data. Copyright, 2016, Moody's Investor Services. Reprinted with permission. Moody's tries to include bonds with remaining maturities as close as possible to 30 years. Moody's drops bonds if the remaining life falls below 20 years, if the bond is susceptible to redemption, or if the rating changes.~131
+CD1M~CD1M~2001-01-10~2001-01-10~1-Month Certificate of Deposit: Secondary Market Rate~1965-12-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:26-05~5.0~9.0~"Averages of Business Days.
+
+The Federal Reserve Board of Governors does not report responses to CD Bids when the number of respondents is too few to be representative."~131
+CD3M~CD3M~2001-01-10~2001-01-10~3-Month Certificate of Deposit: Secondary Market Rate~1964-06-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:27-05~7.0~8.0~"Averages of Business Days.
+
+The Federal Reserve Board of Governors does not report responses to CD Bids when the number of respondents is too few to be representative."~131
+CD6M~CD6M~2001-01-10~2001-01-10~6-Month Certificate of Deposit: Secondary Market Rate~1964-06-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:28-05~8.0~24.0~"Averages of Business Days.
+
+The Federal Reserve Board of Governors does not report responses to CD Bids when the number of respondents is too few to be representative."~131
+CP1M~CP1M~2001-01-10~2001-01-10~1-Month Commercial Paper Rate (DISCONTINUED)~1971-04-01~1997-08-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:20:33-05~1.0~1.0~Average of offering rates on commercial paper placed by several leading dealers for firms whose bond rating is AA or equivalent, quoted on a discount basis. Averages of daily figures.~131
+CP3M~CP3M~2001-01-10~2001-01-10~3-Month Commercial Paper Rate (DISCONTINUED)~1971-04-01~1997-08-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:20:34-05~8.0~8.0~Average of offering rates on commercial paper placed by several leading dealers for firms whose bond rating is AA or equivalent, quoted on a discount basis. Averages of daily figures.~131
+CP6M~CP6M~2001-01-10~2001-01-10~6-Month Commercial Paper Rate (DISCONTINUED)~1970-01-01~1997-08-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:20:34-05~4.0~4.0~Average of offering rates on commercial paper placed by several leading dealers for firms whose bond rating is AA or equivalent, quoted on a discount basis. Averages of daily figures.~131
+CPF1M~CPF1M~2001-01-10~2001-01-10~1-Month AA Financial Commercial Paper Rate~1997-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:33-05~3.0~35.0~Averages of Business Days, Discount Basis~131
+CPF2M~CPF2M~2001-01-10~2001-01-10~2-Month AA Financial Commercial Paper Rate~1997-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:33-05~1.0~6.0~Averages of Business Days, Discount Basis~131
+CPF3M~CPF3M~2001-01-10~2001-01-10~3-Month AA Financial Commercial Paper Rate~1997-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:33-05~14.0~57.0~Averages of Business Days, Discount Basis~131
+CPN1M~CPN1M~2001-01-10~2001-01-10~1-Month AA Nonfinancial Commercial Paper Rate~1997-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:34-05~2.0~17.0~Averages of Business Days, Discount Basis~131
+CPN2M~CPN2M~2001-01-10~2001-01-10~2-Month AA Nonfinancial Commercial Paper Rate~1997-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:34-05~1.0~9.0~Averages of Business Days, Discount Basis~131
+CPN3M~CPN3M~2001-01-10~2001-01-10~3-Month AA Nonfinancial Commercial Paper Rate~1997-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:34-05~19.0~46.0~Averages of Business Days, Discount Basis~131
+FEDFUNDS~FEDFUNDS~2001-01-10~2001-01-10~Effective Federal Funds Rate~1954-07-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:44-05~98.0~99.0~"Averages of daily figures.
+
+The federal funds rate is the interest rate at which depository institutions trade federal funds (balances held at Federal Reserve Banks) with each other overnight. When a depository institution has surplus balances in its reserve account, it lends to other banks in need of larger balances. In simpler terms, a bank with excess cash, which is often referred to as liquidity, will lend to another bank that needs to quickly raise liquidity. (1) The rate that the borrowing institution pays to the lending institution is determined between the two banks; the weighted average rate for all of these types of negotiations is called the effective federal funds rate.(2) The effective federal funds rate is essentially determined by the market but is influenced by the Federal Reserve through open market operations to reach the federal funds rate target.(2)
+The Federal Open Market Committee (FOMC) meets eight times a year to determine the federal funds target rate. As previously stated, this rate influences the effective federal funds rate through open market operations or by buying and selling of government bonds (government debt).(2) More specifically, the Federal Reserve decreases liquidity by selling government bonds, thereby raising the federal funds rate because banks have less liquidity to trade with other banks. Similarly, the Federal Reserve can increase liquidity by buying government bonds, decreasing the federal funds rate because banks have excess liquidity for trade. Whether the Federal Reserve wants to buy or sell bonds depends on the state of the economy. If the FOMC believes the economy is growing too fast and inflation pressures are inconsistent with the dual mandate of the Federal Reserve, the Committee may set a higher federal funds rate target to temper economic activity. In the opposing scenario, the FOMC may set a lower federal funds rate target to spur greater economic activity. Therefore, the FOMC must observe the current state of the economy to determine the best course of monetary policy that will maximize economic growth while adhering to the dual mandate set forth by Congress. In making its monetary policy decisions, the FOMC considers a wealth of economic data, such as: trends in prices and wages, employment, consumer spending and income, business investments, and foreign exchange markets.
+The federal funds rate is the central interest rate in the U.S. financial market. It influences other interest rates such as the prime rate, which is the rate banks charge their customers with higher credit ratings. Additionally, the federal funds rate indirectly influences longer- term interest rates such as mortgages, loans, and savings, all of which are very important to consumer wealth and confidence.(2)
+References
+(1) Federal Reserve Bank of New York. “Federal funds.” Fedpoints, August 2007.
+(2) Board of Governors of the Federal Reserve System. “Monetary Policy”. http://www.federalreserve.gov/monetarypolicy/default.htm."~131
+GS1~GS1~2001-01-10~2001-01-10~1-Year Treasury Constant Maturity Rate~1953-04-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:21-05~50.0~81.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+GS10~GS10~2001-01-10~2001-01-10~10-Year Treasury Constant Maturity Rate~1953-04-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:30-05~68.0~91.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+GS2~GS2~2001-01-10~2001-01-10~2-Year Treasury Constant Maturity Rate~1976-06-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:21-05~45.0~81.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+GS20~GS20~2001-01-10~2001-01-10~20-Year Treasury Constant Maturity Rate~1953-04-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:31-05~44.0~75.0~"Averages of business days. For information on the break in this series from January 1987 through September 1993, please refer to information available at http://www.federalreserve.gov/releases/h15/data.htm.
+
+For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx."~131
+GS3~GS3~2001-01-10~2001-01-10~3-Year Treasury Constant Maturity Rate~1953-04-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:22-05~33.0~70.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+GS30~GS30~2001-01-10~2001-01-10~30-Year Treasury Constant Maturity Rate~1977-02-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:32-05~42.0~75.0~"Yields on actively traded non-inflation-indexed issues adjusted to constant maturities. The 30-year Treasury constant maturity series was discontinued on February 18, 2002, and reintroduced on February 9, 2006.
+For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx."~131
+GS3M~GS3M~2001-01-10~2001-01-10~3-Month Treasury Constant Maturity Rate~1982-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:32-05~37.0~73.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+GS5~GS5~2001-01-10~2001-01-10~5-Year Treasury Constant Maturity Rate~1953-04-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:24-05~53.0~80.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+GS6M~GS6M~2001-01-10~2001-01-10~6-Month Treasury Constant Maturity Rate~1982-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:33-05~16.0~63.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+GS7~GS7~2001-01-10~2001-01-10~7-Year Treasury Constant Maturity Rate~1969-07-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:25-05~17.0~61.0~Averages of business days. For further information regarding treasury constant maturity data, please refer to http://www.federalreserve.gov/releases/h15/current/h15.pdf and http://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/yieldmethod.aspx.~131
+LTGOVTBD~LTGOVTBD~2001-01-10~2001-01-10~Long-Term U.S. Government Securities (DISCONTINUED)~1925-01-01~2000-06-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:42:57-05~12.0~12.0~Unweighted average on all outstanding bonds neither due nor callable in less than 10 years.~131
+MDISCRT~MDISCRT~2001-01-10~2001-01-10~Discount Rate (DISCONTINUED)~1950-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:40-05~3.0~16.0~Averages of daily figures. For more information, see http://www.federalreserve.gov/boarddocs/press/bcreg/2002/200210312/default.htm.~131
+MORTG~MORTG~2001-01-10~2001-01-10~30-Year Conventional Mortgage Rate~1971-04-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:35-05~29.0~31.0~Average Contract Rate on Commitments for Fixed-Rate First Mortgages. Copyright, 2016, Federal Home Loan Mortgage Corporation. Reprinted with permission.~131
+MPRIME~MPRIME~2001-01-10~2001-01-10~Bank Prime Loan Rate~1949-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:42-05~59.0~75.0~"Averages of daily figures.
+Rate posted by a majority of top 25 (by assets in domestic offices) insured U.S.-chartered commercial banks. Prime is one of several base rates used by banks to price short-term business loans."~131
+TB1YA~TB1YA~2001-01-10~2001-01-10~1-Year Treasury Bill Rate: Auction Average (DISCONTINUED)~1959-04-01~2000-06-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:42:58-05~6.0~6.0~Averages of business days, discount basis.~131
+TB1YS~TB1YS~2001-01-10~2001-01-10~1-Year Treasury Bill: Secondary Market Rate (DISCONTINUED)~1959-07-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:36-05~2.0~12.0~Averages of business days, discount basis.~131
+TB3MA~TB3MA~2001-01-10~2001-01-10~3-Month Treasury Bill Rate: Auction Average (DISCONTINUED)~1941-02-01~2000-06-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2000-06-01 00:00:00-05~15.0~15.0~Averages of business days, discount basis.~131
+TB3MS~TB3MS~2001-01-10~2001-01-10~3-Month Treasury Bill: Secondary Market Rate~1934-01-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:38-05~76.0~82.0~Averages of Business Days, Discount Basis~131
+TB6MA~TB6MA~2001-01-10~2001-01-10~6-Month Treasury Bill Rate: Auction Average (DISCONTINUED)~1960-01-01~2000-06-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:43:02-05~4.0~4.0~Averages of business days, discount basis.~131
+TB6MS~TB6MS~2001-01-10~2001-01-10~6-Month Treasury Bill: Secondary Market Rate~1958-12-01~2000-12-01~Monthly~M~Percent~%~Not Seasonally Adjusted~NSA~2006-06-07 15:46:39-05~28.0~61.0~Averages of Business Days, Discount Basis~131
+BOPBCA~BOPBCA~2001-01-10~2001-01-10~Balance on Current Account~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:25-05~6.0~7.0~~49
+BOPBGS~BOPBGS~2001-01-10~2001-01-10~Balance on Goods and Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:25-05~4.0~4.0~~49
+BOPBII~BOPBII~2001-01-10~2001-01-10~Balance on Investment Income~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:25-05~1.0~1.0~~49
+BOPBM~BOPBM~2001-01-10~2001-01-10~Balance on Merchandise Trade~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:18-05~5.0~5.0~~49
+BOPBSV~BOPBSV~2001-01-10~2001-01-10~Balance on Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:26-05~1.0~3.0~~49
+BOPERR~BOPERR~2001-01-10~2001-01-10~Statistical Discrepancy~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:26-05~1.0~1.0~~49
+BOPG~BOPG~2001-01-10~2001-01-10~Unilateral Transfers, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:16-05~3.0~3.0~~49
+BOPGG~BOPGG~2001-01-10~2001-01-10~U.S. Government Grants Excluding Military~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:19-05~1.0~1.0~~49
+BOPGP~BOPGP~2001-01-10~2001-01-10~U.S. Government Pensions and Other Transfers~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:19-05~0.0~1.0~~49
+BOPGR~BOPGR~2001-01-10~2001-01-10~Private Remittances and Other Transfers~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:19-05~1.0~1.0~~49
+BOPI~BOPI~2001-01-10~2001-01-10~Foreign Assets in the U.S.: Net, Capital Inflow {+}~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:17-05~15.0~15.0~~49
+BOPIO~BOPIO~2001-01-10~2001-01-10~Foreign Official Assets in the U.S.: Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:20-05~1.0~1.0~Note that the 1962 Q1 value of 0.000 represents less than +- $500,000.~49
+BOPIOG~BOPIOG~2001-01-10~2001-01-10~Foreign Official Assets in U.S.: U.S. Government Securities~1973-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:26-05~1.0~1.0~~49
+BOPIOGO~BOPIOGO~2001-01-10~2001-01-10~Foreign Official Assets: Other U.S. Government Securities~1962-04-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:34-05~1.0~1.0~~49
+BOPIOGT~BOPIOGT~2001-01-10~2001-01-10~Foreign Official Assets in U.S.: Treasury Securities~1973-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:34-05~1.0~1.0~~49
+BOPIOL~BOPIOL~2001-01-10~2001-01-10~Foreign Official Assets: Other U.S. Government Liabilities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:27-05~1.0~1.0~~49
+BOPIOO~BOPIOO~2001-01-10~2001-01-10~Other Foreign Official Assets~1972-07-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:27-05~0.0~0.0~~49
+BOPIOU~BOPIOU~2001-01-10~2001-01-10~Foreign Official Assets: U.S. Liabilities Reported by U.S. Banks, nie~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:29-05~1.0~1.0~"nie= ""not included elsewhere"~49
+BOPIP~BOPIP~2001-01-10~2001-01-10~Other Foreign Assets in the U.S., Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:20-05~0.0~1.0~~49
+BOPIPD~BOPIPD~2001-01-10~2001-01-10~Other Foreign Assets in the U.S., Net: Direct Investment~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:27-05~1.0~1.0~~49
+BOPIPF~BOPIPF~2001-01-10~2001-01-10~U.S. Liabilities to Unaffiliated Foreigners Reported by U.S. Nonbanks~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:28-05~1.0~1.0~~49
+BOPIPG~BOPIPG~2001-01-10~2001-01-10~Other Foreign Assets in U.S., Net: Government Non-Treasury Securities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:28-05~1.0~1.0~~49
+BOPIPO~BOPIPO~2001-01-10~2001-01-10~Other Foreign Assets in U.S.: U.S. Liabilities Reported by U.S. Banks, nie~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:29-05~1.0~1.0~"nie= ""not included elsewhere"~49
+BOPIPT~BOPIPT~2001-01-10~2001-01-10~Other Foreign Assets in the U.S., Net: U.S. Treasury Securities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:29-05~1.0~1.0~~49
+BOPM~BOPM~2001-01-10~2001-01-10~Imports of Goods, Services, and Income~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:17-05~1.0~1.0~~49
+BOPMD~BOPMD~2001-01-10~2001-01-10~Income Payments on Foreign Direct Investment in U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:20-05~1.0~1.0~~49
+BOPMG~BOPMG~2001-01-10~2001-01-10~U.S. Government Income Payments on Foreign Assets in U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:21-05~0.0~0.0~~49
+BOPMI~BOPMI~2001-01-10~2001-01-10~Income Payments on Foreign Assets in the U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:21-05~1.0~1.0~~49
+BOPMM~BOPMM~2001-01-10~2001-01-10~Imports of Merchandise: Adjusted, Excluding Military~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:22-05~0.0~0.0~~49
+BOPMP~BOPMP~2001-01-10~2001-01-10~Other Private Income Payments on Foreign Assets in U.S.~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:22-05~0.0~0.0~~49
+BOPMSV~BOPMSV~2001-01-10~2001-01-10~Imports of Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:30-05~1.0~1.0~~49
+BOPMSVG~BOPMSVG~2001-01-10~2001-01-10~Imports of U.S. Government Miscellaneous Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:35-05~0.0~1.0~~49
+BOPMSVMT~BOPMSVMT~2001-01-10~2001-01-10~Imports of Services: Direct Defense Expenditures~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:40-05~0.0~0.0~~49
+BOPMSVO~BOPMSVO~2001-01-10~2001-01-10~Imports of Other Private Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:35-05~0.0~1.0~~49
+BOPMSVOT~BOPMSVOT~2001-01-10~2001-01-10~Imports of Other Transportation Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:40-05~0.0~1.0~~49
+BOPMSVP~BOPMSVP~2001-01-10~2001-01-10~Imports of Services: Passenger Fares~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:35-05~0.0~1.0~~49
+BOPMSVR~BOPMSVR~2001-01-10~2001-01-10~Imports of Services: Royalties and Licensing Fees~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:36-05~1.0~1.0~~49
+BOPMSVT~BOPMSVT~2001-01-10~2001-01-10~Imports of Services: Travel~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:36-05~1.0~1.0~~49
+BOPO~BOPO~2001-01-10~2001-01-10~U.S. Assets Abroad, Net: Outflow (-)~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:17-05~1.0~1.0~~49
+BOPOF~BOPOF~2001-01-10~2001-01-10~U.S. Reserves of Foreign Currencies~1961-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:22-05~3.0~3.0~~49
+BOPOG~BOPOG~2001-01-10~2001-01-10~U.S. Government Assets Abroad, Excluding Official Reserves, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:23-05~1.0~1.0~~49
+BOPOGC~BOPOGC~2001-01-10~2001-01-10~U.S. Government Assets Abroad, Net: Credits and Other Long-Term Assets~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:30-05~0.0~0.0~~49
+BOPOGCR~BOPOGCR~2001-01-10~2001-01-10~Repayments on U.S. Credits and Other Long-Term Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:36-05~1.0~1.0~~49
+BOPOGF~BOPOGF~2001-01-10~2001-01-10~U.S. Foreign Currency Holdings and Other Short-Term Assets, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:30-05~1.0~1.0~~49
+BOPOGLD~BOPOGLD~2001-01-10~2001-01-10~U.S. Reserve Assets Abroad: Gold~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:37-05~1.0~1.0~~49
+BOPOIMF~BOPOIMF~2001-01-10~2001-01-10~U.S. Reserve Position in the IMF~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:37-05~1.0~1.0~~49
+BOPOO~BOPOO~2001-01-10~2001-01-10~U.S. Official Reserve Assets Abroad, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:23-05~1.0~1.0~~49
+BOPOP~BOPOP~2001-01-10~2001-01-10~U.S. Private Assets Abroad, Net~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:23-05~1.0~1.0~~49
+BOPOPD~BOPOPD~2001-01-10~2001-01-10~U.S. Private Direct Investment Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:31-05~1.0~1.0~~49
+BOPOPF~BOPOPF~2001-01-10~2001-01-10~U.S. Private Assets: Claims on Foreigners Reported by Nonbanks~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:31-05~1.0~1.0~~49
+BOPOPO~BOPOPO~2001-01-10~2001-01-10~U.S. Private Assets: Claims Reported by U.S. Banks, nie~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:31-05~1.0~1.0~"nie= ""not included elsewhere"~49
+BOPOPS~BOPOPS~2001-01-10~2001-01-10~U.S. Private Assets: Foreign Securities~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:32-05~1.0~1.0~~49
+BOPOSDR~BOPOSDR~2001-01-10~2001-01-10~U.S. Reserve Assets Abroad: Special Drawing Rights~1970-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:38-05~1.0~1.0~~49
+BOPX~BOPX~2001-01-10~2001-01-10~Exports of Goods, Services and Income~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:18-05~0.0~1.0~~49
+BOPXM~BOPXM~2001-01-10~2001-01-10~Exports of Merchandise: Adjusted, Excluding Military~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:24-05~1.0~1.0~~49
+BOPXMD~BOPXMD~2001-01-10~2001-01-10~Income Receipts on U.S. Direct Investment Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:32-05~1.0~1.0~~49
+BOPXMG~BOPXMG~2001-01-10~2001-01-10~U.S. Government Income Receipts on Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:33-05~1.0~1.0~~49
+BOPXMP~BOPXMP~2001-01-10~2001-01-10~Other Private Income Receipts on U.S. Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:33-05~1.0~1.0~~49
+BOPXR~BOPXR~2001-01-10~2001-01-10~Income Receipts on U.S. Assets Abroad~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:24-05~1.0~1.0~~49
+BOPXSV~BOPXSV~2001-01-10~2001-01-10~Exports of Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:33-05~1.0~1.0~~49
+BOPXSVG~BOPXSVG~2001-01-10~2001-01-10~Exports of Services: U.S. Government Miscellaneous~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:38-05~1.0~1.0~~49
+BOPXSVMT~BOPXSVMT~2001-01-10~2001-01-10~Exports of Services: Transfers Under U.S. Military Agency Contracts~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:41-05~0.0~0.0~~49
+BOPXSVO~BOPXSVO~2001-01-10~2001-01-10~Exports of Other Private Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:38-05~0.0~0.0~~49
+BOPXSVOT~BOPXSVOT~2001-01-10~2001-01-10~Exports of Other Transportation Services~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:42-05~1.0~1.0~~49
+BOPXSVP~BOPXSVP~2001-01-10~2001-01-10~Exports of Services: Passenger Fares~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:39-05~1.0~1.0~~49
+BOPXSVR~BOPXSVR~2001-01-10~2001-01-10~Exports of Services: Royalties and Licensing Fees~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:39-05~1.0~1.0~~49
+BOPXSVT~BOPXSVT~2001-01-10~2001-01-10~Exports of Services: Travel~1960-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:39-05~1.0~1.0~~49
+AHETPI~AHETPI~2001-01-10~2001-01-10~Average Hourly Earnings: Total Private Industries~1964-01-01~2000-12-01~Monthly~M~Dollars per Hour~$ per Hour~Seasonally Adjusted~SA~2005-08-12 13:38:57-05~65.0~65.0~~50
+AWHI~AWHI~2001-01-10~2001-01-10~Aggregate Weekly Hours Index: Total Private Industries~1964-01-01~2000-12-01~Monthly~M~Index 1982=100~Index 1982=100~Seasonally Adjusted~SA~2005-06-08 15:26:34-05~34.0~34.0~"Handbook of Methods Establishment Survey - (http://www.bls.gov/opub/hom/pdf/homch2.pdf)
+
+Frequently Asked Questions - (http://stats.bls.gov:80/cps/cps_faq.htm)"~50
+AWHMAN~AWHMAN~2001-01-10~2001-01-10~Average Weekly Hours of Production and Nonsupervisory Employees: Manufacturing~1932-01-01~2000-12-01~Monthly~M~Hours~Hours~Seasonally Adjusted~SA~2009-05-01 13:58:10-05~58.0~58.0~"Average weekly hours relate to the average hours per worker for which pay was received and is different from standard or scheduled hours. Factors such as unpaid absenteeism, labor turnover, part-time work, and stoppages cause average weekly hours to be lower than scheduled hours of work for an establishment. Group averages further reflect changes in the workweek of component industries. Average weekly hours are the total weekly hours divided by the employees paid for those hours.
+
+Production and related employees include working supervisors and all nonsupervisory employees (including group leaders and trainees) engaged in fabricating, processing, assembling, inspecting, receiving, storing, handling, packing, warehousing, shipping, trucking, hauling, maintenance, repair, janitorial, guard services, product development, auxiliary production for plant's own use (for example, power plant), recordkeeping, and other services closely associated with the above production operations.
+
+Nonsupervisory employees include those individuals in private, service-providing industries who are not above the working-supervisor level. This group includes individuals such as office and clerical workers, repairers, salespersons, operators, drivers, physicians, lawyers, accountants, nurses, social workers, research aides, teachers, drafters, photographers, beauticians, musicians, restaurant workers, custodial workers, attendants, line installers and repairers, laborers, janitors, guards, and other employees at similar occupational levels whose services are closely associated with those of the employees listed.
+
+The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES3000000007"~50
+AWHNONAG~AWHNONAG~2001-01-10~2001-01-10~Average Weekly Hours of Production and Nonsupervisory Employees: Total private~1964-01-01~2000-12-01~Monthly~M~Hours~Hours~Seasonally Adjusted~SA~2005-06-08 15:26:45-05~39.0~39.0~"Average weekly hours relate to the average hours per worker for which pay was received and is different from standard or scheduled hours. Factors such as unpaid absenteeism, labor turnover, part-time work, and stoppages cause average weekly hours to be lower than scheduled hours of work for an establishment. Group averages further reflect changes in the workweek of component industries. Average weekly hours are the total weekly hours divided by the employees paid for those hours.
+
+Production and related employees include working supervisors and all nonsupervisory employees (including group leaders and trainees) engaged in fabricating, processing, assembling, inspecting, receiving, storing, handling, packing, warehousing, shipping, trucking, hauling, maintenance, repair, janitorial, guard services, product development, auxiliary production for plant's own use (for example, power plant), recordkeeping, and other services closely associated with the above production operations.
+
+Nonsupervisory employees include those individuals in private, service-providing industries who are not above the working-supervisor level. This group includes individuals such as office and clerical workers, repairers, salespersons, operators, drivers, physicians, lawyers, accountants, nurses, social workers, research aides, teachers, drafters, photographers, beauticians, musicians, restaurant workers, custodial workers, attendants, line installers and repairers, laborers, janitors, guards, and other employees at similar occupational levels whose services are closely associated with those of the employees listed.
+
+The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES0500000007"~50
+AWOTMAN~AWOTMAN~2001-01-10~2001-01-10~Average Weekly Hours: Overtime: Manufacturing~1956-01-01~2000-12-01~Monthly~M~Hours~Hours~Seasonally Adjusted~SA~2009-05-01 13:58:11-05~37.0~37.0~~50
+CE16OV~CE16OV~2001-01-10~2001-01-10~Civilian Employment Level~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2005-06-08 15:26:47-05~65.0~66.0~"The civilian noninstitutional population is defined as: persons 16 years of age and older residing in the 50 states and the District of Columbia, who are not inmates of institutions (e.g., penal and mental facilities, homes for the aged), and who are not on active duty in the Armed Forces.
+
+The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS12000000"~50
+CIVPART~CIVPART~2001-01-10~2001-01-10~Civilian Labor Force Participation Rate~1948-01-01~2000-12-01~Monthly~M~Percent~%~Seasonally Adjusted~SA~2005-06-08 15:27:15-05~84.0~84.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS11300000"~50
+CLF16OV~CLF16OV~2001-01-10~2001-01-10~Civilian Labor Force~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2005-06-08 15:27:17-05~66.0~67.0~"Persons 16 years of age and older.
+
+The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS11000000"~50
+CNP16OV~CNP16OV~2001-01-10~2001-01-10~Civilian Noninstitutional Population~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Not Seasonally Adjusted~NSA~2005-06-08 15:26:36-05~54.0~54.0~"Civilian noninstitutional population is defined as persons 16 years of age and older residing in the 50 states and the District of Columbia, who are not inmates of institutions (e.g., penal and mental facilities, homes for the aged), and who are not on active duty in the Armed Forces.
+
+The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNU00000000"~50
+DMANEMP~DMANEMP~2001-01-10~2001-01-10~All Employees: Durable Goods~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-09 16:47:23-06~17.0~18.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES3100000001"~50
+EMRATIO~EMRATIO~2001-01-10~2001-01-10~Civilian Employment-Population Ratio~1948-01-01~2000-12-01~Monthly~M~Percent~%~Seasonally Adjusted~SA~2005-06-08 15:26:44-05~66.0~66.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS12300000"~50
+MANEMP~MANEMP~2001-01-10~2001-01-10~All Employees: Manufacturing~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 15:55:53-06~70.0~70.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES3000000001"~50
+NDMANEMP~NDMANEMP~2001-01-10~2001-01-10~All Employees: Nondurable goods~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-09 16:47:22-06~13.0~15.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES3200000001"~50
+PAYEMS~PAYEMS~2001-01-10~2001-01-10~All Employees: Total Nonfarm Payrolls~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-06 10:52:55-06~83.0~83.0~"All Employees: Total Nonfarm, commonly known as Total Nonfarm Payroll, is a measure of the number of U.S. workers in the economy that excludes proprietors, private household employees, unpaid volunteers, farm employees, and the unincorporated self-employed. This measure accounts for approximately 80 percent of the workers who contribute to Gross Domestic Product (GDP).
+
+This measure provides useful insights into the current economic situation because it can represent the number of jobs added or lost in an economy. Increases in employment might indicate that businesses are hiring which might also suggest that businesses are growing. Additionally, those who are newly employed have increased their personal incomes, which means (all else constant) their disposable incomes have also increased, thus fostering further economic expansion.
+
+Generally, the U.S. labor force and levels of employment and unemployment are subject to fluctuations due to seasonal changes in weather, major holidays, and the opening and closing of schools. The Bureau of Labor Statistics (BLS) adjusts the data to offset the seasonal effects to show non-seasonal changes: for example, women's participation in the labor force; or a general decline in the number of employees, a possible indication of a downturn in the economy. To closely examine seasonal and non-seasonal changes, the BLS releases two monthly statistical measures: the seasonally adjusted All Employees: Total Nonfarm (PAYEMS) and All Employees: Total Nonfarm (PAYNSA), which is not seasonally adjusted.
+
+The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES0000000001"~50
+SRVPRD~SRVPRD~2001-01-10~2001-01-10~All Employees: Service-Providing Industries~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 16:03:46-06~35.0~35.0~"Handbook of Methods Establishment Survey - (https://www.bls.gov/opub/hom/pdf/ces-20110307.pdf)
+
+Frequently Asked Questions - (http://stats.bls.gov:80/cps/cps_faq.htm)
+
+The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES0700000001"~50
+UEMP15OV~UEMP15OV~2001-01-10~2001-01-10~Number of Civilians Unemployed for 15 Weeks and Over~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2005-06-08 15:27:13-05~12.0~12.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS13008516"~50
+UEMP15T26~UEMP15T26~2001-01-10~2001-01-10~Number of Civilians Unemployed for 15 to 26 Weeks~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-05-01 13:58:06-05~5.0~5.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS13008876"~50
+UEMP27OV~UEMP27OV~2001-01-10~2001-01-10~Number of Civilians Unemployed for 27 Weeks and Over~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-05-01 13:58:12-05~45.0~45.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS13008636"~50
+UEMP5TO14~UEMP5TO14~2001-01-10~2001-01-10~Number of Civilians Unemployed for 5 to 14 Weeks~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-05-01 13:58:08-05~8.0~8.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS13008756"~50
+UEMPLT5~UEMPLT5~2001-01-10~2001-01-10~Number of Civilians Unemployed for Less Than 5 Weeks~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2005-06-08 15:26:50-05~23.0~24.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS13008396"~50
+UEMPMEAN~UEMPMEAN~2001-01-10~2001-01-10~Average (Mean) Duration of Unemployment~1948-01-01~2000-12-01~Monthly~M~Weeks~Weeks~Seasonally Adjusted~SA~2009-05-01 13:58:09-05~46.0~46.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS13008275"~50
+UEMPMED~UEMPMED~2001-01-10~2001-01-10~Median Duration of Unemployment~1967-07-01~2000-12-01~Monthly~M~Weeks~Weeks~Seasonally Adjusted~SA~2005-06-08 15:26:51-05~24.0~24.0~"The series comes from the 'Current Population Survey (Household Survey)'
+
+The source code is: LNS13008276"~50
+UNEMPLOY~UNEMPLOY~2001-01-10~2001-01-10~Unemployment Level~1948-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2005-06-08 15:26:40-05~67.0~67.0~"The series comes from the 'Current Population Survey (Household Survey)'
+The source code is: LNS13000000
+
+The Unemployment Level is the aggregate measure of people currently unemployed in the US. Someone in the labor force is defined as unemployed if they were not employed during the survey reference week, were available for work, and made at least one active effort to find a job during the 4-week survey period. 
+
+The Unemployment Level is collected in the CPS and published by the BLS. It is provided on a monthly basis, so this data is used in part by macroeconomists as an initial economic indicator of current trends. The Unemployment Level helps government agencies, financial markets, and researchers gauge the overall health of the economy.
+
+Note that individuals that are not employed but not actively looking for a job are not counted as unemployed. For instance, declines in the Unemployment Level may either reflect movements of unemployed individuals into the labor force because they found a job, or movements of unemployed individuals out of the labor force because they stopped looking to find a job.
+
+
+For more information, see:
+U.S. Bureau of Labor Statistics, CES Overview (https://www.bls.gov/web/empsit/cesprog.htm)
+U.S. Bureau of Labor Statistics, BLS Handbook of Methods: Chapter 2. Employment, Hours, and Earnings from the Establishment Survey (https://www.bls.gov/opub/hom/pdf/ces-20110307.pdf)"~50
+UNRATE~UNRATE~2001-01-10~2001-01-10~Civilian Unemployment Rate~1948-01-01~2000-12-01~Monthly~M~Percent~%~Seasonally Adjusted~SA~2005-06-08 15:26:58-05~93.0~93.0~"Persons 16 years of age and older.
+
+The Bureau of Labor Statistics (BLS) announced several revisions to the Household Survey on Friday Feb.7th 2003, with the release of the January 2003 Data. They introduced the Census 2000 population controls (which affect data back to 2000 and cause a break in the data in January 2000), a new seasonal adjustment procedure, and new seasonal factors back to January 1998. For further information contact the Current Employment Statistics (CES) homepage at www.bls.gov/ces or by calling 202-691-6555."~50
+USCONS~USCONS~2001-01-10~2001-01-10~All Employees: Construction~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 15:56:55-06~67.0~67.0~"Construction employees in the construction sector include: Working supervisors, qualified craft workers, mechanics, apprentices, helpers, laborers, and so forth, engaged in new work, alterations, demolition, repair, maintenance, and the like, whether working at the site of construction or in shops or yards at jobs (such as precutting and preassembling) ordinarily performed by members of the construction trades.
+
+The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES2000000001"~50
+USFIRE~USFIRE~2001-01-10~2001-01-10~All Employees: Financial Activities~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 15:57:44-06~59.0~59.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES5500000001"~50
+USGOOD~USGOOD~2001-01-10~2001-01-10~All Employees: Goods-Producing Industries~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 16:04:40-06~31.0~31.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES0600000001"~50
+USGOVT~USGOVT~2001-01-10~2001-01-10~All Employees: Government~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 15:58:34-06~61.0~61.0~"Government employment covers only civilian employees; military personnel are excluded. Employees of the Central Intelligence Agency, the National Security Agency, the National Imagery and Mapping Agency, and the Defense Intelligence Agency also are excluded. Postal Services are included.
+
+Handbook of Methods Establishment Survey - (http://www.bls.gov/opub/hom/pdf/homch2.pdf)
+
+Frequently Asked Questions - (http://stats.bls.gov:80/cps/cps_faq.htm)
+
+The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES9000000001"~50
+USMINE~USMINE~2001-01-10~2001-01-10~All Employees: Mining and logging~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 15:59:23-06~58.0~58.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES1000000001"~50
+USPRIV~USPRIV~2001-01-10~2001-01-10~All Employees: Total Private Industries~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-09 16:47:21-06~62.0~62.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES0500000001"~50
+USSERV~USSERV~2001-01-10~2001-01-10~All Employees: Other Services~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 16:00:05-06~57.0~57.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES8000000001"~50
+USTPU~USTPU~2001-01-10~2001-01-10~All Employees: Trade, Transportation and Utilities~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 16:00:52-06~22.0~22.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES4000000001"~50
+USTRADE~USTRADE~2001-01-10~2001-01-10~All Employees: Retail Trade~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 16:01:46-06~60.0~61.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES4200000001"~50
+USWTRADE~USWTRADE~2001-01-10~2001-01-10~All Employees: Wholesale Trade~1939-01-01~2000-12-01~Monthly~M~Thousands of Persons~Thous. of Persons~Seasonally Adjusted~SA~2009-02-11 16:02:55-06~58.0~58.0~"The series comes from the 'Current Employment Statistics (Establishment Survey).'
+
+The source code is: CES4142000001"~50
+BOPGEXP~BOPGEXP~2001-01-10~2001-01-10~Exports of Goods, Balance of Payments Basis~1992-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:01-05~14.0~14.0~"This series represents monthly statistics of complete coverage. The advance estimate of the current month of nearly complete coverage is available on FRED at https://fred.stlouisfed.org/series/AITGEXS
+
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+BOPGIMP~BOPGIMP~2001-01-10~2001-01-10~Imports of Goods: Balance of Payments Basis~1992-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:02-05~14.0~14.0~"This series represents monthly statistics of complete coverage. The advance estimate of the current month of nearly complete coverage is available on FRED at https://fred.stlouisfed.org/series/AITGIXS
+
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+BOPGSTB~BOPGSTB~2001-01-10~2001-01-10~Trade Balance: Goods and Services, Balance of Payments Basis~1992-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:02-05~60.0~60.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+BOPGTB~BOPGTB~2001-01-10~2001-01-10~Trade Balance: Goods, Balance of Payments Basis~1992-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:00-05~34.0~34.0~"This series represents monthly statistics of complete coverage. The advance estimate of the current month of nearly complete coverage is available on FRED at https://fred.stlouisfed.org/series/AITGCBS
+
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+BOPSEXP~BOPSEXP~2001-01-10~2001-01-10~Exports of Services, Balance of Payments Basis~1992-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:02-05~7.0~7.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+BOPSIMP~BOPSIMP~2001-01-10~2001-01-10~Imports of Services, Balance of Payments Basis~1992-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:03-05~5.0~5.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+BOPSTB~BOPSTB~2001-01-10~2001-01-10~Trade Balance: Services, Balance of Payments Basis~1992-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Seasonally Adjusted~SA~2005-08-25 11:16:01-05~12.0~12.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+EXPCA~EXPCA~2001-01-10~2001-01-10~U.S. Exports of Goods by F.A.S. Basis to Canada~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:53-05~6.0~6.0~"Free Alongside Ship Basis (f.a.s.)
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+EXPFR~EXPFR~2001-01-10~2001-01-10~U.S. Exports of Goods by F.A.S. Basis to France~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:54-05~4.0~4.0~"Free Alongside Ship Basis (f.a.s.)
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+EXPGE~EXPGE~2001-01-10~2001-01-10~U.S. Exports of Goods by F.A.S. Basis to Germany~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:53-05~1.0~1.0~"Free Alongside Ship Basis (f.a.s.)
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+EXPJP~EXPJP~2001-01-10~2001-01-10~U.S. Exports of Goods by F.A.S. Basis to Japan~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:55-05~28.0~28.0~"Free Alongside Ship Basis (f.a.s.)
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+EXPMX~EXPMX~2001-01-10~2001-01-10~U.S. Exports of Goods by F.A.S. Basis to Mexico~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:55-05~8.0~8.0~"Free Alongside Ship Basis (f.a.s.)
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+EXPUK~EXPUK~2001-01-10~2001-01-10~U.S. Exports of Goods by F.A.S. Basis to the United Kingdom~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:56-05~4.0~4.0~"Free Alongside Ship Basis (f.a.s.)
+Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+IMPCA~IMPCA~2001-01-10~2001-01-10~U.S. Imports of Goods by Customs Basis from Canada~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:57-05~14.0~14.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+IMPFR~IMPFR~2001-01-10~2001-01-10~U.S. Imports of Goods by Customs Basis from France~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:58-05~5.0~5.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+IMPGE~IMPGE~2001-01-10~2001-01-10~U.S. Imports of Goods by Customs Basis from Germany~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:58-05~7.0~7.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+IMPJP~IMPJP~2001-01-10~2001-01-10~U.S. Imports of Goods by Customs Basis from Japan~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:15:59-05~21.0~21.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+IMPMX~IMPMX~2001-01-10~2001-01-10~U.S. Imports of Goods by Customs Basis from Mexico~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:16:00-05~22.0~22.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+IMPUK~IMPUK~2001-01-10~2001-01-10~U.S. Imports of Goods by Customs Basis from the United Kingdom~1974-01-01~2000-10-01~Monthly~M~Millions of Dollars~Mil. of $~Not Seasonally Adjusted~NSA~2005-08-25 11:16:00-05~4.0~4.0~"Further information related to the international trade data can be found at https://www.census.gov/foreign-trade/data/index.html 
+Methodology details can be found at https://www.census.gov/foreign-trade/Press-Release/current_press_release/explain.pdf"~51
+CMDEBT~CMDEBT~2001-01-10~2001-01-10~Households and Nonprofit Organizations; Credit Market Instruments; Liability, Level~1953-01-01~2000-07-01~Quarterly, End of Period~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2005-09-30 01:08:59-05~45.0~46.0~"The FRED series Household Sector: Liabilities: Household Credit Market Debt Outstanding is now known as Households and Nonprofit Organizations; Credit Market Instruments; Liability.
+
+The source series id is LA154104005.Q.
+
+This series appears in Table D.3. For further information see the assistance provided in the guide to the Financial Accounts at http://www.federalreserve.gov/apps/fof/."~52
+AFDEF~AFDEF~2001-01-10~2001-01-10~Net Federal Government Saving~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:34:17-05~1.0~8.0~"BEA Account Code: A923RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+AFEXPND~AFEXPND~2001-01-10~2001-01-10~Federal Government Current Expenditures~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:32:36-05~18.0~18.0~"BEA Account Code: W013RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+AFGSL~AFGSL~2001-01-10~2001-01-10~Federal government current transfer payments: Other current transfer payments: Grants-in-aid to state and local governments~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:33:20-05~1.0~3.0~"BEA Account Code: B089RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+AFRECPT~AFRECPT~2001-01-10~2001-01-10~Federal Government: Current Receipts~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:31:38-05~15.0~15.0~"BEA Account Code: W005RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+ASLCTAX~ASLCTAX~2001-01-10~2001-01-10~State and Local Government: Tax Receipts on Corporate Income~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:39:04-05~1.0~1.0~"BEA Account Code: B102RC1
+
+A Guide to the National Income and Product Accounts of the United States - http://www.bea.gov/national/pdf/nipaguid.pdf"~53
+ASLEXPND~ASLEXPND~2001-01-10~2001-01-10~State and Local Government Current Expenditures~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:39:55-05~1.0~32.0~"BEA Account Code: W024RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+ASLPITAX~ASLPITAX~2001-01-10~2001-01-10~State and local government current tax receipts: Personal current taxes: Income taxes~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:36:17-05~1.0~2.0~"BEA Account Code: B245RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+ASLPTAX~ASLPTAX~2001-01-10~2001-01-10~State and Local Government: Taxes on production and imports: Property Taxes~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:38:16-05~1.0~1.0~"BEA Account Code: B249RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+ASLRECPT~ASLRECPT~2001-01-10~2001-01-10~State and Local Government: Current Receipts~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:35:05-05~1.0~1.0~"BEA Account Code: W023RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+ASLRSI~ASLRSI~2001-01-10~2001-01-10~State and Local Government Receipts: Contributions for Social Insurance~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:40:38-05~0.0~0.0~"BEA Account Code: B104RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+ASLSTAX~ASLSTAX~2001-01-10~2001-01-10~State and Local Government: Taxes on production and imports: Sales Taxes~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 09:37:29-05~1.0~1.0~"BEA Account Code: B248RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+CBI~CBI~2001-01-10~2001-01-10~Change in Private Inventories~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:27-06~31.0~32.0~"BEA Account Code: A014RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+CBIA~CBIA~2001-01-10~2001-01-10~Change in Private Inventories~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:50-06~2.0~32.0~BEA Account Code: A014RC1~53
+CBIC1~CBIC1~2001-01-10~2001-01-10~Change in Real Private Inventories~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:30-06~23.0~24.0~"BEA Account Code: A014RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+CBICA~CBICA~2001-01-10~2001-01-10~Real Change in Private Inventories~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-11-02 12:26:57-06~1.0~1.0~"BEA Account Code: A014RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA)- http://www.bea.gov/national/pdf/nipaguid.pdf"~53
+CCFC~CCFC~2001-01-10~2001-01-10~Corporate: Consumption of Fixed Capital~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-29 10:51:45-05~1.0~1.0~"BEA Account Code: A438RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+CIVA~CIVA~2001-01-10~2001-01-10~Corporate Inventory Valuation Adjustment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-26 14:47:18-05~2.0~2.0~"BEA Account Code: B058RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+CNCF~CNCF~2001-01-10~2001-01-10~Corporate Net Cash Flow with IVA~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-29 10:51:00-05~27.0~27.0~"BEA Account Code: A904RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+COE~COE~2001-01-10~2001-01-10~National Income: Compensation of Employees, Paid~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-26 14:48:13-05~16.0~16.0~"BEA Account Code: A033RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+COFC~COFC~2001-01-10~2001-01-10~Consumption of Fixed Capital~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-14 11:11:28-06~19.0~19.0~"BEA Account Code: A262RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+CP~CP~2001-01-10~2001-01-10~Corporate Profits After Tax (without IVA and CCAdj)~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-08 09:21:50-06~71.0~71.0~BEA Account Code: A055RC1~53
+CPATAX~CPATAX~2001-01-10~2001-01-10~Corporate Profits After Tax with Inventory Valuation Adjustment (IVA) and Capital Consumption Adjustment (CCAdj)~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:07:57-05~46.0~46.0~"BEA Account Code: A551RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+CPROFIT~CPROFIT~2001-01-10~2001-01-10~Corporate Profits with Inventory Valuation Adjustment (IVA) and Capital Consumption Adjustment (CCAdj)~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:08:49-05~42.0~42.0~"BEA Account Code: A051RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+DCBCCA~DCBCCA~2001-01-10~2001-01-10~Net private saving: Domestic business: Capital consumption adjustment, corporate~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:09:35-05~2.0~2.0~"BEA Account Code: A059RC1
+
+A Guide to the National Income and Product Accounts of the United States - http://www.bea.gov/national/pdf/nipaguid.pdf"~53
+DGI~DGI~2001-01-10~2001-01-10~Federal Government: Real National Defense Gross Investment~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:03:39-05~2.0~2.0~"BEA Account Code: A788RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+DGIC96~DGIC96~2001-01-10~2001-01-10~Real National Defense Gross Investment~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:04-05~1.0~1.0~"BEA Account Code: A788RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+DIVIDEND~DIVIDEND~2001-01-10~2001-01-10~Corporate Profits after tax with IVA and CCAdj: Net Dividends~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-29 10:52:30-05~14.0~14.0~"BEA Account Code: B056RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+DPI~DPI~2001-01-10~2001-01-10~Disposable Personal Income~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:19:36-05~42.0~67.0~"BEA Account Code: A067RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+DPIC96~DPIC96~2001-01-10~2001-01-10~Real Disposable Personal Income~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2007-03-29 10:54:46-05~29.0~75.0~"BEA Account Code: A067RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+EXPGS~EXPGS~2001-01-10~2001-01-10~Exports of Goods and Services~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:31-06~48.0~53.0~"BEA Account Code: B020RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+EXPGSA~EXPGSA~2001-01-10~2001-01-10~Exports of Goods and Services~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:50-06~20.0~53.0~BEA Account Code: B020RC1~53
+EXPGSC1~EXPGSC1~2001-01-10~2001-01-10~Real Exports of Goods and Services, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:33-06~36.0~47.0~"BEA Account Code: A020RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+EXPGSC1N~EXPGSC1N~2001-01-10~2001-01-10~Real Exports of Goods and Services, GNP-Basis (DISCONTINUED)~1947-01-01~1991-07-01~Quarterly~Q~Billions of Chained 1992 Dollars~Bil. of Chn. 1992 $~Seasonally Adjusted Annual Rate~SAAR~2006-05-03 15:37:07-05~1.0~1.0~"A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)
+
+Exports (from table 1.2, line 16) plus receipts of factor income (From table 1.10, line 2)"~53
+EXPGSCA~EXPGSCA~2001-01-10~2001-01-10~Real Exports of Goods and Services~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-11-02 12:26:57-06~33.0~47.0~"BEA Account Code: A020RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+EXPGSCNA~EXPGSCNA~2001-01-10~2001-01-10~Real Exports of Goods and Services, GNP-Basis (DISCONTINUED)~1929-01-01~1990-01-01~Annual~A~Billions of 1982 Dollars~Bil. of 1982 $~Not Seasonally Adjusted~NSA~2007-01-26 10:02:46-06~0.0~1.0~~53
+EXPGSN~EXPGSN~2001-01-10~2001-01-10~Exports of Goods and Services, GNP-Basis (DISCONTINUED)~1946-01-01~1991-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2006-05-03 15:37:11-05~1.0~1.0~"A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)
+
+Exports (from table 1.1, line 16) plus receipts of factor income (From table 1.9, line 2)"~53
+EXPGSNA~EXPGSNA~2001-01-10~2001-01-10~Exports of Goods and Services, GNP-Basis (DISCONTINUED)~1929-01-01~1990-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:02:46-06~1.0~1.0~~53
+FCTAX~FCTAX~2001-01-10~2001-01-10~Federal Government: Tax Receipts on Corporate Income~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-03-19 15:41:24-05~46.0~46.0~"BEA Account Code: B075RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - http://www.bea.gov/national/pdf/nipaguid.pdf"~53
+FDEFX~FDEFX~2001-01-10~2001-01-10~Federal Government: National Defense Consumption Expenditures and Gross Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-21 10:13:44-05~46.0~46.0~"BEA Account Code: A824RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FGCE~FGCE~2001-01-10~2001-01-10~Federal Consumption Expenditures and Gross Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-12-05 13:01:03-06~2.0~2.0~"BEA Account Code: A823RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FGCEA~FGCEA~2001-01-10~2001-01-10~Federal Government Consumption Expenditures and Gross Investment~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:51-06~1.0~1.0~BEA Account Code: A823RC1~53
+FGCEC1~FGCEC1~2001-01-10~2001-01-10~Real Federal Consumption Expenditures and Gross Investment, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:06-05~3.0~3.0~"BEA Account Code: A823RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FGCECA~FGCECA~2001-01-10~2001-01-10~Real Federal Consumption Expenditures and Gross Investment~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:17:10-05~0.0~3.0~"BEA Account Code: A823RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FGDEF~FGDEF~2001-01-10~2001-01-10~Net Federal Government Saving~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-19 09:27:08-05~7.0~8.0~"BEA Account Code: A923RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FGEXPND~FGEXPND~2001-01-10~2001-01-10~Federal Government: Current Expenditures~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-19 09:29:42-05~66.0~66.0~"BEA Account Code: W013RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FGRECPT~FGRECPT~2001-01-10~2001-01-10~Federal Government Current Receipts~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-19 09:28:49-05~45.0~45.0~"BEA Account Code: W005RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FGSL~FGSL~2001-01-10~2001-01-10~Federal government current transfer payments: Other current transfer payments: Grants-in-aid to state and local governments~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-19 09:23:13-05~3.0~3.0~"BEA Account Code: B089RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FINSAL~FINSAL~2001-01-10~2001-01-10~Final Sales of Domestic Product~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:34-06~16.0~16.0~"BEA Account Code: A190RC1
+
+A Guide to the National Income and Product Accounts of the United States - http://www.bea.gov/national/pdf/nipaguid.pdf"~53
+FINSLC1~FINSLC1~2001-01-10~2001-01-10~Real Final Sales of Domestic Product, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:33-06~19.0~19.0~"BEA Account Code: A190RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FINSLCA~FINSLCA~2001-01-10~2001-01-10~Real Final Sales of Domestic Product~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-11-02 12:26:57-06~2.0~19.0~"BEA Account Code: A190RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FNDEFX~FNDEFX~2001-01-10~2001-01-10~Federal Government: Nondefense Consumption Expenditures and Gross Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-21 10:14:43-05~4.0~4.0~"BEA Account Code: A825RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FPI~FPI~2001-01-10~2001-01-10~Fixed Private Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-07 11:07:35-06~38.0~38.0~"BEA Account Code: A007RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FPIA~FPIA~2001-01-10~2001-01-10~Gross private domestic investment: Fixed investment~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:51-06~1.0~1.0~BEA Account Code: A007RC1~53
+FPIC1~FPIC1~2001-01-10~2001-01-10~Real Private Fixed Investment, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:12-05~22.0~24.0~"BEA Account Code: A007RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FPICA~FPICA~2001-01-10~2001-01-10~Real Private Fixed Investment~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:17:16-05~6.0~24.0~"BEA Account Code: A007RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FRSI~FRSI~2001-01-10~2001-01-10~Federal Government Receipts: Contributions for Social Insurance~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2005-12-05 12:58:28-06~1.0~1.0~"BEA Account Code: W780RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+FSDP~FSDP~2001-01-10~2001-01-10~Final Sales to Domestic Purchasers~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-29 10:53:58-05~10.0~11.0~"BEA Account Code: A713RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GCE~GCE~2001-01-10~2001-01-10~Government Consumption Expenditures and Gross Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-12-05 13:01:03-06~38.0~39.0~"BEA Account Code: A822RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GCEA~GCEA~2001-01-10~2001-01-10~Government Consumption Expenditures and Gross Investment~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:51-06~3.0~39.0~BEA Account Code: A822RC1~53
+GCEC1~GCEC1~2001-01-10~2001-01-10~Real Government Consumption Expenditures and Gross Investment, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-12-05 13:01:06-06~47.0~48.0~"BEA Account Code: A822RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GCECA~GCECA~2001-01-10~2001-01-10~Real Government Consumption Expenditures and Gross Investment~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-12-05 12:58:20-06~2.0~48.0~"BEA Account Code: A822RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GDB~GDB~2001-01-10~2001-01-10~Gross Domestic Purchases~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-29 10:53:09-05~13.0~14.0~"BEA Account Code: A712RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GDP~GDP~2001-01-10~2001-01-10~Gross Domestic Product~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:29-06~91.0~92.0~"BEA Account Code: A191RC1
+
+Gross domestic product (GDP), the featured measure of U.S. output, is the market value of the goods and services produced by labor and property located in the United States.
+
+For more information, see the Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GDPA~GDPA~2001-01-10~2001-01-10~Gross Domestic Product~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:52-06~57.0~92.0~BEA Account Code: A191RC1~53
+GDPC1~GDPC1~2001-01-10~2001-01-10~Real Gross Domestic Product~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:31-06~89.0~90.0~"BEA Account Code: A191RX1
+
+Real gross domestic product is the inflation adjusted value of the goods and services produced by labor and property located in the United States.
+
+For more information see the Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GDPCA~GDPCA~2001-01-10~2001-01-10~Real Gross Domestic Product~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-11-02 12:26:57-06~52.0~90.0~"BEA Account Code: A191RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GDPCTPI~GDPCTPI~2001-01-10~2001-01-10~Gross Domestic Product: Chain-type Price Index~1947-01-01~2000-07-01~Quarterly~Q~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2007-04-13 10:22:21-05~38.0~38.0~"BEA Account Code: B191RG3
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GDPDEF~GDPDEF~2001-01-10~2001-01-10~Gross Domestic Product: Implicit Price Deflator~1947-01-01~2000-07-01~Quarterly~Q~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2007-04-13 10:21:43-05~71.0~73.0~"BEA Account Code: A191RD3
+
+The number of decimal places reported varies over time. A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GEXPND~GEXPND~2001-01-10~2001-01-10~Government Current Expenditures~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:05:48-05~4.0~6.0~"BEA Account Code: W022RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GGSAVE~GGSAVE~2001-01-10~2001-01-10~Gross Government Saving~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 13:39:50-05~27.0~28.0~BEA Account Code: A927RC1~53
+GNP~GNP~2001-01-10~2001-01-10~Gross National Product~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:29-06~59.0~59.0~"BEA Account Code: A001RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GNPA~GNPA~2001-01-10~2001-01-10~Gross National Product~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:52-06~8.0~59.0~BEA Account Code: A001RC1~53
+GNPC96~GNPC96~2001-01-10~2001-01-10~Real Gross National Product~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:34-06~28.0~36.0~"BEA Account Code: A001RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GNPCA~GNPCA~2001-01-10~2001-01-10~Real Gross National Product~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:52-06~10.0~36.0~BEA Account Code: A001RX1~53
+GNPCTPI~GNPCTPI~2001-01-10~2001-01-10~Gross National Product: Chain-type Price Index~1947-01-01~2000-07-01~Quarterly~Q~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2007-04-13 10:23:01-05~1.0~1.0~"BEA Account Code: A001RG3
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GNPDEF~GNPDEF~2001-01-10~2001-01-10~Gross National Product: Implicit Price Deflator~1947-01-01~2000-07-01~Quarterly~Q~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2007-04-16 12:45:43-05~30.0~32.0~"BEA Account Code: A001RD3
+
+The number of decimal places reported varies over time. A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GPDI~GPDI~2001-01-10~2001-01-10~Gross Private Domestic Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-07 11:07:36-06~63.0~64.0~"BEA Account Code: A006RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GPDIA~GPDIA~2001-01-10~2001-01-10~Gross Private Domestic Investment~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:52-06~11.0~64.0~BEA Account Code: A006RC1~53
+GPDIC1~GPDIC1~2001-01-10~2001-01-10~Real Gross Private Domestic Investment, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-07 11:07:38-06~59.0~60.0~"BEA Account Code: A006RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GPDICA~GPDICA~2001-01-10~2001-01-10~Real Gross Private Domestic Investment~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-11-07 11:05:15-06~4.0~60.0~"BEA Account Code: A006RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GPDICTPI~GPDICTPI~2001-01-10~2001-01-10~Gross Private Domestic Investment: Chain-type Price Index~1947-01-01~2000-07-01~Quarterly~Q~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2007-04-13 10:23:44-05~3.0~3.0~"BEA Account Code: B006RG3
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GPSAVE~GPSAVE~2001-01-10~2001-01-10~Gross Private Saving~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:14:39-05~47.0~48.0~"BEA Account Code: A126RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GRECPT~GRECPT~2001-01-10~2001-01-10~Government Current Receipts~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:06:28-05~2.0~2.0~"BEA Account Code: W021RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+GSAVE~GSAVE~2001-01-10~2001-01-10~Gross Saving~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-16 12:43:58-05~30.0~30.0~"BEA Account Code: A929RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+IMPGS~IMPGS~2001-01-10~2001-01-10~Imports of Goods and Services~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:32-06~53.0~55.0~"BEA Account Code: B021RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+IMPGSA~IMPGSA~2001-01-10~2001-01-10~Imports of Goods and Services~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:53-06~16.0~55.0~BEA Account Code: B021RC1~53
+IMPGSC1~IMPGSC1~2001-01-10~2001-01-10~Real Imports of Goods and Services, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:35-06~36.0~47.0~"BEA Account Code: A021RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+IMPGSC1N~IMPGSC1N~2001-01-10~2001-01-10~Real Imports of Goods and Services, GNP-Basis (DISCONTINUED)~1947-01-01~1991-07-01~Quarterly~Q~Billions of Chained 1992 Dollars~Bil. of Chn. 1992 $~Seasonally Adjusted Annual Rate~SAAR~2006-05-03 15:37:16-05~1.0~1.0~"A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)
+
+Imports (from table 1.2, line 17) plus payments of factor income (From table 1.10, line 3)"~53
+IMPGSCA~IMPGSCA~2001-01-10~2001-01-10~Real Imports of Goods and Services~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-11-02 12:26:58-06~33.0~47.0~"BEA Account Code: A021RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+IMPGSCNA~IMPGSCNA~2001-01-10~2001-01-10~Real Imports of Goods and Services, GNP-Basis (DISCONTINUED)~1929-01-01~1990-01-01~Annual~A~Billions of 1982 Dollars~Bil. of 1982 $~Not Seasonally Adjusted~NSA~2007-01-26 10:02:47-06~0.0~1.0~~53
+IMPGSN~IMPGSN~2001-01-10~2001-01-10~Imports of Goods and Services, GNP-Basis (DISCONTINUED)~1946-01-01~1991-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2006-05-03 15:37:20-05~1.0~1.0~"A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)
+
+Imports (from table 1.1, line 17) plus payments of factor income (From table 1.9, line 3)"~53
+IMPGSNA~IMPGSNA~2001-01-10~2001-01-10~Imports of Goods and Services, GNP-Basis (DISCONTINUED)~1929-01-01~1990-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:02:47-06~1.0~1.0~~53
+JCXFE~JCXFE~2001-01-10~2001-01-10~Personal Consumption Expenditures: Chain-type Price Index Less Food and Energy~1959-01-01~2000-07-01~Quarterly~Q~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2005-11-09 09:32:58-06~29.0~29.0~"BEA Account Code: DPCCRG3
+
+The number of decimal places reported varies over time."~53
+NDGI~NDGI~2001-01-10~2001-01-10~Federal Nondefense Gross Investment~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:04:22-05~1.0~1.0~"BEA Account Code: A798RC1
+
+A Guide to the National Income and Product Accounts of the United States - http://www.bea.gov/national/pdf/nipaguid.pdf"~53
+NDGIC96~NDGIC96~2001-01-10~2001-01-10~Real Federal Nondefense Gross Investment~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:18-05~1.0~1.0~"BEA Account Code: A798RX1
+
+A Guide to the National Income and Product Accounts of the United States - http://www.bea.gov/national/pdf/nipaguid.pdf"~53
+NETEXC~NETEXC~2001-01-10~2001-01-10~Real Net Exports of Goods and Services~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:21-05~39.0~40.0~BEA Account Code: A019RX1~53
+NETEXP~NETEXP~2001-01-10~2001-01-10~Net Exports of Goods and Services~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:35-06~58.0~58.0~"BEA Account Code: A019RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+NETFI~NETFI~2001-01-10~2001-01-10~Balance on Current Account, NIPA's~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-02 12:29:32-06~33.0~33.0~"BEA Account Code: A124RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+NFCPATAX~NFCPATAX~2001-01-10~2001-01-10~Nonfinancial Corporate Business: Profits After Tax (without IVA and CCAdj)~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-29 10:50:18-05~37.0~40.0~"BEA Account Code: A466RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+NICUR~NICUR~2001-01-10~2001-01-10~National Income~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:10:15-05~27.0~29.0~"BEA Account Code: A032RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+NRIPDC1~NRIPDC1~2001-01-10~2001-01-10~Real Nonresidential Investment: Equipment and Software, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:23-05~1.0~1.0~"BEA Account Code: B010RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+NRIPDCA~NRIPDCA~2001-01-10~2001-01-10~Real Private Nonresidential Investment: Equipment and Software~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:17:27-05~1.0~1.0~"BEA Account Code: B010RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCDG~PCDG~2001-01-10~2001-01-10~Personal Consumption Expenditures: Durable Goods~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:01-06~42.0~63.0~"BEA Account Code: DDURRC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCDGA~PCDGA~2001-01-10~2001-01-10~Personal Consumption Expenditures: Durable Goods~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:53-06~4.0~63.0~BEA Account Code: DDURRC1~53
+PCDGCC96~PCDGCC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Durable Goods~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:30-05~23.0~50.0~"BEA Account Code: DDURRX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCDGCCA~PCDGCCA~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Durable Goods~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:17:33-05~1.0~50.0~"BEA Account Code: DDURRX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCEC~PCEC~2001-01-10~2001-01-10~Personal Consumption Expenditures~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:01-06~56.0~83.0~"BEA Account Code: DPCERC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCECA~PCECA~2001-01-10~2001-01-10~Personal Consumption Expenditures~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:53-06~38.0~83.0~BEA Account Code: DPCERC1~53
+PCECC96~PCECC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:32:57-06~54.0~75.0~"BEA Account Code: DPCERX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCECCA~PCECCA~2001-01-10~2001-01-10~Real Personal Consumption Expenditures~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2005-11-09 09:28:48-06~19.0~75.0~"BEA Account Code: DPCERX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCECTPI~PCECTPI~2001-01-10~2001-01-10~Personal Consumption Expenditures: Chain-type Price Index~1947-01-01~2000-07-01~Quarterly~Q~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2007-04-13 10:24:25-05~43.0~79.0~"BEA Account Code: DPCERG3
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCESV~PCESV~2001-01-10~2001-01-10~Personal Consumption Expenditures: Services~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:32:52-06~44.0~60.0~"BEA Account Code: DSERRC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCESVA~PCESVA~2001-01-10~2001-01-10~Personal Consumption Expenditures: Services~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:53-06~4.0~60.0~BEA Account Code: DSERRC1~53
+PCESVC96~PCESVC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Services~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:52-05~22.0~53.0~"BEA Account Code: DSERRX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCESVCA~PCESVCA~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Services~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:17:56-05~1.0~53.0~"BEA Account Code: DSERRX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCND~PCND~2001-01-10~2001-01-10~Personal Consumption Expenditures: Nondurable Goods~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:02-06~35.0~54.0~"BEA Account Code: DNDGRC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCNDA~PCNDA~2001-01-10~2001-01-10~Personal Consumption Expenditures: Nondurable Goods~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:54-06~5.0~54.0~BEA Account Code: DNDGRC1~53
+PCNDGC96~PCNDGC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Nondurable Goods~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:58-05~23.0~41.0~"BEA Account Code: DNDGRX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PCNDGCA~PCNDGCA~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Nondurable Goods~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:18:02-05~1.0~41.0~"BEA Account Code: DNDGRX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PINCOME~PINCOME~2001-01-10~2001-01-10~Personal Income~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2006-08-18 12:56:24-05~30.0~65.0~"Personal income is the income that persons receive in return for their provision of labor, land, and capital used in current production and the net current transfer payments that they receive from business and from government.25 Personal income is equal to national income minus corporate profits with inventory valuation and capital consumption adjustments, taxes on production and imports less subsidies, contributions for government social insurance, net interest and miscellaneous payments on assets, business current transfer payments (net), current surplus of government enterprises, and wage accruals less disbursements, plus personal income receipts on assets and personal current transfer receipts.
+
+BEA Account Code: A065RC1"~53
+PNFI~PNFI~2001-01-10~2001-01-10~Private Nonresidential Fixed Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2006-08-18 12:56:25-05~50.0~51.0~BEA Account Code: A008RC1~53
+PNFIA~PNFIA~2001-01-10~2001-01-10~Private Nonresidential Fixed Investment~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:55-06~4.0~51.0~BEA Account Code: A008RC1~53
+PNFIC1~PNFIC1~2001-01-10~2001-01-10~Real Private Nonresidential Fixed Investment, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:18:04-05~48.0~48.0~"BEA Account Code: A008RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PNFICA~PNFICA~2001-01-10~2001-01-10~Real Private Nonresidential Fixed Investment~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:18:08-05~1.0~48.0~"BEA Account Code: A008RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PRFI~PRFI~2001-01-10~2001-01-10~Private Residential Fixed Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2006-08-18 12:56:26-05~50.0~51.0~BEA Account Code: A011RC1~53
+PRFIA~PRFIA~2001-01-10~2001-01-10~Private Residential Fixed Investment~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:55-06~5.0~51.0~BEA Account Code: A011RC1~53
+PRFIC1~PRFIC1~2001-01-10~2001-01-10~Real Private Residential Fixed Investment, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:18:10-05~47.0~47.0~"BEA Account Code: A011RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PRFICA~PRFICA~2001-01-10~2001-01-10~Real Private Residential Fixed Investment~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:18:14-05~1.0~47.0~"BEA Account Code: A011RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PROPINC~PROPINC~2001-01-10~2001-01-10~Proprietors' Income with Inventory Valuation Adjustment(IVA) and Capital Consumption Adjustment (CCAdj)~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:11:01-05~7.0~7.0~"BEA Account Code: A041RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+PSAVE~PSAVE~2001-01-10~2001-01-10~Personal Saving~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-16 12:44:50-05~65.0~74.0~"BEA Account Code: A071RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+RENTIN~RENTIN~2001-01-10~2001-01-10~Rental Income of Persons with Capital Consumption Adjustment (CCAdj)~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:11:50-05~10.0~10.0~"BEA Account Code: A048RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+SLCE~SLCE~2001-01-10~2001-01-10~State and Local Consumption Expenditures & Gross Investment~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-12-05 13:01:04-06~2.0~2.0~"BEA Account Code: A829RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+SLCEA~SLCEA~2001-01-10~2001-01-10~State and Local Government Consumption Expenditures and Gross Investment~1929-01-01~1999-01-01~Annual~A~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2007-01-26 10:09:55-06~2.0~2.0~BEA Account Code: A829RC1~53
+SLCEC1~SLCEC1~2001-01-10~2001-01-10~Real State and Local Consumption Expenditures & Gross Investment, 1 Decimal~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:18:16-05~3.0~3.0~"BEA Account Code: A829RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+SLCECA~SLCECA~2001-01-10~2001-01-10~Real State and Local Consumption Expenditures & Gross Investment~1929-01-01~1999-01-01~Annual~A~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Not Seasonally Adjusted~NSA~2010-05-11 08:18:21-05~1.0~1.0~"BEA Account Code: A829RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+SLDEF~SLDEF~2001-01-10~2001-01-10~Net State and Local Government Saving~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-19 09:28:03-05~3.0~3.0~"BEA Account Code: A924RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+SLEXPND~SLEXPND~2001-01-10~2001-01-10~State and Local Government Current Expenditures~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-19 09:30:46-05~32.0~32.0~"BEA Account Code: W024RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+SLINV~SLINV~2001-01-10~2001-01-10~State and Local Government Gross Investment~1947-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:05:04-05~2.0~3.0~"BEA Account Code: A799RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+SLINVC96~SLINVC96~2001-01-10~2001-01-10~Real State and Local Government: Gross Investment~1947-01-01~2000-07-01~Quarterly~Q~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:18:23-05~1.0~1.0~"BEA Account Code: A799RX1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+TGDEF~TGDEF~2001-01-10~2001-01-10~Net Government Saving~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-04-13 10:07:11-05~7.0~7.0~"BEA Account Code: A922RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+WASCUR~WASCUR~2001-01-10~2001-01-10~Compensation of Employees: Wages and Salary Accruals~1946-01-01~2000-07-01~Quarterly~Q~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2007-03-26 14:49:09-05~23.0~23.0~"BEA Account Code: A034RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~53
+DSPI~DSPI~2001-01-10~2001-01-10~Disposable Personal Income~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:17-06~65.0~67.0~"BEA Account Code: A067RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+DSPIC96~DSPIC96~2001-01-10~2001-01-10~Real Disposable Personal Income~1959-01-01~2000-11-01~Monthly~M~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:22-06~74.0~75.0~A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)~54
+PCE~PCE~2001-01-10~2001-01-10~Personal Consumption Expenditures~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:16-06~82.0~83.0~"BEA Account Code: DPCERC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+PCEC96~PCEC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures~1967-01-01~2000-11-01~Monthly~M~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:36-05~73.0~75.0~A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)~54
+PCEDG~PCEDG~2001-01-10~2001-01-10~Personal Consumption Expenditures: Durable Goods~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:20-06~60.0~63.0~"BEA Account Code: DDURRC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+PCEDGC96~PCEDGC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Durable Goods~1967-01-01~2000-11-01~Monthly~M~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:40-05~46.0~50.0~A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)~54
+PCEND~PCEND~2001-01-10~2001-01-10~Personal Consumption Expenditures: Nondurable Goods~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:21-06~49.0~54.0~"BEA Account Code: DNDGRC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+PCENDC96~PCENDC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Nondurable Goods~1967-01-01~2000-11-01~Monthly~M~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:44-05~34.0~41.0~A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)~54
+PCEPI~PCEPI~2001-01-10~2001-01-10~Personal Consumption Expenditures: Chain-type Price Index~1959-01-01~2000-11-01~Monthly~M~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2005-11-09 09:32:59-06~79.0~79.0~~54
+PCEPILFE~PCEPILFE~2001-01-10~2001-01-10~Personal Consumption Expenditures Excluding Food and Energy (Chain-Type Price Index)~1959-01-01~2000-11-01~Monthly~M~Index 1996=100~Index 1996=100~Seasonally Adjusted~SA~2005-11-09 09:33:00-06~77.0~77.0~A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)~54
+PCES~PCES~2001-01-10~2001-01-10~Personal Consumption Expenditures: Services~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:19-06~55.0~60.0~"BEA Account Code: DSERRC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+PCESC96~PCESC96~2001-01-10~2001-01-10~Real Personal Consumption Expenditures: Services~1967-01-01~2000-11-01~Monthly~M~Billions of Chained 1996 Dollars~Bil. of Chn. 1996 $~Seasonally Adjusted Annual Rate~SAAR~2010-05-11 08:17:47-05~50.0~53.0~A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)~54
+PI~PI~2001-01-10~2001-01-10~Personal Income~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-09 09:33:15-06~64.0~65.0~"Personal income is the income that persons receive in return for their provision of labor, land, and capital used in current production and the net current transfer payments that they receive from business and from government.25 Personal income is equal to national income minus corporate profits with inventory valuation and capital consumption adjustments, taxes on production and imports less subsidies, contributions for government social insurance, net interest and miscellaneous payments on assets, business current transfer payments (net), current surplus of government enterprises, and wage accruals less disbursements, plus personal income receipts on assets and personal current transfer receipts.
+
+BEA Account Code: A065RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+PMSAVE~PMSAVE~2001-01-10~2001-01-10~Personal Saving~1959-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted Annual Rate~SAAR~2005-11-07 11:07:51-06~68.0~74.0~"BEA Account Code: A071RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+POPTHM~POPTHM~2001-01-10~2001-01-10~Population~1959-01-01~2000-11-01~Monthly~M~Thousands~Thous.~Not Seasonally Adjusted~NSA~2005-08-12 13:38:55-05~66.0~68.0~"BEA Account Code: B230RC0
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+PSAVERT~PSAVERT~2001-01-10~2001-01-10~Personal Saving Rate~1959-01-01~2000-11-01~Monthly~M~Percent~%~Seasonally Adjusted Annual Rate~SAAR~2005-11-07 11:07:52-06~85.0~85.0~"Personal saving as a percentage of disposable personal income (DPI), frequently referred to as “the personal saving rate,” is calculated as the ratio of personal saving to DPI.
+Personal saving is equal to personal income less personal outlays and personal taxes; it may generally be viewed as the portion of personal income that is used either to provide funds to capital markets or to invest in real assets such as residences.(https://www.bea.gov/national/pdf/all-chapters.pdf)
+
+BEA Account Code: A072RC1
+
+A Guide to the National Income and Product Accounts of the United States (NIPA) - (http://www.bea.gov/national/pdf/nipaguid.pdf)"~54
+POP~POP~2001-01-10~2001-01-10~Total Population: All Ages including Armed Forces Overseas~1952-01-01~2000-11-01~Monthly~M~Thousands~Thous.~Not Seasonally Adjusted~NSA~2005-08-11 13:24:33-05~37.0~37.0~The intercensal estimates for 1990-2000 for the United States population are produced by converting the 1990-2000 postcensal estimates prepared previously for the U. S. to account for differences between the postcensal estimates in 2000 and census counts (error of closure). The postcensal estimates for 1990 to 2000 were produced by updating the resident population enumerated in the 1990 census by estimates of the components of population change between April 1, 1990 and April 1, 2000-- births to U.S. resident women, deaths to U.S. residents, net international migration (incl legal & residual foreign born), and net movement of the U.S. armed forces and civilian citizens to the United States. Intercensal population estimates for 1990 to 2000 are derived from the postcensal estimates by distributing the error of closure over the decade by month. The method used for the 1990s for distributing the error of closure is the same that was used for the 1980s. This method produces an intercensal estimate as a function of time and the postcensal estimates,using the following formula: the population at time t is equal to the postcensal estimate at time t multiplied by a function. The function is the April 1, 2000 census count divided by the April 1, 2000 postcensal estimate raised to the power of t divided by 3653.~59
+MZM~MZM~2001-01-10~2001-01-10~MZM Money Stock~1980-02-04~2000-12-25~Weekly, Ending Monday~W~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2006-09-18 11:34:53-05~47.0~54.0~"M2 less small-denomination time deposits plus institutional money funds.
+Money Zero Maturity is calculated by the Federal Reserve Bank of St. Louis."~61
+MZMNS~MZMNS~2001-01-10~2001-01-10~MZM Money Stock~1974-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Not Seasonally Adjusted~NSA~2006-10-25 16:18:31-05~35.0~54.0~"Components may not sum to totals due to rounding.
+
+M2 less small-denomination time deposits plus institutional money funds.
+Money Zero Maturity is calculated by the Federal Reserve Bank of St. Louis."~61
+MZMSL~MZMSL~2001-01-10~2001-01-10~MZM Money Stock~1974-01-01~2000-11-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2006-10-25 16:18:24-05~8.0~54.0~"Components may not sum to totals due to rounding.
+
+M2 less small-denomination time deposits plus institutional money funds.
+Money Zero Maturity is calculated by the Federal Reserve Bank of St. Louis."~61
+MSIM2~MSIM2~2001-01-10~2001-01-10~Monetary Services Index: M2~1959-01-01~2000-06-01~Monthly~M~Billions of Dollars~Bil. of $~Seasonally Adjusted~SA~2006-10-27 16:19:11-05~24.0~24.0~"Further information and definitions are available at: http://research.stlouisfed.org/publications/mt/ and http://research.stlouisfed.org/msi/.
+
+As of May 16, 2005, revisions to User Costs for the MSI are available and are reflected in the current output data. A working paper regarding the revision is available at http://research.stlouisfed.org/econ/anderson/usercosts.pdf.
+
+As of September 17, 2004, benchmark revisions to the MSI are available. Please refer to http://research.stlouisfed.org/msi/index.html for other information regarding the MSI."~62
