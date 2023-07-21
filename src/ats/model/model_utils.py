@@ -18,6 +18,7 @@ import matplotlib.image as mpimg
 import numpy as np
 from omegaconf import OmegaConf
 import pandas as pd
+import pandas_market_calendars as mcal
 import pyarrow.dataset as pds
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_forecasting import (
@@ -457,7 +458,7 @@ def get_data_module(
 
     raw_data = data_util.add_group_features(raw_data, config.job.time_interval_minutes)
     cal = mcal.get_calendar("NYSE")
-    mdr = market_data_mgr.MarketDataMgr()
+    mdr = market_data_mgr.MarketDataMgr(config, cal)
     raw_data = data_util.add_example_level_features(raw_data, cal, mdr)
     #raw_data = raw_data.sort(["ticker", "time_idx"])
     logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")

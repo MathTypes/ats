@@ -141,7 +141,7 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         fig.update_xaxes(
             rangebreaks=[
                 dict(bounds=["sat", "mon"]),  # hide weekends
-                dict(bounds=[17, 4], pattern="hour"),  # hide hours outside of 4am-5pm
+                #dict(bounds=[17, 4], pattern="hour"),  # hide hours outside of 4am-5pm
             ],
         )
         prediction_date_time = (

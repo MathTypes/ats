@@ -11,7 +11,6 @@ from ats.util import config_utils
 from ats.util import logging_utils
 from ats.calendar import date_utils
 
-
 def get_release_dates(date):
     date_str = date.strftime("%Y-%m-%d")
     year_month_str = date.strftime("%Y-%m")
@@ -54,15 +53,15 @@ def get_releases(month):
     df.to_csv(f"{dir_path}/{date_str}.csv", sep="~")
 
 def get_series_observation(start_date, end_date, now, series_ids, start_series):
-    #start_date_str = start_date.strftime("%Y-%m-%d")
-    #end_date_str = end_date.strftime("%Y-%m-%d")
-    year_month_str = now.strftime("%Y-%m")
+    start_date_str = start_date.strftime("%Y-%m-%d")
+    end_date_str = end_date.strftime("%Y-%m-%d")
+    year_month_str = start_date.strftime("%Y-%m")
     df_vec = []
     for series_id in series_ids["series_id"]:
         if start_series and series_id<start_series:
             continue
-        logging.info(f"series_id:{series_id}")
-        url = f"https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={api_key}&file_type=json&realtime_start={start_date}&realtime_end={end_date}"
+        logging.info(f"series_id:{series_id}, start_date:{start_date}, end_date:{end_date}")
+        url = f"https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={api_key}&file_type=json&realtime_start={start_date_str}&realtime_end={end_date_str}"
         logging.info(f"url:{url}")
         response = requests.get(url).json()
         logging.info(f"response:{response}")
@@ -81,7 +80,7 @@ def get_series_observation(start_date, end_date, now, series_ids, start_series):
     dir_path = f"/home/ubuntu/ats/data/event/macro/series_observation/{year_month_str}"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-    df.to_csv(f"{dir_path}/{start_date}_{end_date}.csv", sep="~")
+    df.to_csv(f"{dir_path}/{start_date_str}.csv", sep="~")
     
 def get_series(date, releases_ids):
     date_str = date.strftime("%Y-%m-%d")
@@ -152,4 +151,7 @@ if __name__ == "__main__":
         series_ids = pd.read_csv("data/event/macro/series.txt",
                                  header=None, names=["series_id"])
         logging.info(f"series_ids:{series_ids}")
-        get_series_observation(start_date, end_date, now, series_ids, args.start_series)
+        for begin, end in date_utils.monthlist(
+                datetime.datetime.strptime(start_date, "%Y-%m-%d"),
+                datetime.datetime.strptime(end_date, "%Y-%m-%d")):
+            get_series_observation(begin, end, now, series_ids, args.start_series)

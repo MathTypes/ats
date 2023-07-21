@@ -32,6 +32,6 @@ class MarketDataMgr(object):
         super().__init__()
         self.config = config
         self.market_cal = market_cal
-        self.macro_data_builder = MacroDataBuilder()
+        self.macro_data_builder = MacroDataBuilder(config)
 
     
