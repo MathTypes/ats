@@ -28,10 +28,10 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 import plotly.graph_objects as go
 import PIL
 from plotly.subplots import make_subplots
-from timeseries_transformer import TimeSeriesTFT
 import torch
 import wandb
 
+from ats.model.timeseries_transformer import TimeSeriesTFT
 from ats.util.profile import profile
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]

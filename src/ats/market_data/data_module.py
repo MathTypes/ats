@@ -3,11 +3,6 @@ import lightning.pytorch as pl
 import torch
 import logging
 from torch.utils.data import DataLoader
-from datasets import (
-    generate_stock_tokens,
-    generate_stock_returns,
-    tabular_to_sliding_dataset,
-)
 from omegaconf import OmegaConf
 from pytorch_forecasting.data.encoders import (
     EncoderNormalizer,
@@ -20,8 +15,13 @@ from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
 from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
 
-from ats.model import timeseries_dataset
-from ats.model import timeseries_utils
+from ats.market_data.datasets import (
+    generate_stock_tokens,
+    generate_stock_returns,
+    tabular_to_sliding_dataset,
+)
+from ats.market_data import timeseries_dataset
+from ats.market_data import timeseries_utils
 
 eval_batch_size = 10
 

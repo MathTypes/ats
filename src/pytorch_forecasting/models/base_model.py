@@ -64,7 +64,7 @@ from tqdm.autonotebook import tqdm
 import wandb
 import yaml
 
-from loss import MultiLossWithUncertaintyWeight
+from ats.model.loss import MultiLossWithUncertaintyWeight
 
 # todo: compile models
 

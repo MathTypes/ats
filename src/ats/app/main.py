@@ -6,7 +6,13 @@ import hydra
 import numpy as np
 from omegaconf import DictConfig
 import pandas as pd
-from pipelines import (
+import pytz
+import ray
+import torch
+import wandb
+from ray.util.dask import enable_dask_on_ray
+
+from ats.app.pipelines import (
     TFTPipeline,
     AttentionEmbeddingLSTMPipeline,
     TimeSeriesPipeline,
@@ -15,12 +21,6 @@ from pipelines import (
     PatchTstTftPipeline,
     PatchTftSupervisedPipeline,
 )
-import pytz
-import ray
-import torch
-import wandb
-from ray.util.dask import enable_dask_on_ray
-
 from ats.model.utils import count_parameters
 from ats.util import config_utils
 from ats.util import logging_utils

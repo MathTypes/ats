@@ -24,8 +24,8 @@ from pytorch_forecasting.metrics import QuantileLoss
 
 optuna_logger = logging.getLogger("optuna")
 
-from loss import MultiLossWithUncertaintyWeight
-import model_utils
+from ats.model.loss import MultiLossWithUncertaintyWeight
+from ats.model import model_utils
 
 # need to inherit from callback for this to work
 class PyTorchLightningPruningCallbackAdjusted(pl.Callback, PyTorchLightningPruningCallback):

@@ -23,7 +23,7 @@ from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.metrics import QuantileLoss
 
-import model_utils
+from ats.model import model_utils
 
 optuna_logger = logging.getLogger("optuna")
 

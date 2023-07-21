@@ -8,7 +8,7 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 import torch
 
 from ats.calendar import market_time
-from ats.model.data_module import (
+from ats.market_data.data_module import (
     TransformerDataModule,
     LSTMDataModule,
     TimeSeriesDataModule,

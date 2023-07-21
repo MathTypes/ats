@@ -2,11 +2,11 @@ import torch
 import pytorch_lightning as pl
 import torch.nn as nn
 from torch import nn, Tensor
-import positional_encoder as pe
 import torch.nn.functional as F
-import timeseries_utils
-import inference
 
+from ats.market_data import timeseries_utils
+from ats.model import inference
+import ats.model.positional_encoder as pe
 
 class TimeSeriesTFT(pl.LightningModule):
 

@@ -61,8 +61,8 @@ from wandb.keras import WandbMetricsLogger
 from ats.calendar import market_time
 from ats.market_data import data_util
 from ats.market_data import market_data_mgr
-from ats.model.data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
-from ats.model.datasets import generate_stock_returns
+from ats.market_data.data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
+from ats.market_data.datasets import generate_stock_returns
 from ats.model.log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
 from ats.model.loss import MultiLossWithUncertaintyWeight
 from ats.model import nhits_tuner
@@ -410,11 +410,7 @@ def get_heads_and_targets(config):
 def get_data_module(
     config,
     base_dir,
-    train_start_date,
-    eval_start_date,
-    eval_end_date,
-    test_start_date,
-    test_end_date,
+    env_mgr,
     targets,
     model_tickers,
     time_interval,
@@ -426,14 +422,12 @@ def get_data_module(
     for ticker in model_tickers:
         # logging.info(f"get_input_for base_dir:{base_dir}, start_date:{train_start_date}, end_date:{test_end_date}, ticker:{ticker}")
         ticker_train_data = get_input_for_ticker.remote(
-            base_dir, train_start_date, test_end_date, ticker, "FUT", time_interval
+            base_dir, env_mgr.train_start_date, env_mgr.test_end_date, ticker, "FUT", time_interval
         )
         refs.append(ticker_train_data)
     all_results = ray.get(refs)
     for result in all_results:
-        #logging.info(f"result:{result}")
         ticker_train_data = result
-        #logging.info(f"ticker_train_data:{ticker_train_data.head()}")
         if ticker_train_data is None or ticker_train_data.empty:
             continue
         ticker_train_data["new_idx"] = ticker_train_data.apply(
@@ -460,13 +454,11 @@ def get_data_module(
     cal = mcal.get_calendar("NYSE")
     mdr = market_data_mgr.MarketDataMgr(config, cal)
     raw_data = data_util.add_example_level_features(raw_data, cal, mdr)
-    #raw_data = raw_data.sort(["ticker", "time_idx"])
-    logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
-    train_start_timestamp = train_start_date.timestamp()
-    eval_start_timestamp = eval_start_date.timestamp()
-    eval_end_timestamp = eval_end_date.timestamp()
-    test_start_timestamp = test_start_date.timestamp()
-    test_end_timestamp = test_end_date.timestamp()
+    train_start_timestamp = self.train_start_date.timestamp()
+    eval_start_timestamp = self.eval_start_date.timestamp()
+    eval_end_timestamp = self.eval_end_date.timestamp()
+    test_start_timestamp = self.test_start_date.timestamp()
+    test_end_timestamp = self.test_end_date.timestamp()
     train_data = raw_data[
         (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
     ]
@@ -487,11 +479,7 @@ def get_data_module(
     train_data = train_data.sort_values(["ticker", "time"])
     eval_data = eval_data.sort_values(["ticker", "time"])
     test_data = test_data.sort_values(["ticker", "time"])
-    #train_data.insert(0, "time_idx", range(0, len(train_data)))
-    #eval_data.insert(0, "time_idx", range(0, len(eval_data)))
     time.time() - start
-    # logging.info(f"train_data:{train_data[:100]}")
-    # logging.info(f"eval_data:{eval_data[:100]}")
     # we want to encode special days as one variable and thus need to first reverse one-hot encoding
     special_days = [
         "easter_day",

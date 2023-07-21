@@ -25,10 +25,9 @@ import wandb
 from wandb.keras import WandbCallback
 from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
 
-import data_module
-from data_module import LSTMDataModule, TransformerDataModule
-from eval_callback import WandbClfEvalCallback
-from log_prediction import (
+from ats.market_data import data_module
+from ats.model.eval_callback import WandbClfEvalCallback
+from ats.model.log_prediction import (
     LogPredictionsCallback,
     LSTMLogPredictionsCallback,
     TSLogPredictionsCallback,

@@ -50,14 +50,15 @@ from pytorch_forecasting.utils import create_mask, detach, to_list
 from pytorch_forecasting.models.patch_tft_supervised.tuning import (
     optimize_hyperparameters,
 )
-from timeseries_transformer import TimeSeriesTFT
 import torch
 import wandb
 
+from ats.app.env_mgr import EnvMgr
 from ats.calendar import market_time
 from ats.market_data import market_data_mgr
-from ats.model.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
+from ats.market_data.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
 from ats.model.models import AttentionEmbeddingLSTM
+from ats.model.timeseries_transformer import TimeSeriesTFT
 from ats.model import model_utils
 from ats.model.utils import Pipeline
 from ats.model import viz_utils
@@ -284,51 +285,14 @@ class PatchTftSupervisedPipeline(Pipeline):
         super().__init__(config)
         self.dataset = dataset
         self.config = config
-        self.init_env()
-
-    def init_env(self):
-        self.train_start_date = datetime.datetime.strptime(
-            self.config.job.train_start_date, "%Y-%m-%d"
-        ).replace(tzinfo=datetime.timezone.utc)
-        self.eval_start_date = datetime.datetime.strptime(
-            self.config.job.eval_start_date, "%Y-%m-%d"
-        ).replace(tzinfo=datetime.timezone.utc)
-        self.eval_end_date = datetime.datetime.strptime(
-            self.config.job.eval_end_date, "%Y-%m-%d"
-        ).replace(tzinfo=datetime.timezone.utc)
-        self.test_start_date = datetime.datetime.strptime(
-            self.config.job.test_start_date, "%Y-%m-%d"
-        ).replace(tzinfo=datetime.timezone.utc)
-        self.test_end_date = datetime.datetime.strptime(
-            self.config.job.test_end_date, "%Y-%m-%d"
-        ).replace(tzinfo=datetime.timezone.utc)
-        self.max_lags = self.config.job.max_lags
-        if self.config.job.mode == "train":
-            self.train_start_date = datetime.datetime.strptime(
-                self.config.job.train_start_date, "%Y-%m-%d"
-            ).replace(tzinfo=datetime.timezone.utc)
-        elif self.config.job.mode == "test":
-            self.data_start_date = self.test_start_date - datetime.timedelta(
-                days=self.max_lags
-            )
-            self.market_cal = mcal.get_calendar(self.config.job.market)
-        logging.info(f"train_start_date:{self.train_start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}")
+        self.env_mgr = EnvMgr(config)
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         logging.info(f"head:{self.heads}, targets:{self.targets}")
-        start_date = self.train_start_date
-        if not start_date:
-            start_date = self.data_start_date
-        logging.info(
-            f"start_date:{start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}"
-        )
+
         self.data_module = model_utils.get_data_module(
             self.config,
             self.config.dataset.base_dir,
-            start_date,
-            self.eval_start_date,
-            self.eval_end_date,
-            self.test_start_date,
-            self.test_end_date,
+            self.env_mgr,
             self.targets,
             self.config.dataset.model_tickers,
             self.config.dataset.time_interval,
@@ -378,7 +342,7 @@ class PatchTftSupervisedPipeline(Pipeline):
 
     def test_model(self):
         test_dates = self.market_cal.valid_days(
-            start_date=self.test_start_date, end_date=self.test_end_date
+            start_date=self.env_mgr.test_start_date, end_date=self.env_mgr.test_end_date
         )
         train_dataset = self.data_module.training
         train_data = self.data_module.train_data
