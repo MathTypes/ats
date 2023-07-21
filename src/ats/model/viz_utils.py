@@ -261,8 +261,9 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
 
 #@profile
 def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
-                matched_eval_data, x, config, pl_module,
-                   out, target_size, interp_output, rmse, mae, filter_small=True):
+                   matched_eval_data, x, config, pl_module,
+                   out, target_size, interp_output, rmse, mae, filter_small=True,
+                   show_viz=True):
     y_hats[idx]
     y_hat_cum = y_hats_cum[idx]
     y_hat_cum_max = torch.max(y_hat_cum)
@@ -307,18 +308,6 @@ def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
         (matched_eval_data.time_idx >= decoder_time_idx - context_length)
         & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
     ]["time"]
-    # logging.info(f"x_time:{x_time}")
-    fig = go.Figure(
-        data=go.Ohlc(
-            x=train_data_rows["time"],
-            open=train_data_rows["open"],
-            high=train_data_rows["high"],
-            low=train_data_rows["low"],
-            close=train_data_rows["close"],
-        )
-    )
-    # add a bar at prediction time
-    fig.update(layout_xaxis_rangeslider_visible=False)
     prediction_date_time = (
         train_data_row["ticker"]
         + " "
@@ -328,98 +317,107 @@ def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
         + " "
         + str(train_data_row["close"])
     )
-    fig.update_layout(title=prediction_date_time, font=dict(size=20))
-    fig.update_xaxes(
-        rangebreaks=[
-            dict(bounds=["sat", "mon"]),  # hide weekends
-            # dict(
-            #    bounds=[17, 2], pattern="hour"
-            # ),  # hide hours outside of 4am-5pm
-        ],
-    )
-    img_bytes = fig.to_image(format="png")  # kaleido library
-    raw_im = PIL.Image.open(BytesIO(img_bytes))
+    fig = None
+    raw_im = None
+    img = None
+    if show_viz:
+        fig = go.Figure(
+            data=go.Ohlc(
+                x=train_data_rows["time"],
+                open=train_data_rows["open"],
+                high=train_data_rows["high"],
+                low=train_data_rows["low"],
+                close=train_data_rows["close"],
+            )
+        )
+        # add a bar at prediction time
+        fig.update(layout_xaxis_rangeslider_visible=False)
+        fig.update_layout(title=prediction_date_time, font=dict(size=20))
+        fig.update_xaxes(
+            rangebreaks=[
+                dict(bounds=["sat", "mon"]),  # hide weekends
+                # dict(
+                #    bounds=[17, 2], pattern="hour"
+                # ),  # hide hours outside of 4am-5pm
+            ],
+        )
+        img_bytes = fig.to_image(format="png")  # kaleido library
+        raw_im = PIL.Image.open(BytesIO(img_bytes))
 
-    fig = make_subplots(
-        rows=2,
-        cols=3,
-        specs=[
-            [
-                {"secondary_y": True},
-                {"secondary_y": True},
-                {"secondary_y": True},
+        fig = make_subplots(
+            rows=2,
+            cols=3,
+            specs=[
+                [
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                ],
+                [
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                ],
             ],
-            [
-                {"secondary_y": True},
-                {"secondary_y": True},
-                {"secondary_y": True},
+        )
+        fig.update_layout(
+            autosize=False,
+            width=1500,
+            height=800,
+            yaxis=dict(
+                side="right",
+            ),
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+        )
+        fig.update_xaxes(
+            rangebreaks=[
+                dict(bounds=["sat", "mon"]),  # hide weekends
+                # dict(
+                #    bounds=[17, 4], pattern="hour"
+                # ),  # hide hours outside of 4am-5pm
             ],
-        ],
-    )
-    fig.update_layout(
-        autosize=False,
-        width=1500,
-        height=800,
-        yaxis=dict(
-            side="right",
-        ),
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-    )
-    fig.update_xaxes(
-        rangebreaks=[
-            dict(bounds=["sat", "mon"]),  # hide weekends
-            # dict(
-            #    bounds=[17, 4], pattern="hour"
-            # ),  # hide hours outside of 4am-5pm
-        ],
-    )
-    prediction_date_time = (
-        train_data_row["ticker"]
-        + " "
-        + dm_str
-        + " "
-        + day_of_week_map[train_data_row["day_of_week"]]
-    )
-    fig.update_layout(title=prediction_date_time, font=dict(size=20))
-    pl_module.plot_prediction(
-        x,
-        out,
-        idx=idx,
-        ax=fig,
-        row=1,
-        col=1,
-        draw_mode="pred_cum",
-        x_time=x_time,
-    )
-    pl_module.plot_prediction(
-        x,
-        out,
-        idx=idx,
-        ax=fig,
-        row=2,
-        col=1,
-        draw_mode="pred_pos",
-        x_time=x_time,
-    )
-    interpretation = {}
-    for name in interp_output.keys():
-        if interp_output[name].dim() > 1:
-            interpretation[name] = interp_output[name][idx]
-        else:
-            interpretation[name] = interp_output[name]
-    pl_module.plot_interpretation(
-        interpretation,
-        ax=fig,
-        cells=[
-            {"row": 1, "col": 2},
-            {"row": 2, "col": 2},
-            {"row": 1, "col": 3},
-            {"row": 2, "col": 3},
-        ],
-    )
-    img_bytes = fig.to_image(format="png")  # kaleido library
-    im = PIL.Image.open(BytesIO(img_bytes))
-    img = wandb.Image(im)
+        )
+        fig.update_layout(title=prediction_date_time, font=dict(size=20))
+        pl_module.plot_prediction(
+            x,
+            out,
+            idx=idx,
+            ax=fig,
+            row=1,
+            col=1,
+            draw_mode="pred_cum",
+            x_time=x_time,
+        )
+        pl_module.plot_prediction(
+            x,
+            out,
+            idx=idx,
+            ax=fig,
+            row=2,
+            col=1,
+            draw_mode="pred_pos",
+            x_time=x_time,
+        )
+        interpretation = {}
+        for name in interp_output.keys():
+            if interp_output[name].dim() > 1:
+                interpretation[name] = interp_output[name][idx]
+            else:
+                interpretation[name] = interp_output[name]
+        pl_module.plot_interpretation(
+            interpretation,
+            ax=fig,
+            cells=[
+                {"row": 1, "col": 2},
+                {"row": 2, "col": 2},
+                {"row": 1, "col": 3},
+                {"row": 2, "col": 3},
+            ],
+        )
+        img_bytes = fig.to_image(format="png")  # kaleido library
+        im = PIL.Image.open(BytesIO(img_bytes))
+        img = wandb.Image(im)
+        
     row = {
         "ticker":train_data_row["ticker"],  # 0 ticker
         "dm":dm,  # 1 time

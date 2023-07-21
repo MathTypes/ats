@@ -406,7 +406,6 @@ def get_heads_and_targets(config):
     # logging.info(f"head_dict:{head_dict}, targets:{targets}")
     return head_dict, targets
 
-
 def get_data_module(
     config,
     base_dir,
@@ -454,11 +453,11 @@ def get_data_module(
     cal = mcal.get_calendar("NYSE")
     mdr = market_data_mgr.MarketDataMgr(config, cal)
     raw_data = data_util.add_example_level_features(raw_data, cal, mdr)
-    train_start_timestamp = self.train_start_date.timestamp()
-    eval_start_timestamp = self.eval_start_date.timestamp()
-    eval_end_timestamp = self.eval_end_date.timestamp()
-    test_start_timestamp = self.test_start_date.timestamp()
-    test_end_timestamp = self.test_end_date.timestamp()
+    train_start_timestamp = env_mgr.train_start_date.timestamp()
+    eval_start_timestamp = env_mgr.eval_start_date.timestamp()
+    eval_end_timestamp = env_mgr.eval_end_date.timestamp()
+    test_start_timestamp = env_mgr.test_start_date.timestamp()
+    test_end_timestamp = env_mgr.test_end_date.timestamp()
     train_data = raw_data[
         (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
     ]

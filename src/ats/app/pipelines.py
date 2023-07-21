@@ -341,7 +341,8 @@ class PatchTftSupervisedPipeline(Pipeline):
         print('best_trial', study.best_trial.params)
 
     def test_model(self):
-        test_dates = self.market_cal.valid_days(
+        self.market_cal = self.env_mgr.market_cal
+        test_dates = self.env_mgr.market_cal.valid_days(
             start_date=self.env_mgr.test_start_date, end_date=self.env_mgr.test_end_date
         )
         train_dataset = self.data_module.training

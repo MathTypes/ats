@@ -61,6 +61,7 @@ class Trader(object):
         self.pnl_df = pd.DataFrame(
             columns=["ticker", "timestamp", "px", "last_px", "pos", "pnl"]
         )
+        self.cnt = 0
 
     def on_interval(self, utc_time):
         max_prediction_length = self.config.model.prediction_length
@@ -158,6 +159,7 @@ class Trader(object):
             attention_prediction_horizon=0,  # attention only for first prediction horizon
         )
         # logging.info(f"interp_output:{interp_output}")
+        log_viz = self.cnt % self.config.log_viz_every_n == 0
         row = viz_utils.create_viz_row(
             0,
             y_hats,
@@ -175,6 +177,7 @@ class Trader(object):
             rmse,
             mae,
             filter_small=False,
+            show_viz=log_viz
         )
         logging.info(f"return from viz_row:{row}")
         new_data_row = new_data.iloc[0]
