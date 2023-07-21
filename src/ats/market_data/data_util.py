@@ -29,7 +29,6 @@ def compute_minutes_after_daily_close(x):
     # logging.info(f"x:{x}, {type(x)}")
     return x
 
-
 def compute_minutes_to_daily_close(x):
     return x
 
@@ -174,7 +173,6 @@ def add_lows(df_cumsum, df_time, width):
 
 @profile
 def ticker_transform(raw_data):
-    #raw_data = raw_data.sort_values(["timestamp"])
     ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
     means = ewm.mean()
     stds = ewm.std()
@@ -240,7 +238,6 @@ def time_diff(row, base_col, diff_col):
 
 @profile
 def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
-    #logging.info(f"raw_data: {raw_data.iloc[:4]}, columns:{raw_data.columns}")
     for column in ["close_back", "volume_back", "dv_back", "close_fwd",
                    "volume_fwd", "dv_fwd", "cum_volume", "cum_dv",
                    'close_back_cumsum', 'volume_back_cumsum', 'close_high_21_ff',
@@ -252,7 +249,7 @@ def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
                    'close_low_21_bf', 'close_high_51_bf', 'close_low_51_bf',
                    'close_high_201_bf', 'close_low_201_bf']:
         if column in raw_data.columns:
-            raw_data = raw_data.drop(columns=[column])    
+            raw_data = raw_data.drop(columns=[column])
     new_features = raw_data.groupby(["ticker"])[['volume','dv','close','timestamp']].apply(ticker_transform)
     #logging.info(f"new_features:{new_features.columns}")
     new_features = new_features.drop(columns=['volume','dv','close','timestamp'])
@@ -282,31 +279,15 @@ def add_group_features(raw_data : pd.DataFrame, interval_minutes, resort=True):
     return raw_data
 
 @profile
-def add_example_level_features(raw_data : pd.DataFrame):
+def add_example_level_features(raw_data : pd.DataFrame, cal, mdr):
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x : x.isocalendar()[1])
     raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)
     
-    raw_data["minutes_after_daily_close"] = raw_data.time.apply(
-        lambda x: compute_minutes_after_daily_close(x)
-    )
-    raw_data["minutes_to_daily_close"] = raw_data.time.apply(
-        lambda x: compute_minutes_to_daily_close(x)
-    )
-    raw_data["days_to_weekly_close"] = raw_data.time.apply(
-        lambda x: compute_days_to_weekly_close(x)
-    )
-    raw_data["days_to_monthly_close"] = raw_data.time.apply(
-        lambda x: compute_days_to_monthly_close(x)
-    )
-    raw_data["days_to_quarterly_close"] = raw_data.time.apply(
-        lambda x: compute_days_to_quarterly_close(x)
-    )
-    raw_data["days_to_option_expiration"] = raw_data.time.apply(
-        lambda x: compute_days_to_option_exipiration(x)
-    )
-
-    cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
+    raw_data["weekly_close_time"] = raw_data.timestamp.apply(market_time.compute_weekly_close_time, cal=cal)
+    raw_data["monthly_close_time"] = raw_data.timestamp.apply(market_time.compute_monthly_close_time, cal=cal)
+    raw_data["option_expiration_time"] = raw_data.timestamp.apply(market_time.compute_option_expiration_time, cal=cal)
+    raw_data["macro_event_time"] = raw_data.timestamp.apply(market_time.compute_macro_event_time, cal=cal, mdr.macro_data_builder)
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(market_time.compute_open_time, cal=cal)
     raw_data["new_york_close_time"] = raw_data.timestamp.apply(market_time.compute_close_time, cal=cal)
     raw_data["london_open_time"] = raw_data.timestamp.apply(market_time.compute_open_time, cal=lse_cal)
@@ -322,6 +303,10 @@ def add_example_level_features(raw_data : pd.DataFrame):
     raw_data["day_of_month"] = raw_data.time.apply(lambda x: x.day)
     # TODO: use business time instead of calendar time. this changes a lot
     # during new year.
+    raw_data['time_to_weekly_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="weekly_close_time")
+    raw_data['time_to_monthly_close'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="monthly_close_time")
+    raw_data['time_to_option_expiration'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="option_expiration_time")
+    raw_data['time_to_macro_event'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="macro_event_time")
     raw_data['time_to_high_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_21_ff")
     raw_data['time_to_low_21_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_low_21_ff")
     raw_data['time_to_high_51_ff'] = raw_data.apply(time_diff, axis=1, base_col="timestamp", diff_col="time_high_51_ff")

@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime
 import logging
 
@@ -25,32 +26,39 @@ from ats.calendar import market_time
 class Trader(object):
     def __init__(
         self,
+        md_mgr,
         model,
-        optimizer,
         wandb_logger,
         target_size,
         future_data,
+        train_data,
         train_dataset,
         config,
-        last_time_idx,
-        last_data_time,
-        last_position_map,
-        last_px_map,
         market_cal,
     ):
         super().__init__()
+        self.market_data_mgr = md_mgr
+        self.last_time_idx = train_data.iloc[-1]["time_idx"]
+        self.last_data_time = None
+        self.last_px_map = {}
+        last_data = train_data.iloc[-1]
+        logging.info(f"last_data:{last_data}")
+        self.last_px_map[last_data.ticker] = last_data.close
+        self.last_position_map = defaultdict(lambda:0, {})
+        self.first_update = True
+        initial_positions = torch.tensor([0])
         self.config = config
-        self.last_data_time = last_data_time
-        self.last_time_idx = last_time_idx
-        self.last_position_map = last_position_map
-        self.last_px_map = last_px_map
+        logging.info(f"sigma:{self.config.trading.sigma}")
         self.market_cal = market_cal
         self.model = model
-        self.optimizer = optimizer
+        self.optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
+                                                  sigma=self.config.trading.sigma,
+                                                  initial_positions=initial_positions)
         self.wandb_logger = wandb_logger
         self.train_dataset = train_dataset
+        self.train_data = train_data
+        self.target_size = target_size
         self.future_data = future_data
-        self.first_update = False
         self.pnl_df = pd.DataFrame(
             columns=["ticker", "timestamp", "px", "last_px", "pos", "pnl"]
         )
@@ -86,7 +94,7 @@ class Trader(object):
                 return None
             else:
                 logging.info(
-                    f"data is too stale, now:{predict_nyc_time}, last_data_time:{last_data_time}"
+                    f"data is too stale, now:{predict_nyc_time}, last_data_time:{self.last_data_time}"
                 )
                 return None
         self.last_data_time = predict_nyc_time
@@ -95,7 +103,7 @@ class Trader(object):
             self.last_time_idx, self.last_time_idx + len(new_data)
         )
         logging.info(f"running step {predict_nyc_time}")
-        self.train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes)
+        self.train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes, self.market_cal, self.market_data_mgr)
         predict_time_idx = new_data.time_idx.max()
         # logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
         logging.info(
@@ -195,4 +203,6 @@ class Trader(object):
         self.last_position_map[ticker] = new_position
         self.last_px_map[ticker] = px
         logging.info(f"return row:{row}")
+        logging.info(f"last_position_map:{self.last_position_map}")
+        logging.info(f"last_px_map:{self.last_px_map}")
         return row

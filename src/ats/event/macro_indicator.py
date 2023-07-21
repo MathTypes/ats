@@ -13,6 +13,15 @@ class MacroDataBuilder:
     ):
         self.api_key = api_key
         self.base_url = base_url
+        observations = pd.read_csv(
+            "data/event/macro/series_observation/2023-07/2000-01-01_2023-07-20.csv",
+            header="~")
+        self.observations = observations[["date","value","series_id"]]
+
+    def has_event(self, dt):
+        df = self.observations[(self.observations.event_time<dt.timestamp()) &
+                               (self.observations.event_time>dt.timestamp()-86400000)]
+        return not df.empty
 
     def most_recent_fetch(self, api_key: str, base_url: str):
         # FRED Series IDs for each economic indicator
@@ -29,15 +38,11 @@ class MacroDataBuilder:
         for name, series_id in series_ids.items():
             url = f"{base_url}{series_id}&api_key={api_key}&file_type=json"
             response = requests.get(url).json()
-
             data = response["observations"]
             df = pd.DataFrame(data)
-
             df["date"] = pd.to_datetime(df["date"])
-
             most_recent_data = df.loc[df["date"].idxmax()]
             print(name)
-
             rows.append(
                 {
                     "date": most_recent_data["date"],
@@ -76,10 +81,20 @@ class MacroDataBuilder:
         return pd.DataFrame(rows)
 
 
+    def add_macro_events(series_ids):
+        df = self.observations[self.observations.series_id.isin(series_ids)]
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.pivot_table(
+            index="date", columns="series_id", values="value", aggfunc="first"
+        )
+        df.reset_index(inplace=True)
+        df["event_time"] = df.date.apply(lambda x: datetime.combine(x, datetime.min.time()))
+        logging.info(f"df:{df}")
+        return df
+
 def add_macro_indicators(api_key, base_url):
     macro_information = MacroDataBuilder(api_key, base_url)
     macro_data = macro_information.full_fetch(api_key, base_url)
-
     return macro_data
 
 
@@ -89,6 +104,8 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None)
     indicators_df = add_macro_indicators(api_key="5e7a5f80ba03257b5913e97bec786466",
                                          base_url="https://api.stlouisfed.org/fred/series/observations?series_id=")
+    series_names = pd.read_csv("data/event/macro/fred_series_names.txt")
+    for idx, row in series_names.iterrows():
     logging.info(f"indicators_df:{indicators_df}")
     indicators_df = indicators_df.apply(lambda x: x.explode()).reset_index(drop=True)
     logging.info(f"indicators_df_explode:{indicators_df}")

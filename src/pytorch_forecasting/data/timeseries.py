@@ -2858,7 +2858,7 @@ class TimeSeriesDataSet(Dataset):
         return decoder_length
 
     @profile
-    def add_new_data(self, new_data: pd.DataFrame, interval_minutes):
+    def add_new_data(self, new_data: pd.DataFrame, interval_minutes, cal, mdr):
         #self.raw_data = pd.concat([self.raw_data, new_data])
         #logging.info(f"adding new_data:{new_data}")
         for index, row in new_data.iterrows():
@@ -2877,7 +2877,7 @@ class TimeSeriesDataSet(Dataset):
         new_data_idx = self.raw_data.time_idx.isin(new_data.time_idx)
         new_raw_data = self.raw_data[new_data_idx]
         #logging.info(f"new_raw_data:{new_raw_data}")
-        new_raw_data = data_util.add_example_level_features(new_raw_data)
+        new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr)
         #logging.info(f"new_raw_data after adding example level features:{new_raw_data}")
         self.raw_data[new_data_idx] = new_raw_data
         #logging.info(f"new_full_data_before_ffill:{self.raw_data.iloc[-3:]}")

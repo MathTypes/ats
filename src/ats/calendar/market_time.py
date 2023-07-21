@@ -8,6 +8,16 @@ import pytz
 from ats.util import time_util
 
 @functools.lru_cache(maxsize=None)
+def get_macro_event_time(cal, x_date, mdb):
+    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=35))
+    open_time = None
+    for idx in range(len(schedule.market_open)):
+        if mdb.has_event(schedule.market_open[idx]:
+            open_time = schedule.market_open[idx]
+            break
+    return open_time
+
+@functools.lru_cache(maxsize=None)
 def get_open_time(cal, x_date):
     schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=5))
     return schedule.market_open[0].timestamp()
@@ -16,6 +26,48 @@ def get_open_time(cal, x_date):
 def get_close_time(cal, x_date):
     schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=5))
     return schedule.market_close[0].timestamp()
+
+
+@functools.lru_cache(maxsize=None)
+def get_weekly_close_time(cal, x_date):
+    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=8))
+    curr_week_of_year = schedule.market_close[0].week_of_year
+    curr_close_time = schedule.market_close[0].timestamp()
+    for idx in range(len(schedule.market_close)):
+        if schedule.market_close[idx].week_of_year != curr_week_of_year:
+            break
+        curr_close_time = schedule.market_close[idx].timestamp()
+    return curr_close_time
+
+@functools.lru_cache(maxsize=None)
+def get_monthly_close_time(cal, x_date):
+    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=38))
+    curr_month_of_year = schedule.market_close[0].month_of_year
+    curr_close_time = schedule.market_close[0].timestamp()
+    for idx in range(len(schedule.market_close)):
+        if schedule.market_close[idx].month_of_year != curr_month_of_year:
+            break
+        curr_close_time = schedule.market_close[idx].timestamp()
+    return curr_close_time
+
+@functools.lru_cache(maxsize=None)
+def get_option_expiration_time(cal, x_date):
+    schedule = cal.schedule(start_date=x_date, end_date=x_date+datetime.timedelta(days=38))
+    curr_week_of_month = date_util.get_week_of_month(schedule.market_close[0])
+    curr_close_time = schedule.market_close[0].timestamp()
+    for idx in range(1, len(schedule.market_close), 3):
+        if date_util.get_week_of_month(schedule.market_close[idx]) == 2:
+            break
+        curr_close_time = schedule.market_close[idx].timestamp()
+    return get_weekly_close_time(cal, x_date)
+
+
+def add_macro_features(raw_data: pd.DataFrame, macro_data_builder):
+    series_ids = ["GDP", "UNRATE", "T10YIE", "GS10", "HOUST"]
+    indicators_df_pivot = macro_data_builder.add_macro_events(series_ids)
+    raw_data["event_date"] = 
+    raw_data = pd.merge(raw_data, indicators_df_pivot, on='date', how='left')
+    return raw_data    
 
 def utc_to_nyse_time(utc_time, interval_minutes):
     utc_time = time_util.round_up(utc_time, interval_minutes)
@@ -30,11 +82,44 @@ def utc_to_nyse_time(utc_time, interval_minutes):
     #                             tzinfo=pytz.timezone('America/New_York'))
     return nyc_time
 
+def compute_macro_time(x, cal):
+    #logging.info(f"x:{x}, {type(x)}")
+    try:
+        x = datetime.datetime.fromtimestamp(x)
+        return int(get_open_time(cal, x.date()))
+    except Exception as e:
+        logging.info(f"can not compute open for {x}, {e}")
+        return x
+
 def compute_open_time(x, cal):
     #logging.info(f"x:{x}, {type(x)}")
     try:
         x = datetime.datetime.fromtimestamp(x)
         return int(get_open_time(cal, x.date()))
+    except Exception as e:
+        logging.info(f"can not compute open for {x}, {e}")
+        return x
+
+def compute_weekly_close_time(x, cal):
+    try:
+        x = datetime.datetime.fromtimestamp(x)
+        return int(get_close_time(cal, x.date()))
+    except Exception as e:
+        logging.info(f"can not compute open for {x}, {e}")
+        return x
+
+def compute_monthly_close_time(x, cal):
+    try:
+        x = datetime.datetime.fromtimestamp(x)
+        return int(get_close_time(cal, x.date()))
+    except Exception as e:
+        logging.info(f"can not compute open for {x}, {e}")
+        return x
+
+def compute_option_expiration_time(x, cal):
+    try:
+        x = datetime.datetime.fromtimestamp(x)
+        return int(get_close_time(cal, x.date()))
     except Exception as e:
         logging.info(f"can not compute open for {x}, {e}")
         return x

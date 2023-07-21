@@ -55,13 +55,13 @@ import torch
 import wandb
 
 from ats.calendar import market_time
+from ats.market_data import market_data_mgr
 from ats.model.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
 from ats.model.models import AttentionEmbeddingLSTM
 from ats.model import model_utils
-from ats.prediction import prediction_utils
 from ats.model.utils import Pipeline
 from ats.model import viz_utils
-from ats.optimizer import position_utils
+from ats.prediction import prediction_utils
 from ats.trading.trader import Trader
 from ats.util.profile import profile
 from ats.util import trace_utils
@@ -387,23 +387,6 @@ class PatchTftSupervisedPipeline(Pipeline):
         #logging.info(f"train_data:{train_data.iloc[-2:]}")
         #logging.info(f"future_data:{future_data.iloc[:2]}")
         wandb_logger = WandbLogger(project="ATS", log_model=True)
-        last_time_idx = train_data.iloc[-1]["time_idx"]
-        last_data_time = None
-        last_position_map = {} 
-        last_px_map = {}
-        last_data = train_data.iloc[-1]
-        logging.info(f"last_data:{last_data}")
-        last_px_map[last_data.ticker] = last_data.close
-        logging.info(f"initial_last_px_map:{last_px_map}")
-        last_position_map = defaultdict(lambda:0,last_position_map)
-        pnl_df = pd.DataFrame(columns = ["ticker","timestamp","px","last_px","pos","pnl"])
-        max_prediction_length = self.config.model.prediction_length
-        first_update = True
-        initial_positions = torch.tensor([0])
-        logging.info(f"sigma:{self.config.trading.sigma}")
-        optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
-                                             sigma=self.config.trading.sigma,
-                                             initial_positions=initial_positions)
         data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pnl_viz", type="pnl_viz")
         column_names = [
             "ticker",
@@ -435,12 +418,10 @@ class PatchTftSupervisedPipeline(Pipeline):
         ]
         data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
         target_size = len(self.targets) if isinstance(self.targets, List) else 1
-        
-        trader = Trader(self.model, optimizer, wandb_logger, target_size,
-                        future_data, train_dataset, self.config,
-                        last_time_idx, last_data_time,
-                        last_position_map,
-                        last_px_map, self.market_cal)
+
+        md_mgr = market_data_mgr.MarketDataMgr(self.config, self.market_cal)
+        trader = Trader(md_mgr, self.model, wandb_logger, target_size, future_data,
+                        train_data, train_dataset, self.config, self.market_cal)
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -451,9 +432,6 @@ class PatchTftSupervisedPipeline(Pipeline):
                 row = trader.on_interval(utc_time)
                 logging.info(f"got row:{row}")
                 if row:
-                    if first_update:
-                        first_update = False
-
                     logging.info(f"row:{row}")
                     data_table.add_data(
                         row["ticker"],  # 0 ticker
@@ -483,17 +461,17 @@ class PatchTftSupervisedPipeline(Pipeline):
                         row["px"],
                         row["pnl_delta"],
                     )
-                logging.info(f"last_position_map:{last_position_map}")
-                logging.info(f"last_px_map:{last_px_map}")
                 #logging.info(f"new_position:{position}, prediction:{prediction}")
             logging.info(f"eod {test_date}")
             gc.collect()
-        stats = self.compute_stats(pnl_df.pnl)
-        data_artifact.add(data_table, "eval_data")
+        data_artifact.add(data_table, "trading_data")
         # Calling `use_artifact` uploads the data to W&B.
         assert wandb.run is not None
         wandb.run.use_artifact(data_artifact)
+        pnl_df = trader.pnl_df
         logging.info(f"pnl:{pnl_df}")
+        if not pnl_df.empty:
+            stats = self.compute_stats(pnl_df.pnl)
         logging.info(f"stats:{stats}")
 
     def compute_stats(self, srs : pd.DataFrame, metric_suffix = ""):

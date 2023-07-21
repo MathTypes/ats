@@ -59,6 +59,7 @@ from wandb.keras import WandbMetricsLogger
 
 from ats.calendar import market_time
 from ats.market_data import data_util
+from ats.market_data import market_data_mgr
 from ats.model.data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
 from ats.model.datasets import generate_stock_returns
 from ats.model.log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
@@ -455,7 +456,9 @@ def get_data_module(
     raw_data["time_idx"] = range(0, len(raw_data))
 
     raw_data = data_util.add_group_features(raw_data, config.job.time_interval_minutes)
-    raw_data = data_util.add_example_level_features(raw_data)
+    cal = mcal.get_calendar("NYSE")
+    mdr = market_data_mgr.MarketDataMgr()
+    raw_data = data_util.add_example_level_features(raw_data, cal, mdr)
     #raw_data = raw_data.sort(["ticker", "time_idx"])
     logging.info(f"raw_data before filtering: {raw_data.iloc[:3]}")
     train_start_timestamp = train_start_date.timestamp()
