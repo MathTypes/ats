@@ -12,7 +12,8 @@ class MacroDataBuilder:
         self.config = config
         start_date = datetime.datetime.strptime(config.job.train_start_date, "%Y-%m-%d")
         end_date = datetime.datetime.strptime(config.job.test_end_date, "%Y-%m-%d")
-        if config.features.add_macro_event:
+        self.add_macro_event = config.features.add_macro_event
+        if add_macro_event:
             self.load_events()
         
     def load_events(self):

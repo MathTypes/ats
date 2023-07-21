@@ -311,9 +311,10 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
     raw_data["option_expiration_time"] = raw_data.timestamp.apply(
         market_time.compute_option_expiration_time, cal=cal
     )
-    raw_data["macro_event_time"] = raw_data.timestamp.apply(
-        market_time.compute_macro_event_time, cal=cal, mdb=mdr.macro_data_builder
-    )
+    if mdb.features.add_macro_event:
+        raw_data["macro_event_time"] = raw_data.timestamp.apply(
+            market_time.compute_macro_event_time, cal=cal, mdb=mdr.macro_data_builder
+        )
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(
         market_time.compute_open_time, cal=cal
     )
@@ -354,9 +355,10 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
     raw_data["time_to_option_expiration"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="option_expiration_time"
     )
-    raw_data["time_to_macro_event"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="macro_event_time"
-    )
+    if mdr.macro_data_builder.add_macro_event:
+        raw_data["time_to_macro_event"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="macro_event_time"
+        )
     raw_data["time_to_high_21_ff"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="time_high_21_ff"
     )
