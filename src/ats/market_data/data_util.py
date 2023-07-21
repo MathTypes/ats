@@ -311,7 +311,7 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
     raw_data["option_expiration_time"] = raw_data.timestamp.apply(
         market_time.compute_option_expiration_time, cal=cal
     )
-    if mdb.features.add_macro_event:
+    if mdr.macro_data_builder.features.add_macro_event:
         raw_data["macro_event_time"] = raw_data.timestamp.apply(
             market_time.compute_macro_event_time, cal=cal, mdb=mdr.macro_data_builder
         )
