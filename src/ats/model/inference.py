@@ -3,7 +3,8 @@ Code for running inference with transformer
 """
 import torch.nn as nn
 import torch
-import timeseries_utils
+
+from ats.market_data import timeseries_utils
 
 
 def run_encoder_decoder_inference(

@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 
 plt.style.use("seaborn")
 import PIL
-import inference
+from torch.utils.data import DataLoader
 
 PIL.Image.MAX_IMAGE_PIXELS = None
-import timeseries_utils
-import timeseries_dataset
-from torch.utils.data import DataLoader
+from ats.model import inference
+from ats.market_data import timeseries_utils
+from ats.market_data import timeseries_dataset
 
 
 class LogPredictionsCallback(Callback):
