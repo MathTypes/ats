@@ -30,8 +30,9 @@ class Optimizer(object):
         logging.info(f"cum_rets:{cum_rets}")
         ret = cp.sum(cum_rets @ w)
         logging.info(f"ret:{ret}, w:{w}")
-        buy_risk = cp.sum(min_neg_fcst @ cp.maximum(w,0))
-        sell_risk = cp.sum(max_pos_fcst @ cp.minimum(w,0))
+        # We need a bit power to limit positions.
+        buy_risk = cp.sum(min_neg_fcst @ cp.power(cp.maximum(w,0), 1.5))
+        sell_risk = cp.sum(max_pos_fcst @ cp.power(-cp.minimum(w,0), 1.5))
         risk = buy_risk + sell_risk
         objective = cp.Maximize(ret + self.sigma * risk)
         logging.info(f"ret:{ret}, risk:{risk}, objective:{objective}")
@@ -40,7 +41,8 @@ class Optimizer(object):
 
         constraints = [
             cp.norm(w, self.l_norm) <= self.gamma,
-            cp.norm(risk, self.pnl_risk) <= self.pnl_risk_norm
+            cp.norm(risk, self.pnl_risk) <= self.pnl_risk_norm,
+            risk<=self.max_loss
         ]
 
         problem = cp.Problem(objective, constraints)

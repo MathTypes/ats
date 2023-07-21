@@ -50,7 +50,9 @@ class Trader(object):
         logging.info(f"sigma:{self.config.trading.sigma}")
         self.market_cal = market_cal
         self.model = model
-        self.optimizer = position_utils.Optimizer(name="opt", max_loss=0, gamma=4,
+        self.optimizer = position_utils.Optimizer(name="opt",
+                                                  max_loss=self.config.trading.max_loss,
+                                                  gamma=self.config.trading.gamma,
                                                   sigma=self.config.trading.sigma,
                                                   initial_positions=initial_positions)
         self.wandb_logger = wandb_logger
