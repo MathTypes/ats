@@ -436,7 +436,9 @@ class PatchTftSupervisedPipeline(Pipeline):
         logging.info(f"pnl:{pnl_df}")
         if not pnl_df.empty:
             stats = self.compute_stats(pnl_df.pnl)
-        logging.info(f"stats:{stats}")
+            for key, val in stats.items():
+                wandb.run.summary[key] = val
+            logging.info(f"stats:{stats}")
 
     def compute_stats(self, srs : pd.DataFrame, metric_suffix = ""):
         return {
