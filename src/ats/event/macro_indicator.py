@@ -12,6 +12,10 @@ class MacroDataBuilder:
         self.config = config
         start_date = datetime.datetime.strptime(config.job.train_start_date, "%Y-%m-%d")
         end_date = datetime.datetime.strptime(config.job.test_end_date, "%Y-%m-%d")
+        if config.features.add_macro_event:
+            self.load_events()
+        
+    def load_events(self):
         df_vec = []
         for begin, end in date_utils.monthlist(start_date, end_date):
             year_month_str = begin.strftime("%Y-%m")
