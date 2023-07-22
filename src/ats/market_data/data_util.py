@@ -127,7 +127,7 @@ def add_highs(df_cumsum, df_time, width):
     df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
-    df_high["time_high_ff"] = df_high["time_high"].ffill().astype(int)
+    df_high["time_high_ff"] = df_high["time_high"].ffill()
     del high
     del high_time
     del high_idx
@@ -142,7 +142,7 @@ def add_lows(df_cumsum, df_time, width):
     df_low = df_cumsum.to_frame(name="close_cumsum").join(low).join(low_time)
     df_low["close_cumsum_low_ff"] = df_low["close_cumsum_low"].ffill()
     df_low["close_cumsum_low_bf"] = df_low["close_cumsum_low"].bfill()
-    df_low["time_low_ff"] = df_low["time_low"].ffill().astype(int)
+    df_low["time_low_ff"] = df_low["time_low"].ffill()
     del low_idx
     del low
     del low_time
@@ -280,6 +280,7 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
     ]:
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
+    logging.info(f"raw_data:{raw_data.describe()}")
     new_features = raw_data.groupby(["ticker"])[
         ["volume", "dv", "close", "timestamp"]
     ].apply(ticker_transform, interval_minutes=interval_minutes)

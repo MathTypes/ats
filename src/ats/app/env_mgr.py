@@ -6,7 +6,6 @@ import pandas_market_calendars as mcal
 
 from ats.calendar import market_time
 from ats.model import model_utils
-from ats.calendar import market_time
 
 
 class EnvMgr(object):
@@ -37,6 +36,9 @@ class EnvMgr(object):
         self.test_start_date = datetime.datetime.strptime(
             self.config.job.test_start_date, "%Y-%m-%d"
         ).replace(tzinfo=datetime.timezone.utc)
+        self.eval_end_timestamp = market_time.get_close_time(
+            self.market_cal, self.eval_end_date
+	)
         self.test_start_timestamp = market_time.get_open_time(
             self.market_cal, self.test_start_date
         )
@@ -69,6 +71,8 @@ class EnvMgr(object):
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
         self.time_interval = self.config.dataset.time_interval
         self.target_size = len(self.targets) if isinstance(self.targets, List) else 1
+        self.data_start_timestamp = self.train_start_timestamp
+        self.data_end_timestamp = self.test_end_timestamp
         logging.info(
             f"start_date:{start_date}, test_start_date:{self.test_start_date}, test_end_date:{self.test_end_date}"
         )

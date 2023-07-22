@@ -119,27 +119,6 @@ def optimize_hyperparameters(
         )
 
         LearningRateMonitor()
-        # logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
-        # default_trainer_kwargs = dict(
-        #    accelerator="auto",
-        #    max_epochs=max_epochs,
-        #    gradient_clip_val=gradient_clip_val,
-        #    limit_train_batches=50,
-        #    callbacks=[
-        #        learning_rate_callback,
-        #        checkpoint_callback,
-        #        PyTorchLightningPruningCallbackAdjusted(trial, monitor="val_loss"),
-        #    ],
-        # logger=logger,
-        #    enable_progress_bar=optuna_verbose < optuna.logging.INFO,
-        #    enable_model_summary=[False, True][optuna_verbose < optuna.logging.INFO],
-        # )
-        # default_trainer_kwargs.update(trainer_kwargs)
-
-        # create model
-        # hidden_size = trial.suggest_int("hidden_size", *hidden_size_range, log=True)
-        # context_length = trial.suggest_int("context_length", *context_length_range, log=True)
-        # prediction_length = trial.suggest_int("prediction_length", *prediction_length_range, log=True)
         kwargs["loss"] = copy.deepcopy(loss)
         trial_config = config
         trial_config.update(dict(trial.params))

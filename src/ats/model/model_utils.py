@@ -354,67 +354,6 @@ def get_heads_and_targets(config):
     return head_dict, targets
 
 
-def get_data_module(env_mgr, simulation_mode=False):
-    config = env_mgr.config
-    start = time.time()
-    mdr = market_data_mgr.MarketDataMgr(env_mgr)
-    raw_data = mdr.get_raw_data()
-    train_start_timestamp = env_mgr.train_start_date.timestamp()
-    eval_start_timestamp = env_mgr.eval_start_date.timestamp()
-    eval_end_timestamp = env_mgr.eval_end_date.timestamp()
-    test_start_timestamp = env_mgr.test_start_date.timestamp()
-    test_end_timestamp = env_mgr.test_end_date.timestamp()
-    train_data = raw_data[
-        (raw_data.timestamp >= train_start_timestamp)
-        & (raw_data.timestamp < test_start_timestamp)
-    ]
-    logging.info(f"train_data: {len(train_data)}")
-    train_data = raw_data[
-        (raw_data.timestamp >= train_start_timestamp)
-        & (raw_data.timestamp < test_start_timestamp)
-    ]
-    eval_data = raw_data[
-        (raw_data.timestamp >= eval_start_timestamp)
-        & (raw_data.timestamp < eval_end_timestamp)
-    ]
-    test_data = raw_data[
-        (raw_data.timestamp >= test_start_timestamp)
-        & (raw_data.timestamp < test_end_timestamp)
-    ]
-    logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
-    logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
-    logging.info(f"test data after filtering: {test_data.iloc[:3]}")
-    logging.info(f"eval_data: {len(eval_data)}")
-    train_data = train_data.sort_values(["ticker", "time"])
-    eval_data = eval_data.sort_values(["ticker", "time"])
-    test_data = test_data.sort_values(["ticker", "time"])
-    time.time() - start
-    # we want to encode special days as one variable and thus need to first reverse one-hot encoding
-    special_days = [
-        "easter_day",
-        "good_friday",
-        "new_year",
-        "christmas",
-        "labor_day",
-        "independence_day",
-        "revolution_day_memorial",
-        "regional_games",
-        "fifa_u_17_world_cup",
-        "football_gold_cup",
-        "beer_capital",
-        "music_fest",
-    ]
-    data_module = TimeSeriesDataModule(
-        config,
-        train_data,
-        eval_data,
-        test_data,
-        env_mgr.targets,
-        simulation_mode=simulation_mode,
-    )
-    return data_module
-
-
 def run_train(config, net, trainer, data_module):
     device = config["device"]
     # fit network

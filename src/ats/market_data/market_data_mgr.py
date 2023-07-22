@@ -1,13 +1,14 @@
 import datetime
 import logging
-
 import numpy as np
 import pandas as pd
 import ray
+import time
 
 from ats.calendar import market_time
 from ats.event.macro_indicator import MacroDataBuilder
 from ats.market_data import data_util
+from ats.market_data.data_module import TimeSeriesDataModule
 
 
 @ray.remote
@@ -77,6 +78,42 @@ class MarketDataMgr(object):
         self.market_cal = env_mgr.market_cal
         self.macro_data_builder = MacroDataBuilder(self.config)
         self.raw_data = None
+        self.data_module = self.create_data_module(simulation_mode=True)
+        
+    def create_data_module(self, simulation_mode=False):
+        env_mgr = self.env_mgr
+        config = env_mgr.config
+        start = time.time()
+        raw_data = self.get_snapshot()
+        train_data = raw_data[
+            (raw_data.timestamp >= env_mgr.train_start_timestamp)
+            & (raw_data.timestamp < env_mgr.test_start_timestamp)
+        ]
+        eval_data = raw_data[
+            (raw_data.timestamp >= env_mgr.eval_start_timestamp)
+            & (raw_data.timestamp < env_mgr.eval_end_timestamp)
+        ]
+        test_data = raw_data[
+            (raw_data.timestamp >= env_mgr.test_start_timestamp)
+            & (raw_data.timestamp < env_mgr.test_end_timestamp)
+        ]
+        logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
+        logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
+        logging.info(f"test data after filtering: {test_data.iloc[:3]}")
+        logging.info(f"eval_data: {len(eval_data)}")
+        train_data = train_data.sort_values(["ticker", "time"])
+        eval_data = eval_data.sort_values(["ticker", "time"])
+        test_data = test_data.sort_values(["ticker", "time"])
+        time.time() - start
+        data_module = TimeSeriesDataModule(
+            config,
+            train_data,
+            eval_data,
+            test_data,
+            env_mgr.targets,
+            simulation_mode=simulation_mode,
+        )
+        return data_module
 
     def get_snapshot(self):
         if "initial_snapshot" in self.config.dataset:

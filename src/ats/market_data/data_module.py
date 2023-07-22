@@ -217,6 +217,8 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             ]
         )
         logging.info(f"train_data:{train_data.describe()}")
+        train_data = train_data.fillna(-1)
+        eval_data = eval_data.fillna(-1)
         self.train_data = train_data.dropna()
         logging.info(f"train_data:{train_data.describe()}")
         logging.info(f"train_data:{train_data.iloc[-5:]}")

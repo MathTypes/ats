@@ -268,14 +268,12 @@ class PatchTftSupervisedPipeline(Pipeline):
         self.dataset = dataset
         self.config = config
         self.env_mgr = EnvMgr(config)
+        self.market_cal = self.env_mgr.market_cal
         self.heads = self.env_mgr.heads
         self.targets = self.env_mgr.targets
         logging.info(f"head:{self.heads}, targets:{self.targets}")
-
-        self.data_module = model_utils.get_data_module(
-            self.env_mgr,
-            simulation_mode=True,
-        )
+        self.md_mgr = market_data_mgr.MarketDataMgr(self.env_mgr)
+        self.data_module = self.md_mgr.data_module
 
     def create_model(self, checkpoint):
         self.model = model_utils.get_patch_tft_supervised_model(
@@ -321,7 +319,6 @@ class PatchTftSupervisedPipeline(Pipeline):
         print("best_trial", study.best_trial.params)
 
     def test_model(self):
-        self.market_cal = self.env_mgr.market_cal
         test_dates = self.env_mgr.market_cal.valid_days(
             start_date=self.env_mgr.test_start_date, end_date=self.env_mgr.test_end_date
         )
@@ -364,9 +361,8 @@ class PatchTftSupervisedPipeline(Pipeline):
         data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
         target_size = len(self.targets) if isinstance(self.targets, List) else 1
 
-        md_mgr = market_data_mgr.MarketDataMgr(self.config, self.market_cal)
         trader = Trader(
-            md_mgr,
+            self.md_mgr,
             self.model,
             wandb_logger,
             target_size,
