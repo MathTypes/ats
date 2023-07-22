@@ -2,6 +2,7 @@ import datetime
 import logging
 import numpy as np
 import pandas as pd
+import os
 import ray
 import time
 
@@ -116,7 +117,7 @@ class MarketDataMgr(object):
         return data_module
 
     def get_snapshot(self):
-        if self.config.dataset.snapshot:
+        if self.config.dataset.snapshot and os.listdir(f"{self.config.dataset.snapshot}"):
             try:
                 self.raw_data = read_snapshot(self.config.dataset.snapshot)
             except Exception:
