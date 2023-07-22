@@ -50,3 +50,76 @@ def test_get_week_of_month_sixth_week():
         tzinfo=datetime.timezone.utc
     )
     assert date_util.get_week_of_month(train_start_date) == 6
+
+def test_option_expiration_jan():
+    train_start_date = datetime.datetime.strptime("2023-01-02", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_feb():
+    train_start_date = datetime.datetime.strptime("2023-02-02", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_mar():
+    train_start_date = datetime.datetime.strptime("2023-03-23", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_apr():
+    train_start_date = datetime.datetime.strptime("2023-04-13", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 4
+
+def test_option_expiration_may():
+    train_start_date = datetime.datetime.strptime("2023-05-22", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_jun():
+    train_start_date = datetime.datetime.strptime("2023-06-30", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_jul():
+    train_start_date = datetime.datetime.strptime("2023-07-20", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 4
+
+def test_option_expiration_aug():
+    train_start_date = datetime.datetime.strptime("2023-08-31", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_sep():
+    train_start_date = datetime.datetime.strptime("2023-09-30", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_oct():
+    train_start_date = datetime.datetime.strptime("2023-10-02", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_nov():
+    train_start_date = datetime.datetime.strptime("2023-11-12", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
+def test_option_expiration_dec():
+    train_start_date = datetime.datetime.strptime("2023-12-10", "%Y-%m-%d").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    assert date_util.get_option_expiration_week(train_start_date) == 3
+
