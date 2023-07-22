@@ -124,15 +124,15 @@ def add_highs(df_cumsum, df_time, width):
     #df_cumsum = df_cumsum.fillna(0)
     #high_idx, properties = find_peaks(df_cumsum, width=width, rel_height=0.001)
     high_idx, properties = find_peaks(df_cumsum, prominence=width)
-    logging.error(f"df_cumsum:{df_cumsum}, width:{width}, high_idx:{high_idx}, properties:{properties}")
+    #logging.error(f"df_cumsum:{df_cumsum}, width:{width}, high_idx:{high_idx}, properties:{properties}")
     high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
     high_time = df_time.iloc[high_idx].to_frame(name="time_high")
-    logging.error(f"high_time:{high_time}, high:{high}")
+    #logging.error(f"high_time:{high_time}, high:{high}")
     df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
     df_high["time_high_ff"] = df_high["time_high"].ffill()
-    logging.error(f"df_high:{df_high}")
+    #logging.error(f"df_high:{df_high}")
     del high
     del high_time
     del high_idx
@@ -141,7 +141,7 @@ def add_highs(df_cumsum, df_time, width):
 
 @profile
 def add_lows(df_cumsum, df_time, width):
-    low_idx, _ = find_peaks(np.negative(df_cumsum), width=width)
+    low_idx, _ = find_peaks(np.negative(df_cumsum), prominence=width)
     low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
     low_time = df_time.iloc[low_idx].to_frame(name="time_low")
     df_low = df_cumsum.to_frame(name="close_cumsum").join(low).join(low_time)
