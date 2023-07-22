@@ -78,15 +78,15 @@ class MarketDataMgr(object):
         self.config = env_mgr.config
         self.market_cal = env_mgr.market_cal
         self.macro_data_builder = MacroDataBuilder(self.config)
-        self.raw_data = self.get_snapshot()
-        logging.info(f"summary raw_data:{raw_data.describe()}")
+        self.raw_data = self._get_snapshot()
+        logging.info(f"summary raw_data:{self.raw_data.describe()}")
         self.data_module = self.create_data_module(simulation_mode=simulation_mode)
         
     def create_data_module(self, simulation_mode=False):
         env_mgr = self.env_mgr
         config = env_mgr.config
         start = time.time()
-        raw_data = this.raw_data
+        raw_data = self.raw_data
         train_data = raw_data[
             (raw_data.timestamp >= env_mgr.train_start_timestamp)
             & (raw_data.timestamp < env_mgr.test_start_timestamp)
@@ -102,7 +102,7 @@ class MarketDataMgr(object):
         logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
         logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
         logging.info(f"test data after filtering: {test_data.iloc[:3]}")
-        logging.info(f"train_data:{len(train_data}, eval_data: {len(eval_data)}, test_data:{len(test_data)}")
+        logging.info(f"train_data:{len(train_data)}, eval_data: {len(eval_data)}, test_data:{len(test_data)}")
         train_data = train_data.sort_values(["ticker", "time"])
         eval_data = eval_data.sort_values(["ticker", "time"])
         test_data = test_data.sort_values(["ticker", "time"])
@@ -117,21 +117,24 @@ class MarketDataMgr(object):
         )
         return data_module
 
-    def get_snapshot(self):
+    def _get_snapshot(self):
+        raw_data = None
         try:
-            if self.config.dataset.snapshot and os.listdir(f"{self.config.dataset.snapshot}"):
-                self.raw_data = read_snapshot(self.config.dataset.snapshot)
+            if self.config.dataset.read_snapshot and os.listdir(f"{self.config.dataset.snapshot}"):
+                logging.info(f"reading snapshot from {self.config.dataset.snapshot}")
+                raw_data = read_snapshot(self.config.dataset.snapshot)
         except Exception:
             # Will try regenerating when reading fails
             pass
 
-        if not self.raw_data is None:
-            return self.raw_data
+        if not raw_data is None:
+            return raw_data
 
         train_data_vec = []
         refs = []
         env_mgr = self.env_mgr
         for ticker in env_mgr.model_tickers:
+            logging.info(f"adding {ticker} from {env_mgr.dataset_base_dir}, {env_mgr.train_start_date}, {env_mgr.test_end_date}")
             ticker_train_data = get_input_for_ticker.remote(
                 env_mgr.dataset_base_dir,
                 env_mgr.train_start_date,
@@ -140,7 +143,7 @@ class MarketDataMgr(object):
                 "FUT",
                 env_mgr.time_interval,
             )
-        refs.append(ticker_train_data)
+            refs.append(ticker_train_data)
         all_results = ray.get(refs)
         for result in all_results:
             ticker_train_data = result
@@ -187,5 +190,4 @@ class MarketDataMgr(object):
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(raw_data)
             ds.write_parquet(self.config.dataset.snapshot)
-        self.raw_data = raw_data
-        return self.raw_data
+        return raw_data
