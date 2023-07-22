@@ -78,14 +78,15 @@ class MarketDataMgr(object):
         self.config = env_mgr.config
         self.market_cal = env_mgr.market_cal
         self.macro_data_builder = MacroDataBuilder(self.config)
-        self.raw_data = None
+        self.raw_data = self.get_snapshot()
+        logging.info(f"summary raw_data:{raw_data.describe()}")
         self.data_module = self.create_data_module(simulation_mode=simulation_mode)
         
     def create_data_module(self, simulation_mode=False):
         env_mgr = self.env_mgr
         config = env_mgr.config
         start = time.time()
-        raw_data = self.get_snapshot()
+        raw_data = this.raw_data
         train_data = raw_data[
             (raw_data.timestamp >= env_mgr.train_start_timestamp)
             & (raw_data.timestamp < env_mgr.test_start_timestamp)
@@ -101,7 +102,7 @@ class MarketDataMgr(object):
         logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
         logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
         logging.info(f"test data after filtering: {test_data.iloc[:3]}")
-        logging.info(f"eval_data: {len(eval_data)}")
+        logging.info(f"train_data:{len(train_data}, eval_data: {len(eval_data)}, test_data:{len(test_data)}")
         train_data = train_data.sort_values(["ticker", "time"])
         eval_data = eval_data.sort_values(["ticker", "time"])
         test_data = test_data.sort_values(["ticker", "time"])
@@ -117,12 +118,13 @@ class MarketDataMgr(object):
         return data_module
 
     def get_snapshot(self):
-        if self.config.dataset.snapshot and os.listdir(f"{self.config.dataset.snapshot}"):
-            try:
+        try:
+            if self.config.dataset.snapshot and os.listdir(f"{self.config.dataset.snapshot}"):
                 self.raw_data = read_snapshot(self.config.dataset.snapshot)
-            except Exception:
-                # Will try regenerating when reading fails
-                pass
+        except Exception:
+            # Will try regenerating when reading fails
+            pass
+
         if not self.raw_data is None:
             return self.raw_data
 
