@@ -32,7 +32,6 @@ def test_add_highs_trending_no_high():
     }
     raw_data = pd.DataFrame(data=raw_data)
     raw_data = data_util.add_group_features(raw_data, 30)
-    logging.error(f"raw_data:{raw_data}")
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3
@@ -66,7 +65,6 @@ def test_with_high():
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
     raw_data = data_util.add_group_features(raw_data, 30*23*2)
-    logging.error(f"raw_data:{raw_data}")
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3
@@ -77,7 +75,6 @@ def test_with_high():
     assert math.isclose(row_two["close_back"], 0.405465, rel_tol=0.01)
     assert math.isclose(row_two["volume_back"], -0.405465, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
-    logging.error(f"close_high_5_ff:{raw_data['close_high_5_ff']}")
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
         [np.nan, np.nan, np.nan, np.nan, 4.317488, 4.317488, 4.317488, 4.317488],
@@ -118,7 +115,6 @@ def test_with_low():
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
     raw_data = data_util.add_group_features(raw_data, 30*23*2)
-    logging.error(f"raw_data:{raw_data}")
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3
@@ -200,12 +196,10 @@ def test_add_example_features():
         }
         raw_data = pd.DataFrame(data=raw_data)
         raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
-        logging.error(f"raw_data before add_example_level_features:{raw_data}")
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
         raw_data = data_util.add_group_features(raw_data, 30*23*2)
         raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
-        logging.error(f"raw_data:{raw_data}")
         row_two = raw_data.iloc[2]
         assert row_two["ticker"] == "ES"
         assert row_two["close_back"] ==  0.4054651081081643

@@ -185,7 +185,6 @@ def ticker_transform(raw_data, interval_minutes):
     close_back_cumsum = raw_data["close_back_cumsum"]
     timestamp = raw_data["timestamp"]
     interval_per_day = int(23 * 60 / interval_minutes)
-    logging.error(f"interval_per_day:{interval_per_day}, raw_data:{raw_data}")
     # find_peaks only with prominance which needs to be set to half of the width.
     # in case of high among 5 days, the high needs to be higher than 4 points around
     # it, 2 to the left and 2 to the right.
@@ -436,7 +435,6 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder):
     raw_data["time_to_low_201_ff"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="time_low_201_ff"
     )
-    logging.error(f"raw_data after add example features:{raw_data}")
     return raw_data
 
 
