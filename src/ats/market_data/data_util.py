@@ -121,13 +121,18 @@ def get_processed_data(
 
 @profile
 def add_highs(df_cumsum, df_time, width):
-    high_idx, _ = find_peaks(df_cumsum, width=width)
+    #df_cumsum = df_cumsum.fillna(0)
+    #high_idx, properties = find_peaks(df_cumsum, width=width, rel_height=0.001)
+    high_idx, properties = find_peaks(df_cumsum, prominence=width)
+    logging.error(f"df_cumsum:{df_cumsum}, width:{width}, high_idx:{high_idx}, properties:{properties}")
     high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
     high_time = df_time.iloc[high_idx].to_frame(name="time_high")
+    logging.error(f"high_time:{high_time}, high:{high}")
     df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
     df_high["time_high_ff"] = df_high["time_high"].ffill()
+    logging.error(f"df_high:{df_high}")
     del high
     del high_time
     del high_idx
@@ -159,54 +164,69 @@ def ticker_transform(raw_data, interval_minutes):
     raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
     raw_data["cum_volume"] = raw_data.volume.cumsum()
     raw_data["cum_dv"] = raw_data.dv.cumsum()
-    df_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
-    df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
-    raw_data = raw_data.join(df_pct_back, rsuffix="_back").join(
-        df_pct_forward, rsuffix="_fwd"
-    )
+    #df_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
+    #df['close_pct_change'] = raw_data.close.pct_change(period=1)
+    #df['volume_pct_change'] = raw_data.volume.pct_change(period=1)
+    #df['dv_pct_change'] = raw_data.dv.pct_change(period=1)
+    raw_data['close_back'] = np.log(raw_data.close) - np.log(raw_data.close.shift(1))
+    raw_data['volume_back'] = np.log(raw_data.volume) - np.log(raw_data.volume.shift(1))
+    raw_data['dv_back'] = np.log(raw_data.dv) - np.log(raw_data.dv.shift(1))
+    #df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
+    raw_data['close_fwd'] = np.log(raw_data.close.shift(1)) - np.log(raw_data.close)
+    raw_data['volume_fwd'] = np.log(raw_data.volume.shift(-1)) - np.log(raw_data.volume)
+    raw_data['dv_fwd'] = np.log(raw_data.dv.shift(-1)) - np.log(raw_data.dv)
+    
+    #raw_data = raw_data.join(df_pct_back, rsuffix="_back").join(
+    #    df_pct_forward, rsuffix="_fwd"
+    #)
     raw_data["close_back_cumsum"] = raw_data["close_back"].cumsum()
     raw_data["volume_back_cumsum"] = raw_data["volume_back"].cumsum()
 
     close_back_cumsum = raw_data["close_back_cumsum"]
     timestamp = raw_data["timestamp"]
     interval_per_day = int(23 * 60 / interval_minutes)
-    df = add_highs(close_back_cumsum, timestamp, width=5 * interval_per_day)
+    logging.error(f"interval_per_day:{interval_per_day}, raw_data:{raw_data}")
+    # find_peaks only with prominance which needs to be set to half of the width.
+    # in case of high among 5 days, the high needs to be higher than 4 points around
+    # it, 2 to the left and 2 to the right.
+    df = add_highs(close_back_cumsum, timestamp, width=2*interval_per_day)
     raw_data["close_high_5_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_5_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_5_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=5 * interval_per_day)
+    logging.error(f"raw_data:{raw_data}")
+    df = add_lows(close_back_cumsum, timestamp, width=2 * interval_per_day)
     raw_data["close_low_5_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_5_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_5_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=11 * interval_per_day)
+    df = add_highs(close_back_cumsum, timestamp, width=5 * interval_per_day)
     raw_data["close_high_11_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_11_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_11_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=11 * interval_per_day)
+    df = add_lows(close_back_cumsum, timestamp, width=5 * interval_per_day)
     raw_data["close_low_11_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_11_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_11_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=21 * interval_per_day)
+    df = add_highs(close_back_cumsum, timestamp, width=10 * interval_per_day)
     raw_data["close_high_21_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_21_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_21_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=21 * interval_per_day)
+    df = add_lows(close_back_cumsum, timestamp, width=10 * interval_per_day)
     raw_data["close_low_21_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_21_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_21_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=51 * interval_per_day)
+    df = add_highs(close_back_cumsum, timestamp, width=25 * interval_per_day)
     raw_data["close_high_51_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_51_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_51_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=51 * interval_per_day)
+    df = add_lows(close_back_cumsum, timestamp, width=25 * interval_per_day)
     raw_data["close_low_51_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_51_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_51_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=201 * interval_per_day)
+    df = add_highs(close_back_cumsum, timestamp, width=100 * interval_per_day)
     raw_data["close_high_201_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_201_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_201_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=201 * interval_per_day)
+    df = add_lows(close_back_cumsum, timestamp, width=100 * interval_per_day)
     raw_data["close_low_201_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
     raw_data["time_low_201_ff"] = df["time_low_ff"]
