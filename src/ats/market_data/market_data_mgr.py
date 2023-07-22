@@ -57,7 +57,7 @@ def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_inte
     return input_dirs
 
 
-def get_snapshot(input_dirs) -> pd.DataFrame:
+def read_snapshot(input_dirs) -> pd.DataFrame:
     ds = ray.data.read_parquet(input_dirs, parallelism=100)
     ds = ds.to_pandas(10000000)
     ds = ds.sort_index()
@@ -116,9 +116,9 @@ class MarketDataMgr(object):
         return data_module
 
     def get_snapshot(self):
-        if "initial_snapshot" in self.config.dataset:
+        if self.config.dataset.snapshot:
             try:
-                self.raw_data = get_snapshot(self.config.dataset.snapshot)
+                self.raw_data = read_snapshot(self.config.dataset.snapshot)
             except Exception:
                 # Will try regenerating when reading fails
                 pass

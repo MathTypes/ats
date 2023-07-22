@@ -62,7 +62,8 @@ class Trader(object):
         max_prediction_length = self.config.model.prediction_length
         # prediction is at current time, so we need max_prediction_length + 1.
         trading_times = market_time.get_next_trading_times(
-            self.market_cal, "30M", utc_time, max_prediction_length + 1
+            self.market_cal, f"{self.config.job.time_interval_minutes}min",
+            utc_time, max_prediction_length + 1
         )
         predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
         logging.info(f"utc_time:{utc_time}, trading_times:{trading_times}")

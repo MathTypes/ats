@@ -35,8 +35,6 @@ def test_get_snapshot():
         # 2008-02-07 08:30:00 - we need 201 prior intervals. Each day
         # has about 40 intervals. It is strange why we go to 2008-02-07 instead
         # of 2008-01-10.
-        logging.error(f"train_data start:{raw_data[:5]}")
-        logging.error(f"train_data end:{raw_data[-5:]}")
         # Sun Mar 29 2009 15:30:00
         assert first_data_row["timestamp"] == 1238365800
         first_train_data_row = md_mgr.data_module.train_data.iloc[0]

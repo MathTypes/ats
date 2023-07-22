@@ -77,7 +77,7 @@ def test_single_asset_large_neg_drawback():
     new_positions, ret, val = optimizer.optimize(
         returns_fcst, min_neg_fcst, max_pos_fcst
     )
-    assert math.isclose(new_positions, 0, rel_tol=0.01)
+    assert math.isclose(new_positions, 0.2, rel_tol=0.01)
     # assert math.isclose(ret[0], 0.8, rel_tol=0.01)
     # assert math.isclose(val, 0.8, rel_tol=0.01)
 

@@ -16,8 +16,9 @@ class Optimizer(object):
         gamma=0,
         sigma=0,
         l_norm=1.5,
-        pnl_risk_norm=1.5,
+        pnl_risk_norm=3,
         pnl_risk=10,
+        risk_power=3,
         initial_positions=None,
     ):
         super().__init__()
@@ -25,6 +26,7 @@ class Optimizer(object):
         self.max_loss = max_loss
         self.gamma = gamma
         self.sigma = sigma
+        self.risk_power = risk_power
         self.n = initial_positions.shape[0]
         self.l_norm = l_norm
         self.pnl_risk_norm = pnl_risk_norm
@@ -38,10 +40,10 @@ class Optimizer(object):
         ret = cp.sum(cum_rets @ w)
         logging.info(f"ret:{ret}, w:{w}")
         # We need a bit power to limit positions.
-        buy_risk = cp.sum(min_neg_fcst @ cp.power(cp.maximum(w, 0), 1.5))
-        sell_risk = cp.sum(max_pos_fcst @ cp.power(-cp.minimum(w, 0), 1.5))
+        buy_risk = cp.sum_squares(w @ cp.minimum(min_neg_fcst, 0))
+        sell_risk = cp.sum_squares(w @ cp.maximum(max_pos_fcst, 0))
         risk = buy_risk + sell_risk
-        objective = cp.Maximize(ret + self.sigma * risk)
+        objective = cp.Minimize(self.sigma * risk-ret)
         logging.info(f"ret:{ret}, risk:{risk}, objective:{objective}")
         # objective = cp.Maximize(ret)
         # wors_hour = cp.sum_smallest(np.dot(np.sum(quantile_returns_fcst), w))
@@ -49,7 +51,7 @@ class Optimizer(object):
         constraints = [
             cp.norm(w, self.l_norm) <= self.gamma,
             cp.norm(risk, self.pnl_risk) <= self.pnl_risk_norm,
-            risk <= self.max_loss,
+            #risk <= self.max_loss,
         ]
 
         problem = cp.Problem(objective, constraints)

@@ -376,7 +376,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
             )
-            time_range = mcal.date_range(schedule, frequency="30M")
+            time_range = mcal.date_range(schedule, frequency=f"{self.config.job.time_interval_minutes}min")
             logging.info(f"sod {test_date}, schedule:{time_range}")
             for utc_time in time_range:
                 row = trader.on_interval(utc_time)
