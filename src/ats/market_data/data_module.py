@@ -274,9 +274,10 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         eval_data_size = (
             int(len(self.eval_data) / self.eval_batch_size) * self.eval_batch_size
         )
-        logging.info(f"eval_data_size:{eval_data_size}")
         self.eval_data = self.eval_data[:eval_data_size]
+        logging.info(f"eval_data_size:{len(self.eval_data)}")
         self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
+        logging.info(f"test_data_size:{len(self.test_data)}")
         self.test = TimeSeriesDataSet.from_dataset(
             self.training, self.test_data, simulation_mode=simulation_mode
         )

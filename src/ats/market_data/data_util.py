@@ -387,6 +387,18 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
         raw_data["time_to_macro_event"] = raw_data.apply(
             time_diff, axis=1, base_col="timestamp", diff_col="macro_event_time"
         )
+    raw_data["time_to_high_5_ff"] = raw_data.apply(
+        time_diff, axis=1, base_col="timestamp", diff_col="time_high_5_ff"
+    )
+    raw_data["time_to_low_5_ff"] = raw_data.apply(
+        time_diff, axis=1, base_col="timestamp", diff_col="time_low_5_ff"
+    )
+    raw_data["time_to_high_11_ff"] = raw_data.apply(
+        time_diff, axis=1, base_col="timestamp", diff_col="time_high_11_ff"
+    )
+    raw_data["time_to_low_11_ff"] = raw_data.apply(
+        time_diff, axis=1, base_col="timestamp", diff_col="time_low_11_ff"
+    )
     raw_data["time_to_high_21_ff"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="time_high_21_ff"
     )

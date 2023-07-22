@@ -71,14 +71,14 @@ def get_snapshot(input_dirs) -> pd.DataFrame:
 
 
 class MarketDataMgr(object):
-    def __init__(self, env_mgr):
+    def __init__(self, env_mgr, simulation_mode = False):
         super().__init__()
         self.env_mgr = env_mgr
         self.config = env_mgr.config
         self.market_cal = env_mgr.market_cal
         self.macro_data_builder = MacroDataBuilder(self.config)
         self.raw_data = None
-        self.data_module = self.create_data_module(simulation_mode=True)
+        self.data_module = self.create_data_module(simulation_mode=simulation_mode)
         
     def create_data_module(self, simulation_mode=False):
         env_mgr = self.env_mgr

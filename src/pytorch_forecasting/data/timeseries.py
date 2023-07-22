@@ -423,8 +423,9 @@ class TimeSeriesDataSet(Dataset):
         # JJ: disable target normalizer
         self._set_target_normalizer(data)
 
+        traceback.print_stack()
         data = self.preprocess_data(data)
-        #logging.info(f"data:{data.iloc[-10:]}m simulation_mode:{simulation_mode}")
+        #logging.error(f"data:{data.iloc[-5:]} simulation_mode:{self.simulation_mode}")
         if not simulation_mode:
             self.transform_data(data)
 
@@ -458,6 +459,7 @@ class TimeSeriesDataSet(Dataset):
 
     @profile
     def transform_data(self, data : pd.DataFrame):
+        traceback.print_stack()
         #logging.info(f"data:{data.iloc[-30:]}")
         for target in self.target_names:
             assert (
@@ -534,16 +536,17 @@ class TimeSeriesDataSet(Dataset):
             # minimal decoder index is always >= min_prediction_idx
             data = data[lambda x: x[self.time_idx] >= self.min_prediction_idx - self.max_encoder_length - self.max_lag]
         data = data.sort_values(self.group_ids + [self.time_idx])
-
+        #logging.error(f"before process:{data.describe()}")
         # preprocess data
         data = self._preprocess_data(data)
+        #logging.error(f"after process:{data.describe()}")
         #logging.info(f"preprocessed_data:{data.iloc[-3:]}")
         for target in self.target_names:
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
         self.transformed_data = data
         # create index
         self.index = self._construct_index(data, predict_mode=self.predict_mode)
-
+        #logging.error(f"data:{data.describe()}")
         # convert to torch tensor for high performance data loading later
         self.data = self._data_to_tensors(data)
 
@@ -1262,7 +1265,7 @@ class TimeSeriesDataSet(Dataset):
         tensors = dict(
             reals=continuous, categoricals=categorical, groups=index, target=target, weight=weight, time=time
         )
-
+        #logging.error(f"tensors:{tensors}")
         return tensors
 
     @property
@@ -2604,8 +2607,9 @@ class TimeSeriesDataSet(Dataset):
             pd.DataFrame: index dataframe for timesteps and index dataframe for groups.
                 It contains a list of all possible subsequences.
         """
+        #logging.error(f"group_ids:{self._group_ids}, data:{data.describe()}")
         g = data.groupby(self._group_ids, observed=True)
-
+        #logging.error(f"g:{g}")
         df_index_first = g["__time_idx__"].transform("first").to_frame("time_first")
         df_index_last = g["__time_idx__"].transform("last").to_frame("time_last")
         df_index_diff_to_next = -g["__time_idx__"].diff(-1).fillna(-1).astype(int).to_frame("time_diff_to_next")
@@ -2617,7 +2621,7 @@ class TimeSeriesDataSet(Dataset):
         df_index["sequence_id"] = sequence_ids
         min_sequence_length = self.min_prediction_length + self.min_encoder_length
         max_sequence_length = self.max_prediction_length + self.max_encoder_length
-
+        #logging.error(f"df_index:{df_index}")
         # calculate maximum index to include from current index_start
         max_time = (df_index["time"] + max_sequence_length - 1).clip(upper=df_index["count"] + df_index.time_first - 1)
 
@@ -2681,7 +2685,6 @@ class TimeSeriesDataSet(Dataset):
         assert (
             len(df_index) > 0
         ), "filters should not remove entries all entries - check encoder/decoder lengths and lags"
-
         return df_index
 
     def filter(self, filter_func: Callable, copy: bool = True) -> "TimeSeriesDataSet":
