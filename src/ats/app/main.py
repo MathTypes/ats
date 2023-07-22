@@ -28,10 +28,8 @@ RESULTS_PATH = Path("results")
 
 @hydra.main(config_path="conf", config_name="config")
 def my_app(cfg: DictConfig) -> None:
-    print(f"Current working directory : {os.getcwd()}")
-    print(f"Orig working directory    : {get_original_cwd()}")
-    print(f"to_absolute_path('foo')   : {to_absolute_path('foo')}")
-    print(f"to_absolute_path('/foo')  : {to_absolute_path('/foo')}")
+    logging.info(f"Current working directory : {os.getcwd()}")
+    logging.info(f"Orig working directory    : {get_original_cwd()}")
     run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     wandb.init(
         project="ats", name=f"{cfg.model.name}-{cfg.job.tag}-{run_id}", config=cfg
