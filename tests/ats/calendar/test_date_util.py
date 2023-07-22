@@ -8,7 +8,37 @@ from ats.calendar import date_util
 from ats.util import logging_utils
 
 
-def test_get_week_of_month_first_week():
+def test_get_week_of_month_first_week_first():
+    assert date_util.get_week_of_month(datetime.date(2023,1,1)) == 1
+
+def test_get_week_of_month_first_week_last():
+    assert date_util.get_week_of_month(datetime.date(2023,1,7)) == 1
+
+def test_get_week_of_month_second_week_first():
+    assert date_util.get_week_of_month(datetime.date(2023,1,8)) == 2
+
+def test_get_week_of_month_second_week_last():
+    assert date_util.get_week_of_month(datetime.date(2023,1,14)) == 2
+
+def test_get_week_of_month_third_week_first():
+    assert date_util.get_week_of_month(datetime.date(2023,1,15)) == 3
+
+def test_get_week_of_month_third_week_last():
+    assert date_util.get_week_of_month(datetime.date(2023,1,21)) == 3
+
+def test_get_week_of_month_fourth_week_first():
+    assert date_util.get_week_of_month(datetime.date(2023,1,22)) == 4
+
+def test_get_week_of_month_fourth_week_last():
+    assert date_util.get_week_of_month(datetime.date(2023,1,28)) == 4
+
+def test_get_week_of_month_fifth_week_first():
+    assert date_util.get_week_of_month(datetime.date(2023,1,29)) == 5
+
+def test_get_week_of_month_fifth_week_last():
+    assert date_util.get_week_of_month(datetime.date(2023,1,31)) == 5
+
+def test_get_week_of_month_first_week_():
     # 2009-06-01 is Monday
     # 2009-06-01 00:00:00+00:00
     train_start_date = datetime.datetime.strptime("2009-06-01", "%Y-%m-%d").replace(
@@ -56,6 +86,7 @@ def test_option_expiration_jan():
         tzinfo=datetime.timezone.utc
     )
     assert date_util.get_option_expiration_week(train_start_date) == 3
+    assert date_util.get_option_expiration_day(datetime.date(2023, 1, 1)).strftime("%Y%m%d") == "20230120"
 
 def test_option_expiration_feb():
     train_start_date = datetime.datetime.strptime("2023-02-02", "%Y-%m-%d").replace(

@@ -1,4 +1,5 @@
 import datetime
+import logging
 import math
 
 def get_option_expiration_week(date):
@@ -17,6 +18,7 @@ def get_option_expiration_day(date):
     while cur_week != option_expiration_week:
         date = date + datetime.timedelta(days=7)
         cur_week = get_week_of_month(date)
+        logging.error(f"cur_week:{cur_week}, date:{date}, option_expiration_week:{option_expiration_week}")
         # Needs to recompute since we might move to next month
         option_expiration_week = get_option_expiration_week(date)
     while date.weekday() != 4:
@@ -24,14 +26,15 @@ def get_option_expiration_day(date):
     return date
 
 def get_week_of_month(date):
+    logging.error(f"date:{date}")
     first_day = date.replace(day=1)
     day_of_month = date.day
     if first_day.weekday() == 6:
-        adjusted_dom = (1 + first_day.weekday()) / 7
+        adjusted_dom = day_of_month - 1
     else:
         adjusted_dom = day_of_month + first_day.weekday()
-    return int(math.ceil(adjusted_dom / 7.0))
-
+    week_of_month = int(math.floor(adjusted_dom / 7.0)) + 1
+    return week_of_month
 
 def monthlist(begin, end):
     result = []
