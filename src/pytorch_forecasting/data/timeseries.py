@@ -350,6 +350,7 @@ class TimeSeriesDataSet(Dataset):
                 prediction samples and everthing previous up to ``max_encoder_length`` samples as encoder samples.
         """
         super().__init__()
+        data = data.fillna(-1)
         assert(min_encoder_length == max_encoder_length), "max encoder length must be equal to min encoder length"
         assert(min_prediction_length == max_prediction_length), "max prediction length must be equal to min prediction length"
         self.max_encoder_length = max_encoder_length
@@ -423,7 +424,7 @@ class TimeSeriesDataSet(Dataset):
         # JJ: disable target normalizer
         self._set_target_normalizer(data)
 
-        traceback.print_stack()
+        #traceback.print_stack()
         data = self.preprocess_data(data)
         #logging.error(f"data:{data.iloc[-5:]} simulation_mode:{self.simulation_mode}")
         if not simulation_mode:
@@ -459,7 +460,6 @@ class TimeSeriesDataSet(Dataset):
 
     @profile
     def transform_data(self, data : pd.DataFrame):
-        traceback.print_stack()
         #logging.info(f"data:{data.iloc[-30:]}")
         for target in self.target_names:
             assert (
