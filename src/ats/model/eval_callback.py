@@ -1,3 +1,4 @@
+import gc
 import logging
 from typing import Any, List
 
@@ -169,6 +170,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         device = self.pl_module.device
         for batch_idx in range(self.num_samples):
             logging.info(f"add prediction for batch:{batch_idx}")
+            gc.collect()
+            torch.cuda.empty_cache()
+            logging.info(f"allocated before prediction:{torch.cuda.memory_allocated()}")
+            logging.info(f"max_allocated before prediction:{torch.cuda.max_memory_allocated()}")
             orig_x = self.val_x_batch[batch_idx]
             orig_y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
@@ -196,11 +201,13 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             # logging.info(f"y:{y.device}")
             # logging.info(f"self.pl_module:{self.pl_module.device}")
             log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
+            logs = detach(log)
             # logging.info(f"out:{out}")
             prediction_kwargs = {"reduction": None}
             result = self.pl_module.compute_metrics(
                 x, y, out, prediction_kwargs=prediction_kwargs
             )
+            result = {k:detach(v) for k, v in result.items()}
             if "train_RMSE" in result:
                 rmse = result["train_RMSE"].cpu().detach().numpy()
             else:
@@ -215,6 +222,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             prediction_kwargs = {}
             quantiles_kwargs = {}
             predictions = self.pl_module.to_prediction(out, **prediction_kwargs)
+            predictions = detach(predictions)
             # logging.info(f"predictions:{predictions}")
             y_hats = to_list(predictions)[0]
             y_hats_cum = torch.cumsum(y_hats, dim=-1)
@@ -227,7 +235,11 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 attention_prediction_horizon=0,  # attention only for first prediction horizon
             )
             cnt = 0
+            logging.info(f"allocated before iter:{torch.cuda.memory_allocated()}")
+            logging.info(f"max_allocated before iter:{torch.cuda.max_memory_allocated()}")
             for idx in range(len(y_hats)):
+                #logging.info(f"allocated:{torch.cuda.memory_allocated()}")
+                #logging.info(f"max_allocated:{torch.cuda.max_memory_allocated()}")
                 row = viz_utils.create_viz_row(
                     idx,
                     y_hats,
@@ -248,7 +260,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 if row:
                     data_table.add_data(
                         row["ticker"],  # 0 ticker
-                        row["time"],  # 1 time
+                        row["dm"],  # 1 time
                         row["time_idx"],  # 2 time_idx
                         row["day_of_week"],  # 3 day of week
                         row["hour_of_day"],  # 4 hour of day
