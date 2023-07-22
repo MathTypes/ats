@@ -186,7 +186,8 @@ class MarketDataMgr(object):
         raw_data = data_util.add_group_features(
             raw_data, self.config.job.time_interval_minutes
         )
-        raw_data = data_util.add_example_level_features(raw_data, self.market_cal, self)
+        raw_data = data_util.add_example_level_features(raw_data, self.market_cal,
+                                                        self.macro_data_builder)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(raw_data)
             ds.write_parquet(self.config.dataset.snapshot)
