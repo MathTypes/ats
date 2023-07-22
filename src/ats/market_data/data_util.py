@@ -293,7 +293,7 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
     logging.info(f"raw_data:{raw_data.describe()}")
-    new_features = raw_data.groupby(["ticker"])[
+    new_features = raw_data.groupby(["ticker"], group_keys=False)[
         ["volume", "dv", "close", "timestamp"]
     ].apply(ticker_transform, interval_minutes=interval_minutes)
     # logging.info(f"new_features:{new_features.columns}")

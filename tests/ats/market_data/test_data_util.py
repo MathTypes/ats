@@ -18,7 +18,7 @@ def test_group_features():
         "timestamp": [1325689200, 1325691000, 1349357400],
     }
     raw_data = pd.DataFrame(data=raw_data)
-    raw_data = data_util.add_group_features(raw_data, "30M")
+    raw_data = data_util.add_group_features(raw_data, 30)
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     assert row_two["close_back"] == 0.25
