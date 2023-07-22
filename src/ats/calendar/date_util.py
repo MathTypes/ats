@@ -25,7 +25,6 @@ def get_option_expiration_day(date):
     return date
 
 def get_week_of_month(date):
-    logging.error(f"date:{date}")
     first_day = date.replace(day=1)
     day_of_month = date.day
     if first_day.weekday() == 6:

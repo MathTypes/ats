@@ -193,7 +193,6 @@ def ticker_transform(raw_data, interval_minutes):
     raw_data["close_high_5_ff"] = df["close_cumsum_high_ff"]
     raw_data["close_high_5_bf"] = df["close_cumsum_high_bf"]
     raw_data["time_high_5_ff"] = df["time_high_ff"]
-    logging.error(f"raw_data:{raw_data}")
     df = add_lows(close_back_cumsum, timestamp, width=2 * interval_per_day)
     raw_data["close_low_5_ff"] = df["close_cumsum_low_ff"]
     raw_data["close_low_5_bf"] = df["close_cumsum_low_bf"]
@@ -345,7 +344,7 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
 
 
 @profile
-def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
+def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder):
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x: x.isocalendar()[1])
     raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)
 
@@ -359,9 +358,9 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
     raw_data["option_expiration_time"] = raw_data.timestamp.apply(
         market_time.compute_option_expiration_time, cal=cal
     )
-    if mdr.macro_data_builder.add_macro_event:
+    if macro_data_builder.add_macro_event:
         raw_data["macro_event_time"] = raw_data.timestamp.apply(
-            market_time.compute_macro_event_time, cal=cal, mdb=mdr.macro_data_builder
+            market_time.compute_macro_event_time, cal=cal, mdb=macro_data_builder
         )
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(
         market_time.compute_open_time, cal=cal
@@ -403,7 +402,7 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
     raw_data["time_to_option_expiration"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="option_expiration_time"
     )
-    if mdr.macro_data_builder.add_macro_event:
+    if macro_data_builder.add_macro_event:
         raw_data["time_to_macro_event"] = raw_data.apply(
             time_diff, axis=1, base_col="timestamp", diff_col="macro_event_time"
         )
@@ -437,6 +436,7 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, mdr):
     raw_data["time_to_low_201_ff"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="time_low_201_ff"
     )
+    logging.error(f"raw_data after add example features:{raw_data}")
     return raw_data
 
 
