@@ -352,7 +352,7 @@ class PredictCallback(BasePredictionWriter):
             if self.return_decoder_lengths:
                 output["decoder_lengths"] = torch.cat(self._decode_lenghts, dim=0)
             if self.return_y:
-                logging.info(f"self._y:{self._y[0].shape}")
+                #logging.info(f"self._y:{self._y[0].shape}")
                 #y = concat_sequences([yi[0] for yi in self._y])
                 #y = concat_sequences([yi for yi in self._y])
                 y = torch.cat([yi for yi in self._y], dim=0)
@@ -626,7 +626,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #logging.info(f"normalizer.classes_:{len(normalizer.classes_)}")
                 return len(normalizer.classes_)
             elif isinstance(loss, DistributionLoss):
-                logging.error(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
+                #logging.error(f"loss.distribution_arguments:{len(loss.distribution_arguments)}")
                 return len(loss.distribution_arguments)
             else:
                 return 1  # default to 1
@@ -1492,7 +1492,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     out = out[1]
             try:
                 #traceback.print_stack()
-                logging.info(f"use metrics:{out['prediction']}")
+                #logging.info(f"use metrics:{out['prediction']}")
                 #logging.info(f"loss:{self.loss}")
                 out = self.loss.to_prediction(out["prediction"], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
