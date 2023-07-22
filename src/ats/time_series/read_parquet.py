@@ -8,6 +8,7 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None)
     parser = config_utils.get_arg_parser("Read parquet files")
     parser.add_argument("--input", type=str)
+    parser.add_argument("--columns", type=str)
     parser.add_argument("--min_time", type=str)
     parser.add_argument("--max_time", type=str)
     args = parser.parse_args()
@@ -17,4 +18,6 @@ if __name__ == "__main__":
     df = pd.read_parquet(args.input)
     if args.min_time and args.max_time:
         df = df.loc[(df.time > args.min_time) & (df.time < args.max_time)]
+    if args.columns:
+        df = df[args.columns]
     print(df)
