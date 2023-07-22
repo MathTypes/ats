@@ -101,7 +101,6 @@ class Decoder(Object):
             self.wrapper.tickSize(reqId, sizeTickType, size)
 
     def processOrderStatusMsg(self, fields):
-
         next(fields)
         if self.serverVersion < MIN_SERVER_VER_MARKET_CAP_PRICE:
             decode(int, fields)
@@ -137,7 +136,6 @@ class Decoder(Object):
         )
 
     def processOpenOrder(self, fields):
-
         next(fields)
 
         order = Order()
@@ -233,7 +231,6 @@ class Decoder(Object):
         self.wrapper.openOrder(order.orderId, contract, order, orderState)
 
     def processPortfolioValueMsg(self, fields):
-
         next(fields)
         version = decode(int, fields)
 
@@ -280,7 +277,6 @@ class Decoder(Object):
         )
 
     def processContractDataMsg(self, fields):
-
         next(fields)
         version = 8
         if self.serverVersion < MIN_SERVER_VER_SIZE_RULES:
@@ -372,7 +368,6 @@ class Decoder(Object):
         self.wrapper.contractDetails(reqId, contract)
 
     def processBondContractDataMsg(self, fields):
-
         next(fields)
         version = 6
         if self.serverVersion < MIN_SERVER_VER_SIZE_RULES:
@@ -646,7 +641,6 @@ class Decoder(Object):
             or tickTypeInt == TickTypeEnum.MODEL_OPTION
             or tickTypeInt == TickTypeEnum.DELAYED_MODEL_OPTION
         ):
-
             optPrice = decode(float, fields)
             pvDividend = decode(float, fields)
 
@@ -1381,7 +1375,7 @@ class Decoder(Object):
             meth2handleInfo[handleInfo.wrapperMeth] = handleInfo
 
         methods = inspect.getmembers(EWrapper, inspect.isfunction)
-        for (_, meth) in methods:
+        for _, meth in methods:
             # logger.debug("meth %s", name)
             sig = inspect.signature(meth)
             handleInfo = meth2handleInfo.get(meth, None)
@@ -1392,11 +1386,11 @@ class Decoder(Object):
             #     logger.debug("\tparam %s %s %s", pname, param.name, param.annotation)
 
     def printParams(self):
-        for (_, handleInfo) in self.msgId2handleInfo.items():
+        for _, handleInfo in self.msgId2handleInfo.items():
             if handleInfo.wrapperMeth is not None:
                 logger.debug("meth %s", handleInfo.wrapperMeth.__name__)
                 if handleInfo.wrapperParams is not None:
-                    for (pname, param) in handleInfo.wrapperParams.items():
+                    for pname, param in handleInfo.wrapperParams.items():
                         logger.debug(
                             "\tparam %s %s %s", pname, param.name, param.annotation
                         )
@@ -1419,7 +1413,7 @@ class Decoder(Object):
 
         fieldIdx = nIgnoreFields
         args = []
-        for (pname, param) in handleInfo.wrapperParams.items():
+        for pname, param in handleInfo.wrapperParams.items():
             if pname != "self":
                 logger.debug("field %s ", fields[fieldIdx])
                 try:
@@ -1484,7 +1478,9 @@ class Decoder(Object):
         IN.ACCT_VALUE: HandleInfo(wrap=EWrapper.updateAccountValue),
         IN.PORTFOLIO_VALUE: HandleInfo(proc=processPortfolioValueMsg),
         IN.ACCT_UPDATE_TIME: HandleInfo(wrap=EWrapper.updateAccountTime),
-        IN.NEXT_VALID_ID: HandleInfo(wrap=EWrapper.nextValidId,),
+        IN.NEXT_VALID_ID: HandleInfo(
+            wrap=EWrapper.nextValidId,
+        ),
         IN.CONTRACT_DATA: HandleInfo(proc=processContractDataMsg),
         IN.EXECUTION_DATA: HandleInfo(proc=processExecutionDataMsg),
         IN.MARKET_DEPTH: HandleInfo(proc=processMarketDepthMsg),

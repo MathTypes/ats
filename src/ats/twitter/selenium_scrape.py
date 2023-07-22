@@ -3,33 +3,31 @@
 # Example of usage:
 # PYTHONPATH=. python3 twitter/selenium_scrape.py --username=eliant_capital --since=2023-03-23 --until=2023-03-24
 #
-import argparse
 import logging
 import datetime
 import os
 
 import pandas as pd
 
-from twitter_scraper_selenium import get_profile_details
-from twitter_scraper_selenium import scrape_profile, scrape_keyword
+from twitter_scraper_selenium import scrape_keyword
 from util import config_utils
 from util import logging_utils
 
 
-#def scrape_tweets(keyword, since, until, output_file):
-    #output_file = os.path.join(output_dir, username + f"-from-{since}-{until}" + ".csv")
-    #if not os.path.exists(output_file):
-    #    scrape_keyword(
-    #        keyword = f"from:{username}",
-    #        since=since,
-    #        until=until,
-    #        output_format="csv",
-    #        browser="chrome",
-    #        tweets_count=1000000,
-    #        filename=username + f"-from-{since}",
-    #        directory=output_dir,
-    #        headless=False,
-    #    )
+# def scrape_tweets(keyword, since, until, output_file):
+# output_file = os.path.join(output_dir, username + f"-from-{since}-{until}" + ".csv")
+# if not os.path.exists(output_file):
+#    scrape_keyword(
+#        keyword = f"from:{username}",
+#        since=since,
+#        until=until,
+#        output_format="csv",
+#        browser="chrome",
+#        tweets_count=1000000,
+#        filename=username + f"-from-{since}",
+#        directory=output_dir,
+#        headless=False,
+#    )
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
@@ -75,13 +73,13 @@ if __name__ == "__main__":
         else:
             output_file_name = args.symbol + f"-to-{since}-{until}"
             keyword = f"${args.symbol}"
-        output_file_name = output_file_name.replace(" ","_")
+        output_file_name = output_file_name.replace(" ", "_")
         empty_tweets = set()
         # Creating list to append tweet data
         tweets_list1 = []
         since = since.date().isoformat()
         until = until.date().isoformat()
-        #query = f"{keyword} since:{since} until:{until}"
+        # query = f"{keyword} since:{since} until:{until}"
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
         output_file = args.output_dir + "/" + output_file_name + ".csv"
@@ -96,7 +94,7 @@ if __name__ == "__main__":
             logging.info(f"browser_profile:{browser_profile}")
             logging.info(f"args.login:{args.login}")
             scrape_keyword(
-                keyword = f"{keyword}",
+                keyword=f"{keyword}",
                 since=since,
                 until=until,
                 output_format="csv",
@@ -106,6 +104,6 @@ if __name__ == "__main__":
                 directory=args.output_dir,
                 browser_profile=browser_profile,
                 headless=args.headless,
-                email = email,
-                login = args.login
+                email=email,
+                login=args.login,
             )

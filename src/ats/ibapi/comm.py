@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 def make_msg(text) -> bytes:
-    """ adds the length prefix """
+    """adds the length prefix"""
 
     msg = struct.pack("!I%ds" % len(text), len(text), str.encode(text))
     return msg
 
 
 def make_field(val) -> str:
-    """ adds the NULL string terminator """
+    """adds the NULL string terminator"""
     if val is None:
         raise ValueError("Cannot send None to TWS")
 
@@ -65,7 +65,7 @@ def make_field_handle_empty(val) -> str:
 
 
 def read_msg(buf: bytes) -> tuple:
-    """ first the size prefix and then the corresponding msg payload """
+    """first the size prefix and then the corresponding msg payload"""
 
     if len(buf) < 4:
         return (0, "", buf)

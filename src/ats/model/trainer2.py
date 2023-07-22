@@ -12,21 +12,12 @@ from lightning.pytorch.loggers import TensorBoardLogger
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import torch
 from lightning.pytorch.tuner import Tuner
 from pytorch_forecasting import Baseline, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data import NaNLabelEncoder
-from pytorch_forecasting.data.examples import generate_ar_data
-from pytorch_forecasting.metrics import MAE, SMAPE, MultivariateNormalDistributionLoss
-from pytorch_forecasting.data import GroupNormalizer
-from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
-    optimize_hyperparameters,
-)
+from pytorch_forecasting.metrics import MAE, MultivariateNormalDistributionLoss
+from pytorch_forecasting.metrics import MAE
 
-from pytorch_forecasting.data.examples import get_stallion_data
-from datasets import generate_stock_returns
 from util import logging_utils
 
 from math import ceil

@@ -10,7 +10,10 @@ from src.data.data_process import data_preprocess
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--scrape", help="Scrape climate bbc data.", action="store_true", default=False,
+        "--scrape",
+        help="Scrape climate bbc data.",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
         "--preprocess",

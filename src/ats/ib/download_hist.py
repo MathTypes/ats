@@ -105,7 +105,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         )
 
     def save_data(self, contract: Contract, bars: BarDataList) -> None:
-        #logging.error(f"save_data, contract:{contract}, bars:{bars}")
+        # logging.error(f"save_data, contract:{contract}, bars:{bars}")
         data = [
             # MAX: IBAPI 10.15 does not provide bar.average anymore
             # MAX: IBAPI 10.15 has an attribute bar.wap (weighted average)
@@ -143,7 +143,10 @@ class DownloadApp(EClient, wrapper.EWrapper):
             # date file to which it belongs
             last = (self.current - timedelta(days=1)).strftime("%Y%m%d")
             path = os.path.sep.join(
-                [make_download_path(self.args, contract), "%s.csv" % last,]
+                [
+                    make_download_path(self.args, contract),
+                    "%s.csv" % last,
+                ]
             )
         df.to_csv(path, index=False)
 
@@ -338,7 +341,6 @@ def validate_data_type(data_type: str) -> None:
 
 
 def main():
-
     now = datetime.now()
 
     class DateAction(argparse.Action):
@@ -397,10 +399,15 @@ def main():
         action=DateAction,
     )
     argp.add_argument(
-        "--end_date", help="Last day for bars", default=now, action=DateAction,
+        "--end_date",
+        help="Last day for bars",
+        default=now,
+        action=DateAction,
     )
     argp.add_argument(
-        "--max-days", help="Set start date to earliest date", action="store_true",
+        "--max-days",
+        help="Set start date to earliest date",
+        action="store_true",
     )
     args = argp.parse_args()
 

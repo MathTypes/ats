@@ -84,8 +84,8 @@ class EClient(object):
             logger.info("REQUEST %s %s" % (fnName, prms))
 
     def startApi(self):
-        """  Initiates the message exchange between the client application and
-        the TWS/IB Gateway. """
+        """Initiates the message exchange between the client application and
+        the TWS/IB Gateway."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -94,7 +94,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 2
 
             msg = (
@@ -353,7 +352,7 @@ class EClient(object):
         regulatorySnapshot: bool - With the US Value Snapshot Bundle for stocks,
             regulatory snapshots are available for 0.01 USD each.
         mktDataOptions:TagValueList - For internal use only.
-            Use default value XYZ. """
+            Use default value XYZ."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -390,7 +389,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 11
 
             # send req mkt data msg
@@ -485,7 +483,7 @@ class EClient(object):
         will stop flowing.
 
         reqId: TickerId - The ID that was specified in the call to
-            reqMktData(). """
+            reqMktData()."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -561,7 +559,6 @@ class EClient(object):
             return
 
         try:
-
             msg = (
                 make_field(OUT.REQ_SMART_COMPONENTS)
                 + make_field(reqId)
@@ -626,7 +623,6 @@ class EClient(object):
             return
 
         try:
-
             msg = (
                 make_field(OUT.REQ_TICK_BY_TICK_DATA)
                 + make_field(reqId)
@@ -720,7 +716,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 3
 
             # send req mkt data msg
@@ -768,7 +763,7 @@ class EClient(object):
         """Call this function to cancel a request to calculate
         volatility for a supplied option price and underlying price.
 
-        reqId:TickerId - The request ID.  """
+        reqId:TickerId - The request ID."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -837,7 +832,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 3
 
             # send req mkt data msg
@@ -885,7 +879,7 @@ class EClient(object):
         """Call this function to cancel a request to calculate the option
         price and greek values for a supplied volatility and underlying price.
 
-        reqId:TickerId - The request ID.  """
+        reqId:TickerId - The request ID."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -953,7 +947,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 2
 
             # send req mkt data msg
@@ -1399,7 +1392,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 27 if (self.serverVersion() < MIN_SERVER_VER_NOT_HELD) else 45
 
             # send place order msg
@@ -1641,7 +1633,6 @@ class EClient(object):
                 and order.scalePriceIncrement != UNSET_DOUBLE
                 and order.scalePriceIncrement > 0.0
             ):
-
                 flds += [
                     make_field_handle_empty(order.scalePriceAdjustValue),
                     make_field_handle_empty(order.scalePriceAdjustInterval),
@@ -1881,7 +1872,7 @@ class EClient(object):
         Note:  The client with a clientId of 0 will also receive the TWS-owned
         open orders. These orders will be associated with the client and a new
         orderId will be generated. This association will persist over multiple
-        API and TWS sessions.  """
+        API and TWS sessions."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -2005,7 +1996,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 2
 
             flds = []
@@ -2086,7 +2076,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -2173,7 +2162,7 @@ class EClient(object):
     def reqPositionsMulti(self, reqId: int, account: str, modelCode: str):
         """Requests positions for account and/or model.
         Results are delivered via EWrapper.positionMulti() and
-        EWrapper.positionMultiEnd() """
+        EWrapper.positionMultiEnd()"""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -2190,7 +2179,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -2208,7 +2196,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelPositionsMulti(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -2254,7 +2241,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -2273,7 +2259,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelAccountUpdatesMulti(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -2303,7 +2288,6 @@ class EClient(object):
     #########################################################################
 
     def reqPnL(self, reqId: int, account: str, modelCode: str):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -2319,7 +2303,6 @@ class EClient(object):
             return
 
         try:
-
             msg = (
                 make_field(OUT.REQ_PNL)
                 + make_field(reqId)
@@ -2334,7 +2317,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelPnL(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -2354,7 +2336,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def reqPnLSingle(self, reqId: int, account: str, modelCode: str, conid: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -2370,7 +2351,6 @@ class EClient(object):
             return
 
         try:
-
             msg = (
                 make_field(OUT.REQ_PNL_SINGLE)
                 + make_field(reqId)
@@ -2386,7 +2366,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelPnLSingle(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -2431,7 +2410,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 3
 
             # send req open orders msg
@@ -2523,7 +2501,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 8
 
             # send req mkt data msg
@@ -2593,7 +2570,6 @@ class EClient(object):
     #########################################################################
 
     def reqMktDepthExchanges(self):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -2677,7 +2653,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 5
 
             # send req mkt depth msg
@@ -2788,7 +2763,7 @@ class EClient(object):
 
         allMsgs:bool - If set to TRUE, returns all the existing bulletins for
         the currencyent day and any new ones. If set to FALSE, will only
-        return new bulletins. """
+        return new bulletins."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -2876,7 +2851,7 @@ class EClient(object):
             2 = PROFILE
             3 = ACCOUNT ALIASES
         cxml: str - The XML string containing the new FA configuration
-            information.  """
+            information."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -2972,7 +2947,7 @@ class EClient(object):
             1 - dates applying to bars returned in the format: yyyymmdd{space}{space}hh:mm:dd
             2 - dates are returned as a long integer specifying the number of seconds since
                 1/1/1970 GMT.
-        chartOptions:TagValueList - For internal use only. Use default value XYZ. """
+        chartOptions:TagValueList - For internal use only. Use default value XYZ."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -3001,7 +2976,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 6
 
             # send req mkt data msg
@@ -3136,7 +3110,6 @@ class EClient(object):
             return
 
         try:
-
             flds = []
             flds += [
                 make_field(OUT.REQ_HEAD_TIMESTAMP),
@@ -3168,7 +3141,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelHeadTimeStamp(self, reqId: TickerId):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -3192,7 +3164,6 @@ class EClient(object):
     def reqHistogramData(
         self, tickerId: int, contract: Contract, useRTH: bool, timePeriod: str
     ):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -3208,7 +3179,6 @@ class EClient(object):
             return
 
         try:
-
             flds = []
             flds += [
                 make_field(OUT.REQ_HISTOGRAM_DATA),
@@ -3239,7 +3209,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelHistogramData(self, tickerId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -3270,7 +3239,6 @@ class EClient(object):
         ignoreSize: bool,
         miscOptions: TagValueList,
     ):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -3286,7 +3254,6 @@ class EClient(object):
             return
 
         try:
-
             flds = []
             flds += [
                 make_field(OUT.REQ_HISTORICAL_TICKS),
@@ -3379,7 +3346,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 4
 
             flds = []
@@ -3496,7 +3462,8 @@ class EClient(object):
             1 = only data within the regular trading hours for the product
                 requested is returned, even if the time time span falls
                 partially or completely outside.
-        realTimeBarOptions:TagValueList - For internal use only. Use default value XYZ."""
+        realTimeBarOptions:TagValueList - For internal use only. Use default value XYZ.
+        """
 
         self.logRequest(current_fn_name(), vars())
 
@@ -3515,7 +3482,6 @@ class EClient(object):
                 return
 
         try:
-
             VERSION = 3
 
             flds = []
@@ -3569,7 +3535,7 @@ class EClient(object):
     def cancelRealTimeBars(self, reqId: TickerId):
         """Call the cancelRealTimeBars() function to stop receiving real time bar results.
 
-        reqId:TickerId - The Id that was specified in the call to reqRealTimeBars(). """
+        reqId:TickerId - The Id that was specified in the call to reqRealTimeBars()."""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -3620,7 +3586,7 @@ class EClient(object):
             ReportsFinSummary (financial summary)
             ReportRatios (financial ratios)
             ReportsFinStatements (financial statements)
-            RESC (analyst estimates) """
+            RESC (analyst estimates)"""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -3629,7 +3595,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 2
 
             if self.serverVersion() < MIN_SERVER_VER_FUNDAMENTAL_DATA:
@@ -3724,7 +3689,6 @@ class EClient(object):
     #########################################################################
 
     def reqNewsProviders(self):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -3750,7 +3714,6 @@ class EClient(object):
         articleId: str,
         newsArticleOptions: TagValueList,
     ):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -3766,7 +3729,6 @@ class EClient(object):
             return
 
         try:
-
             flds = []
 
             flds += [
@@ -3804,7 +3766,6 @@ class EClient(object):
         totalResults: int,
         historicalNewsOptions: TagValueList,
     ):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -3820,7 +3781,6 @@ class EClient(object):
             return
 
         try:
-
             flds = []
 
             flds += [
@@ -3860,7 +3820,7 @@ class EClient(object):
         TWS color-grouped windows are identified by an integer number. Currently that number ranges from 1 to 7 and are mapped to specific colors, as indicated in TWS.
 
         reqId:int - The unique number that will be associated with the
-            response """
+            response"""
 
         self.logRequest(current_fn_name(), vars())
 
@@ -3942,7 +3902,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -4014,7 +3973,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -4049,7 +4007,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -4092,7 +4049,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -4128,7 +4084,6 @@ class EClient(object):
             return
 
         try:
-
             VERSION = 1
 
             msg = (
@@ -4176,7 +4131,6 @@ class EClient(object):
             return
 
         try:
-
             flds = []
             flds += [
                 make_field(OUT.REQ_SEC_DEF_OPT_PARAMS),
@@ -4211,7 +4165,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def reqFamilyCodes(self):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -4231,7 +4184,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def reqMatchingSymbols(self, reqId: int, pattern: str):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -4247,7 +4199,6 @@ class EClient(object):
             return
 
         try:
-
             msg = (
                 make_field(OUT.REQ_MATCHING_SYMBOLS)
                 + make_field(reqId)
@@ -4261,8 +4212,8 @@ class EClient(object):
         self.sendMsg(msg)
 
     def reqCompletedOrders(self, apiOnly: bool):
-        """Call this function to request the completed orders. If apiOnly parameter 
-        is true, then only completed orders placed from API are requested. 
+        """Call this function to request the completed orders. If apiOnly parameter
+        is true, then only completed orders placed from API are requested.
         Each completed order will be fed back through the
         completedOrder() function on the EWrapper."""
 
@@ -4277,7 +4228,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def reqWshMetaData(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -4293,7 +4243,6 @@ class EClient(object):
             return
 
         try:
-
             msg = make_field(OUT.REQ_WSH_META_DATA) + make_field(reqId)
 
         except ClientException as ex:
@@ -4303,7 +4252,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelWshMetaData(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -4323,7 +4271,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def reqWshEventData(self, reqId: int, wshEventData: WshEventData):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -4392,7 +4339,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def cancelWshEventData(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():
@@ -4412,7 +4358,6 @@ class EClient(object):
         self.sendMsg(msg)
 
     def reqUserInfo(self, reqId: int):
-
         self.logRequest(current_fn_name(), vars())
 
         if not self.isConnected():

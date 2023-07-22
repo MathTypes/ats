@@ -36,18 +36,25 @@ if __name__ == "__main__":
             df = pd.DataFrame()
             tweets = nitter.get_tweets(user, pages=100, address="https://nitter.net")
             for tweet in tweets:
-                df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
-                df = df.append(df2, ignore_index = True)
+                df2 = {
+                    "Id": str(tweet.tweet_id),
+                    "Url": tweet.tweet_url,
+                    "Username": tweet.username,
+                }
+                df = df.append(df2, ignore_index=True)
             logging.info(f"df:{df}")
             df.to_csv(args.output_dir + "/" + args.username + ".csv")
     exit(0)
 
     with NitterScraper(host="0.0.0.0", port=8008) as nitter:
         while True:
-            #https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
+            # https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
             for tweet in nitter.search_tweets(
                 "search?f=tweets&q=$btc&until=2012-01-03&since=2012-01-02",
-                pages=1, break_on_tweet_id=last_tweet_id, address="https://nitter.net"):
+                pages=1,
+                break_on_tweet_id=last_tweet_id,
+                address="https://nitter.net",
+            ):
                 if tweet.is_pinned is True:
                     continue
                 if tweet.is_retweet is True:
@@ -62,10 +69,10 @@ if __name__ == "__main__":
 
     with NitterScraper(host="0.0.0.0", port=8008) as nitter:
         while True:
-            #https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
+            # https://nitter.net/search?f=tweets&q=DougKass&until=2012-01-03&since=2012-01-02
             for tweet in nitter.get_tweets(
-                "DougKass",
-                pages=1, break_on_tweet_id=last_tweet_id):
+                "DougKass", pages=1, break_on_tweet_id=last_tweet_id
+            ):
                 if tweet.is_pinned is True:
                     continue
                 if tweet.is_retweet is True:
@@ -97,15 +104,16 @@ if __name__ == "__main__":
                 try:
                     tweets = nitter.search_tweets(query, pages=100)
                     for tweet in tweets:
-                        df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
-                        df = df.append(df2, ignore_index = True)
+                        df2 = {
+                            "Id": str(tweet.tweet_id),
+                            "Url": tweet.tweet_url,
+                            "Username": tweet.username,
+                        }
+                        df = df.append(df2, ignore_index=True)
                 except Exception as e:
                     logging.info(f"e:{e}")
-                    pass
             logging.info(f"df:{df}")
             df.to_csv(args.output_dir + "/" + args.username + ".csv")
     exit(0)
 
     print("Scraping with local nitter docker instance.")
-
-

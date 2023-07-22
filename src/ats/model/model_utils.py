@@ -2,34 +2,20 @@
 import logging
 from math import ceil
 import os
-import pytz
 import time
 from typing import List
 import warnings
 
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-from lightning.pytorch.tuner import Tuner
 import lightning.pytorch as pl
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import numpy as np
 from omegaconf import OmegaConf
-import pandas as pd
-import pandas_market_calendars as mcal
-import pyarrow.dataset as pds
-from pytorch_lightning.loggers import WandbLogger
 from pytorch_forecasting import (
-    Baseline,
     TemporalFusionTransformer,
-    TimeSeriesDataSet,
     PatchTstTransformer,
     PatchTstTftTransformer,
     PatchTftSupervised,
 )
-from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
 from pytorch_forecasting.metrics import (
     MAE,
     MAPE,
@@ -37,37 +23,19 @@ from pytorch_forecasting.metrics import (
     MAPCSE,
     RMSE,
     SMAPE,
-    PoissonLoss,
     QuantileLoss,
     MQF2DistributionLoss,
     MultiLoss,
     SharpeLoss,
     DistributionLoss,
 )
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
-    optimize_hyperparameters,
-)
-from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
-import ray
-from ray.util.dask import enable_dask_on_ray
-from ray_lightning import RayStrategy
-from ray.data import ActorPoolStrategy
-from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
-import torch
+from pytorch_forecasting import NHiTS
 from torch import nn
-import wandb
-from wandb.keras import WandbMetricsLogger
 
-from ats.calendar import market_time
-from ats.market_data import data_util
 from ats.market_data import market_data_mgr
-from ats.market_data.data_module import LSTMDataModule, TransformerDataModule, TimeSeriesDataModule
-from ats.market_data.datasets import generate_stock_returns
-from ats.model.log_prediction import LogPredictionsCallback, LSTMLogPredictionsCallback
+from ats.market_data.data_module import TimeSeriesDataModule
 from ats.model.loss import MultiLossWithUncertaintyWeight
 from ats.model import nhits_tuner
-from ats.util import logging_utils
-from ats.util import config_utils
 from ats.util import time_util
 
 
@@ -364,7 +332,6 @@ def get_input_dirs(config):
     return input_dirs
 
 
-
 def get_heads_and_targets(config):
     heads = config.model.heads
     # logging.info(f"heads:{heads}")
@@ -386,7 +353,8 @@ def get_heads_and_targets(config):
     # logging.info(f"head_dict:{head_dict}, targets:{targets}")
     return head_dict, targets
 
-def get_data_module(env_mgr, simulation_mode = False):
+
+def get_data_module(env_mgr, simulation_mode=False):
     config = env_mgr.config
     start = time.time()
     mdr = market_data_mgr.MarketDataMgr(env_mgr)
@@ -397,17 +365,21 @@ def get_data_module(env_mgr, simulation_mode = False):
     test_start_timestamp = env_mgr.test_start_date.timestamp()
     test_end_timestamp = env_mgr.test_end_date.timestamp()
     train_data = raw_data[
-        (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
+        (raw_data.timestamp >= train_start_timestamp)
+        & (raw_data.timestamp < test_start_timestamp)
     ]
     logging.info(f"train_data: {len(train_data)}")
     train_data = raw_data[
-        (raw_data.timestamp >= train_start_timestamp) & (raw_data.timestamp < test_start_timestamp)
+        (raw_data.timestamp >= train_start_timestamp)
+        & (raw_data.timestamp < test_start_timestamp)
     ]
     eval_data = raw_data[
-        (raw_data.timestamp >= eval_start_timestamp) & (raw_data.timestamp < eval_end_timestamp)
+        (raw_data.timestamp >= eval_start_timestamp)
+        & (raw_data.timestamp < eval_end_timestamp)
     ]
     test_data = raw_data[
-        (raw_data.timestamp >= test_start_timestamp) & (raw_data.timestamp < test_end_timestamp)
+        (raw_data.timestamp >= test_start_timestamp)
+        & (raw_data.timestamp < test_end_timestamp)
     ]
     logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
     logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
@@ -432,8 +404,14 @@ def get_data_module(env_mgr, simulation_mode = False):
         "beer_capital",
         "music_fest",
     ]
-    data_module = TimeSeriesDataModule(config, train_data, eval_data, test_data,
-                                       env_mgr.targets, simulation_mode=simulation_mode)
+    data_module = TimeSeriesDataModule(
+        config,
+        train_data,
+        eval_data,
+        test_data,
+        env_mgr.targets,
+        simulation_mode=simulation_mode,
+    )
     return data_module
 
 

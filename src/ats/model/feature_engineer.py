@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-from settings.settings import DUAL_TICKER, SINGLE_TICKER, SPARSE_PORTFOLIO
+from settings.settings import SINGLE_TICKER
 import finplot as fplt
 from dateutil import tz
 from datetime import datetime

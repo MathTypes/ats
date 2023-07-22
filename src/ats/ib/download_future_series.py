@@ -15,7 +15,6 @@ from datetime import datetime, timedelta
 import pytz
 
 # MAX: necessary imports for multi-threading
-from threading import Thread
 from queue import Queue
 
 from typing import List, Optional
@@ -52,7 +51,17 @@ def make_download_path(base_directory, security_type, size, contract: Contract) 
 
 
 class DownloadApp(EClient, wrapper.EWrapper):
-    def __init__(self, contracts: ContractList, start_date, end_date, duration, base_directory, size, data_type, security_type):
+    def __init__(
+        self,
+        contracts: ContractList,
+        start_date,
+        end_date,
+        duration,
+        base_directory,
+        size,
+        data_type,
+        security_type,
+    ):
         logging.info(f"DownloadApp: start_date:{start_date}, end_date:{end_date}")
         EClient.__init__(self, wrapper=self)
         wrapper.EWrapper.__init__(self)
@@ -66,7 +75,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         self.bar_data = defaultdict(list)
         self.security_type = security_type
         self.pending_ends = set()
-        #self.args = args
+        # self.args = args
         self.current = end_date
         self.data_type = data_type
         self.base_directory = base_directory
@@ -112,7 +121,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         )
 
     def save_data(self, contract: Contract, bars: BarDataList) -> None:
-        #logging.error(f"save_data, contract:{contract}, bars:{bars}")
+        # logging.error(f"save_data, contract:{contract}, bars:{bars}")
         data = [
             # MAX: IBAPI 10.15 does not provide bar.average anymore
             # MAX: IBAPI 10.15 has an attribute bar.wap (weighted average)
@@ -144,14 +153,21 @@ class DownloadApp(EClient, wrapper.EWrapper):
             ],
         )
         if self.daily_files():
-            path = "%s.csv" % make_download_path(self.base_directory, self.security_type, self.size, contract)
+            path = "%s.csv" % make_download_path(
+                self.base_directory, self.security_type, self.size, contract
+            )
         else:
             # since we fetched data until midnight, store data in
             # date file to which it belongs
-            #last = (self.current - timedelta(days=1)).strftime("%Y%m%d")
+            # last = (self.current - timedelta(days=1)).strftime("%Y%m%d")
             last = (self.current).strftime("%Y%m%d")
             path = os.path.sep.join(
-                [make_download_path(self.base_directory, self.security_type, self.size, contract), "%s.csv" % last,]
+                [
+                    make_download_path(
+                        self.base_directory, self.security_type, self.size, contract
+                    ),
+                    "%s.csv" % last,
+                ]
             )
         df.to_csv(path, index=False)
 
@@ -166,8 +182,10 @@ class DownloadApp(EClient, wrapper.EWrapper):
             ts = datetime.strptime(headTimestamp, "%Y%m%d-%H:%M:%S")
         else:
             ts = datetime.strptime(headTimestamp, "%Y%m%d %H:%M:%S")
-        logging.info("Head Timestamp for %s is %s, start_date:%s", contract, ts, self.start_date)
-        #if ts > self.start_date or self.args.max_days:
+        logging.info(
+            "Head Timestamp for %s is %s, start_date:%s", contract, ts, self.start_date
+        )
+        # if ts > self.start_date or self.args.max_days:
         if ts > self.start_date:
             logging.warning("Overriding start date, setting to %s", ts)
             self.start_date = ts  # TODO make this per contract
@@ -209,8 +227,10 @@ class DownloadApp(EClient, wrapper.EWrapper):
             for rid, bars in self.bar_data.items():
                 self.save_data(self.requests[rid], bars)
             if "/" in start:
-                start_vec = start.split()                
-                parsed_datetime = datetime.strptime(start_vec[0] + " " + start_vec[1], "%Y%m%d  %H:%M:%S")
+                start_vec = start.split()
+                parsed_datetime = datetime.strptime(
+                    start_vec[0] + " " + start_vec[1], "%Y%m%d  %H:%M:%S"
+                )
                 parsed_tz = pytz.timezone(start_vec[2])
                 self.current = parsed_datetime.astimezone(parsed_tz)
             else:
@@ -354,9 +374,11 @@ def validate_data_type(data_type: str) -> None:
         ],
     )
 
+
 INDEX_SYMBOLS = ["ES", "NQ", "RTY", "YM"]
 ENERGY_SYMBOLS = ["CL", "NG"]
 METAL_SYMBOLS = ["GC", "SI", "HG"]
+
 
 def get_exchange(symbol):
     if symbol in INDEX_SYMBOLS:
@@ -385,8 +407,9 @@ def get_local_symbol(symbol, cur_date):
             month_str = "Z"
             last_trade_date = last_trade_date.replace(month=12, day=1)
     year_str = str(cur_date.year % 10)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    logging.info(f"month_str:{month_str}, last_trade:{last_trade_date}")
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
+
 
 # borrowed from https://stackoverflow.com/a/13565185
 # as noted there, the calendar module has a function of its own
@@ -394,19 +417,20 @@ def last_day_of_month(any_day):
     next_month = any_day.replace(day=28) + timedelta(days=4)  # this will never fail
     return next_month - timedelta(days=next_month.day)
 
-def monthlist(begin,end):
+
+def monthlist(begin, end):
     result = []
     while True:
         if begin.month == 12:
-            next_month = begin.replace(year=begin.year+1,month=1, day=1)
+            next_month = begin.replace(year=begin.year + 1, month=1, day=1)
         else:
-            next_month = begin.replace(month=begin.month+1, day=1)
+            next_month = begin.replace(month=begin.month + 1, day=1)
         if next_month > end:
             break
-        result.append ([begin, last_day_of_month(begin)])
+        result.append([begin, last_day_of_month(begin)])
         begin = next_month
     # IB excludes start_date. So we go back one day.
-    result.append ([begin-timedelta(days=1), end])
+    result.append([begin - timedelta(days=1), end])
     return result
 
 
@@ -431,9 +455,7 @@ if __name__ == "__main__":
     argp.add_argument(
         "-d", "--debug", action="store_true", help="turn on debug logging"
     )
-    argp.add_argument(
-        "--max_days", action="store_true", help="turn on debug logging"
-    )
+    argp.add_argument("--max_days", action="store_true", help="turn on debug logging")
     argp.add_argument("--logfile", help="log to file")
     argp.add_argument(
         "-p", "--port", type=int, default=7496, help="local port for TWS connection"
@@ -459,7 +481,10 @@ if __name__ == "__main__":
         action=DateAction,
     )
     argp.add_argument(
-        "--end_date", help="Last day for bars", default=now, action=DateAction,
+        "--end_date",
+        help="Last day for bars",
+        default=now,
+        action=DateAction,
     )
     args = argp.parse_args()
 
@@ -490,10 +515,10 @@ if __name__ == "__main__":
     logging.debug(f"args={args}")
     for begin, end in monthlist(args.start_date, args.end_date):
         import shlex, subprocess
+
         command_line = f"python3 ib/download_fut.py {args.symbol} --start_date={begin.strftime('%Y%m%d')} --end_date={end.strftime('%Y%m%d')} --port={args.port} --duration='{args.duration}' --base-directory='{args.base_directory}' --security-type={args.security_type} --size='{args.size}' --data-type={args.data_type}"
         logging.info(f"command_line:{command_line}")
         new_args = shlex.split(command_line)
-        #p = subprocess.Popen(new_args) # Success!
+        # p = subprocess.Popen(new_args) # Success!
         with subprocess.Popen(new_args, stdout=subprocess.PIPE) as proc:
             logging.info(proc.stdout.read())
-

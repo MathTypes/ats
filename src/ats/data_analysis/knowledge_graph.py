@@ -56,7 +56,6 @@ def wikifier(text, lang="en", threshold=0.8):
         if ("wikiDataClasses" in annotation) and (
             any([el["enLabel"] in ENTITY_TYPES for el in annotation["wikiDataClasses"]])
         ):
-
             # Specify entity label
             if any(
                 [

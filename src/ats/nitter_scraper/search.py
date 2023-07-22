@@ -1,5 +1,4 @@
 """Module for scraping tweets"""
-from bs4 import BeautifulSoup
 import re
 import logging
 import datetime
@@ -23,28 +22,30 @@ def link_parser(tweet_link):
 
 def date_parser(tweet_date):
     split_datetime = tweet_date.split(",")
-    #logging.info(f"split_datetime:{split_datetime}")
+    # logging.info(f"split_datetime:{split_datetime}")
     tweet_date = split_datetime[0] + split_datetime[1][:6] + "-" + split_datetime[1][7:]
-    #logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
-    dt = datetime.datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z').replace(tzinfo=datetime.timezone.utc)
-    #logging.info(f"dt:{dt}")
+    # logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
+    dt = datetime.datetime.strptime(tweet_date, "%b %d %Y - %H:%M %p %Z").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    # logging.info(f"dt:{dt}")
     return dt
-    #tweet_date:Nov 1, 2014 · 11:45 PM UTC
-    #day, month, year = split_datetime[0].strip().split("/")
-    #hour, minute, second = split_datetime[1].strip().split(":")
+    # tweet_date:Nov 1, 2014 · 11:45 PM UTC
+    # day, month, year = split_datetime[0].strip().split("/")
+    # hour, minute, second = split_datetime[1].strip().split(":")
 
-    #data = {}
+    # data = {}
 
-    #data["day"] = int(day)
-    #data["month"] = int(month)
-    #data["year"] = int(year)
+    # data["day"] = int(day)
+    # data["month"] = int(month)
+    # data["year"] = int(year)
 
-    #data["hour"] = int(hour)
-    #data["minute"] = int(minute)
-    #data["second"] = int(second)
-    #logging.info(f"date:{data}")
+    # data["hour"] = int(hour)
+    # data["minute"] = int(minute)
+    # data["second"] = int(second)
+    # logging.info(f"date:{data}")
 
-    #return datetime.today()
+    # return datetime.today()
 
 
 def clean_stat(stat):
@@ -53,12 +54,17 @@ def clean_stat(stat):
 
 def stats_parser(tweet_stats):
     stats = {}
-    #logging.info(f"tweet_stats:{tweet_stats}")
+    # logging.info(f"tweet_stats:{tweet_stats}")
     for ic in tweet_stats.find(".icon-container"):
-        key = ic.find("span", first=True).attrs["class"][0].replace("icon", "").replace("-", "")
+        key = (
+            ic.find("span", first=True)
+            .attrs["class"][0]
+            .replace("icon", "")
+            .replace("-", "")
+        )
         value = ic.text
         stats[key] = value
-    #logging.info(f"stats:{stats}")
+    # logging.info(f"stats:{stats}")
     return stats
 
 
@@ -86,7 +92,7 @@ def url_parser(links):
 
 def parse_tweet(html) -> Dict:
     data = {}
-    #logging.info(f"parse_tweet:{html}")
+    # logging.info(f"parse_tweet:{html}")
     id, username, url = link_parser(html.find(".tweet-link", first=True))
     data["tweet_id"] = id
     data["tweet_url"] = url
@@ -146,17 +152,23 @@ def pagination_parser(timeline, address, username) -> str:
     next_page = list(timeline.find(".show-more")[-1].links)[0]
     if not "cursor" in next_page:
         return ""
-    #logging.info(f"next_page:{next_page}")
+    # logging.info(f"next_page:{next_page}")
     return f"{address}/{username}{next_page}"
 
-class HTMLSession2(HTMLSession):
 
+class HTMLSession2(HTMLSession):
     @property
     def browser(self):
         if not hasattr(self, "_browser"):
             self.loop = asyncio.get_event_loop()
-            self._browser = self.loop.run_until_complete(pyppeteer.launch(headless=True, args=['--no-sandbox', '--proxy-server=host.docker.internal:8118']))
+            self._browser = self.loop.run_until_complete(
+                pyppeteer.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--proxy-server=host.docker.internal:8118"],
+                )
+            )
         return self._browser
+
 
 def search_tweets(
     username: str,
@@ -178,9 +190,9 @@ def search_tweets(
 
     """
     url = f"{address}/{username}"
-    #session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
-    #session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
-    #session = HTMLSession2()
+    # session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
+    # session = HTMLSession(browser_args=["--proxy-server=host.docker.internal:8118"])
+    # session = HTMLSession2()
     session = HTMLSession()
 
     def gen_tweets(pages):
@@ -199,10 +211,10 @@ def search_tweets(
                 for item in timeline_items:
                     if "show-more" in item.attrs["class"]:
                         continue
-                    
+
                     try:
                         tweet_data = parse_tweet(item)
-                        #logging.info(f"tweet_data:{tweet_data}")
+                        # logging.info(f"tweet_data:{tweet_data}")
                         tweet = Tweet.from_dict(tweet_data)
 
                         if tweet.tweet_id == break_on_tweet_id:
@@ -211,13 +223,11 @@ def search_tweets(
                         yield tweet
                     except Exception as e:
                         logging.error(f"exception with {item}", e)
-                        pass
             if next_url:
                 response = session.get(next_url)
                 pages -= 1
             else:
                 logging.info("no next_url")
                 break
-
 
     yield from gen_tweets(pages)

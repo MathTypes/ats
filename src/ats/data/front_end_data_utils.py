@@ -24,21 +24,24 @@ def bbc_content(soup):
     # =================================================================================== #
     Global = cont2.find("div", {"aria-labelledby": "nw-c-Globalclimatesummit__title"})
     Global_cont = Global.find(
-        "div", {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
+        "div",
+        {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
     )
     # =================================================================================== #
     #                             3. climates                                             #
     # =================================================================================== #
     climate = cont2.find("div", {"aria-labelledby": "nw-c-Climatebasics__title"})
     climate_cont = climate.find(
-        "div", {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
+        "div",
+        {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
     )
     # =================================================================================== #
     #                             4. features                                             #
     # =================================================================================== #
     features = cont2.find("div", {"aria-labelledby": "nw-c-Features__title"})
     features_cont = features.find(
-        "div", {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
+        "div",
+        {"class": "nw-c-5-slice gel-layout gel-layout--equal b-pw-1280"},
     )
     # =================================================================================== #
     #                             5. Latest Updates                                       #

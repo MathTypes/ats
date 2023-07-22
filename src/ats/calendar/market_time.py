@@ -70,12 +70,12 @@ def get_option_expiration_time(cal, x_date):
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=38)
     )
-    curr_week_of_month = date_util.get_week_of_month(schedule.market_close[0])
-    curr_close_time = schedule.market_close[0].timestamp()
+    date_util.get_week_of_month(schedule.market_close[0])
+    schedule.market_close[0].timestamp()
     for idx in range(1, len(schedule.market_close), 3):
         if date_util.get_week_of_month(schedule.market_close[idx]) == 2:
             break
-        curr_close_time = schedule.market_close[idx].timestamp()
+        schedule.market_close[idx].timestamp()
     return get_weekly_close_time(cal, x_date)
 
 

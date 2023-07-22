@@ -1,36 +1,41 @@
 import os
-import time
 import datetime
 import logging
-from pprint import pprint
 
 import pandas as pd
 from nitter_scraper import NitterScraper
 from util import config_utils
 from util import logging_utils
 
+
 # borrowed from https://stackoverflow.com/a/13565185
 # as noted there, the calendar module has a function of its own
 def last_day_of_month(any_day):
-    next_month = any_day.replace(day=28) + datetime.timedelta(days=4)  # this will never fail
+    next_month = any_day.replace(day=28) + datetime.timedelta(
+        days=4
+    )  # this will never fail
     return next_month - datetime.timedelta(days=next_month.day)
 
+
 def monthlist(begin, end):
-    #begin = datetime.datetime.strptime(begin, "%Y-%m-%d")
-    #end = datetime.datetime.strptime(end, "%Y-%m-%d")
+    # begin = datetime.datetime.strptime(begin, "%Y-%m-%d")
+    # end = datetime.datetime.strptime(end, "%Y-%m-%d")
 
     result = []
     while True:
         if begin.month == 12:
-            next_month = begin.replace(year=begin.year+1,month=1, day=1)
+            next_month = begin.replace(year=begin.year + 1, month=1, day=1)
         else:
-            next_month = begin.replace(month=begin.month+1, day=1)
+            next_month = begin.replace(month=begin.month + 1, day=1)
         if next_month > end:
             break
-        result.append ([begin.strftime("%Y-%m-%d"),last_day_of_month(begin).strftime("%Y-%m-%d")])
+        result.append(
+            [begin.strftime("%Y-%m-%d"), last_day_of_month(begin).strftime("%Y-%m-%d")]
+        )
         begin = next_month
-    result.append ([begin.strftime("%Y-%m-%d"),end.strftime("%Y-%m-%d")])
+    result.append([begin.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")])
     return result
+
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
@@ -67,15 +72,16 @@ if __name__ == "__main__":
                 try:
                     tweets = nitter.search_tweets(query, pages=10000)
                     for tweet in tweets:
-                        #df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
+                        # df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
                         df2 = tweet.dict()
                         df2["tweet_id"] = str(df2["tweet_id"])
-                        df = df.append(df2, ignore_index = True)
+                        df = df.append(df2, ignore_index=True)
                 except Exception as e:
                     logging.info(f"e:{e}")
-                    pass
                 logging.info(f"df:{df}")
                 user_output_dir = os.path.join(args.output_dir, user)
                 if not os.path.exists(user_output_dir):
                     os.mkdir(user_output_dir)
-                df.to_csv(user_output_dir + "/" + user + "_" + since + "_" + until + ".csv")
+                df.to_csv(
+                    user_output_dir + "/" + user + "_" + since + "_" + until + ".csv"
+                )

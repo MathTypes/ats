@@ -149,11 +149,10 @@ def decode(the_type, fields, show_unset=False, use_unicode=False):
 
 
 def ExerciseStaticMethods(klass):
-
     import types
 
     # import code; code.interact(local=dict(globals(), **locals()))
-    for (_, var) in inspect.getmembers(klass):
+    for _, var in inspect.getmembers(klass):
         # print(name, var, type(var))
         if type(var) == types.FunctionType:
             print("Exercising: %s:" % var)

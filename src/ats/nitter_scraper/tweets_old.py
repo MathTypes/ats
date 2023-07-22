@@ -13,9 +13,9 @@ from nitter_scraper.schema import Tweet  # noqa: I100, I202
 
 def link_parser(tweet_link):
     logging.info(f"link:{tweet_link}")
-    #links = list(tweet_link.links)
-    #tweet_url = links[0]
-    #parts = links[0].split("/")
+    # links = list(tweet_link.links)
+    # tweet_url = links[0]
+    # parts = links[0].split("/")
     parts = tweet_link.split("/")
 
     tweet_id = parts[-1].replace("#m", "")
@@ -25,11 +25,13 @@ def link_parser(tweet_link):
 
 def date_parser(tweet_date):
     split_datetime = tweet_date.split(",")
-    #logging.info(f"split_datetime:{split_datetime}")
+    # logging.info(f"split_datetime:{split_datetime}")
     tweet_date = split_datetime[0] + split_datetime[1][:6] + "-" + split_datetime[1][7:]
-    #logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
-    dt = datetime.datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z').replace(tzinfo=datetime.timezone.utc)
-    #logging.info(f"dt:{dt}")
+    # logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
+    dt = datetime.datetime.strptime(tweet_date, "%b %d %Y - %H:%M %p %Z").replace(
+        tzinfo=datetime.timezone.utc
+    )
+    # logging.info(f"dt:{dt}")
     return dt
 
 
@@ -40,7 +42,12 @@ def clean_stat(stat):
 def stats_parser(tweet_stats):
     stats = {}
     for ic in tweet_stats.find(".icon-container"):
-        key = ic.find("span", first=True).attrs["class"][0].replace("icon", "").replace("-", "")
+        key = (
+            ic.find("span", first=True)
+            .attrs["class"][0]
+            .replace("icon", "")
+            .replace("-", "")
+        )
         value = ic.text
         stats[key] = value
     return stats
@@ -69,7 +76,7 @@ def url_parser(links):
 
 
 def parse_tweet(html) -> Dict:
-    logging.info(f'parse_tweet:{html}')
+    logging.info(f"parse_tweet:{html}")
     id, username, url = link_parser(html.find(".a", first=True))
     data["tweet_id"] = id
     data["tweet_url"] = url
@@ -160,21 +167,21 @@ def get_tweets(
         while pages > 0:
             if response.status_code == 200:
                 logging.info(f"response:{response.html.html}")
-                #timeline = timeline_parser(response.html)
-                #logging.info(f"timeline:{timeline}")
+                # timeline = timeline_parser(response.html)
+                # logging.info(f"timeline:{timeline}")
 
-                #next_url = pagination_parser(timeline, address, username)
-                #if not next_url:
+                # next_url = pagination_parser(timeline, address, username)
+                # if not next_url:
                 #    logging.info("no next_url")
                 #    pages = 0
                 #    break
-                soup = BeautifulSoup(response.html.html,'html.parser') 
+                soup = BeautifulSoup(response.html.html, "html.parser")
                 pattern = re.compile(r"\/.*?#m")
                 timeline_items = soup.findAll("a", href=pattern)
 
                 for item in timeline_items:
                     logging.info(f"item:{item}")
-                    #if "show-more" in item.attrs["class"]:
+                    # if "show-more" in item.attrs["class"]:
                     #    continue
 
                     tweet_data = parse_tweet(item)
@@ -187,9 +194,8 @@ def get_tweets(
 
                     yield tweet
                 break
-            #if next_url:
+            # if next_url:
             #    response = session.get(next_url)
             #    pages -= 1
-
 
     yield from gen_tweets(pages)

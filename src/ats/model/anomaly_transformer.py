@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .attn import AnomalyAttention, AttentionLayer
-from .embed import DataEmbedding, TokenEmbedding
+from .embed import DataEmbedding
 
 
 class EncoderLayer(nn.Module):
@@ -19,10 +19,7 @@ class EncoderLayer(nn.Module):
         self.activation = F.relu if activation == "relu" else F.gelu
 
     def forward(self, x, attn_mask=None):
-        new_x, attn, mask, sigma = self.attention(
-            x, x, x,
-            attn_mask=attn_mask
-        )
+        new_x, attn, mask, sigma = self.attention(x, x, x, attn_mask=attn_mask)
         x = x + self.dropout(new_x)
         y = x = self.norm1(x)
         y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
@@ -55,8 +52,19 @@ class Encoder(nn.Module):
 
 
 class AnomalyTransformer(nn.Module):
-    def __init__(self, win_size, enc_in, c_out, d_model=50, n_heads=8, e_layers=3, d_ff=50,
-                 dropout=0.0, activation='gelu', output_attention=True):
+    def __init__(
+        self,
+        win_size,
+        enc_in,
+        c_out,
+        d_model=50,
+        n_heads=8,
+        e_layers=3,
+        d_ff=50,
+        dropout=0.0,
+        activation="gelu",
+        output_attention=True,
+    ):
         super(AnomalyTransformer, self).__init__()
         self.output_attention = output_attention
 
@@ -68,15 +76,23 @@ class AnomalyTransformer(nn.Module):
             [
                 EncoderLayer(
                     AttentionLayer(
-                        AnomalyAttention(win_size, False, attention_dropout=dropout, output_attention=output_attention),
-                        d_model, n_heads),
+                        AnomalyAttention(
+                            win_size,
+                            False,
+                            attention_dropout=dropout,
+                            output_attention=output_attention,
+                        ),
+                        d_model,
+                        n_heads,
+                    ),
                     d_model,
                     d_ff,
                     dropout=dropout,
-                    activation=activation
-                ) for l in range(e_layers)
+                    activation=activation,
+                )
+                for l in range(e_layers)
             ],
-            norm_layer=torch.nn.LayerNorm(d_model)
+            norm_layer=torch.nn.LayerNorm(d_model),
         )
 
         self.projection = nn.Linear(d_model, c_out, bias=True)

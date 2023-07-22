@@ -1,14 +1,5 @@
-import datetime
-import logging
-import unittest.mock as mock
-
-import numpy as np
 import pandas as pd
-import pandas_market_calendars as mcal
-import pytz
-import torch
 
-from ats.calendar import market_time
 from ats.market_data import data_util
 from ats.util import logging_utils
 
@@ -31,6 +22,7 @@ def test_group_features():
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     assert row_two["close_back"] == 0.25
+
 
 if __name__ == "__main__":
     logging_utils.init_logging()

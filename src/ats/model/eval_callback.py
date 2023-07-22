@@ -1,15 +1,9 @@
 import logging
 from typing import Any, List
 
-import numpy as np
-from omegaconf import OmegaConf
-import pandas as pd
-import PIL
-import plotly.graph_objects as go
 from lightning.pytorch.callbacks.callback import Callback
 from lightning.pytorch.utilities.types import STEP_OUTPUT
-from plotly.subplots import make_subplots
-from pytorch_forecasting.utils import create_mask, detach, to_list
+from pytorch_forecasting.utils import detach, to_list
 import torch
 import wandb
 from wandb.keras import WandbEvalCallback
@@ -80,13 +74,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             self.val_x_batch.append(val_x)
             self.val_y_batch.append(val_y)
             self.indices_batch.append(indices)
-            logging.info(f"batch_size:{len(val_x)}, indices_batch:{len(self.indices_batch)}")
+            logging.info(
+                f"batch_size:{len(val_x)}, indices_batch:{len(self.indices_batch)}"
+            )
         self.validation = data_module.validation
         self.matched_eval_data = data_module.eval_data
         self.returns_target_name = self.validation.target_names[0]
         transformer = self.validation.get_transformer(self.returns_target_name)
         logging.info(f"transformer:{transformer}")
-
 
     def on_train_end(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
@@ -142,7 +137,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
     def add_ground_truth(self, logs=None):
         for batch_idx in range(self.num_samples):
             pass
-        
+
     def add_model_predictions(self, epoch, logs=None):
         if epoch % self.every_n_epochs:
             return
@@ -178,7 +173,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             orig_y = self.val_y_batch[batch_idx]
             indices = self.indices_batch[batch_idx]
             y_close = orig_y[0]
-            # TODO: fix following hack to deal with multiple targets                                                                                     
+            # TODO: fix following hack to deal with multiple targets
             if isinstance(y_close, list):
                 y_close = y_close[0]
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
@@ -197,9 +192,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 for val in orig_y
             ]
             kwargs = {"nolog": True}
-            #logging.info(f"x:{x.device}")
-            #logging.info(f"y:{y.device}")
-            #logging.info(f"self.pl_module:{self.pl_module.device}")
+            # logging.info(f"x:{x.device}")
+            # logging.info(f"y:{y.device}")
+            # logging.info(f"self.pl_module:{self.pl_module.device}")
             log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
             # logging.info(f"out:{out}")
             prediction_kwargs = {"reduction": None}
@@ -233,9 +228,23 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             )
             cnt = 0
             for idx in range(len(y_hats)):
-                row = viz_utils.create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
-                                               self.matched_eval_data, x, self.config, self.pl_module, out,
-                                               self.target_size, interp_output, rmse, mae)
+                row = viz_utils.create_viz_row(
+                    idx,
+                    y_hats,
+                    y_hats_cum,
+                    y_close,
+                    y_close_cum_sum,
+                    indices,
+                    self.matched_eval_data,
+                    x,
+                    self.config,
+                    self.pl_module,
+                    out,
+                    self.target_size,
+                    interp_output,
+                    rmse,
+                    mae,
+                )
                 if row:
                     data_table.add_data(
                         row["ticker"],  # 0 ticker
@@ -260,7 +269,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                         row["rmse"],
                         row["mae"],
                     )
-                    cnt+=1
+                    cnt += 1
             del x
             del y
             del y_raws
@@ -281,6 +290,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         assert wandb.run is not None
         wandb.run.use_artifact(data_artifact)
         del data_table
-        #data_artifact.wait()
-        
+        # data_artifact.wait()
+
         return []

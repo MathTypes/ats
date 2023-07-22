@@ -5,15 +5,10 @@ import logging
 import os
 import sys
 
-import numpy as np
 import pandas as pd
 from pyarrow import csv
-import pytz
-import pyarrow as pa
 import ray
 from ray.util.dask import enable_dask_on_ray
-
-from settings.default import PINNACLE_DATA_CUT, PINNACLE_DATA_FOLDER
 
 
 def pull_sample_data(ticker: str, intraday: bool) -> pd.DataFrame:

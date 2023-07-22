@@ -5,33 +5,19 @@ from typing import Type
 
 # find optimal learning rate
 from lightning.pytorch.tuner import Tuner
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
+from lightning.pytorch.callbacks import LearningRateMonitor
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import (
     ModelCheckpoint,
-    EarlyStopping,
     LearningRateMonitor,
 )
 from lightning.pytorch.loggers import WandbLogger
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from torch.utils.data import DataLoader, Dataset, Sampler
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, SequentialSampler
-import wandb
-from wandb.keras import WandbCallback
-from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
 
-from ats.market_data import data_module
 from ats.model.eval_callback import WandbClfEvalCallback
-from ats.model.log_prediction import (
-    LogPredictionsCallback,
-    LSTMLogPredictionsCallback,
-    TSLogPredictionsCallback,
-)
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -161,10 +147,10 @@ class Pipeline:
             ],
             devices=devices,
             accelerator="gpu",
-            #accumulate_grad_batches=8,
+            # accumulate_grad_batches=8,
             # stochastic_weight_avg=True,
             # precision="bf16",
-            #gradient_clip_val=0.5,
+            # gradient_clip_val=0.5,
             default_root_dir=LIGHTNING_DIR,
             log_every_n_steps=LOG_EVERY_N_STEPS,
             detect_anomaly=True,
@@ -190,16 +176,16 @@ class Pipeline:
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
+
 import torch
 import torch.nn as nn
 from typing import Type
 import numpy as np
 import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader, Dataset, Sampler
-import pandas as pd
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class NormalizationIdentity:
     """
@@ -311,7 +297,11 @@ def _split_series_time_dims(x: torch.Tensor, target_shape: torch.Size) -> torch.
 
 
 def _easy_mlp(
-    input_dim: int, hidden_dim: int, output_dim: int, num_layers: int, activation: Type[nn.Module]
+    input_dim: int,
+    hidden_dim: int,
+    output_dim: int,
+    num_layers: int,
+    activation: Type[nn.Module],
 ) -> nn.Sequential:
     """
     Generate a MLP with the given parameters.
@@ -322,17 +312,18 @@ def _easy_mlp(
     elayers += [nn.Linear(hidden_dim, output_dim)]
     return nn.Sequential(*elayers)
 
+
 def plot_single_series(samples, target, timesteps, index):
     s_samples = samples[0, index, :, :].detach().cpu().numpy()
     s_timesteps = timesteps[0, :].cpu().numpy()
     s_target = target[0, index, :].cpu().numpy()
-    
+
     plt.figure()
-    
+
     for zorder, quant, color, label in [
-        [1, 0.05, (0.75,0.75,1), "5%-95%"],
-        [2, 0.10, (0.25,0.25,1), "10%-90%"],
-        [3, 0.25, (0,0,0.75), "25%-75%"],
+        [1, 0.05, (0.75, 0.75, 1), "5%-95%"],
+        [2, 0.10, (0.25, 0.25, 1), "10%-90%"],
+        [3, 0.25, (0, 0, 0.75), "25%-75%"],
     ]:
         plt.fill_between(
             s_timesteps,
@@ -346,24 +337,35 @@ def plot_single_series(samples, target, timesteps, index):
     plt.plot(
         s_timesteps,
         np.quantile(s_samples, 0.5, axis=1),
-        color=(0.5,0.5,0.5),
+        color=(0.5, 0.5, 0.5),
         linewidth=3,
         label="50%",
         zorder=4,
     )
-    
-    plt.plot(s_timesteps, s_target, color=(0, 0, 0), linewidth=2, zorder=5, label="ground truth")
+
+    plt.plot(
+        s_timesteps,
+        s_target,
+        color=(0, 0, 0),
+        linewidth=2,
+        zorder=5,
+        label="ground truth",
+    )
     handles, labels = plt.gca().get_legend_handles_labels()
     order = [1, 2, 3, 4, 0]
     plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
     plt.show()
 
-def hourly_results(v_plus, bid_price, v_neg, offer_price, da, rt):    
-    return (v_plus * (da <= bid_price) * (rt - da)) + (v_neg * (offer_price < da) * (da - rt))
+
+def hourly_results(v_plus, bid_price, v_neg, offer_price, da, rt):
+    return (v_plus * (da <= bid_price) * (rt - da)) + (
+        v_neg * (offer_price < da) * (da - rt)
+    )
 
 
-def worst_loss(results):    
+def worst_loss(results):
     return min(results.sum(axis=1))
+
 
 def best_loss(results):
     return max(results.sum(axis=1))

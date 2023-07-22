@@ -1,21 +1,18 @@
 # importing libraries and packages
 # from absl import logging
 # Example of usage:
-# YTHONPATH=. python3 twitter/selenium_scrape.py --symbol=qqq --start_date=2022-04-01 --end_date=2023-04-26 --output_dir=/Volumes/Seagate\ Portable\ Drive/data/selenium/user --email=alexsimon788213 --browser_profile=/Users/jianjunchen/repo/ats-1/src 
+# YTHONPATH=. python3 twitter/selenium_scrape.py --symbol=qqq --start_date=2022-04-01 --end_date=2023-04-26 --output_dir=/Volumes/Seagate\ Portable\ Drive/data/selenium/user --email=alexsimon788213 --browser_profile=/Users/jianjunchen/repo/ats-1/src
 #
-import argparse
 import logging
 import datetime
-import os
 
-import pandas as pd
 
-from twitter_scraper_selenium import get_profile_details
-from twitter_scraper_selenium import scrape_profile, scrape_keyword
+from twitter_scraper_selenium import scrape_keyword
 from util import config_utils
 from util import logging_utils
 import logging
-#from google.cloud import firestore_v1 as firestore
+
+# from google.cloud import firestore_v1 as firestore
 from firebase_admin import firestore
 from util import logging_utils
 
@@ -23,13 +20,15 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase import firebase
 
+
 def read_collection(db, query):
-    doc_ref = db.collection('unique_ids').document(query)
+    doc_ref = db.collection("unique_ids").document(query)
     doc = doc_ref.get()
     if doc.exists:
         return doc.to_dict()
     else:
         return None
+
 
 if __name__ == "__main__":
     parser = config_utils.get_arg_parser("Scape tweet")
@@ -67,7 +66,9 @@ if __name__ == "__main__":
     cred = credentials.Certificate(args.firebase_cert)
     default_app = firebase_admin.initialize_app(cred)
     db = firestore.client()
-    firebase = firebase.FirebaseApplication('https://keen-rhino-386415.firebaseio.com', None)
+    firebase = firebase.FirebaseApplication(
+        "https://keen-rhino-386415.firebaseio.com", None
+    )
 
     until = datetime.datetime.today()
     for symbol in args.symbol.split(","):
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         logging.info(f"browser_profile:{browser_profile}")
         logging.info(f"args.login:{args.login}")
         data = scrape_keyword(
-            keyword = f"{keyword}",
+            keyword=f"{keyword}",
             output_format="",
             browser="chrome",
             since_id=since_id,
@@ -107,14 +108,14 @@ if __name__ == "__main__":
             directory="",
             browser_profile=browser_profile,
             headless=args.headless,
-            email = email,
-            login = args.login
+            email=email,
+            login=args.login,
         )
         last_tweet_id = int(since_id) if since_id else None
         if data:
             for key, value in data.items():
                 logging.info(f"key:{key}, value:{value}")
-                db.collection(u'recent_tweet_symbol').document(key).set(value)
+                db.collection("recent_tweet_symbol").document(key).set(value)
                 if not last_tweet_id or int(value["tweet_id"]) > last_tweet_id:
                     last_tweet_id = int(value["tweet_id"])
-        db.collection(u'unique_ids').document(id_key).set({"last_id":last_tweet_id})
+        db.collection("unique_ids").document(id_key).set({"last_id": last_tweet_id})

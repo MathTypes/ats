@@ -1,11 +1,8 @@
 import argparse
 import datetime
-from dateutil.parser import parse, ParserError
-import functools
+from dateutil.parser import parse
 import logging
 import os
-import time
-import traceback
 
 import pandas as pd
 

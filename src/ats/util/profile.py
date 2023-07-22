@@ -6,14 +6,14 @@ import inspect
 
 
 def elapsed_since(start):
-    #return time.strftime("%H:%M:%S", time.gmtime(time.time() - start))
+    # return time.strftime("%H:%M:%S", time.gmtime(time.time() - start))
     elapsed = time.time() - start
     if elapsed < 1:
-        return str(round(elapsed*1000,2)) + "ms"
+        return str(round(elapsed * 1000, 2)) + "ms"
     if elapsed < 60:
         return str(round(elapsed, 2)) + "s"
     if elapsed < 3600:
-        return str(round(elapsed/60, 2)) + "min"
+        return str(round(elapsed / 60, 2)) + "min"
     else:
         return str(round(elapsed / 3600, 2)) + "hrs"
 
@@ -26,9 +26,9 @@ def get_process_memory():
 
 def format_bytes(bytes):
     if abs(bytes) < 1000:
-        return str(bytes)+"B"
+        return str(bytes) + "B"
     elif abs(bytes) < 1e6:
-        return str(round(bytes/1e3,2)) + "kB"
+        return str(round(bytes / 1e3, 2)) + "kB"
     elif abs(bytes) < 1e9:
         return str(round(bytes / 1e6, 2)) + "MB"
     else:
@@ -42,15 +42,19 @@ def profile(func, *args, **kwargs):
         result = func(*args, **kwargs)
         elapsed_time = elapsed_since(start)
         rss_after, vms_after, shared_after = get_process_memory()
-        print("Profiling: {:>20}  RSS: {:>8} | VMS: {:>8} | SHR {"
-              ":>8} | time: {:>8}"
-            .format("<" + func.__name__ + ">",
-                    format_bytes(rss_after - rss_before),
-                    format_bytes(vms_after - vms_before),
-                    format_bytes(shared_after - shared_before),
-                    elapsed_time))
+        print(
+            "Profiling: {:>20}  RSS: {:>8} | VMS: {:>8} | SHR {"
+            ":>8} | time: {:>8}".format(
+                "<" + func.__name__ + ">",
+                format_bytes(rss_after - rss_before),
+                format_bytes(vms_after - vms_before),
+                format_bytes(shared_after - shared_before),
+                elapsed_time,
+            )
+        )
         return result
+
     if inspect.isfunction(func):
         return wrapper
     elif inspect.ismethod(func):
-        return wrapper(*args,**kwargs)
+        return wrapper(*args, **kwargs)

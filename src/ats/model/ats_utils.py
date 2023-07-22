@@ -8,21 +8,19 @@ os.chdir("../../..")
 import warnings
 
 import lightning.pytorch as pl
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.loggers import TensorBoardLogger
 import numpy as np
 import pandas as pd
-import torch
 
-from ats.pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
+from ats.pytorch_forecasting import (
+    Baseline,
+    TemporalFusionTransformer,
+    TimeSeriesDataSet,
+)
 from ats.pytorch_forecasting.data import GroupNormalizer
 from ats.pytorch_forecasting.data.examples import get_stallion_data
-from ats.pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
-from ats.pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
-    optimize_hyperparameters,
-)
+from ats.pytorch_forecasting.metrics import MAE, SMAPE, QuantileLoss
 
 data = get_stallion_data()
 

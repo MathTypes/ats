@@ -3,7 +3,6 @@ import altair as alt
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
-from collections import Counter
 import streamlit as st
 from nltk import pos_tag, word_tokenize
 

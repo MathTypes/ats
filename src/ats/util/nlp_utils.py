@@ -1,22 +1,12 @@
-import datetime
 import functools
-import logging
 import os
-import pandas as pd
 
 import nltk
 import spacy
-from textblob import TextBlob
 
 import matplotlib.pyplot as plt
-from PIL import Image
-import plotly.express as px
-import pyLDAvis
 import streamlit as st
-from streamlit import components
 from wordcloud import WordCloud
-
-from data_analysis.topic_modeling import LatentDirichletAllocation
 
 
 def draw_wordcloud(news_df, stop, asset="all assets", start_date=None, end_date=None):

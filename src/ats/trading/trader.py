@@ -1,26 +1,16 @@
 from collections import defaultdict
 import datetime
 import logging
-from typing import List
 
 import pandas as pd
 import pytz
-from pytorch_forecasting.utils import create_mask, detach, to_list
+from pytorch_forecasting.utils import detach
 import torch
 
 from ats.calendar import market_time
-from ats.market_data.data_module import (
-    TransformerDataModule,
-    LSTMDataModule,
-    TimeSeriesDataModule,
-)
-from ats.model.models import AttentionEmbeddingLSTM
-from ats.model import model_utils
-from ats.model.utils import Pipeline
 from ats.model import viz_utils
 from ats.prediction import prediction_utils
 from ats.optimizer import position_utils
-from ats.util.profile import profile
 
 
 class Trader(object):
@@ -44,18 +34,20 @@ class Trader(object):
         last_data = train_data.iloc[-1]
         logging.info(f"last_data:{last_data}")
         self.last_px_map[last_data.ticker] = last_data.close
-        self.last_position_map = defaultdict(lambda:0, {})
+        self.last_position_map = defaultdict(lambda: 0, {})
         self.first_update = True
         initial_positions = torch.tensor([0])
         self.config = config
         logging.info(f"sigma:{self.config.trading.sigma}")
         self.market_cal = market_cal
         self.model = model
-        self.optimizer = position_utils.Optimizer(name="opt",
-                                                  max_loss=self.config.trading.max_loss,
-                                                  gamma=self.config.trading.gamma,
-                                                  sigma=self.config.trading.sigma,
-                                                  initial_positions=initial_positions)
+        self.optimizer = position_utils.Optimizer(
+            name="opt",
+            max_loss=self.config.trading.max_loss,
+            gamma=self.config.trading.gamma,
+            sigma=self.config.trading.sigma,
+            initial_positions=initial_positions,
+        )
         self.wandb_logger = wandb_logger
         self.train_dataset = train_dataset
         self.train_data = train_data
@@ -106,7 +98,12 @@ class Trader(object):
             self.last_time_idx, self.last_time_idx + len(new_data)
         )
         logging.info(f"running step {predict_nyc_time}")
-        self.train_dataset.add_new_data(new_data, self.config.job.time_interval_minutes, self.market_cal, self.market_data_mgr)
+        self.train_dataset.add_new_data(
+            new_data,
+            self.config.job.time_interval_minutes,
+            self.market_cal,
+            self.market_data_mgr,
+        )
         predict_time_idx = new_data.time_idx.max()
         # logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
         logging.info(
@@ -180,7 +177,7 @@ class Trader(object):
             rmse,
             mae,
             filter_small=False,
-            show_viz=log_viz
+            show_viz=log_viz,
         )
         logging.info(f"return from viz_row:{row}")
         new_data_row = new_data.iloc[0]

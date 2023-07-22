@@ -162,13 +162,21 @@ def html_parser(html: HTML) -> Dict:
 
     profile_statlist = html.find(".profile-statlist", first=True)
 
-    elements["tweets_count"] = profile_statlist.find(".posts .profile-stat-num", first=True)
+    elements["tweets_count"] = profile_statlist.find(
+        ".posts .profile-stat-num", first=True
+    )
 
-    elements["following_count"] = profile_statlist.find(".following .profile-stat-num", first=True)
+    elements["following_count"] = profile_statlist.find(
+        ".following .profile-stat-num", first=True
+    )
 
-    elements["followers_count"] = profile_statlist.find(".followers .profile-stat-num", first=True)
+    elements["followers_count"] = profile_statlist.find(
+        ".followers .profile-stat-num", first=True
+    )
 
-    elements["likes_count"] = profile_statlist.find(".likes .profile-stat-num", first=True)
+    elements["likes_count"] = profile_statlist.find(
+        ".likes .profile-stat-num", first=True
+    )
 
     elements = {k: v for k, v in elements.items() if v is not None}
 

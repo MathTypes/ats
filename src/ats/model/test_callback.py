@@ -1,14 +1,9 @@
 from io import BytesIO
 import logging
-from omegaconf import OmegaConf
 import PIL
-import pandas as pd
-import torch
-from wandb.keras import WandbEvalCallback
 import wandb
 from lightning.pytorch.callbacks.callback import Callback
-from lightning.pytorch.utilities.types import STEP_OUTPUT
-from pytorch_forecasting.utils import create_mask, detach, to_list
+from pytorch_forecasting.utils import to_list
 
 
 class TestEvalCallback(Callback):

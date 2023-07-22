@@ -1,25 +1,20 @@
 # Usage
 #   PYTHONPATH=.. streamlit run app.py -- --neo4j_host=bolt://34.94.237.162:7687 --neo4j_pass=Tq7ks8zY --ts_root=../../ts/1_min
 #
-import argparse
-import functools
 import datetime
 import logging
 import model_prediction
 import news_analyzer
-import nltk
 import os
 import pandas as pd
 import rvl
 import sentiment_analyzer
-import spacy
 import streamlit as st
 import token_analyzer
 import trading_data
 import visualization
-from PIL import Image
 
-from data.front_end_utils import data_process, subject_analysis
+from data.front_end_utils import data_process
 from market_data import ts_read_api
 from neo4j_util import sentiment_api
 from util import config_utils
@@ -64,7 +59,9 @@ max_date = datetime.date.today()
 def load_data(from_date, to_date):
     df_vec = []
     for asset in futureAssetCodes:
-        date_df = ts_read_api.get_time_series_from_monthly(asset, from_date, to_date, "1_min")
+        date_df = ts_read_api.get_time_series_from_monthly(
+            asset, from_date, to_date, "1_min"
+        )
         date_df["assetName"] = asset
         date_df["assetCode"] = asset
         df_vec.append(date_df)

@@ -1,12 +1,8 @@
 import datetime
 import logging
-import os
-import sys
-import argparse
-import pandas as pd
 
 from nlp.keyword_util import add_subject_keyword
-from neo4j_util.sentiment_api import get_unprocessed_tweets, get_tweet_replies_v2
+from neo4j_util.sentiment_api import get_unprocessed_tweets
 from neo4j_util.neo4j_tweet_util import Neo4j
 from util import config_utils
 from util import logging_utils

@@ -3,10 +3,8 @@
 #
 import dotenv
 import os
-import time
 import datetime
 import logging
-from pprint import pprint
 import twarc
 import pandas as pd
 from util import config_utils
@@ -59,30 +57,37 @@ if __name__ == "__main__":
         last_tweet_id = get_last_tweet_id(symbol_output_dir)
         since = start_date.strftime("%Y%m%d%H%M%S")
         until = end_date.strftime("%Y%m%d%H%M%S")
-        output_file = symbol_output_dir + "/" + symbol + "_" + since + "_" + until + ".csv"
-        logging.info(f"processing since:{since} until:{until}, output_file:{output_file}, last_tweet_id:{last_tweet_id}")
-        if not os.path.exists(output_file):                    
+        output_file = (
+            symbol_output_dir + "/" + symbol + "_" + since + "_" + until + ".csv"
+        )
+        logging.info(
+            f"processing since:{since} until:{until}, output_file:{output_file}, last_tweet_id:{last_tweet_id}"
+        )
+        if not os.path.exists(output_file):
             df = pd.DataFrame()
             try:
-                for response_page in T.search_recent(f"{symbol}", start_time=start_date, end_time=end_date, since_id=last_tweet_id):
-                    #logging.info(f"response_page:{response_page}")
+                for response_page in T.search_recent(
+                    f"{symbol}",
+                    start_time=start_date,
+                    end_time=end_date,
+                    since_id=last_tweet_id,
+                ):
+                    # logging.info(f"response_page:{response_page}")
                     for tweet in response_page["data"]:
                         logging.info(f"tweet:{tweet}")
                         # convert created_at to datetime with utc timezone
-                        #dt = tweet["created_at"].strip("Z")
-                        #dt = datetime.datetime.fromisoformat(dt)
-                        #dt = dt.replace(tzinfo=datetime.timezone.utc)
-                        #df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
+                        # dt = tweet["created_at"].strip("Z")
+                        # dt = datetime.datetime.fromisoformat(dt)
+                        # dt = dt.replace(tzinfo=datetime.timezone.utc)
+                        # df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
                         try:
                             df2 = tweet
                             df2["tweet_id"] = str(df2["id"])
-                            df = df.append(df2, ignore_index = True)
+                            df = df.append(df2, ignore_index=True)
                         except Exception as e:
                             logging.info(f"e:{e}")
-                            pass
             except Exception as e:
                 logging.info(f"e:{e}")
-                pass
             logging.info(f"df:{df}")
             if not os.path.exists(symbol_output_dir):
                 os.makedirs(symbol_output_dir)

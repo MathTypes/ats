@@ -6,21 +6,13 @@ warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 import warnings
 
 import lightning.pytorch as pl
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-from lightning.pytorch.loggers import TensorBoardLogger
 import numpy as np
 import pandas as pd
-import torch
 
 from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
 from pytorch_forecasting.data import GroupNormalizer
-from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
-    optimize_hyperparameters,
-)
+from pytorch_forecasting.metrics import MAE, QuantileLoss
 
-from pytorch_forecasting.data.examples import get_stallion_data
-from datasets import generate_stock_returns
 from util import logging_utils
 
 from math import ceil

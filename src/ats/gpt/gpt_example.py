@@ -1,11 +1,6 @@
 import os
 import sys
-import pandas as pd
 from sqlalchemy import create_engine
-import ipywidgets as widgets
-from IPython.display import display
-from IPython.display import update_display
-from IPython.display import display_pretty
 
 
 SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI")

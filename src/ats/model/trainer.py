@@ -15,17 +15,11 @@ import pandas as pd
 import torch
 
 from lightning.pytorch.tuner import Tuner
-from pytorch_forecasting import Baseline, TemporalFusionTransformer, TimeSeriesDataSet
-from pytorch_forecasting.data import GroupNormalizer
-from pytorch_forecasting.metrics import MAE, SMAPE, PoissonLoss, QuantileLoss
-from pytorch_forecasting.models.temporal_fusion_transformer.tuning import (
-    optimize_hyperparameters,
-)
+from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
+from pytorch_forecasting.metrics import MAE, SMAPE, QuantileLoss
 from torch.utils.data.sampler import SequentialSampler
-from pytorch_forecasting.data import RollingGroupedSampler, TimeSynchronizedBatchSampler
+from pytorch_forecasting.data import RollingGroupedSampler
 
-from pytorch_forecasting.data.examples import get_stallion_data
-from datasets import generate_stock_returns
 from util import logging_utils
 from util import config_utils
 from math import ceil

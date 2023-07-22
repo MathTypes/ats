@@ -1,19 +1,17 @@
 import datetime
 import functools
-import gc
 import logging
 import os
 import spacy_streamlit
 import altair as alt
-from streamlit_vega_lite import altair_component, vega_lite_component
-from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
+from streamlit_vega_lite import altair_component
+from st_aggrid import GridOptionsBuilder, AgGrid
 
 import panel as pn
 
 pn.extension("vega")
 import visualization
 import matplotlib.pyplot as plt
-from util import nlp_utils
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -21,7 +19,6 @@ import plotly.graph_objs as go
 import streamlit as st
 
 # from app_dir.data_sourcing import Data_Sourcing, data_update
-from app_dir.data_sourcing import Data_Sourcing
 from app_dir.graph import Visualization
 from app_dir.indicator_analysis import Indications
 from eda_utils import generate_color
@@ -93,13 +90,20 @@ def render_sentiment_analysis(
 
     def mis_value_graph(data):
         data = [
-            go.Bar(x=data.columns, y=data.isnull().sum(), name="Unknown Assets",),
+            go.Bar(
+                x=data.columns,
+                y=data.isnull().sum(),
+                name="Unknown Assets",
+            ),
         ]
         layout = go.Layout(
             xaxis=dict(title="Columns"),
             yaxis=dict(title="Value Count"),
             showlegend=True,
-            legend=dict(yanchor="bottom", xanchor="right",),
+            legend=dict(
+                yanchor="bottom",
+                xanchor="right",
+            ),
         )
         fig = go.Figure(data=data, layout=layout)
         st.plotly_chart(fig, use_container_width=True)
@@ -136,7 +140,10 @@ def render_sentiment_analysis(
             xaxis=dict(title="Asset codes"),
             yaxis=dict(title="Value Count"),
             showlegend=True,
-            legend=dict(yanchor="bottom", xanchor="right",),
+            legend=dict(
+                yanchor="bottom",
+                xanchor="right",
+            ),
         )
         fig = go.Figure(data=data, layout=layout)
 
@@ -191,7 +198,11 @@ def render_sentiment_analysis(
                 autosize=True,
                 title=f"Top {no_of_drops} months by standard deviation of price change within a day",
                 hovermode="closest",
-                yaxis=dict(title="price_diff", ticklen=5, gridwidth=2,),
+                yaxis=dict(
+                    title="price_diff",
+                    ticklen=5,
+                    gridwidth=2,
+                ),
                 showlegend=False,
             )
             fig = go.Figure(data=data, layout=layout)
@@ -203,7 +214,11 @@ def render_sentiment_analysis(
             assets = assetNames
             assets.insert(0, "All assets")
 
-            selected_asset = st.selectbox("Please select the assets", assets, index=0,)
+            selected_asset = st.selectbox(
+                "Please select the assets",
+                assets,
+                index=0,
+            )
 
             time_period = st.date_input(
                 "From/To", [from_date, to_date], min_value=from_date, max_value=to_date
@@ -284,7 +299,10 @@ def render_sentiment_analysis(
                     ),
                 ),
                 # legend=dict(orientation="h")
-                legend=dict(yanchor="bottom", xanchor="right",),
+                legend=dict(
+                    yanchor="bottom",
+                    xanchor="right",
+                ),
             )
 
             st.plotly_chart(dict(data=data1, layout=layout), use_container_width=True)
@@ -398,7 +416,6 @@ def render_sentiment_analysis(
             return sentiment_df
 
         data = []
-        selected_points_vec = []
         # @st.cache_data
 
         # @functools.lru_cache(maxsize=32)
@@ -427,17 +444,24 @@ def render_sentiment_analysis(
                 "datum.Open <= datum.Close", alt.value("#06982d"), alt.value("#ae1325")
             )
 
-            base = alt.Chart(hist_data).encode(x="eventTime:T", color=open_close_color,)
+            base = alt.Chart(hist_data).encode(
+                x="eventTime:T",
+                color=open_close_color,
+            )
 
             rule = base.mark_rule().encode(
-                alt.Y("Low:Q", title="Price", scale=alt.Scale(zero=False),),
+                alt.Y(
+                    "Low:Q",
+                    title="Price",
+                    scale=alt.Scale(zero=False),
+                ),
                 alt.Y2("High:Q"),
             )
 
             bar = base.mark_bar().encode(alt.Y("Open:Q"), alt.Y2("Close:Q"))
 
             market = (rule + bar).properties(width=300, height=300).add_selection(brush)
-            logging.info(f'market type:{type(market)}')
+            logging.info(f"market type:{type(market)}")
             # market = rule
             # market = base
 
@@ -452,18 +476,18 @@ def render_sentiment_analysis(
                         bin=True,
                     ),
                     y=alt.Y("mean(polarity):Q"),
-                    #y2="rolling_mean:Q",
+                    # y2="rolling_mean:Q",
                     color=alt.Color("analyst_rating:N"),
                     tooltip=[
-                        #"keyword_subject:N",
+                        # "keyword_subject:N",
                         "user:N",
                         "lemma_text:N",
                         "keyword_text:N",
-                        #"subject:N",
+                        # "subject:N",
                         "text_ner_names:N",
                         "subject_ner_names:N",
                         "text:N",
-                    ]
+                    ],
                 )
                 .transform_filter(brush)
                 .properties(width=400, height=300)
@@ -473,7 +497,9 @@ def render_sentiment_analysis(
             ranked_text = (
                 alt.Chart(sentiment_data)
                 .mark_text(align="center")
-                .encode(y=alt.Y("row_number:O", axis=None),)
+                .encode(
+                    y=alt.Y("row_number:O", axis=None),
+                )
                 .transform_filter(brush)
                 .transform_window(row_number="row_number()")
                 .transform_filter("datum.row_number < 15")
@@ -489,30 +515,28 @@ def render_sentiment_analysis(
                 title=alt.TitleParams(text="Polarity", align="center"),
             )
 
-
             if tweet_id_text | alt.Chart():
                 tweet_id_text = ranked_text.encode(text="id:N").properties(
-                title=alt.TitleParams(text="No Id Data", align="center")
-            )
+                    title=alt.TitleParams(text="No Id Data", align="center")
+                )
 
             if user_text | alt.Chart():
                 user_text = ranked_text.encode(text="user:N").properties(
-                title=alt.TitleParams(text="No User Data", align="center")
-            )
-                
+                    title=alt.TitleParams(text="No User Data", align="center")
+                )
+
             if polarity_text | alt.Chart():
                 polarity_text = ranked_text.encode(text="polarity:Q").properties(
-                title=alt.TitleParams(text="No Polarity Data", align="center")
-            )
+                    title=alt.TitleParams(text="No Polarity Data", align="center")
+                )
 
-            #keyword_text = ranked_text.encode(text="keyword_text:N").properties(
-                #title=alt.TitleParams(text="Keyword_text", align="center"),
-            #)
+            # keyword_text = ranked_text.encode(text="keyword_text:N").properties(
+            # title=alt.TitleParams(text="Keyword_text", align="center"),
+            # )
             text_ner_names_text = ranked_text.encode(
                 text="text_ner_names:N"
-            ).properties(title=alt.TitleParams(
-                text="Text Ner Names", align="center"
-                ),
+            ).properties(
+                title=alt.TitleParams(text="Text Ner Names", align="center"),
             )
             subject_ner_names_text = ranked_text.encode(
                 text="subject_ner_names:N"
@@ -520,31 +544,30 @@ def render_sentiment_analysis(
                 title=alt.TitleParams(text="Subject Ner Names", align="center"),
             )
 
-
             if text_ner_names_text | alt.Chart():
                 text_ner_names_text = ranked_text.encode(
                     text="text_ner_names:N"
-                ).properties(title=alt.TitleParams(
-                    text="No Text Ner Name Data", align="center"
-                    ),
+                ).properties(
+                    title=alt.TitleParams(text="No Text Ner Name Data", align="center"),
                 )
-            
+
             if subject_ner_names_text | alt.Chart():
                 subject_ner_names_text = ranked_text.encode(
                     text="subject_ner_names:N"
                 ).properties(
-                    title=alt.TitleParams(text="No Subject Ner Name Data", align="center"),
+                    title=alt.TitleParams(
+                        text="No Subject Ner Name Data", align="center"
+                    ),
                 )
-            
 
             text = alt.hconcat(
                 tweet_id_text,
                 user_text,
                 polarity_text,
-                #keyword_text,
+                # keyword_text,
                 text_ner_names_text,
                 subject_ner_names_text,
-            )#.add_selection(text_brush)
+            )  # .add_selection(text_brush)
             base_filter = (
                 alt.Chart(sentiment_data)
                 .transform_filter(brush)
@@ -554,7 +577,10 @@ def render_sentiment_analysis(
             polarity_hg = (
                 base_filter.mark_bar()
                 .transform_bin("pbin", field="polarity", bin=alt.Bin(maxbins=20))
-                .encode(x="pbin:N", y="sum(pct):Q",)
+                .encode(
+                    x="pbin:N",
+                    y="sum(pct):Q",
+                )
                 .properties(width=500, height=100)
             )
             sentiment_hg = (
@@ -565,9 +591,13 @@ def render_sentiment_analysis(
                 )
                 .properties(width=500, height=100)
             )
-            chart = alt.vconcat(data=hist_data).configure_view(
-                strokeOpacity=0,
-            ).configure_axisLeft()
+            chart = (
+                alt.vconcat(data=hist_data)
+                .configure_view(
+                    strokeOpacity=0,
+                )
+                .configure_axisLeft()
+            )
             row1 = alt.hconcat()
             row1 |= market
             row1 |= polarity
@@ -575,7 +605,6 @@ def render_sentiment_analysis(
 
             chart &= text
             return chart, brush
-
 
             row3 = alt.hconcat()
             row3 |= polarity_hg
@@ -607,14 +636,11 @@ def render_sentiment_analysis(
         # gc.collect()
 
         st.sidebar.subheader(f"Sentiment:")
-        analysts = news_df.user.unique().tolist()
+        news_df.user.unique().tolist()
         # stock_indexes = app_data.stock_indexes
-        market = "US S&P 500"
         selected_rating = st.sidebar.multiselect(
             "Please select ratings: ", [-2, -1, 1, 2], default=[-2, -1, 1, 2]
         )
-
-        
 
         # logging.info(f'analyst:{selected_analysts}')
         # app_data.market_data(market)
@@ -639,14 +665,12 @@ def render_sentiment_analysis(
         # st.plotly_chart(technical_analysis_fig, use_container_width=True)
 
         # logging.info(f'asset_size:{selected_assets}')
-        #if len(selected_analysts) > 0:
-            # news_df = news_df[news_df["user"].isin(selected_analysts)]
-            # logging.info(f'news_df:{news_df}')
+        # if len(selected_analysts) > 0:
+        # news_df = news_df[news_df["user"].isin(selected_analysts)]
+        # logging.info(f'news_df:{news_df}')
         if len(selected_rating) > 0:
             news_df = news_df[news_df["analyst_rating"].isin(selected_rating)]
-        selections = {}
         rating_period = datetime.timedelta(hours=1)
-        df_vec = []
         logging.info(f"selected_assets:{selected_assets}")
         # st.altair_chart(chart, use_container_width=True)
         # df = pd.read_json(penguins_url)
@@ -657,7 +681,7 @@ def render_sentiment_analysis(
         if not selected_assets:
             return
         asset = selected_assets[0]
-        analyst_rating = news_df.analyst_rating.unique().tolist()
+        news_df.analyst_rating.unique().tolist()
         # for rating in analyst_rating:
         #    df = calculate_mean_sentiment(asset, rating_period, rating)
         #    df["analystRating"] = rating

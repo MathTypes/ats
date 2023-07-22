@@ -25,7 +25,6 @@ from collections import defaultdict
 from dateutil.parser import parse
 
 import numpy as np
-import pandas as pd
 
 from ibapi import wrapper
 from ibapi.common import TickerId, BarData
@@ -38,13 +37,15 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase import firebase
 
+
 def read_collection(db, query):
-    doc_ref = db.collection('unique_ids').document(query)
+    doc_ref = db.collection("unique_ids").document(query)
     doc = doc_ref.get()
     if doc.exists:
         return doc.to_dict()
     else:
         return None
+
 
 ContractList = List[Contract]
 BarDataList = List[BarData]
@@ -67,7 +68,21 @@ def make_download_path(base_directory, security_type, size, contract: Contract) 
 
 
 class DownloadApp(EClient, wrapper.EWrapper):
-    def __init__(self, db, id_key, start_time, symbol, contracts: ContractList, start_date, end_date, duration, base_directory, size, data_type, security_type):
+    def __init__(
+        self,
+        db,
+        id_key,
+        start_time,
+        symbol,
+        contracts: ContractList,
+        start_date,
+        end_date,
+        duration,
+        base_directory,
+        size,
+        data_type,
+        security_type,
+    ):
         logging.info(f"DownloadApp: start_date:{start_date}, end_date:{end_date}")
         EClient.__init__(self, wrapper=self)
         wrapper.EWrapper.__init__(self)
@@ -77,7 +92,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         self.started = False
         self.start_time = start_time
         self.symbol = symbol
-        self.start_date = start_date-timedelta(days=1)
+        self.start_date = start_date - timedelta(days=1)
         self.end_date = end_date
         self.next_valid_order_id = None
         self.contracts = contracts
@@ -85,7 +100,7 @@ class DownloadApp(EClient, wrapper.EWrapper):
         self.bar_data = defaultdict(list)
         self.security_type = security_type
         self.pending_ends = set()
-        #self.args = args
+        # self.args = args
         self.current = end_date
         self.data_type = data_type
         self.base_directory = base_directory
@@ -117,11 +132,11 @@ class DownloadApp(EClient, wrapper.EWrapper):
         cid = self.next_request_id(contract)
         self.pending_ends.add(cid)
         logging.error(f"send historic data request:{contract}, {self}")
-        #current = datetime.now()
+        # current = datetime.now()
         self.reqHistoricalData(
             cid,  # tickerId, used to identify incoming data
             contract,
-            #self.current.strftime("%Y%m%d-21:59:59"),  # always go to midnight
+            # self.current.strftime("%Y%m%d-21:59:59"),  # always go to midnight
             "",  # always go to midnight
             self.duration,  # amount of time to go back
             self.size,  # bar size
@@ -133,24 +148,33 @@ class DownloadApp(EClient, wrapper.EWrapper):
         )
 
     def save_data(self, contract: Contract, bars: BarDataList) -> None:
-        #logging.error(f"save_data, contract:{contract}, bars:{bars}")
+        # logging.error(f"save_data, contract:{contract}, bars:{bars}")
         last_time = None
         for b in bars:
-            val = {"date":str(b.date), "open":str(b.open), "high":str(b.high), "low":str(b.low),
-                   "close":str(b.close), "volume":str(b.volume), "barCount":str(b.barCount)}
+            val = {
+                "date": str(b.date),
+                "open": str(b.open),
+                "high": str(b.high),
+                "low": str(b.low),
+                "close": str(b.close),
+                "volume": str(b.volume),
+                "barCount": str(b.barCount),
+            }
             date_vec = b.date.split(" ")
             doc_key = date_vec[0] + " " + date_vec[1]
             ts = datetime.strptime(doc_key, "%Y%m%d %H:%M:%S")
             logging.info(f"key:{b.date}, value:{b}")
-            if not self.start_time or ts.timestamp()>self.start_time:
-                db.collection(f'recent_trade_{self.symbol}').document(doc_key).set(val)
+            if not self.start_time or ts.timestamp() > self.start_time:
+                db.collection(f"recent_trade_{self.symbol}").document(doc_key).set(val)
                 logging.info(f"comparing {ts} against {last_time}")
-                if not last_time or ts.timestamp()>last_time:
+                if not last_time or ts.timestamp() > last_time:
                     last_time = ts.timestamp()
             else:
                 logging.info(f"skipping ts:{ts}, start_time:{self.start_time}")
         logging.info(f"Saving unique_id, id_key:{self.id_key}, last_time:{last_time}")
-        db.collection(u'unique_ids').document(self.id_key).set({"last_time":last_time, "key":self.id_key})
+        db.collection("unique_ids").document(self.id_key).set(
+            {"last_time": last_time, "key": self.id_key}
+        )
 
     def daily_files(self):
         return SIZES.index(self.size.split()[1]) >= 5
@@ -163,8 +187,10 @@ class DownloadApp(EClient, wrapper.EWrapper):
             ts = datetime.strptime(headTimestamp, "%Y%m%d-%H:%M:%S")
         else:
             ts = datetime.strptime(headTimestamp, "%Y%m%d %H:%M:%S")
-        logging.info("Head Timestamp for %s is %s, start_date:%s", contract, ts, self.start_date)
-        #if ts > self.start_date or self.args.max_days:
+        logging.info(
+            "Head Timestamp for %s is %s, start_date:%s", contract, ts, self.start_date
+        )
+        # if ts > self.start_date or self.args.max_days:
         if ts > self.start_date:
             logging.warning("Overriding start date, setting to %s", ts)
             self.start_date = ts  # TODO make this per contract
@@ -187,19 +213,23 @@ class DownloadApp(EClient, wrapper.EWrapper):
             # to get accurate daily closing prices
             self.useRTH = 0
             # round up current time to midnight for even days
-            #self.current = self.current.replace(
+            # self.current = self.current.replace(
             #    hour=0, minute=0, second=0, microsecond=0
-            #)
+            # )
 
         self.historicalDataRequest(contract)
-
 
     @iswrapper
     def contractDetails(self, reqId, contractDetails) -> None:
         logging.info(f"contractDetails:{reqId}, {contractDetails}")
         contract = self.requests.get(reqId)
-        last_trade_time = contractDetails.lastTradeTime
-        logging.info("contractDetails for %s is %s, start_date:%s", contract, contractDetails, self.start_date)
+        contractDetails.lastTradeTime
+        logging.info(
+            "contractDetails for %s is %s, start_date:%s",
+            contract,
+            contractDetails,
+            self.start_date,
+        )
         self.historicalDataRequest(contract)
 
     @iswrapper
@@ -215,8 +245,10 @@ class DownloadApp(EClient, wrapper.EWrapper):
             for rid, bars in self.bar_data.items():
                 self.save_data(self.requests[rid], bars)
             if "/" in start:
-                start_vec = start.split()                
-                parsed_datetime = datetime.strptime(start_vec[0] + " " + start_vec[1], "%Y%m%d  %H:%M:%S")
+                start_vec = start.split()
+                parsed_datetime = datetime.strptime(
+                    start_vec[0] + " " + start_vec[1], "%Y%m%d  %H:%M:%S"
+                )
                 parsed_tz = pytz.timezone(start_vec[2])
                 self.current = parsed_datetime.astimezone(parsed_tz)
             else:
@@ -244,14 +276,11 @@ class DownloadApp(EClient, wrapper.EWrapper):
 
         self.started = True
         for contract in self.contracts:
-            logging.info(f'request details:{contract}')
-            self.reqContractDetails(
-                self.next_request_id(contract), contract
-            )
-            #self.reqHeadTimeStamp(
+            logging.info(f"request details:{contract}")
+            self.reqContractDetails(self.next_request_id(contract), contract)
+            # self.reqHeadTimeStamp(
             #    self.next_request_id(contract), contract, self.data_type, 0, 1
-            #)
-            
+            # )
 
     @iswrapper
     # MAX: IBAPI 10.15 defines an additional parameter: advancedOrderRejectJson
@@ -361,10 +390,13 @@ def validate_data_type(data_type: str) -> None:
         ],
     )
 
+
 INDEX_SYMBOLS = ["ES", "NQ", "RTY", "GLB", "YM"]
 RATE_SYMBOLS = ["ZB", "ZT", "ZF", "ZN", "SR3"]
 ENERGY_SYMBOLS = ["CL", "NG", "CB"]
 METAL_SYMBOLS = ["GC", "SI", "HG", "ALI"]
+
+
 def get_exchange(symbol):
     if symbol in INDEX_SYMBOLS:
         return "CME"
@@ -376,6 +408,7 @@ def get_exchange(symbol):
         return "COMEX"
     return ""
 
+
 def get_last_trade_date(symbol, cur_date):
     if symbol in INDEX_SYMBOLS:
         last_trade_date = cur_date
@@ -386,6 +419,7 @@ def get_last_trade_date(symbol, cur_date):
     elif symbol in METAL_SYMBOLS:
         last_trade_date = cur_date + timedelta(days=32)
     return last_trade_date
+
 
 def get_index_local_symbol_for_last_trade_date(symbol, last_trade_date):
     if last_trade_date.month < 3:
@@ -402,28 +436,57 @@ def get_index_local_symbol_for_last_trade_date(symbol, last_trade_date):
         last_trade_date = last_trade_date.replace(month=12, day=1)
     else:
         month_str = "H"
-        last_trade_date = last_trade_date.replace(year=last_trade_date.year+1, month=3, day=1)
+        last_trade_date = last_trade_date.replace(
+            year=last_trade_date.year + 1, month=3, day=1
+        )
     year_str = str(last_trade_date.year % 10)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    logging.info(f"month_str:{month_str}, last_trade:{last_trade_date}")
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
+
 
 def get_energy_local_symbol_for_last_trade_date(symbol, last_trade_date):
-    code_dict = {1:"G", 2:"H", 3:"J", 4:"K", 5:"M", 6:"N",
-                 7:"Q", 8:"U", 9:"V", 10:"X", 11:"Z", 12:"F"}
+    code_dict = {
+        1: "G",
+        2: "H",
+        3: "J",
+        4: "K",
+        5: "M",
+        6: "N",
+        7: "Q",
+        8: "U",
+        9: "V",
+        10: "X",
+        11: "Z",
+        12: "F",
+    }
     last_trade_date = last_trade_date.replace(day=1)
     month_str = code_dict[last_trade_date.month]
     year_str = str(last_trade_date.year % 10)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    logging.info(f"month_str:{month_str}, last_trade:{last_trade_date}")
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
 
+
 def get_metal_local_symbol_for_last_trade_date(symbol, last_trade_date):
-    code_dict = {2:"G", 3:"H", 4:"J", 5:"K", 6:"M", 7:"N",
-                 8:"Q", 9:"U", 10:"V", 11:"X", 12:"Z", 1:"F"}
+    code_dict = {
+        2: "G",
+        3: "H",
+        4: "J",
+        5: "K",
+        6: "M",
+        7: "N",
+        8: "Q",
+        9: "U",
+        10: "V",
+        11: "X",
+        12: "Z",
+        1: "F",
+    }
     last_trade_date = last_trade_date.replace(day=1)
     month_str = code_dict[last_trade_date.month]
     year_str = str(last_trade_date.year % 10)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+    logging.info(f"month_str:{month_str}, last_trade:{last_trade_date}")
     return symbol + month_str + year_str, last_trade_date.strftime("%Y%m")
+
 
 def get_financial_local_symbol_for_last_trade_date(symbol, last_trade_date):
     if last_trade_date.month < 3:
@@ -440,10 +503,13 @@ def get_financial_local_symbol_for_last_trade_date(symbol, last_trade_date):
         last_trade_date = last_trade_date.replace(month=12, day=1)
     else:
         month_str = "H"
-        last_trade_date = last_trade_date.replace(year=last_trade_date.year+1, month=3, day=1)
-    year_str = str(last_trade_date.year % 100)
-    logging.info(f'month_str:{month_str}, last_trade:{last_trade_date}')
+        last_trade_date = last_trade_date.replace(
+            year=last_trade_date.year + 1, month=3, day=1
+        )
+    str(last_trade_date.year % 100)
+    logging.info(f"month_str:{month_str}, last_trade:{last_trade_date}")
     return "", last_trade_date.strftime("%Y%m")
+
 
 def get_local_symbol_for_last_trade_date(symbol, last_trade_date):
     if symbol in INDEX_SYMBOLS:
@@ -455,9 +521,11 @@ def get_local_symbol_for_last_trade_date(symbol, last_trade_date):
     if symbol in RATE_SYMBOLS:
         return get_financial_local_symbol_for_last_trade_date(symbol, last_trade_date)
 
+
 def get_local_symbol(symbol, cur_date):
     last_trade_date = get_last_trade_date(symbol, cur_date)
     return get_local_symbol_for_last_trade_date(symbol, last_trade_date)
+
 
 # borrowed from https://stackoverflow.com/a/13565185
 # as noted there, the calendar module has a function of its own
@@ -465,25 +533,41 @@ def last_day_of_month(any_day):
     next_month = any_day.replace(day=28) + timedelta(days=4)  # this will never fail
     return next_month - timedelta(days=next_month.day)
 
-def monthlist(begin,end):
+
+def monthlist(begin, end):
     result = []
     while True:
         if begin.month == 12:
-            next_month = begin.replace(year=begin.year+1,month=1, day=1)
+            next_month = begin.replace(year=begin.year + 1, month=1, day=1)
         else:
-            next_month = begin.replace(month=begin.month+1, day=1)
+            next_month = begin.replace(month=begin.month + 1, day=1)
         if next_month > end:
             break
-        result.append ([begin, last_day_of_month(begin)])
+        result.append([begin, last_day_of_month(begin)])
         begin = next_month
-    result.append ([begin, end])
+    result.append([begin, end])
     return result
 
-def download(db, id_key, start_time, symbol, host, start_date, end_date, port, duration,  base_directory, security_type, size, data_type):
+
+def download(
+    db,
+    id_key,
+    start_time,
+    symbol,
+    host,
+    start_date,
+    end_date,
+    port,
+    duration,
+    base_directory,
+    security_type,
+    size,
+    data_type,
+):
     contracts = []
-    logging.info(f'start_date:{start_date}, end_date:{end_date}')
+    logging.info(f"start_date:{start_date}, end_date:{end_date}")
     for begin, end in monthlist(start_date, end_date):
-        logging.info(f'begin:{begin}, end:{end}')
+        logging.info(f"begin:{begin}, end:{end}")
         (local_symbol, last_trade_date) = get_local_symbol(symbol, begin)
         contract = make_contract(
             symbol,
@@ -494,15 +578,30 @@ def download(db, id_key, start_time, symbol, host, start_date, end_date, port, d
             last_trade_date,
             True,
         )
-        download_path = make_download_path(base_directory, security_type, size, contract)
+        download_path = make_download_path(
+            base_directory, security_type, size, contract
+        )
         os.makedirs(download_path, exist_ok=True)
-        #if not os.path.isfile(next_done_file):
+        # if not os.path.isfile(next_done_file):
         contracts.append(contract)
         if not contracts:
             logging.info(f"Skipping, date:{begin}")
             continue
         logging.info(f"start_time:{start_time}")
-        app = DownloadApp(db, id_key, start_time, symbol, contracts, begin, end, duration, base_directory, size, data_type, security_type)
+        app = DownloadApp(
+            db,
+            id_key,
+            start_time,
+            symbol,
+            contracts,
+            begin,
+            end,
+            duration,
+            base_directory,
+            size,
+            data_type,
+            security_type,
+        )
         logging.error(f"before connection, host:{host}, port:{port}")
         app.connect(host, port, clientId=1)
         # MAX: Start the application as a separate thread
@@ -513,6 +612,7 @@ def download(db, id_key, start_time, symbol, host, start_date, end_date, port, d
         app.disconnect()
         time.sleep(5)
         logging.error(f"code:{code}")
+
 
 if __name__ == "__main__":
     now = datetime.now()
@@ -535,16 +635,12 @@ if __name__ == "__main__":
     argp.add_argument(
         "-d", "--debug", action="store_true", help="turn on debug logging"
     )
-    argp.add_argument(
-        "--max_days", action="store_true", help="turn on debug logging"
-    )
+    argp.add_argument("--max_days", action="store_true", help="turn on debug logging")
     argp.add_argument("--logfile", help="log to file")
     argp.add_argument(
         "-p", "--port", type=int, default=7496, help="local port for TWS connection"
     )
-    argp.add_argument(
-        "--host", type=str, default="STK", help="host"
-    )
+    argp.add_argument("--host", type=str, default="STK", help="host")
     argp.add_argument(
         "--security-type", type=str, default="STK", help="security type for symbols"
     )
@@ -567,7 +663,10 @@ if __name__ == "__main__":
         action=DateAction,
     )
     argp.add_argument(
-        "--end_date", help="Last day for bars", default=now, action=DateAction,
+        "--end_date",
+        help="Last day for bars",
+        default=now,
+        action=DateAction,
     )
     args = argp.parse_args()
 
@@ -599,7 +698,9 @@ if __name__ == "__main__":
     cred = credentials.Certificate(args.firebase_cert)
     default_app = firebase_admin.initialize_app(cred)
     db = firestore.client()
-    firebase = firebase.FirebaseApplication('https://keen-rhino-386415.firebaseio.com', None)
+    firebase = firebase.FirebaseApplication(
+        "https://keen-rhino-386415.firebaseio.com", None
+    )
     for symbol in args.symbol.split(","):
         fb_key = f"ib_realtime_trade_{symbol}"
         df = read_collection(db, fb_key)
@@ -607,5 +708,18 @@ if __name__ == "__main__":
         if df:
             start_time = df["last_time"]
         logging.info(f"Downloading {symbol} from {args.host}:{args.port}")
-        download(db, fb_key, start_time, symbol, args.host, args.start_date.replace(tzinfo=pytz.UTC), args.end_date.replace(tzinfo=pytz.UTC),
-                args.port, args.duration, args.base_directory, args.security_type, args.size, args.data_type)
+        download(
+            db,
+            fb_key,
+            start_time,
+            symbol,
+            args.host,
+            args.start_date.replace(tzinfo=pytz.UTC),
+            args.end_date.replace(tzinfo=pytz.UTC),
+            args.port,
+            args.duration,
+            args.base_directory,
+            args.security_type,
+            args.size,
+            args.data_type,
+        )

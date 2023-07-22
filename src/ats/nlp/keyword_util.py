@@ -1,6 +1,4 @@
 import logging
-import pandas as pd
-import numpy as np
 import tweetnlp
 import string
 import inflect
@@ -8,13 +6,11 @@ import inflect
 import spacy
 import nltk
 
-nltk.download('wordnet')
+nltk.download("wordnet")
 nltk.download("stopwords")
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
-import requests
-import time
 
 # Set up the API call to the Inference API to do sentiment analysis
 model = "cardiffnlp/twitter-roberta-base-sentiment-latest"
@@ -38,46 +34,53 @@ emotion_model = None
 irony_model = None
 ner_model = None
 
+
 def get_topic_model():
     global topic_model
     if not topic_model:
-        topic_model = tweetnlp.load_model('topic_classification')        
+        topic_model = tweetnlp.load_model("topic_classification")
     return topic_model
+
 
 def get_sentiment_model():
     global sentiment_model
     if not sentiment_model:
-        sentiment_model = tweetnlp.load_model('sentiment')        
+        sentiment_model = tweetnlp.load_model("sentiment")
     return sentiment_model
+
 
 def get_emoji_model():
     global emoji_model
     if not emoji_model:
-        emoji_model = tweetnlp.load_model('emoji')        
+        emoji_model = tweetnlp.load_model("emoji")
     return emoji_model
+
 
 def get_emotion_model():
     global emotion_model
     if not emotion_model:
-        emotion_model = tweetnlp.load_model('emotion')        
+        emotion_model = tweetnlp.load_model("emotion")
     return emotion_model
+
 
 def get_ner_model():
     global ner_model
     if not ner_model:
-        ner_model = tweetnlp.load_model('ner')
+        ner_model = tweetnlp.load_model("ner")
     return ner_model
+
 
 def get_irony_model():
     global irony_model
     if not irony_model:
-        irony_model = tweetnlp.load_model('irony')
+        irony_model = tweetnlp.load_model("irony")
     return irony_model
+
 
 def topic_analysis(data):
     if data:
-        topic_result = get_topic_model().topic(data, return_probability=True)        
-        #logging.info(f"topic_result:{topic_result}")
+        topic_result = get_topic_model().topic(data, return_probability=True)
+        # logging.info(f"topic_result:{topic_result}")
         topics = ""
         prob = ""
         for topic in topic_result["label"]:
@@ -87,51 +90,57 @@ def topic_analysis(data):
                 prob = prob + "," + str(probability)
             else:
                 topics = topic
-                prob =  str(probability)
+                prob = str(probability)
         return topics + ":" + prob
     return ""
 
+
 def sentiment_analysis(data):
     if data:
-        topic_result = get_sentiment_model().sentiment(data, return_probability=True)        
-        #logging.info(f"topic_result:{topic_result}")
+        topic_result = get_sentiment_model().sentiment(data, return_probability=True)
+        # logging.info(f"topic_result:{topic_result}")
         label = topic_result["label"]
         probability = topic_result["probability"][label]
         return label + ":" + str(probability)
     return ""
+
 
 def irony_analysis(data):
     if data:
-        topic_result = get_irony_model().irony(data, return_probability=True)        
+        topic_result = get_irony_model().irony(data, return_probability=True)
         label = topic_result["label"]
         probability = topic_result["probability"][label]
         return label + ":" + str(probability)
     return ""
+
 
 def emoji_analysis(data):
     if data:
-        topic_result = get_emoji_model().emoji(data, return_probability=True)        
+        topic_result = get_emoji_model().emoji(data, return_probability=True)
         label = topic_result["label"]
         probability = topic_result["probability"][label]
         return label + ":" + str(probability)
     return ""
+
 
 def emotion_analysis(data):
     if data:
-        topic_result = get_emotion_model().emotion(data, return_probability=True)        
+        topic_result = get_emotion_model().emotion(data, return_probability=True)
         label = topic_result["label"]
         probability = topic_result["probability"][label]
         return label + ":" + str(probability)
     return ""
 
+
 def ner_analysis(data):
     if data:
-        topic_result = get_ner_model().ner(data, return_probability=True)        
+        topic_result = get_ner_model().ner(data, return_probability=True)
         for val in topic_result:
             if val["type"] == "event":
                 return ":".join(val["entity"])
         return ""
     return ""
+
 
 def get_label(sentiment):
     if ":" in sentiment:
@@ -139,17 +148,20 @@ def get_label(sentiment):
         return val[0]
     return "NA"
 
+
 def get_score(sentiment):
     if ":" in sentiment:
         val = sentiment.split(":")
         return float(val[1])
     return -100
 
+
 def get_topic_score(sentiment):
     if ":" in sentiment:
         val = sentiment.split(":")
         return val[1]
     return ""
+
 
 def add_hb_sentiment(df):
     df["nlp_sentiment"] = df["orig_text"].apply(sentiment_analysis)
@@ -170,10 +182,11 @@ def add_hb_sentiment(df):
     df["nlp_ner_event"] = df["orig_text"].apply(ner_analysis)
     return df
 
+
 def add_subject_keyword(df):
     # df = pd.read_csv(data_path, index_col=0)
-    #df["subject"] = np.nan
-    #for i in range(df.shape[0]):
+    # df["subject"] = np.nan
+    # for i in range(df.shape[0]):
     #    parag = list(df.iloc[i]["text"].split(", "))
     #    df.iloc[i]["subject"] = parag[0][2:]
 
@@ -226,7 +239,7 @@ def text_process(text, word_cloud=False, stemming=False, lemmetization=False):
     if not isinstance(text, str):
         text = str(text)
     text = text[:4000]
-    #logging.info(f"text:{text}")
+    # logging.info(f"text:{text}")
     if lemmetization:
         text = "".join([i for i in text if i not in string.punctuation])
         text = text.lower()

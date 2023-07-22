@@ -1,18 +1,9 @@
 import datetime
 import logging
-import os
-import sys
-import argparse
-import pandas as pd
 
-from nlp.keyword_util import add_subject_keyword
 from neo4j_util import sentiment_api
-from neo4j_util.neo4j_tweet_util import Neo4j
 from util import config_utils
 from util import logging_utils
-from data.front_end_utils import subject_analysis
-
-import re
 
 
 if __name__ == "__main__":

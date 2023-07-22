@@ -1,8 +1,6 @@
-import functools
 import logging
 import numpy as np
 import pandas as pd
-import util.nlp_utils
 
 import spacy
 from spacy import displacy
@@ -136,11 +134,12 @@ def find(c, text_ner, text_ner_count):
 
 def get_polarity(parag):
     try:
-        #logging.info(f'parag:{parag}')
+        # logging.info(f'parag:{parag}')
         blob = TextBlob(parag)
         return blob.sentiment.polarity
     except:
         return -1
+
 
 def subject_analysis(df):
     df["polarity"] = np.nan
@@ -148,7 +147,7 @@ def subject_analysis(df):
     df["palarity"] = df["text"].apply(get_polarity)
 
     def sentiment(x):
-        if x==-1:
+        if x == -1:
             return "NA"
         if x < 0:
             return "Negative"
@@ -200,7 +199,10 @@ def custom_visualize_ner(
     if title:
         st.markdown(labels[0])
     html = displacy.render(
-        doc, style="ent", options={"ents": labels, "colors": colors}, manual=manual,
+        doc,
+        style="ent",
+        options={"ents": labels, "colors": colors},
+        manual=manual,
     )
 
     style = "<style>mark.entity { display: inline-block }</style>"

@@ -71,7 +71,7 @@ class EWrapper:
         self.logAnswer(current_fn_name(), vars())
 
     def connectAck(self):
-        """ callback signifying completion of successful connection """
+        """callback signifying completion of successful connection"""
         self.logAnswer(current_fn_name(), vars())
 
     def marketDataType(self, reqId: TickerId, marketDataType: int):
@@ -99,7 +99,7 @@ class EWrapper:
 
     def tickSnapshotEnd(self, reqId: int):
         """When requesting market data snapshots, this market will indicate the
-        snapshot reception is finished. """
+        snapshot reception is finished."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -206,8 +206,8 @@ class EWrapper:
         self.logAnswer(current_fn_name(), vars())
 
     def updateAccountValue(self, key: str, val: str, currency: str, accountName: str):
-        """ This function is called only when ReqAccountUpdates on
-        EEClientSocket object has been called. """
+        """This function is called only when ReqAccountUpdates on
+        EEClientSocket object has been called."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -237,7 +237,7 @@ class EWrapper:
         self.logAnswer(current_fn_name(), vars())
 
     def nextValidId(self, orderId: int):
-        """ Receives next valid order id."""
+        """Receives next valid order id."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -263,7 +263,7 @@ class EWrapper:
 
     def execDetails(self, reqId: int, contract: Contract, execution: Execution):
         """This event is fired when the reqExecutions() functions is
-        invoked, or when an order is filled.  """
+        invoked, or when an order is filled."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -326,12 +326,12 @@ class EWrapper:
     def updateNewsBulletin(
         self, msgId: int, msgType: int, newsMessage: str, originExch: str
     ):
-        """ provides IB's bulletins
+        """provides IB's bulletins
         msgId - the bulletin's identifier
         msgType - one of: 1 - Regular news bulletin 2 - Exchange no longer
             available for trading 3 - Exchange is available for trading
         message - the message
-        origExchange -    the exchange where the message comes from.  """
+        origExchange -    the exchange where the message comes from."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -340,7 +340,7 @@ class EWrapper:
         self.logAnswer(current_fn_name(), vars())
 
     def receiveFA(self, faData: FaDataType, cxml: str):
-        """ receives the Financial Advisor's configuration available in the TWS
+        """receives the Financial Advisor's configuration available in the TWS
 
         faDataType - one of:
             Groups: offer traders a way to create a group of accounts and apply
@@ -349,12 +349,12 @@ class EWrapper:
                 using a predefined calculation value.
             Account Aliases: let you easily identify the accounts by meaningful
                  names rather than account numbers.
-        faXmlData -  the xml-formatted configuration """
+        faXmlData -  the xml-formatted configuration"""
 
         self.logAnswer(current_fn_name(), vars())
 
     def historicalData(self, reqId: int, bar: BarData):
-        """ returns the requested historical data bars
+        """returns the requested historical data bars
 
         reqId - the request's identifier
         date  - the bar's date and time (either as a yyyymmss hh:mm:ssformatted
@@ -367,16 +367,16 @@ class EWrapper:
         count - the number of trades during the bar's timespan (only available
             for TRADES).
         WAP -   the bar's Weighted Average Price
-        hasGaps  -indicates if the data has gaps or not. """
+        hasGaps  -indicates if the data has gaps or not."""
 
         self.logAnswer(current_fn_name(), vars())
 
     def historicalDataEnd(self, reqId: int, start: str, end: str):
-        """ Marks the ending of the historical bars reception. """
+        """Marks the ending of the historical bars reception."""
         self.logAnswer(current_fn_name(), vars())
 
     def scannerParameters(self, xml: str):
-        """ Provides the xml-formatted parameters available to create a market
+        """Provides the xml-formatted parameters available to create a market
         scanner.
 
         xml -   the xml-formatted string with the available parameters."""
@@ -392,7 +392,7 @@ class EWrapper:
         projection: str,
         legsStr: str,
     ):
-        """ Provides the data resulting from the market scanner request.
+        """Provides the data resulting from the market scanner request.
 
         reqid - the request's identifier.
         rank -  the ranking within the response of this bar.
@@ -405,7 +405,7 @@ class EWrapper:
         self.logAnswer(current_fn_name(), vars())
 
     def scannerDataEnd(self, reqId: int):
-        """ Indicates the scanner data reception has terminated.
+        """Indicates the scanner data reception has terminated.
 
         reqId - the request's identifier"""
 
@@ -423,8 +423,7 @@ class EWrapper:
         wap: Decimal,
         count: int,
     ):
-
-        """ Updates the real time 5 seconds bars
+        """Updates the real time 5 seconds bars
 
         reqId - the request's identifier
         bar.time  - start of bar in unix (or 'epoch') time
@@ -441,8 +440,8 @@ class EWrapper:
         self.logAnswer(current_fn_name(), vars())
 
     def currentTime(self, time: int):
-        """ Server's current time. This method will receive IB server's system
-        time resulting after the invokation of reqCurrentTime. """
+        """Server's current time. This method will receive IB server's system
+        time resulting after the invokation of reqCurrentTime."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -482,7 +481,7 @@ class EWrapper:
 
     def positionEnd(self):
         """This is called once all position data for a given request are
-        received and functions as an end marker for the position() data. """
+        received and functions as an end marker for the position() data."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -501,19 +500,16 @@ class EWrapper:
         self.logAnswer(current_fn_name(), vars())
 
     def verifyMessageAPI(self, apiData: str):
-        """ Deprecated Function """
+        """Deprecated Function"""
         self.logAnswer(current_fn_name(), vars())
 
     def verifyCompleted(self, isSuccessful: bool, errorText: str):
-
         self.logAnswer(current_fn_name(), vars())
 
     def verifyAndAuthMessageAPI(self, apiData: str, xyzChallange: str):
-
         self.logAnswer(current_fn_name(), vars())
 
     def verifyAndAuthCompleted(self, isSuccessful: bool, errorText: str):
-
         self.logAnswer(current_fn_name(), vars())
 
     def displayGroupList(self, reqId: int, groups: str):
@@ -539,7 +535,7 @@ class EWrapper:
             none = empty selection
             contractID@exchange = any non-combination contract.
                 Examples: 8314@SMART for IBM SMART; 8314@ARCA for IBM @ARCA.
-            combo = if any combo is selected.  """
+            combo = if any combo is selected."""
 
         self.logAnswer(current_fn_name(), vars())
 
@@ -614,7 +610,7 @@ class EWrapper:
         expirations: SetOfString,
         strikes: SetOfFloat,
     ):
-        """ Returns the option chain for an underlying on an exchange
+        """Returns the option chain for an underlying on an exchange
         specified in reqSecDefOptParams There will be multiple callbacks to
         securityDefinitionOptionParameter if multiple exchanges are specified
         in reqSecDefOptParams
@@ -626,39 +622,39 @@ class EWrapper:
         expirations - a list of the expiries for the options of this underlying
              on this exchange
         strikes - a list of the possible strikes for options of this underlying
-             on this exchange """
+             on this exchange"""
 
         self.logAnswer(current_fn_name(), vars())
 
     def securityDefinitionOptionParameterEnd(self, reqId: int):
-        """ Called when all callbacks to securityDefinitionOptionParameter are
+        """Called when all callbacks to securityDefinitionOptionParameter are
         complete
 
-        reqId - the ID used in the call to securityDefinitionOptionParameter """
+        reqId - the ID used in the call to securityDefinitionOptionParameter"""
 
         self.logAnswer(current_fn_name(), vars())
 
     def softDollarTiers(self, reqId: int, tiers: list):
-        """ Called when receives Soft Dollar Tier configuration information
+        """Called when receives Soft Dollar Tier configuration information
 
         reqId - The request ID used in the call to EEClient::reqSoftDollarTiers
         tiers - Stores a list of SoftDollarTier that contains all Soft Dollar
-            Tiers information """
+            Tiers information"""
 
         self.logAnswer(current_fn_name(), vars())
 
     def familyCodes(self, familyCodes: ListOfFamilyCode):
-        """ returns array of family codes """
+        """returns array of family codes"""
         self.logAnswer(current_fn_name(), vars())
 
     def symbolSamples(
         self, reqId: int, contractDescriptions: ListOfContractDescription
     ):
-        """ returns array of sample contract descriptions """
+        """returns array of sample contract descriptions"""
         self.logAnswer(current_fn_name(), vars())
 
     def mktDepthExchanges(self, depthMktDataDescriptions: ListOfDepthExchanges):
-        """ returns array of exchanges which return depth to UpdateMktDepthL2"""
+        """returns array of exchanges which return depth to UpdateMktDepthL2"""
         self.logAnswer(current_fn_name(), vars())
 
     def tickNews(
@@ -670,7 +666,7 @@ class EWrapper:
         headline: str,
         extraData: str,
     ):
-        """ returns news headlines"""
+        """returns news headlines"""
         self.logAnswer(current_fn_name(), vars())
 
     def smartComponents(self, reqId: int, smartComponentMap: SmartComponentMap):
@@ -804,7 +800,8 @@ class EWrapper:
 
         contract: Contract - The Contract class attributes describe the contract.
         order: Order - The Order class gives the details of the completed order.
-        orderState: OrderState - The orderState class includes completed order status details."""
+        orderState: OrderState - The orderState class includes completed order status details.
+        """
 
         self.logAnswer(current_fn_name(), vars())
 

@@ -14,10 +14,8 @@ import datetime
 import functools
 import json
 import logging
-import random
 import requests
 import requests.adapters
-import string
 import urllib3.connection
 import time
 import warnings
@@ -130,8 +128,8 @@ class _JSONDataclass:
 class Item(_JSONDataclass):
     """An abstract base class for an item returned by the scraper.
 
-	An item can really be anything. The string representation should be useful for the CLI output (e.g. a direct URL for the item).
-	"""
+    An item can really be anything. The string representation should be useful for the CLI output (e.g. a direct URL for the item).
+    """
 
     @abc.abstractmethod
     def __str__(self):
@@ -141,8 +139,8 @@ class Item(_JSONDataclass):
 class IntWithGranularity(int):
     """A number with an associated granularity
 
-	For example, an IntWithGranularity(42000, 1000) represents a number on the order of 42000 with two significant digits, i.e. something counted with a granularity of 1000.
-	"""
+    For example, an IntWithGranularity(42000, 1000) represents a number on the order of 42000 with two significant digits, i.e. something counted with a granularity of 1000.
+    """
 
     def __new__(cls, value, granularity, *args, **kwargs):
         obj = super().__new__(cls, value, *args, **kwargs)
@@ -201,20 +199,18 @@ class Scraper:
             "http": "http://host.docker.internal:8118",
             "https": "http://host.docker.internal:8118",
         }
-        #self._session.proxies.update(proxies)
+        # self._session.proxies.update(proxies)
         self._session.mount("https://", _HTTPSAdapter())
 
     @abc.abstractmethod
     def get_items(self):
         """Iterator yielding Items."""
 
-        pass
-
     def _get_entity(self):
         """Get the entity behind the scraper, if any.
 
-		This is the method implemented by subclasses for doing the actual retrieval/entity object creation. For accessing the scraper's entity, use the entity property.
-		"""
+        This is the method implemented by subclasses for doing the actual retrieval/entity object creation. For accessing the scraper's entity, use the entity property.
+        """
 
         return None
 
@@ -234,13 +230,13 @@ class Scraper:
         allowRedirects=True,
         proxies=None,
     ):
-        #proxies = proxies or self._proxies or {}
+        # proxies = proxies or self._proxies or {}
         proxies = {}
-        #proxies = {
+        # proxies = {
         #    "http": "http://host.docker.internal:8118",
         #    "https": "http://host.docker.internal:8118",
-        #}
-        logging.info(f'setting proxies:{proxies}')
+        # }
+        logging.info(f"setting proxies:{proxies}")
         errors = []
         self._session.cookies.clear()
         # v1%3A168203758754724534
@@ -249,17 +245,17 @@ class Scraper:
         for attempt in range(self._retries + 1):
             # The request is newly prepared on each retry because of potential cookie updates.
             _logger.info(f"Retrieving {url}, header:{headers}")
-            user_agent = headers['User-Agent']
-            logging.info(f'user_agent:{user_agent}')
-            #rand_str = "".join(random.choices(string.ascii_lowercase, k=5))
-            #logging.info(f'rand_str:{rand_str}')
-            #new_user_agent = user_agent + rand_str
-            #logging.info(f'new_user_agent:{new_user_agent}')
-            #headers.update(
+            user_agent = headers["User-Agent"]
+            logging.info(f"user_agent:{user_agent}")
+            # rand_str = "".join(random.choices(string.ascii_lowercase, k=5))
+            # logging.info(f'rand_str:{rand_str}')
+            # new_user_agent = user_agent + rand_str
+            # logging.info(f'new_user_agent:{new_user_agent}')
+            # headers.update(
             #    {
             #        'User-Agent': new_user_agent,
             #    }
-            #)
+            # )
             req = self._session.prepare_request(
                 requests.Request(method, url, params=params, data=data, headers=headers)
             )
@@ -279,9 +275,9 @@ class Scraper:
                     timeout=timeout,
                     **environmentSettings,
                 )
-                logging.info(f'response:{r.headers}')
+                logging.info(f"response:{r.headers}")
             except Exception as exc:
-                logging.info(f'response exception:{exc}')
+                logging.info(f"response exception:{exc}")
                 if attempt < self._retries:
                     retrying = ", retrying"
                     level = logging.INFO
@@ -322,7 +318,7 @@ class Scraper:
                     _logger.log(level, f"Error retrieving {req.url}{msg}{retrying}")
             if attempt < self._retries:
                 sleepTime = (
-                    1.0 * 2 ** attempt
+                    1.0 * 2**attempt
                 )  # exponential backoff: sleep 1 second after first attempt, 2 after second, 4 after third, etc.
                 _logger.info(f"Waiting {sleepTime:.0f} seconds")
                 time.sleep(sleepTime)

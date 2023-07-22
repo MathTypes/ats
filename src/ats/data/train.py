@@ -5,11 +5,9 @@ import random
 import argparse
 import glob
 import logging
-import os
 import re
 
 from utils import load_unlabeled_dataset
-from textblob import TextBlob
 
 from snorkel.labeling.model import LabelModel
 from snorkel.labeling import PandasLFApplier

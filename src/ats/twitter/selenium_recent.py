@@ -1,22 +1,20 @@
 # importing libraries and packages
 # from absl import logging
 # Example of usage:
-# YTHONPATH=. python3 twitter/selenium_scrape.py --symbol=qqq --start_date=2022-04-01 --end_date=2023-04-26 --output_dir=/Volumes/Seagate\ Portable\ Drive/data/selenium/user --email=alexsimon788213 --browser_profile=/Users/jianjunchen/repo/ats-1/src 
+# YTHONPATH=. python3 twitter/selenium_scrape.py --symbol=qqq --start_date=2022-04-01 --end_date=2023-04-26 --output_dir=/Volumes/Seagate\ Portable\ Drive/data/selenium/user --email=alexsimon788213 --browser_profile=/Users/jianjunchen/repo/ats-1/src
 #
-import argparse
 import logging
 import datetime
 import os
 
-import pandas as pd
 
 from google.cloud import firestore_v1 as firestore
-from twitter_scraper_selenium import get_profile_details
-from twitter_scraper_selenium import scrape_profile, scrape_keyword
+from twitter_scraper_selenium import scrape_keyword
 from util import config_utils
 from util import logging_utils
 import logging
-#from google.cloud import firestore_v1 as firestore
+
+# from google.cloud import firestore_v1 as firestore
 from firebase_admin import firestore
 from util import logging_utils
 
@@ -66,7 +64,7 @@ if __name__ == "__main__":
     empty_tweets = set()
     # Creating list to append tweet data
     tweets_list1 = []
-    #query = f"{keyword} since:{since} until:{until}"
+    # query = f"{keyword} since:{since} until:{until}"
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     output_file = args.output_dir + "/" + output_file_name + ".csv"
@@ -83,7 +81,7 @@ if __name__ == "__main__":
         logging.info(f"browser_profile:{browser_profile}")
         logging.info(f"args.login:{args.login}")
         data = scrape_keyword(
-            keyword = f"{keyword}",
+            keyword=f"{keyword}",
             output_format="",
             browser="chrome",
             tweets_count=30,
@@ -91,20 +89,24 @@ if __name__ == "__main__":
             directory="",
             browser_profile=browser_profile,
             headless=args.headless,
-            email = email,
-            login = args.login
+            email=email,
+            login=args.login,
         )
 
-        cred = credentials.Certificate("/Users/jianjunchen/repo/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json")
+        cred = credentials.Certificate(
+            "/Users/jianjunchen/repo/secrets/keen-rhino-386415-firebase-adminsdk-9jpg7-968c43811b.json"
+        )
         default_app = firebase_admin.initialize_app(cred)
         db = firestore.client()
-        firebase = firebase.FirebaseApplication('https://keen-rhino-386415.firebaseio.com', None)
+        firebase = firebase.FirebaseApplication(
+            "https://keen-rhino-386415.firebaseio.com", None
+        )
 
-        #data = {'1657852295558709248': {'tweet_id': '1657852295558709248', 'username': 'davidcharting', 'name': 'David', 'profile_picture': 'https://pbs.twimg.com/profile_images/1641528445149519895/f5IC8trq_x96.jpg', 'replies': 0, 'retweets': 0, 'likes': 0, 'is_retweet': False, 'posted_time': '2023-05-14T20:56:03+00:00', 'content': 'Relatively light week until Powell speaks on Friday. Hopefully the $SPY does not stay trapped in this 404-417 range.\n\nThere is also a range within that range… first level of support is at 408.75 and first level of resistance is at 414.75.', 'hashtags': [], 'mentions': [], 'images': ['https://pbs.twimg.com/media/FwHf4BXWwAYuF9r?format=jpg&name=medium', 'https://pbs.twimg.com/media/FwHf4BTXoAAcos0?format=jpg&name=medium'], 'videos': [], 'tweet_url': 'https://twitter.com/davidcharting/status/1657852295558709248', 'link': ''}}
-        #doc_ref = db.collection(u'recent_tweet')
-        #postdata = data
+        # data = {'1657852295558709248': {'tweet_id': '1657852295558709248', 'username': 'davidcharting', 'name': 'David', 'profile_picture': 'https://pbs.twimg.com/profile_images/1641528445149519895/f5IC8trq_x96.jpg', 'replies': 0, 'retweets': 0, 'likes': 0, 'is_retweet': False, 'posted_time': '2023-05-14T20:56:03+00:00', 'content': 'Relatively light week until Powell speaks on Friday. Hopefully the $SPY does not stay trapped in this 404-417 range.\n\nThere is also a range within that range… first level of support is at 408.75 and first level of resistance is at 414.75.', 'hashtags': [], 'mentions': [], 'images': ['https://pbs.twimg.com/media/FwHf4BXWwAYuF9r?format=jpg&name=medium', 'https://pbs.twimg.com/media/FwHf4BTXoAAcos0?format=jpg&name=medium'], 'videos': [], 'tweet_url': 'https://twitter.com/davidcharting/status/1657852295558709248', 'link': ''}}
+        # doc_ref = db.collection(u'recent_tweet')
+        # postdata = data
         # Assumes any auth/headers you need are already taken care of.
-        #result = firebase.post('/tweet', postdata, {'print': 'pretty'})
+        # result = firebase.post('/tweet', postdata, {'print': 'pretty'})
         for key, value in data.items():
             logging.info(f"key:{key}, value:{value}")
-            db.collection(u'recent_tweet').document(key).set(value)
+            db.collection("recent_tweet").document(key).set(value)

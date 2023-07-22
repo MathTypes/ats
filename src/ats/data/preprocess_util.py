@@ -1,25 +1,13 @@
-import chart_studio
 import re
 import string
-import emot
 import collections
-import ipywidgets
 import contractions
-import cufflinks
 import nltk.tokenize
 
 import pandas as pd
-import numpy as np
 
 from textblob import TextBlob
-from google.colab import widgets
 from sklearn.feature_extraction.text import CountVectorizer
-from nltk.tokenize import RegexpTokenizer
-from nltk.probability import FreqDist
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import stopwords
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 
 
 def pre_process(text):
@@ -189,7 +177,7 @@ def apply_topics(df):
 
     vader_sentiments = df["vader_polarity"].tolist()
     textblob_sentiments = df["blob_polarity"].tolist()
-    text = df["stop_text"].tolist()
+    df["stop_text"].tolist()
 
     # We create a new column Topic
     df["Topic"] = ""
@@ -209,7 +197,7 @@ def apply_topics(df):
             {"Topic": topic, "Sentiment": textblob_sentiments, "Source": "TextBlob"}
         )
 
-    df_new = pd.DataFrame(data)
+    pd.DataFrame(data)
 
 
 # https://github.com/Wazzabeee/NLP_Unsupervised_Sentiment_Analysis_Elon_Musk/blob/main/500_000_Tweets_on_Elon_Musk.ipynb

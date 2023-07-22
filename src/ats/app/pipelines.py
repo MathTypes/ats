@@ -1,6 +1,4 @@
-from collections import defaultdict
 import datetime
-from dateutil import parser
 import gc
 import logging
 from typing import List
@@ -18,35 +16,15 @@ from empyrical import (
     annual_volatility,
     # cum_returns,
 )
+
 # find optimal learning rate
 from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.tuner import Tuner
 import optuna
 
-import pytz
-import plotly.graph_objects as go
-import PIL
-from plotly.subplots import make_subplots
-from pytorch_forecasting import (
-    Baseline,
-    TemporalFusionTransformer,
-    TimeSeriesDataSet,
-    PatchTstTransformer,
-    PatchTstTftTransformer,
-    PatchTftSupervised,
-)
-from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
 from pytorch_forecasting.metrics import (
-    MAE,
-    MAPE,
-    MASE,
-    MAPCSE,
-    RMSE,
     SMAPE,
-    PoissonLoss,
     QuantileLoss,
 )
-from pytorch_forecasting.utils import create_mask, detach, to_list
 from pytorch_forecasting.models.patch_tft_supervised.tuning import (
     optimize_hyperparameters,
 )
@@ -54,18 +32,14 @@ import torch
 import wandb
 
 from ats.app.env_mgr import EnvMgr
-from ats.calendar import market_time
 from ats.market_data import market_data_mgr
-from ats.market_data.data_module import TransformerDataModule, LSTMDataModule, TimeSeriesDataModule
+from ats.market_data.data_module import TransformerDataModule, LSTMDataModule
 from ats.model.models import AttentionEmbeddingLSTM
 from ats.model.timeseries_transformer import TimeSeriesTFT
 from ats.model import model_utils
 from ats.model.utils import Pipeline
 from ats.model import viz_utils
-from ats.prediction import prediction_utils
 from ats.trading.trader import Trader
-from ats.util.profile import profile
-from ats.util import trace_utils
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -253,8 +227,10 @@ class PatchTstTftPipeline(Pipeline):
         # nhits.run_tune(config, study_name)
         pass
 
+
 class TftParams(object):
     """Esta clase contiene los parametros necesarios del modelo"""
+
     def __init__(self):
         self.BATCH_SIZE = 16
         self.NUM_EPOCHS = 120
@@ -267,18 +243,24 @@ class TftParams(object):
         self.NUM_ATTENTION_HEADS = 1
         self.QUANTILES = [0.1, 0.5, 0.9]
         self.GRADIENT_CLIP_VAL = 0.01002874085767653
-    
-        self.ENCODER_LEN_MIN = 252 #1 anio
-        self.ENCODER_LEN_MAX = 252 #1 anio
-        self.DECODER_LEN = 63 # 1 trimestre
-        self.TIME_IDX = 'Time_idx'
-        self.TARGET = ['Close', 'Volume']
+
+        self.ENCODER_LEN_MIN = 252  # 1 anio
+        self.ENCODER_LEN_MAX = 252  # 1 anio
+        self.DECODER_LEN = 63  # 1 trimestre
+        self.TIME_IDX = "Time_idx"
+        self.TARGET = ["Close", "Volume"]
         self.GROUP_ID = ["Ticker"]
         self.STATIC_CATEGORICALS = ["Ticker"]
-        self.TIME_KNOW_CATEGORICALS = ['Date_day', 'Date_month', 'Date_day_week', 'Date_day_year']
-        self.TIME_KNOW_REALS = ['Time_idx']
+        self.TIME_KNOW_CATEGORICALS = [
+            "Date_day",
+            "Date_month",
+            "Date_day_week",
+            "Date_day_year",
+        ]
+        self.TIME_KNOW_REALS = ["Time_idx"]
         self.TIME_UNKNOW_CATEGORICALS = []
         self.TIME_UNKNOW_REALS = ["Close", "Open", "Volume"]
+
 
 class PatchTftSupervisedPipeline(Pipeline):
     def __init__(self, dataset="fut", config=None):
@@ -306,9 +288,11 @@ class PatchTftSupervisedPipeline(Pipeline):
 
     def tune_model(self, run_id):
         study_name = f"tft_study_{run_id}"
-        opt = optuna.create_study(direction="minimize",
-                                  pruner=optuna.pruners.SuccessiveHalvingPruner(),
-                                  study_name=study_name)
+        opt = optuna.create_study(
+            direction="minimize",
+            pruner=optuna.pruners.SuccessiveHalvingPruner(),
+            study_name=study_name,
+        )
         kwargs = {"loss": QuantileLoss(quantiles=TftParams().QUANTILES)}
         study = optimize_hyperparameters(
             self.data_module.train_dataloader(),
@@ -325,16 +309,16 @@ class PatchTftSupervisedPipeline(Pipeline):
             attention_head_size_range=(1, 4),
             learning_rate_range=(0.001, 0.1),
             dropout_range=(0.1, 0.3),
-            trainer_kwargs=dict(limit_train_batches=30,
-                                accelerator='gpu', devices=-1,
-                                callbacks=[]),
+            trainer_kwargs=dict(
+                limit_train_batches=30, accelerator="gpu", devices=-1, callbacks=[]
+            ),
             reduce_on_plateau_patience=4,
             use_learning_rate_finder=False,
-            study=opt, 
-            timeout=60*60*2, #2 horas
-            **kwargs
+            study=opt,
+            timeout=60 * 60 * 2,  # 2 horas
+            **kwargs,
         )
-        print('best_trial', study.best_trial.params)
+        print("best_trial", study.best_trial.params)
 
     def test_model(self):
         self.market_cal = self.env_mgr.market_cal
@@ -345,8 +329,8 @@ class PatchTftSupervisedPipeline(Pipeline):
         train_data = self.data_module.train_data
         future_data = self.data_module.test_data
 
-        #logging.info(f"train_data:{train_data.iloc[-2:]}")
-        #logging.info(f"future_data:{future_data.iloc[:2]}")
+        # logging.info(f"train_data:{train_data.iloc[-2:]}")
+        # logging.info(f"future_data:{future_data.iloc[:2]}")
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pnl_viz", type="pnl_viz")
         column_names = [
@@ -381,8 +365,17 @@ class PatchTftSupervisedPipeline(Pipeline):
         target_size = len(self.targets) if isinstance(self.targets, List) else 1
 
         md_mgr = market_data_mgr.MarketDataMgr(self.config, self.market_cal)
-        trader = Trader(md_mgr, self.model, wandb_logger, target_size, future_data,
-                        train_data, train_dataset, self.config, self.market_cal)
+        trader = Trader(
+            md_mgr,
+            self.model,
+            wandb_logger,
+            target_size,
+            future_data,
+            train_data,
+            train_dataset,
+            self.config,
+            self.market_cal,
+        )
         for test_date in test_dates:
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
@@ -422,7 +415,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                         row["px"],
                         row["pnl_delta"],
                     )
-                #logging.info(f"new_position:{position}, prediction:{prediction}")
+                # logging.info(f"new_position:{position}, prediction:{prediction}")
             logging.info(f"eod {test_date}")
             gc.collect()
         data_artifact.add(data_table, "trading_data")
@@ -437,7 +430,7 @@ class PatchTftSupervisedPipeline(Pipeline):
                 wandb.run.summary[key] = val
             logging.info(f"stats:{stats}")
 
-    def compute_stats(self, srs : pd.DataFrame, metric_suffix = ""):
+    def compute_stats(self, srs: pd.DataFrame, metric_suffix=""):
         return {
             f"annual_return{metric_suffix}": annual_return(srs),
             f"annual_volatility{metric_suffix}": annual_volatility(srs),

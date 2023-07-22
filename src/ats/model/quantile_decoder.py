@@ -4,6 +4,7 @@ import math
 from typing import Dict, Any, Optional
 from utils import _easy_mlp, _split_series_time_dims, _merge_series_time_dims
 
+
 class QuantileDecoder(nn.Module):
     """
     A decoder which forecast using a non parametric distribution.
@@ -29,14 +30,18 @@ class QuantileDecoder(nn.Module):
 
         self.min_u = min_u
         self.max_u = max_u
-        
+
         if attentional_quantile is not None:
-            self.quantile = AttentionalQuantile(input_dim=input_dim, **attentional_quantile)
+            self.quantile = AttentionalQuantile(
+                input_dim=input_dim, **attentional_quantile
+            )
 
         # if dsf_marginal is not None:
         #     self.marginal = DSFMarginal(context_dim=input_dim, **dsf_marginal)
 
-    def loss(self, encoded: torch.Tensor, mask: torch.BoolTensor, true_value: torch.Tensor) -> torch.Tensor:
+    def loss(
+        self, encoded: torch.Tensor, mask: torch.BoolTensor, true_value: torch.Tensor
+    ) -> torch.Tensor:
         """
         Compute the loss function of the decoder.
 
@@ -73,14 +78,18 @@ class QuantileDecoder(nn.Module):
             hist_encoded=hist_encoded,
             hist_true_u=hist_true_x,
             pred_encoded=pred_encoded,
-            pred_true_u=pred_true_x
+            pred_true_u=pred_true_x,
         )
 
         # Loss = negative log likelihood
-        return quantile_loss 
+        return quantile_loss
 
     def sample(
-        self, num_samples: int, encoded: torch.Tensor, mask: torch.BoolTensor, true_value: torch.Tensor
+        self,
+        num_samples: int,
+        encoded: torch.Tensor,
+        mask: torch.BoolTensor,
+        true_value: torch.Tensor,
     ) -> torch.Tensor:
         """
         Generate the given number of samples from the forecasted distribution.
@@ -104,7 +113,9 @@ class QuantileDecoder(nn.Module):
         samples: torch.Tensor [batch, series, time steps, samples]
             Samples drawn from the forecasted distribution.
         """
-        target_shape = torch.Size((true_value.shape[0], true_value.shape[1], true_value.shape[2], num_samples))
+        target_shape = torch.Size(
+            (true_value.shape[0], true_value.shape[1], true_value.shape[2], num_samples)
+        )
 
         encoded = _merge_series_time_dims(encoded)
         mask = _merge_series_time_dims(mask)
@@ -117,9 +128,7 @@ class QuantileDecoder(nn.Module):
         pred_encoded = encoded[:, ~mask, :]
         hist_true_x = true_value[:, mask]
 
-        
         hist_true_u = hist_true_x
-
 
         pred_samples = self.quantile.sample(
             num_samples=num_samples,
@@ -127,10 +136,12 @@ class QuantileDecoder(nn.Module):
             hist_true_u=hist_true_u,
             pred_encoded=pred_encoded,
         )
-        
 
         samples = torch.zeros(
-            target_shape[0], target_shape[1] * target_shape[2], target_shape[3], device=encoded.device
+            target_shape[0],
+            target_shape[1] * target_shape[2],
+            target_shape[3],
+            device=encoded.device,
         )
         samples[:, mask, :] = hist_true_x[:, :, None]
         samples[:, ~mask, :] = pred_samples
@@ -199,7 +210,9 @@ class AttentionalQuantile(nn.Module):
         # After each layer, we transform the embedding using a feed-forward network, consisting of
         # two linear layer with a ReLu in-between both
         # At the very beginning, we have a linear layer to change the embedding to the proper dimensionality
-        self.dimension_shifting_layer = nn.Linear(self.input_dim, self.attention_heads * self.attention_dim)
+        self.dimension_shifting_layer = nn.Linear(
+            self.input_dim, self.attention_heads * self.attention_dim
+        )
 
         # one per layer and per head
         # The key and value creators take the input embedding together with the sampled [0,1] value as an input
@@ -239,24 +252,38 @@ class AttentionalQuantile(nn.Module):
         )
 
         # one per layer
-        self.attention_dropouts = nn.ModuleList([nn.Dropout(self.dropout) for _ in range(self.attention_layers)])
+        self.attention_dropouts = nn.ModuleList(
+            [nn.Dropout(self.dropout) for _ in range(self.attention_layers)]
+        )
         self.attention_layer_norms = nn.ModuleList(
-            [nn.LayerNorm(self.attention_heads * self.attention_dim) for _ in range(self.attention_layers)]
+            [
+                nn.LayerNorm(self.attention_heads * self.attention_dim)
+                for _ in range(self.attention_layers)
+            ]
         )
         self.feed_forwards = nn.ModuleList(
             [
                 nn.Sequential(
-                    nn.Linear(self.attention_heads * self.attention_dim, self.attention_heads * self.attention_dim),
+                    nn.Linear(
+                        self.attention_heads * self.attention_dim,
+                        self.attention_heads * self.attention_dim,
+                    ),
                     nn.ReLU(),
                     nn.Dropout(self.dropout),
-                    nn.Linear(self.attention_heads * self.attention_dim, self.attention_heads * self.attention_dim),
+                    nn.Linear(
+                        self.attention_heads * self.attention_dim,
+                        self.attention_heads * self.attention_dim,
+                    ),
                     nn.Dropout(dropout),
                 )
                 for _ in range(self.attention_layers)
             ]
         )
         self.feed_forward_layer_norms = nn.ModuleList(
-            [nn.LayerNorm(self.attention_heads * self.attention_dim) for _ in range(self.attention_layers)]
+            [
+                nn.LayerNorm(self.attention_heads * self.attention_dim)
+                for _ in range(self.attention_layers)
+            ]
         )
 
         # Parameter extractor for the categorical distribution
@@ -315,16 +342,34 @@ class AttentionalQuantile(nn.Module):
         pred_true_u = pred_true_u[:, permutation]
 
         # The MLP which generates the keys and values used the encoded embedding + transformed true values.
-        key_value_input_hist = torch.cat([hist_encoded, hist_true_u[:, :, None]], axis=2)
-        key_value_input_pred = torch.cat([pred_encoded, pred_true_u[:, :, None]], axis=2)
-        key_value_input = torch.cat([key_value_input_hist, key_value_input_pred], axis=1)
+        key_value_input_hist = torch.cat(
+            [hist_encoded, hist_true_u[:, :, None]], axis=2
+        )
+        key_value_input_pred = torch.cat(
+            [pred_encoded, pred_true_u[:, :, None]], axis=2
+        )
+        key_value_input = torch.cat(
+            [key_value_input_hist, key_value_input_pred], axis=1
+        )
 
         keys = [
-            torch.cat([mlp(key_value_input)[:, None, :, :] for mlp in self.key_creators[layer]], axis=1)
+            torch.cat(
+                [
+                    mlp(key_value_input)[:, None, :, :]
+                    for mlp in self.key_creators[layer]
+                ],
+                axis=1,
+            )
             for layer in range(self.attention_layers)
         ]
         values = [
-            torch.cat([mlp(key_value_input)[:, None, :, :] for mlp in self.value_creators[layer]], axis=1)
+            torch.cat(
+                [
+                    mlp(key_value_input)[:, None, :, :]
+                    for mlp in self.value_creators[layer]
+                ],
+                axis=1,
+            )
             for layer in range(self.attention_layers)
         ]
 
@@ -352,7 +397,10 @@ class AttentionalQuantile(nn.Module):
         for layer in range(self.attention_layers):
             # Split the hidden layer into its various heads
             att_value_heads = att_value.reshape(
-                att_value.shape[0], att_value.shape[1], self.attention_heads, self.attention_dim
+                att_value.shape[0],
+                att_value.shape[1],
+                self.attention_heads,
+                self.attention_dim,
             )
 
             # Attention layer, for each batch and head:
@@ -381,7 +429,9 @@ class AttentionalQuantile(nn.Module):
             att = torch.einsum("bhvw,bhwj->bvhj", weights, values[layer])
 
             # Merge back the various heads to allow the feed forwards module to share information between heads
-            att_merged_heads = att.reshape(att.shape[0], att.shape[1], att.shape[2] * att.shape[3])
+            att_merged_heads = att.reshape(
+                att.shape[0], att.shape[1], att.shape[2] * att.shape[3]
+            )
             att_merged_heads = self.attention_dropouts[layer](att_merged_heads)
             att_value = att_value + att_merged_heads
             att_value = self.attention_layer_norms[layer](att_value)
@@ -396,7 +446,11 @@ class AttentionalQuantile(nn.Module):
         logits = self.dist_extractors(att_value)[:, 1:, :]
 
         # Assign each observed U(0,1) value to a bin. The clip is to avoid issues with numerical inaccuracies.
-        target = torch.clip(torch.floor(pred_true_u[:, 1:] * self.resolution).long(), min=0, max=self.resolution - 1)
+        target = torch.clip(
+            torch.floor(pred_true_u[:, 1:] * self.resolution).long(),
+            min=0,
+            max=self.resolution - 1,
+        )
 
         # We multiply the probability by self.resolution to get the PDF of the continuous-by-part distribution.
         logprob = math.log(self.resolution) + nn.functional.log_softmax(logits, dim=2)
@@ -408,7 +462,11 @@ class AttentionalQuantile(nn.Module):
         return -logprob.sum(axis=1)  # Only keep the batch dimension
 
     def sample(
-        self, num_samples: int, hist_encoded: torch.Tensor, hist_true_u: torch.Tensor, pred_encoded: torch.Tensor
+        self,
+        num_samples: int,
+        hist_encoded: torch.Tensor,
+        hist_true_u: torch.Tensor,
+        pred_encoded: torch.Tensor,
     ) -> torch.Tensor:
         """
         Generate the given number of samples from the forecasted copula.
@@ -441,23 +499,41 @@ class AttentionalQuantile(nn.Module):
         if self.fixed_permutation:
             # This fixed permutation would better be done series by series, instead of time step by time step.
             # However, we cannot have the other behaviour without explicitly sending the number of series (or time steps).
-            permutations = torch.stack([torch.range(0, num_variables) for _ in range(num_samples)])
+            permutations = torch.stack(
+                [torch.range(0, num_variables) for _ in range(num_samples)]
+            )
         else:
             # Have an independant permutation for each sample.
             # Note that different elements of a single batch will share the same permutations.
             # This was done due to avoid an overly complex implementation,
             # but it does has an impact on the sampling accuracy if num_samples is small and num_batches is large
             # (aka: when the sampling of a given forecast is spread over multiple entries of a single batch).
-            permutations = torch.stack([torch.randperm(num_variables) for _ in range(num_samples)])
+            permutations = torch.stack(
+                [torch.randperm(num_variables) for _ in range(num_samples)]
+            )
 
         # The MLP which generates the keys and values used the encoded embedding + transformed true values.
-        key_value_input_hist = torch.cat([hist_encoded, hist_true_u[:, :, None]], axis=2)
+        key_value_input_hist = torch.cat(
+            [hist_encoded, hist_true_u[:, :, None]], axis=2
+        )
         keys_hist = [
-            torch.cat([mlp(key_value_input_hist)[:, None, :, :] for mlp in self.key_creators[layer]], axis=1)
+            torch.cat(
+                [
+                    mlp(key_value_input_hist)[:, None, :, :]
+                    for mlp in self.key_creators[layer]
+                ],
+                axis=1,
+            )
             for layer in range(self.attention_layers)
         ]
         values_hist = [
-            torch.cat([mlp(key_value_input_hist)[:, None, :, :] for mlp in self.value_creators[layer]], axis=1)
+            torch.cat(
+                [
+                    mlp(key_value_input_hist)[:, None, :, :]
+                    for mlp in self.value_creators[layer]
+                ],
+                axis=1,
+            )
             for layer in range(self.attention_layers)
         ]
 
@@ -465,13 +541,23 @@ class AttentionalQuantile(nn.Module):
         samples = torch.zeros(num_batches, num_variables, num_samples).to(device)
         keys_samples = [
             torch.zeros(
-                num_batches, num_samples, self.attention_heads, num_variables, self.attention_dim, device=device
+                num_batches,
+                num_samples,
+                self.attention_heads,
+                num_variables,
+                self.attention_dim,
+                device=device,
             )
             for _ in range(self.attention_layers)
         ]
         values_samples = [
             torch.zeros(
-                num_batches, num_samples, self.attention_heads, num_variables, self.attention_dim, device=device
+                num_batches,
+                num_samples,
+                self.attention_heads,
+                num_variables,
+                self.attention_dim,
+                device=device,
             )
             for _ in range(self.attention_layers)
         ]
@@ -492,7 +578,10 @@ class AttentionalQuantile(nn.Module):
                 for layer in range(self.attention_layers):
                     # Split the hidden layer into its various heads
                     att_value_heads = att_value.reshape(
-                        att_value.shape[0], att_value.shape[1], self.attention_heads, self.attention_dim
+                        att_value.shape[0],
+                        att_value.shape[1],
+                        self.attention_heads,
+                        self.attention_dim,
                     )
 
                     # Calculate attention weights
@@ -502,10 +591,14 @@ class AttentionalQuantile(nn.Module):
                     # h: attention head number
                     # w: variable we want to get information from (history or prediction)
                     # i: embedding dimension of the keys and queries (self.input_dim)
-                    product_hist = torch.einsum("bnhi,bhwi->bnhw", att_value_heads, keys_hist[layer])
+                    product_hist = torch.einsum(
+                        "bnhi,bhwi->bnhw", att_value_heads, keys_hist[layer]
+                    )
                     # keys_samples is full of zero starting at i of the 4th dimension (w)
                     product_samples = torch.einsum(
-                        "bnhi,bnhwi->bnhw", att_value_heads, keys_samples[layer][:, :, :, 0:i, :]
+                        "bnhi,bnhwi->bnhw",
+                        att_value_heads,
+                        keys_samples[layer][:, :, :, 0:i, :],
                     )
                     # Combine the attention from the history and from the previous samples.
                     product = torch.cat([product_hist, product_samples], axis=3)
@@ -522,14 +615,20 @@ class AttentionalQuantile(nn.Module):
                     # h: attention head number
                     # w: variable we want to get information from (history or prediction)
                     # j: embedding dimension of the values (self.hid_dim)
-                    att_hist = torch.einsum("bnhw,bhwj->bnhj", weights_hist, values_hist[layer])
+                    att_hist = torch.einsum(
+                        "bnhw,bhwj->bnhj", weights_hist, values_hist[layer]
+                    )
                     att_samples = torch.einsum(
-                        "bnhw,bnhwj->bnhj", weights_samples, values_samples[layer][:, :, :, 0:i, :]
+                        "bnhw,bnhwj->bnhj",
+                        weights_samples,
+                        values_samples[layer][:, :, :, 0:i, :],
                     )  # i >= 1
                     att = att_hist + att_samples
 
                     # Merge back the various heads to allow the feed forwards module to share information between heads
-                    att_merged_heads = att.reshape(att.shape[0], att.shape[1], att.shape[2] * att.shape[3])
+                    att_merged_heads = att.reshape(
+                        att.shape[0], att.shape[1], att.shape[2] * att.shape[3]
+                    )
                     att_merged_heads = self.attention_dropouts[layer](att_merged_heads)
                     att_value = att_value + att_merged_heads
                     att_value = self.attention_layer_norms[layer](att_value)
@@ -538,20 +637,40 @@ class AttentionalQuantile(nn.Module):
                     att_value = self.feed_forward_layer_norms[layer](att_value)
 
                 # Get the output distribution parameters
-                logits = self.dist_extractors(att_value).reshape(num_batches * num_samples, self.resolution)
+                logits = self.dist_extractors(att_value).reshape(
+                    num_batches * num_samples, self.resolution
+                )
                 # Select a single variable in {0, 1, 2, ..., self.resolution-1} according to the probabilities from the softmax
-                current_samples = torch.multinomial(input=torch.softmax(logits, dim=1), num_samples=1)
+                current_samples = torch.multinomial(
+                    input=torch.softmax(logits, dim=1), num_samples=1
+                )
                 # Each point in the same bucket is equiprobable, and we used a floor function in the training
-                current_samples = current_samples + torch.rand(*current_samples.shape).to(device)
+                current_samples = current_samples + torch.rand(
+                    *current_samples.shape
+                ).to(device)
                 # Normalize to a variable in the [0, 1) range
                 current_samples /= self.resolution
                 current_samples = current_samples.reshape(num_batches, num_samples)
 
             # Compute the key and value associated with the newly sampled variable, for the attention of the next ones.
-            key_value_input = torch.cat([current_pred_encoded, current_samples[:, :, None]], axis=-1)
+            key_value_input = torch.cat(
+                [current_pred_encoded, current_samples[:, :, None]], axis=-1
+            )
             for layer in range(self.attention_layers):
-                new_keys = torch.cat([k(key_value_input)[:, :, None, :] for k in self.key_creators[layer]], axis=2)
-                new_values = torch.cat([v(key_value_input)[:, :, None, :] for v in self.value_creators[layer]], axis=2)
+                new_keys = torch.cat(
+                    [
+                        k(key_value_input)[:, :, None, :]
+                        for k in self.key_creators[layer]
+                    ],
+                    axis=2,
+                )
+                new_values = torch.cat(
+                    [
+                        v(key_value_input)[:, :, None, :]
+                        for v in self.value_creators[layer]
+                    ],
+                    axis=2,
+                )
                 keys_samples[layer][:, :, :, i, :] = new_keys
                 values_samples[layer][:, :, :, i, :] = new_values
 
@@ -561,13 +680,11 @@ class AttentionalQuantile(nn.Module):
 
         return samples
 
+
 class RNNDecoder(nn.Module):
-    def __init__(self,
-                 dim_features,
-                 dim_hidden_features,
-                 num_layers,
-                 dim_output,
-                 bias = True):
+    def __init__(
+        self, dim_features, dim_hidden_features, num_layers, dim_output, bias=True
+    ):
         super().__init__()
         self.dim_features = dim_features
         self.dim_hidden_features = dim_hidden_features
@@ -576,30 +693,37 @@ class RNNDecoder(nn.Module):
         self.bias = bias
         self.rnn = nn.RNN(
             input_size=dim_features,
-            hidden_size=dim_hidden_features,     
-            num_layers=num_layers,       
+            hidden_size=dim_hidden_features,
+            num_layers=num_layers,
             batch_first=True,
-            bias = bias   # input & output will has batch size as 1s dimension. e.g. (batch, time_step, dim_features)
+            bias=bias,  # input & output will has batch size as 1s dimension. e.g. (batch, time_step, dim_features)
         )
         self.readout = nn.Linear(dim_hidden_features, dim_output)
 
         self.relu = nn.ReLU()
         self.distribution_mu = nn.Linear(dim_hidden_features * num_layers, dim_output)
-        self.distribution_presigma = nn.Linear(dim_hidden_features * num_layers, dim_output)
+        self.distribution_presigma = nn.Linear(
+            dim_hidden_features * num_layers, dim_output
+        )
         self.distribution_sigma = nn.Softplus()
 
     def forward(self, in_tensor, in_hidden=None):
-
         output_tensor, hidden_tensor = self.rnn(in_tensor, in_hidden)
         output_signal = self.readout(output_tensor)
-        hidden_tensor = hidden_tensor.view(-1, self.dim_hidden_features*self.num_layers)
+        hidden_tensor = hidden_tensor.view(
+            -1, self.dim_hidden_features * self.num_layers
+        )
         pre_sigma = self.distribution_presigma(hidden_tensor)
         mu_hidden = self.distribution_mu(hidden_tensor)
-        sigma_hidden = self.distribution_sigma(pre_sigma)  # softplus to make sure standard deviation is positive
-        
+        sigma_hidden = self.distribution_sigma(
+            pre_sigma
+        )  # softplus to make sure standard deviation is positive
+
         return output_signal, hidden_tensor, mu_hidden, sigma_hidden
 
-    def loss(self, encoded: torch.Tensor, mask: torch.BoolTensor, true_value: torch.Tensor) -> torch.Tensor:
+    def loss(
+        self, encoded: torch.Tensor, mask: torch.BoolTensor, true_value: torch.Tensor
+    ) -> torch.Tensor:
         """
         Compute the loss function of the decoder.
         Parameters:
@@ -623,15 +747,19 @@ class RNNDecoder(nn.Module):
         true_value = _merge_series_time_dims(true_value)
         # Assume that the mask is constant inside the batch
         mask = mask[0, :]
-        
-        #If there is intercation between variables then 
+
+        # If there is intercation between variables then
         hist_encoded = encoded[:, mask, :]
         pred_encoded = encoded[:, ~mask, :]
         hist_true_x = true_value[:, mask]
         pred_true_x = true_value[:, ~mask]
 
-        out_tensor, hidden_tensor , mu_hidden, sigma_hidden = self.forward(torch.cat([hist_encoded, pred_encoded], axis = 1))
-        dist_log_prob = torch.distributions.normal.Normal(mu_hidden, sigma_hidden).log_prob(pred_true_x)
+        out_tensor, hidden_tensor, mu_hidden, sigma_hidden = self.forward(
+            torch.cat([hist_encoded, pred_encoded], axis=1)
+        )
+        dist_log_prob = torch.distributions.normal.Normal(
+            mu_hidden, sigma_hidden
+        ).log_prob(pred_true_x)
 
         self.dist_extractors = _easy_mlp(
             input_dim=self.dim_features,
@@ -640,11 +768,15 @@ class RNNDecoder(nn.Module):
             num_layers=self.num_layers,
             activation=nn.ReLU,
         )
-        
+
         return -dist_log_prob
-    
+
     def sample(
-        self, num_samples: int, encoded: torch.Tensor, mask: torch.BoolTensor, true_value: torch.Tensor
+        self,
+        num_samples: int,
+        encoded: torch.Tensor,
+        mask: torch.BoolTensor,
+        true_value: torch.Tensor,
     ) -> torch.Tensor:
         """
         Generate the given number of samples from the forecasted distribution.
@@ -685,16 +817,19 @@ class RNNDecoder(nn.Module):
         # Except what is needed to copy to the output
         hist_true_x = true_value[:, mask]
 
-        out_tensor, hidden_tensor , mu_hidden, sigma_hidden = self.forward(pred_encoded)
-        
+        out_tensor, hidden_tensor, mu_hidden, sigma_hidden = self.forward(pred_encoded)
+
         dist = torch.distributions.normal.Normal(mu_hidden, sigma_hidden)
-   
-        pred_samples = dist.rsample((num_samples,)).permute((1,2, 0))
-   
-        samples = torch.zeros(num_batches, num_series * num_timesteps, num_samples, device=device)
-       
+
+        pred_samples = dist.rsample((num_samples,)).permute((1, 2, 0))
+
+        samples = torch.zeros(
+            num_batches, num_series * num_timesteps, num_samples, device=device
+        )
+
         samples[:, mask, :] = hist_true_x[:, :, None]
-       
+
         samples[:, ~mask, :] = pred_samples
-        return _split_series_time_dims(samples, torch.Size((num_batches, num_series, num_timesteps, num_samples)))
-    
+        return _split_series_time_dims(
+            samples, torch.Size((num_batches, num_series, num_timesteps, num_samples))
+        )

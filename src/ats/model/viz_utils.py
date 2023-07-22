@@ -2,39 +2,17 @@ import datetime
 from io import BytesIO
 import logging
 
-import numpy as np
 from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.tuner import Tuner
-from pytorch_forecasting import (
-    Baseline,
-    TemporalFusionTransformer,
-    TimeSeriesDataSet,
-    PatchTstTransformer,
-    PatchTstTftTransformer,
-    PatchTftSupervised,
-)
-from pytorch_forecasting.data import GroupNormalizer, NaNLabelEncoder
-from pytorch_forecasting.metrics import (
-    MAE,
-    MAPE,
-    MASE,
-    MAPCSE,
-    RMSE,
-    SMAPE,
-    PoissonLoss,
-    QuantileLoss,
-)
-from pytorch_forecasting.utils import create_mask, detach, to_list
+from pytorch_forecasting.utils import detach, to_list
 import plotly.graph_objects as go
 import PIL
 from plotly.subplots import make_subplots
 import torch
 import wandb
 
-from ats.model.timeseries_transformer import TimeSeriesTFT
-from ats.util.profile import profile
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
+
 
 def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     wandb_logger = WandbLogger(project="ATS", log_model=True)
@@ -141,7 +119,7 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         fig.update_xaxes(
             rangebreaks=[
                 dict(bounds=["sat", "mon"]),  # hide weekends
-                #dict(bounds=[17, 4], pattern="hour"),  # hide hours outside of 4am-5pm
+                # dict(bounds=[17, 4], pattern="hour"),  # hide hours outside of 4am-5pm
             ],
         )
         prediction_date_time = (
@@ -259,11 +237,26 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     return data_table
 
 
-#@profile
-def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
-                   matched_eval_data, x, config, pl_module,
-                   out, target_size, interp_output, rmse, mae, filter_small=True,
-                   show_viz=True):
+# @profile
+def create_viz_row(
+    idx,
+    y_hats,
+    y_hats_cum,
+    y_close,
+    y_close_cum_sum,
+    indices,
+    matched_eval_data,
+    x,
+    config,
+    pl_module,
+    out,
+    target_size,
+    interp_output,
+    rmse,
+    mae,
+    filter_small=True,
+    show_viz=True,
+):
     y_hats[idx]
     y_hat_cum = y_hats_cum[idx]
     y_hat_cum_max = torch.max(y_hat_cum)
@@ -288,14 +281,8 @@ def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
     ):
         return {}
     train_data_rows = matched_eval_data[
-        (
-            matched_eval_data.time_idx
-            >= index.time_idx - config.model.context_length
-        )
-        & (
-            matched_eval_data.time_idx
-            < index.time_idx + config.model.prediction_length
-        )
+        (matched_eval_data.time_idx >= index.time_idx - config.model.context_length)
+        & (matched_eval_data.time_idx < index.time_idx + config.model.prediction_length)
     ]
     # logging.info(f"train_data:rows:{train_data_rows}")
     if target_size > 1:
@@ -417,28 +404,28 @@ def create_viz_row(idx, y_hats, y_hats_cum, y_close, y_close_cum_sum, indices,
         img_bytes = fig.to_image(format="png")  # kaleido library
         im = PIL.Image.open(BytesIO(img_bytes))
         img = wandb.Image(im)
-        
+
     row = {
-        "ticker":train_data_row["ticker"],  # 0 ticker
-        "dm":dm,  # 1 time
-        "time_idx":train_data_row["time_idx"],  # 2 time_idx
-        "day_of_week":train_data_row["day_of_week"],  # 3 day of week
-        "hour_of_day":train_data_row["hour_of_day"],  # 4 hour of day
-        "year":train_data_row["year"],  # 5 year
-        "month":train_data_row["month"],  # 6 month
-        "day_of_month":train_data_row["day_of_month"],  # 7 day_of_month
-        "image":wandb.Image(raw_im),  # 8 image
-        "y_close_cum_max":y_close_cum_max,  # 9 max
-        "y_close_cum_min":y_close_cum_min,  # 10 min
-        "close_back_cumsum":0,  # 11 close_back_cusum
-        "dm_str":dm_str,  # 12
-        "decoder_time_idx":decoder_time_idx,
-        "y_hat_cum_max":y_hat_cum_max,
-        "y_hat_cum_min":y_hat_cum_min,
-        "pred_img":img,
-        "error_cum_max":y_hat_cum_max - y_close_cum_max,
-        "error_cum_min":y_hat_cum_min - y_close_cum_min,
-        "rmse":rmse[idx],
-        "mae":mae[idx],
+        "ticker": train_data_row["ticker"],  # 0 ticker
+        "dm": dm,  # 1 time
+        "time_idx": train_data_row["time_idx"],  # 2 time_idx
+        "day_of_week": train_data_row["day_of_week"],  # 3 day of week
+        "hour_of_day": train_data_row["hour_of_day"],  # 4 hour of day
+        "year": train_data_row["year"],  # 5 year
+        "month": train_data_row["month"],  # 6 month
+        "day_of_month": train_data_row["day_of_month"],  # 7 day_of_month
+        "image": wandb.Image(raw_im),  # 8 image
+        "y_close_cum_max": y_close_cum_max,  # 9 max
+        "y_close_cum_min": y_close_cum_min,  # 10 min
+        "close_back_cumsum": 0,  # 11 close_back_cusum
+        "dm_str": dm_str,  # 12
+        "decoder_time_idx": decoder_time_idx,
+        "y_hat_cum_max": y_hat_cum_max,
+        "y_hat_cum_min": y_hat_cum_min,
+        "pred_img": img,
+        "error_cum_max": y_hat_cum_max - y_close_cum_max,
+        "error_cum_min": y_hat_cum_min - y_close_cum_min,
+        "rmse": rmse[idx],
+        "mae": mae[idx],
     }
     return row

@@ -1,4 +1,3 @@
-import re
 import openai
 
 # get configuration
@@ -17,12 +16,12 @@ import streamlit as st
 openai.api_key = st.secrets["GPT3"]["OPENAI_API_KEY"]  # os.getenv("OPENAI_API_KEY")
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
+
 # --------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------
 ## Reducing text
 def reduce_text_to_nearest_period(text, MAX_LEN):
-    """ Reduce text to nearest period always the text is less than MAX_LEN
-    """
+    """Reduce text to nearest period always the text is less than MAX_LEN"""
     dots_idx = np.array(find_words_endswith_dot(text))
     # select dot position less than MAX_TOKEN
     best_dot_idx = dots_idx[(dots_idx - MAX_LEN) < 0]
@@ -46,8 +45,7 @@ def find_words_endswith_dot(list_words):
 # --------------------------------------------------------------------------------
 ## Reduce tokens for using gpt3 api
 def reduce_tokens_for_gpt3(input_text_gpt3):
-    """reduce tokens for using gpt3 api
-    """
+    """reduce tokens for using gpt3 api"""
     # if text have periods --->  reduce using periods
     best_id_dot = 0
     dots_idx = find_words_endswith_dot(input_text_gpt3)

@@ -2,8 +2,6 @@ import datetime
 import logging
 
 import matplotlib.pyplot as plt
-import nltk
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import pyLDAvis
@@ -38,7 +36,7 @@ def render_visualization(news_df, start_day, end_day):
 
 
 def render_visualization_df(sub_data):
-    count = sub_data.shape[0]
+    sub_data.shape[0]
     # logging.info(f'rendering:{sub_data}')
     # =================================================================================== #
     #                                General                                              #
@@ -59,7 +57,10 @@ def render_visualization_df(sub_data):
             cloud_text = " ".join(sub_data["keyword_subject"])
             # logging.info(f'cloud_text:{cloud_text}')
             wordcloud = WordCloud(
-                colormap="Blues", background_color="white", width=1200, height=800,
+                colormap="Blues",
+                background_color="white",
+                width=1200,
+                height=800,
             ).generate(cloud_text)
             # Generate plot
             plt.figure(figsize=(100, 100))
@@ -73,7 +74,10 @@ def render_visualization_df(sub_data):
             cloud_text = " ".join(sub_data["keyword_text"])
             # logging.info(f'cloud_text:{cloud_text}')
             wordcloud = WordCloud(
-                colormap="Reds", background_color="white", width=1200, height=800,
+                colormap="Reds",
+                background_color="white",
+                width=1200,
+                height=800,
             ).generate(cloud_text)
             # Generate plot
             plt.figure(figsize=(100, 100))
@@ -173,7 +177,11 @@ def render_visualization_df(sub_data):
         # =================================================================================== #
         with st.container():
             st.subheader("**Select the subject of the new to visualise:**")
-            option = st.multiselect("News Subjects:", sub_data["subject"].tolist(), [],)
+            option = st.multiselect(
+                "News Subjects:",
+                sub_data["subject"].tolist(),
+                [],
+            )
             if len(option) > 0:
                 st.markdown("**Name entity Recognition:**")
                 text = sub_data["text"][sub_data["subject"] == option[0]].values[0]
@@ -245,5 +253,8 @@ def render_visualization_df(sub_data):
             st.info("this process takes some time ⌛ ...")
             text_ner, text_ner_count = get_list_ner(sub_data)
             display_text(
-                sub_data, options, text_ner=text_ner, text_ner_count=text_ner_count,
+                sub_data,
+                options,
+                text_ner=text_ner,
+                text_ner_count=text_ner_count,
             )

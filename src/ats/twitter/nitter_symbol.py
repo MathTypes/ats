@@ -2,10 +2,8 @@
 # PYTHONPATH=. python3 twitter/nitter_symbol.py --output_dir=../data/nitter_tweet_ids --symbols=spy --start_date=2010-01-01 --end_date=2023-04-20
 #
 import os
-import time
 import datetime
 import logging
-from pprint import pprint
 
 import pandas as pd
 from nitter_scraper import NitterScraper
@@ -43,22 +41,34 @@ if __name__ == "__main__":
             for cur_date in pd.date_range(args.start_date, args.end_date, freq="D"):
                 since = cur_date.strftime("%Y-%m-%d")
                 until = (cur_date + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-                output_file = symbol_output_dir + "/" + symbol + "_" + since + "_" + until + ".csv"
-                logging.info(f"processing since:{since} until:{until}, output_file:{output_file}")
-                if not os.path.exists(output_file):                    
+                output_file = (
+                    symbol_output_dir
+                    + "/"
+                    + symbol
+                    + "_"
+                    + since
+                    + "_"
+                    + until
+                    + ".csv"
+                )
+                logging.info(
+                    f"processing since:{since} until:{until}, output_file:{output_file}"
+                )
+                if not os.path.exists(output_file):
                     df = pd.DataFrame()
                     query = f"search?f=tweets&q={symbol}&until={until}&since={since}"
                     try:
-                        tweets = nitter.search_tweets(query, pages=100, address=f"http://nitter.cz")
+                        tweets = nitter.search_tweets(
+                            query, pages=100, address=f"http://nitter.cz"
+                        )
                         for tweet in tweets:
-                            #df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
+                            # df2 = {'Id': str(tweet.tweet_id), 'Url': tweet.tweet_url, 'Username': tweet.username}
                             df2 = tweet.dict()
                             df2["tweet_id"] = str(df2["tweet_id"])
-                            df2["timestamp_ms"] = tweet.time.timestamp()*1000
-                            df = df.append(df2, ignore_index = True)
+                            df2["timestamp_ms"] = tweet.time.timestamp() * 1000
+                            df = df.append(df2, ignore_index=True)
                     except Exception as e:
                         logging.info(f"e:{e}")
-                        pass
                     logging.info(f"df:{df}")
                     if not os.path.exists(symbol_output_dir):
                         os.makedirs(symbol_output_dir)

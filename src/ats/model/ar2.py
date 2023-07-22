@@ -7,7 +7,6 @@ from lightning.pytorch.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import pandas as pd
-import torch
 
 from pytorch_forecasting import Baseline, DeepAR, TimeSeriesDataSet
 from pytorch_forecasting.data import NaNLabelEncoder
@@ -63,7 +62,6 @@ baseline_predictions = Baseline().predict(
 SMAPE()(baseline_predictions.output, baseline_predictions.y)
 
 pl.seed_everything(42)
-import pytorch_forecasting as ptf
 
 trainer = pl.Trainer(accelerator="cpu", gradient_clip_val=1e-1)
 net = DeepAR.from_dataset(

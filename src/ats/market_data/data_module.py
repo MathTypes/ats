@@ -5,20 +5,14 @@ import logging
 from torch.utils.data import DataLoader
 from omegaconf import OmegaConf
 from pytorch_forecasting.data.encoders import (
-    EncoderNormalizer,
-    GroupNormalizer,
-    MultiNormalizer,
     NaNLabelEncoder,
-    TorchNormalizer,
 )
-from pytorch_forecasting import Baseline, NHiTS, DeepAR, TimeSeriesDataSet
+from pytorch_forecasting import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
-from scipy.signal import argrelmax, argrelmin, argrelextrema, find_peaks
 
 from ats.market_data.datasets import (
     generate_stock_tokens,
     generate_stock_returns,
-    tabular_to_sliding_dataset,
 )
 from ats.market_data import timeseries_dataset
 from ats.market_data import timeseries_utils
@@ -198,14 +192,30 @@ class LSTMDataModule(pl.LightningDataModule):
 
 
 class TimeSeriesDataModule(pl.LightningDataModule):
-    def __init__(self, config, train_data, eval_data, test_data, target, simulation_mode = False):
+    def __init__(
+        self, config, train_data, eval_data, test_data, target, simulation_mode=False
+    ):
         super().__init__()
-        train_data = train_data.drop(columns=["close_low_201_bf", "close_high_21_bf",
-                                              "close_low_21_bf", "close_high_201_bf",
-                                              "close_low_51_bf", "close_high_51_bf"])
-        eval_data = eval_data.drop(columns=["close_low_201_bf", "close_high_21_bf",
-                                            "close_low_21_bf", "close_high_201_bf",
-                                            "close_low_51_bf", "close_high_51_bf"])
+        train_data = train_data.drop(
+            columns=[
+                "close_low_201_bf",
+                "close_high_21_bf",
+                "close_low_21_bf",
+                "close_high_201_bf",
+                "close_low_51_bf",
+                "close_high_51_bf",
+            ]
+        )
+        eval_data = eval_data.drop(
+            columns=[
+                "close_low_201_bf",
+                "close_high_21_bf",
+                "close_low_21_bf",
+                "close_high_201_bf",
+                "close_low_51_bf",
+                "close_high_51_bf",
+            ]
+        )
         logging.info(f"train_data:{train_data.describe()}")
         self.train_data = train_data.dropna()
         logging.info(f"train_data:{train_data.describe()}")
@@ -220,7 +230,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         # target_normalizer=GroupNormalizer(
         #    groups=["ticker"], transformation="softplus"
         # ),  # use softplus and normalize by group
-        #if isinstance(target, (typing.Set, typing.List)):
+        # if isinstance(target, (typing.Set, typing.List)):
         #    normalizer_list = [
         #        EncoderNormalizer(transformation="relu") for i in range(len(target))
         #    ]
@@ -265,7 +275,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         logging.info(f"eval_data_size:{eval_data_size}")
         self.eval_data = self.eval_data[:eval_data_size]
         self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
-        self.test = TimeSeriesDataSet.from_dataset(self.training, self.test_data, simulation_mode=simulation_mode)
+        self.test = TimeSeriesDataSet.from_dataset(
+            self.training, self.test_data, simulation_mode=simulation_mode
+        )
 
     def prepare_data(self):
         pass
@@ -285,14 +297,14 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         return train_dataloader
 
     def val_dataloader(self):
-        #logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
+        # logging.info(f"val_dataloader_batch:{self.eval_batch_size}")
         # train = True is the hack to randomly sample from time series from different ticker.
         logging.info(f"eval_batch_size:{self.eval_batch_size}")
         val_dataloader = self.validation.to_dataloader(
             train=True,
             batch_size=self.eval_batch_size,
             num_workers=20,
-            #batch_sampler="synchronized",
+            # batch_sampler="synchronized",
             pin_memory=True,
             drop_last=False,
         )

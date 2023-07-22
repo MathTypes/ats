@@ -9,14 +9,12 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-import numpy as np
 import pandas as pd
-import torch
 
-from pytorch_forecasting import Baseline, NHiTS, TimeSeriesDataSet
+from pytorch_forecasting import NHiTS, TimeSeriesDataSet
 from pytorch_forecasting.data import NaNLabelEncoder
 from pytorch_forecasting.data.examples import generate_ar_data
-from pytorch_forecasting.metrics import MAE, SMAPE, MQF2DistributionLoss, QuantileLoss
+from pytorch_forecasting.metrics import MAE, MQF2DistributionLoss
 from util import logging_utils
 
 logging_utils.init_logging()

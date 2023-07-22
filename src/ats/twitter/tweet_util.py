@@ -3,6 +3,7 @@ import logging
 
 import pandas as pd
 
+
 def get_last_tweet_id(symbol_output_dir):
     df_vec = []
     for filename in os.listdir(symbol_output_dir):
@@ -13,7 +14,7 @@ def get_last_tweet_id(symbol_output_dir):
             continue
         if not os.path.isfile(id_file):
             continue
-        logging.info(f'get_last_tweet_id:{id_file}')
+        logging.info(f"get_last_tweet_id:{id_file}")
         df = pd.read_csv(id_file)
         df_vec.append(df)
     if df_vec:

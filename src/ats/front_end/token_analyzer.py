@@ -1,5 +1,4 @@
 import CONFIG
-import nltk
 import plotly.express as px
 import streamlit as st
 from utils_dir.coingecko_utils import CoinGeckoUtils

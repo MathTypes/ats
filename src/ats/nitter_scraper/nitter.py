@@ -113,9 +113,17 @@ class Nitter(DockerBase):
             ValueError: If the target profile does not exist and the not_found_ok argument is
                 false.
         """
-        return get_profile(username=username, not_found_ok=not_found_ok, address=self.address)
+        return get_profile(
+            username=username, not_found_ok=not_found_ok, address=self.address
+        )
 
-    def get_tweets(self, username: str, pages: int = 25, break_on_tweet_id: Optional[int] = None, address=None):
+    def get_tweets(
+        self,
+        username: str,
+        pages: int = 25,
+        break_on_tweet_id: Optional[int] = None,
+        address=None,
+    ):
         """Gets the target users tweets
 
         This is a modified version of nitter_scraper.tweets.get_tweets().
@@ -141,8 +149,13 @@ class Nitter(DockerBase):
             address=address if address is not None else self.address,
         )
 
-    def search_tweets(self, username: str, pages: int = 25, break_on_tweet_id: Optional[int] = None,
-                      address=None):
+    def search_tweets(
+        self,
+        username: str,
+        pages: int = 25,
+        break_on_tweet_id: Optional[int] = None,
+        address=None,
+    ):
         """Gets the target users tweets
 
         This is a modified version of nitter_scraper.tweets.get_tweets().
@@ -166,7 +179,7 @@ class Nitter(DockerBase):
             pages=pages,
             break_on_tweet_id=break_on_tweet_id,
             address=address if address is not None else self.address,
-            #address="https://nitter.net"
+            # address="https://nitter.net"
         )
 
     def start(self):
@@ -182,18 +195,26 @@ class Nitter(DockerBase):
             volumes=self.volumes,
         )
         time.sleep(1)
-        logger.info(f"Running container {self.container.name} {self.container.short_id}.")
+        logger.info(
+            f"Running container {self.container.name} {self.container.short_id}."
+        )
 
     def stop(self):
         """Stops the docker the container"""
-        logger.info(f"Stopping container {self.container.name} {self.container.short_id}.")
+        logger.info(
+            f"Stopping container {self.container.name} {self.container.short_id}."
+        )
         if self.container:
             self.container.stop(timeout=5)
-            logger.info(f"Container {self.container.name} {self.container.short_id} Destroyed.")
+            logger.info(
+                f"Container {self.container.name} {self.container.short_id} Destroyed."
+            )
 
 
 @contextmanager
-def NitterScraper(host: str = "0.0.0.0", port: int = 8080, existing_instance: bool=False):
+def NitterScraper(
+    host: str = "0.0.0.0", port: int = 8080, existing_instance: bool = False
+):
     """The NitterScraper context manager.
 
     Takes care of configuring, starting, and stopping a docker instance of nitter.

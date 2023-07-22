@@ -1,5 +1,4 @@
 """Module for scraping tweets"""
-from bs4 import BeautifulSoup
 import re
 import logging
 from datetime import datetime, timezone
@@ -20,15 +19,15 @@ def link_parser(tweet_link):
     tweet_id = parts[-1].replace("#m", "")
     username = parts[1]
     return tweet_id, username, tweet_url
-    #logging.info(f"link:{tweet_link}")
-    #links = list(tweet_link.links)
-    #tweet_url = links[0]
-    #parts = links[0].split("/")
-    #parts = tweet_link.split("/")
+    # logging.info(f"link:{tweet_link}")
+    # links = list(tweet_link.links)
+    # tweet_url = links[0]
+    # parts = links[0].split("/")
+    # parts = tweet_link.split("/")
 
-    #tweet_id = parts[-1].replace("#m", "")
-    #username = parts[1]
-    #return tweet_id, username, tweet_link
+    # tweet_id = parts[-1].replace("#m", "")
+    # username = parts[1]
+    # return tweet_id, username, tweet_link
 
 
 def date_parser(tweet_date):
@@ -36,7 +35,7 @@ def date_parser(tweet_date):
     logging.info(f"split_datetime:{split_datetime}")
     tweet_date = split_datetime[0] + split_datetime[1][:6] + "-" + split_datetime[1][7:]
     logging.info(f"tweet_date:{tweet_date}, split_datetime:{split_datetime[0]}")
-    dt = datetime.strptime(tweet_date, '%b %d %Y - %H:%M %p %Z')
+    dt = datetime.strptime(tweet_date, "%b %d %Y - %H:%M %p %Z")
     if "UTC" in tweet_date:
         dt = dt.replace(tzinfo=timezone.utc)
     logging.info(f"dt:{dt}")
@@ -50,7 +49,12 @@ def clean_stat(stat):
 def stats_parser(tweet_stats):
     stats = {}
     for ic in tweet_stats.find(".icon-container"):
-        key = ic.find("span", first=True).attrs["class"][0].replace("icon", "").replace("-", "")
+        key = (
+            ic.find("span", first=True)
+            .attrs["class"][0]
+            .replace("icon", "")
+            .replace("-", "")
+        )
         value = ic.text
         stats[key] = value
     return stats
@@ -191,7 +195,9 @@ def get_tweets(
                     tweet = Tweet.from_dict(tweet_data)
 
                     if tweet.tweet_id == break_on_tweet_id:
-                        logging.info(f"breaking:{break_on_tweet_id}, tweet_id:{tweet.tweet_id}")
+                        logging.info(
+                            f"breaking:{break_on_tweet_id}, tweet_id:{tweet.tweet_id}"
+                        )
                         pages = 0
                         break
 

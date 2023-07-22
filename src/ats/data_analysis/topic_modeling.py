@@ -1,9 +1,8 @@
 import spacy
-import logging
 import gensim
 import gensim.corpora as corpora
 from gensim.utils import simple_preprocess
-from gensim.models import CoherenceModel, Phrases, phrases, ldamodel
+from gensim.models import CoherenceModel, ldamodel
 
 import pyLDAvis
 import pyLDAvis.gensim

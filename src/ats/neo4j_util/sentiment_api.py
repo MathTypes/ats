@@ -1,21 +1,11 @@
 from datetime import datetime, timezone
 from functools import lru_cache
 import logging
-from neo4j import GraphDatabase
 import os
 import pandas as pd
 from data.front_end_utils import (
-    data_process,
-    feature_extraction,
-    visualize_ner,
-    get_top_n_bigram,
-    get_list_ner,
-    display_text,
     subject_analysis,
-    result_to_df,
-    analyze_token_sentiment,
 )
-from nlp import keyword_util
 from util import config_utils
 from neo4j_util import driver
 
@@ -56,6 +46,7 @@ def get_article_text(title):
     )
     return text
 
+
 def get_tweet_id_by_user(username, start_id, end_id):
     logging.info(f"get_tweet_id_by_id_range: start_id={start_id}, end_id={end_id}")
     query = """
@@ -64,9 +55,11 @@ def get_tweet_id_by_user(username, start_id, end_id):
             and t.user=$username
             RETURN t.id as id
             """
-    text = read_query(query, params={"start_id": start_id, "end_id": end_id,
-                                     "username": username})
+    text = read_query(
+        query, params={"start_id": start_id, "end_id": end_id, "username": username}
+    )
     return text
+
 
 def get_tweet_id_by_range(start_date, end_date):
     logging.info(f"get_tweet_id_by_range: start_date={start_date}, end_date={end_date}")
@@ -123,15 +116,13 @@ def get_tweets():
         return df
 
 
-#@lru_cache
+# @lru_cache
 def get_processed_tweets_from_monthly(from_date, end_date):
     df_vec = []
     for month in pd.period_range(from_date, end_date, freq="M"):
         logging.info(f"month:{month}")
-        path_dir = os.path.join(
-            config_utils.get_ts_root(), "monthly", "twitter"
-        )
-        logging.info(f'reading tweets from {path_dir}')
+        path_dir = os.path.join(config_utils.get_ts_root(), "monthly", "twitter")
+        logging.info(f"reading tweets from {path_dir}")
         month_file = os.path.join(path_dir, month.strftime("%Y%m") + ".parquet")
         logging.info(f"reading:{month_file}")
         df_vec.append(pd.read_parquet(month_file))

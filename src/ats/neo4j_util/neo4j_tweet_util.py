@@ -1,12 +1,9 @@
-import json
 import logging
 import time
-import sys
-from neo4j import unit_of_work
 
 
 from datetime import datetime
-from py2neo import Graph, Node, NodeMatcher, Relationship
+from py2neo import Graph, Node, NodeMatcher
 from ratelimiter import RateLimiter
 from util import config_utils
 
@@ -16,7 +13,7 @@ from util import config_utils
 class Neo4j:
     def __init__(self):
         # initialize the self.graph
-        host = config_utils.get_args
+        config_utils.get_args
         self.graph = Graph(
             config_utils.get_neo4j_host(),
             auth=("neo4j", config_utils.get_neo4j_password()),
@@ -31,7 +28,7 @@ class Neo4j:
     def update_processed_text(self, df):
         tx = self.graph.begin()
         for index, row in df.iterrows():
-            tweet_id = row["tweet_id"]
+            row["tweet_id"]
             # retrieve company node from the remote self.graph
             self.graph.evaluate(
                 """MATCH(t:Tweet {id:$tweet_id})
@@ -78,7 +75,7 @@ class Neo4j:
     def update_gpt_entities(self, df):
         tx = self.graph.begin()
         for index, row in df.iterrows():
-            tweet_id = row["tweet_id"]
+            row["tweet_id"]
             entity_name = row["entity_name"]
             entity_type = row["entity_class"]
             entity_node = self.graph.evaluate(
@@ -146,7 +143,7 @@ class Neo4j:
         #    tx.create(user_node)
         # print("Node created:", company)
 
-        #retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
+        # retweetedTweetId = tweet.retweetedTweet.id if tweet.retweetedTweet else None
         # Skip deleted tweets
         if not hasattr(tweet, "user"):
             return

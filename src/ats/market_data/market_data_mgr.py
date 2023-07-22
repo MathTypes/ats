@@ -1,29 +1,14 @@
-from collections import defaultdict
 import datetime
 import logging
 
 import numpy as np
 import pandas as pd
-import pytz
-from pytorch_forecasting.utils import create_mask, detach, to_list
 import ray
-import torch
 
 from ats.calendar import market_time
 from ats.event.macro_indicator import MacroDataBuilder
-from ats.market_data.data_module import (
-    TransformerDataModule,
-    LSTMDataModule,
-    TimeSeriesDataModule,
-)
-from ats.model.models import AttentionEmbeddingLSTM
 from ats.market_data import data_util
-from ats.model import model_utils
-from ats.model.utils import Pipeline
-from ats.model import viz_utils
-from ats.optimizer import position_utils
-from ats.prediction import prediction_utils
-from ats.util.profile import profile
+
 
 @ray.remote
 def get_input_for_ticker(
@@ -31,6 +16,7 @@ def get_input_for_ticker(
 ):
     try:
         from ats.market_data import data_util
+
         logging.info(f"reading from base_dir:{base_dir}, ticker:{ticker}")
         all_data = data_util.get_processed_data(
             base_dir, start_date, end_date, ticker, asset_type, time_interval
@@ -38,12 +24,13 @@ def get_input_for_ticker(
         all_data = all_data.replace([np.inf, -np.inf], np.nan)
         all_data = all_data.dropna()
         all_data = all_data.drop(columns=["time_idx"])
-        #logging.info(f"all_data:all_data.head()")
+        # logging.info(f"all_data:all_data.head()")
         return all_data
     except Exception as e:
         print(f"can not get input for {ticker}, {e}")
         logging.info(f"can not get input for {ticker}, {e}")
         return None
+
 
 def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_interval):
     base_dir = f"{base_dir}/{asset_type}/{time_interval}/{ticker}"
@@ -78,14 +65,12 @@ def get_snapshot(input_dirs) -> pd.DataFrame:
     if not ds_dup.empty:
         logging.info(f"ds_dup:{ds_dup}")
         # exit(0)
-    #ds = ds.dropna()
+    # ds = ds.dropna()
     return ds
 
+
 class MarketDataMgr(object):
-    def __init__(
-        self,
-        env_mgr
-    ):
+    def __init__(self, env_mgr):
         super().__init__()
         self.env_mgr = env_mgr
         self.config = env_mgr.config
@@ -97,19 +82,23 @@ class MarketDataMgr(object):
         if "initial_snapshot" in self.config.dataset:
             try:
                 self.raw_data = get_snapshot(self.config.dataset.snapshot)
-            except Exception as e:
+            except Exception:
                 # Will try regenerating when reading fails
                 pass
         if not self.raw_data is None:
             return self.raw_data
-        
+
         train_data_vec = []
         refs = []
         env_mgr = self.env_mgr
         for ticker in env_mgr.model_tickers:
             ticker_train_data = get_input_for_ticker.remote(
-                env_mgr.dataset_base_dir, env_mgr.train_start_date,
-                env_mgr.test_end_date, ticker, "FUT", env_mgr.time_interval
+                env_mgr.dataset_base_dir,
+                env_mgr.train_start_date,
+                env_mgr.test_end_date,
+                ticker,
+                "FUT",
+                env_mgr.time_interval,
             )
         refs.append(ticker_train_data)
         all_results = ray.get(refs)
@@ -125,19 +114,35 @@ class MarketDataMgr(object):
         raw_data = pd.concat(train_data_vec)
         # TODO: the original time comes from aggregated time is UTC, but actually
         # has New York time in it.
-        raw_data["time"] = raw_data.time.apply(market_time.utc_to_nyse_time,
-                                               interval_minutes=self.config.job.time_interval_minutes)
+        raw_data["time"] = raw_data.time.apply(
+            market_time.utc_to_nyse_time,
+            interval_minutes=self.config.job.time_interval_minutes,
+        )
         raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
         # Do not use what are in serialized files as we need to recompute across different months.
-        raw_data = raw_data.drop(columns=["close_back", "volume_back", "dv_back", "close_fwd",
-                                          "volume_fwd", "dv_fwd", "cum_volume", "cum_dv"])
+        raw_data = raw_data.drop(
+            columns=[
+                "close_back",
+                "volume_back",
+                "dv_back",
+                "close_fwd",
+                "volume_fwd",
+                "dv_fwd",
+                "cum_volume",
+                "cum_dv",
+            ]
+        )
         raw_data = raw_data.reset_index()
-        raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
+        raw_data["new_idx"] = raw_data.apply(
+            lambda x: x.ticker + "_" + str(x.timestamp), axis=1
+        )
         raw_data = raw_data.set_index("new_idx")
         raw_data = raw_data.sort_index()
         raw_data["time_idx"] = range(0, len(raw_data))
 
-        raw_data = data_util.add_group_features(raw_data, self.config.job.time_interval_minutes)
+        raw_data = data_util.add_group_features(
+            raw_data, self.config.job.time_interval_minutes
+        )
         raw_data = data_util.add_example_level_features(raw_data, self.market_cal, self)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(raw_data)

@@ -31,7 +31,6 @@ class EReader(Thread):
             logger.debug("EReader thread started")
             buf = b""
             while self.conn.isConnected():
-
                 data = self.conn.recvMsg()
                 logger.debug("reader loop, recvd size %d", len(data))
                 buf += data
