@@ -1,7 +1,7 @@
 defaults:
- - dataset: future_dev
+ - dataset: future_test
  - features: test
  - optimizer: adam
- - model: patch_tft_supervised_dev
- - job: test_dev
+ - model: patch_tft_supervised_test
+ - job: test
  - trading: dev
