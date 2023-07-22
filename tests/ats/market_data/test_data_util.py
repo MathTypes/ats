@@ -39,8 +39,8 @@ def test_add_highs_trending_no_high():
     assert row_two["dv"] == 3
     assert row_two["cum_volume"] == 6
     assert row_two["cum_dv"] == 6
-    assert row_two["close_back"] == 0.5 # 2=>3
-    assert math.isclose(row_two["volume_back"], -0.3333, rel_tol=0.01) # 3=>2
+    assert math.isclose(row_two["close_back"], 0.4054651081081643, rel_tol=0.01)
+    assert math.isclose(row_two["volume_back"], -0.4054651081081643, rel_tol=0.01) # 3=>2
     assert np.isnan(row_two["close_high_5_ff"])
     assert np.isnan(row_two["time_high_5_ff"])
     assert np.isnan(row_two["close_low_5_ff"])
@@ -166,7 +166,7 @@ def test_group_features():
     raw_data = data_util.add_group_features(raw_data, 30)
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
-    assert row_two["close_back"] == 0.25
+    assert math.isclose(row_two["close_back"], 0.2231435513142097, rel_tol=0.01)
 
 
 def test_add_example_features():
@@ -231,7 +231,7 @@ def test_add_example_features():
         )
         np.testing.assert_array_almost_equal(
             raw_data["option_expiration_time"],
-            [1328047200] * data_len,
+            [1327096800] * data_len,
             decimal=3, verbose=True, err_msg="can not match option_expiration_time",
         )
 
