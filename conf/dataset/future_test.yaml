@@ -1,4 +1,4 @@
-base_dir: ${hydra:runtime.cwd}/data
+base_dir: ${hydra.runtime.cwd}/data
 time_interval: "30min"
 model_tickers: ['ES']
 trading_tickers: ['ES']
