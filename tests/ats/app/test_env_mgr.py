@@ -6,13 +6,9 @@ from ats.app.env_mgr import EnvMgr
 def test_env_mgr_init():
     with initialize(version_base=None, config_path="../../../conf"):
         cfg = compose(
-            config_name="test_dev",
+            config_name="test",
+            return_hydra_config=True,
             overrides=[
-                "job.train_start_date=2009-06-01",
-                "job.eval_start_date=2009-06-04",
-                "job.eval_end_date=2009-06-10",
-                "job.test_start_date=2009-06-04",
-                "job.eval_end_date=2009-06-10",
                 "dataset.snapshot=''",
                 "dataset.write_snapshot=False",
             ],

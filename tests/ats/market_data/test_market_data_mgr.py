@@ -17,20 +17,15 @@ def test_get_snapshot():
         cfg = compose(
             config_name="test",
             overrides=[
-                "job.train_start_date=2009-06-01",
-                "job.eval_start_date=2009-07-01",
-                "job.eval_end_date=2009-08-01",
-                "job.test_start_date=2009-07-01",
-                "job.eval_end_date=2009-08-01",
                 "dataset.snapshot=''",
                 "dataset.write_snapshot=False",
             ],
+            return_hydra_config=True
         )
         env_mgr = EnvMgr(cfg)
         md_mgr = market_data_mgr.MarketDataMgr(env_mgr, simulation_mode=True)
-        md_mgr.market_cal
         # wandb_logger = WandbLogger(project="ATS", log_model=True)
-        raw_data = md_mgr.get_snapshot()
+        raw_data = md_mgr.raw_data
         first_data_row = raw_data.iloc[0]
         # 2008-02-07 08:30:00 - we need 201 prior intervals. Each day
         # has about 40 intervals. It is strange why we go to 2008-02-07 instead

@@ -19,11 +19,11 @@ def test_on_interval():
         cfg = compose(
             config_name="test",
             overrides=[],
+            return_hydra_config=True
         )
         env_mgr = EnvMgr(cfg)
         md_mgr = market_data_mgr.MarketDataMgr(env_mgr)
         market_cal = md_mgr.market_cal
-        # wandb_logger = WandbLogger(project="ATS", log_model=True)
         wandb_logger = None
         data_module = md_mgr.data_module
         model = model_utils.get_patch_tft_supervised_model(
