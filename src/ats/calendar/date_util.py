@@ -11,14 +11,13 @@ def get_option_expiration_week(date):
         return 3
 
 def get_option_expiration_day(date):
-    if date.weekday()==6:
-        date = date + datetime.timedelta(days=1)
+    if date.weekday()==6 or date.weekday()==5:
+        date = date + datetime.timedelta(days=2)
     option_expiration_week = get_option_expiration_week(date)
     cur_week = get_week_of_month(date)
     while cur_week != option_expiration_week:
         date = date + datetime.timedelta(days=7)
         cur_week = get_week_of_month(date)
-        logging.error(f"cur_week:{cur_week}, date:{date}, option_expiration_week:{option_expiration_week}")
         # Needs to recompute since we might move to next month
         option_expiration_week = get_option_expiration_week(date)
     while date.weekday() != 4:
