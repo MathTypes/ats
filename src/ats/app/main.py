@@ -13,9 +13,6 @@ import wandb
 from ray.util.dask import enable_dask_on_ray
 
 from ats.app.pipelines import (
-    AttentionEmbeddingLSTMPipeline,
-    TimeSeriesPipeline,
-    TemporalFusionTransformerPipeline,
     PatchTstTransformerPipeline,
     PatchTstTftPipeline,
     PatchTftSupervisedPipeline,
@@ -37,12 +34,9 @@ def my_app(cfg: DictConfig) -> None:
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     pipelines = {
-        "attention": AttentionEmbeddingLSTMPipeline,
-        "tft": TemporalFusionTransformerPipeline,
         "patch_tst": PatchTstTransformerPipeline,
         "patch_tst_tft": PatchTstTftPipeline,
         "patch_tft_supervised": PatchTftSupervisedPipeline,
-        "nhits": TimeSeriesPipeline,
     }
     logging_utils.init_logging()
     logging.info(f"cfg:{cfg}, dir(cfg)")
