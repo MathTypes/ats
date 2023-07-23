@@ -2079,6 +2079,9 @@ class TimeSeriesDataSet(Dataset):
                 and not isinstance(transformer, EncoderNormalizer)
             ):
                 #logging.info(f"name:{name}, data:{data[name]}")
+                # See https://stackoverflow.com/questions/69326639/sklearn-warning-valid-feature-names-in-version-1-0
+                # why .values is need. Lagged variables do not have their own scaler and use scaler from original
+                # variable.
                 data[name] = self.transform_values(name, data[name].values, data=data, inverse=False)
 
         # encode lagged categorical targets
