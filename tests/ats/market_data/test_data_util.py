@@ -14,7 +14,7 @@ from ats.util import logging_utils
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
-
+pd.options.display.float_format = "{:.5f}".format
 
 def test_add_highs_trending_no_high():
     start_timestamp = 1325689200
@@ -39,74 +39,74 @@ def test_add_highs_trending_no_high():
     assert row_two["dv"] == 3
     assert row_two["cum_volume"] == 6
     assert row_two["cum_dv"] == 6
-    assert math.isclose(row_two["close_back"], 0.4054651081081643, rel_tol=0.01)
+    assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
     assert math.isclose(row_two["volume_back"], -0.4054651081081643, rel_tol=0.01) # 3=>2
-    assert np.isnan(row_two["close_high_5_ff"])
-    assert np.isnan(row_two["time_high_5_ff"])
-    assert np.isnan(row_two["close_low_5_ff"])
-    assert np.isnan(row_two["time_low_5_ff"])
+    assert pd.isna(row_two["close_high_5_ff"])
+    assert pd.isna(row_two["time_high_5_ff"])
+    assert pd.isna(row_two["close_low_5_ff"])
+    assert pd.isna(row_two["time_low_5_ff"])
 
 
 def test_with_high():
     start_timestamp = 1325689200
     delta = 30*60
-    timestamps = [start_timestamp + i*delta for i in range(8)]
+    timestamps = [start_timestamp + i*delta for i in range(11)]
     raw_data = {
-        "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
-        "open": [1, 2, 3, 4, 5, 6, 7, 8],
-        "high": [3, 4, 5, 6, 7, 8, 9, 10],
-        "low": [1, 2, 3, 4, 5, 6, 7, 8],
-        "close": [1, 2, 3, 4, 150, 6, 7, 8],
-        "volume": [1, 3, 2, 1, 2, 3, 4, 5],
-        "dv": [1, 2, 3, 1, 2, 3, 1, 2],
+        "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
+        "open": [1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8],
+        "high": [1, 1, 1, 3, 4, 5, 6, 7, 8, 9, 10],
+        "low": [1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8],
+        "close": [1, 1, 1, 1, 2, 3, 4, 15, 6, 7, 8],
+        "volume": [1, 1, 1, 1, 3, 2, 1, 2, 3, 4, 5],
+        "dv": [1, 1, 1, 1, 2, 3, 1, 2, 3, 1, 2],
         "timestamp": timestamps
     }
     raw_data = pd.DataFrame(data=raw_data)
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
     raw_data = data_util.add_group_features(raw_data, 30*23*2)
-    row_two = raw_data.iloc[2]
+    row_two = raw_data.iloc[5]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3
     assert row_two["volume"] == 2
     assert row_two["dv"] == 3
-    assert row_two["cum_volume"] == 6
-    assert row_two["cum_dv"] == 6
-    assert math.isclose(row_two["close_back"], 0.405465, rel_tol=0.01)
+    assert row_two["cum_volume"] == 9
+    assert row_two["cum_dv"] == 9
+    assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
     assert math.isclose(row_two["volume_back"], -0.405465, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, 4.317488, 4.317488, 4.317488, 4.317488],
+        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0.006, 0.028, 0.028, 0.028, 0.028],
         decimal=3,
         err_msg="can not match close_high_5_ff")
     np.testing.assert_array_almost_equal(
         raw_data["time_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, peak_timestamp, peak_timestamp, peak_timestamp, peak_timestamp],
+        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 1325700000, 1325701800, 1325701800, 1325701800, 1325701800],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_bf"],
-        [4.317488, 4.317488, 4.317488, 4.317488, 4.317488, np.nan, np.nan, np.nan],
+        [0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.028, 0.028, 0.028, 0.028],
         decimal=3,
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_low_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+        [ np.nan,   np.nan,   np.nan,   np.nan,   np.nan,   np.nan, 0.   , 0.   , 0.002, 0.004, 0.006],
         decimal=3,
     )
 
 
-def test_with_low():
+def test_with_negative_price():
     start_timestamp = 1325689200
     delta = 30*60
     timestamps = [start_timestamp + i*delta for i in range(8)]
     raw_data = {
-        "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
-        "open": [1, 2, 3, 4, 5, 6, 7, 8],
-        "high": [3, 4, 5, 6, 7, 8, 9, 10],
-        "low": [1, 2, 3, 4, 5, 6, 7, 8],
-        "close": [1, 2, 3, 4, 0.5, 6, 7, 8],
+        "ticker": ["CL", "CL", "CL", "CL", "CL", "CL", "CL", "CL"],
+        "open": [-1, -2, -3, -4, -5, -6, -7, -8],
+        "high": [-3, -4, -5, -6, -7, -8, -9, -10],
+        "low": [-1, -2, -3, -4, -5, -6, -7, -8],
+        "close": [-1, -2, -3, -4, -150, -6, -7, -8],
         "volume": [1, 3, 2, 1, 2, 3, 4, 5],
         "dv": [1, 2, 3, 1, 2, 3, 1, 2],
         "timestamp": timestamps
@@ -116,38 +116,72 @@ def test_with_low():
     # intervals
     raw_data = data_util.add_group_features(raw_data, 30*23*2)
     row_two = raw_data.iloc[2]
-    assert row_two["ticker"] == "ES"
-    assert row_two["close"] == 3
+    assert row_two["ticker"] == "CL"
+    assert row_two["close"] == -3
     assert row_two["volume"] == 2
     assert row_two["dv"] == 3
     assert row_two["cum_volume"] == 6
     assert row_two["cum_dv"] == 6
-    assert math.isclose(row_two["close_back"], 0.405465, rel_tol=0.01)
+    assert math.isclose(row_two["close_back"], -0.0020100509280238654, rel_tol=0.01)
     assert math.isclose(row_two["volume_back"], -0.405465, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, -0.002, -0.004],
+        decimal=3,
+        err_msg="can not match close_high_5_ff")
+
+def test_with_low():
+    start_timestamp = 1325689200
+    delta = 30*60
+    timestamps = [start_timestamp + i*delta for i in range(11)]
+    raw_data = {
+        "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
+        "open": [1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8],
+        "high": [1, 1, 1, 3, 4, 5, 6, 7, 8, 9, 10],
+        "low": [1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8],
+        "close": [1, 1, 1, 1, 2, 3, 4, 0.5, 6, 7, 8],
+        "volume": [1, 1, 1, 1, 3, 2, 1, 2, 3, 4, 5],
+        "dv": [1, 1, 1, 1, 2, 3, 1, 2, 3, 1, 2],
+        "timestamp": timestamps
+    }
+    raw_data = pd.DataFrame(data=raw_data)
+    # fake the time interval to one day so that we can have 5 day high with 5
+    # intervals
+    raw_data = data_util.add_group_features(raw_data, 30*23*2)
+    row_two = raw_data.iloc[5]
+    assert row_two["ticker"] == "ES"
+    assert row_two["close"] == 3
+    assert row_two["volume"] == 2
+    assert row_two["dv"] == 3
+    assert row_two["cum_volume"] == 9
+    assert row_two["cum_dv"] == 9
+    assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
+    assert math.isclose(row_two["volume_back"], -0.405465, rel_tol=0.01)
+    peak_timestamp = start_timestamp + delta * 4
+    np.testing.assert_array_almost_equal(
+        raw_data["close_high_5_ff"],
+        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0.006, 0.006, 0.01, 0.012, 0.014],
         decimal=3, verbose=True,
         err_msg="can not match close_high_5_ff")
     np.testing.assert_array_almost_equal(
         raw_data["time_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 1325700000, 1325700000, 1325703600, 1325705400, 1325707200],
         decimal=3, verbose=True, err_msg="can not match time_high_5_ff",
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_bf"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+        [0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.01, 0.012, 0.014],
         decimal=3, verbose=True, err_msg="can not match close_high_5_bf"
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_low_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, -1.386294, -1.386294, -1.386294, -1.386294],
+        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0., -0.001, -0.001, -0.001, -0.001],
         decimal=3, verbose=True, err_msg="can not match close_low_5_ff",
     )
     np.testing.assert_array_almost_equal(
         raw_data["time_low_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, peak_timestamp, peak_timestamp, peak_timestamp, peak_timestamp],
+        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 1325701800, 1325701800, 1325701800, 1325701800],
         decimal=3, verbose=True, err_msg="can not match time_low_5_ff",
     )
 
@@ -166,7 +200,8 @@ def test_group_features():
     raw_data = data_util.add_group_features(raw_data, 30)
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
-    assert math.isclose(row_two["close_back"], 0.2231435513142097, rel_tol=0.01)
+    # base price 500 is used as denominator
+    assert math.isclose(row_two["close_back"], 0.001982161203990529, rel_tol=0.01)
 
 
 def test_add_example_features():
@@ -186,10 +221,10 @@ def test_add_example_features():
         timestamps = [start_timestamp + i*delta for i in range(8)]
         raw_data = {
             "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
-            "open": [1, 2, 3, 4, 5, 6, 7, 8],
-            "high": [3, 4, 5, 6, 7, 8, 9, 10],
-            "low": [1, 2, 3, 4, 5, 6, 7, 8],
-            "close": [1, 2, 3, 4, 150, 6, 7, 8],
+            "open": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048],
+            "high": [1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050],
+            "low": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048],
+            "close": [1041, 1042, 1043, 1044, 1540, 1046, 1047, 1048],
             "volume": [1, 3, 2, 1, 2, 3, 4, 5],
             "dv": [1, 2, 3, 1, 2, 3, 1, 2],
             "timestamp": timestamps
@@ -202,7 +237,7 @@ def test_add_example_features():
         raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
         row_two = raw_data.iloc[2]
         assert row_two["ticker"] == "ES"
-        assert row_two["close_back"] ==  0.4054651081081643
+        assert row_two["close_back"] ==  0.0006482982398861026
         data_len = len(raw_data.timestamp)
         np.testing.assert_array_almost_equal(
             raw_data["weekly_close_time"],

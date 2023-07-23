@@ -1,5 +1,6 @@
 import datetime
 import logging
+import math
 import os
 
 import numpy as np
@@ -121,18 +122,15 @@ def get_processed_data(
 
 @profile
 def add_highs(df_cumsum, df_time, width):
-    #df_cumsum = df_cumsum.fillna(0)
-    #high_idx, properties = find_peaks(df_cumsum, width=width, rel_height=0.001)
-    high_idx, properties = find_peaks(df_cumsum, prominence=width)
-    #logging.error(f"df_cumsum:{df_cumsum}, width:{width}, high_idx:{high_idx}, properties:{properties}")
+    df_z_scaled = df_cumsum
+    df_z_scaled = (df_z_scaled - df_z_scaled.mean()) / df_z_scaled.std()  
+    high_idx, _ = find_peaks(df_z_scaled, prominence=width)
     high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
     high_time = df_time.iloc[high_idx].to_frame(name="time_high")
-    #logging.error(f"high_time:{high_time}, high:{high}")
     df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
     df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
     df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
     df_high["time_high_ff"] = df_high["time_high"].ffill()
-    #logging.error(f"df_high:{df_high}")
     del high
     del high_time
     del high_idx
@@ -141,7 +139,9 @@ def add_highs(df_cumsum, df_time, width):
 
 @profile
 def add_lows(df_cumsum, df_time, width):
-    low_idx, _ = find_peaks(np.negative(df_cumsum), prominence=width)
+    df_z_scaled = df_cumsum.fillna(0)
+    df_z_scaled = -(df_z_scaled - df_z_scaled.mean()) / df_z_scaled.std() * 20
+    low_idx, _ = find_peaks(df_z_scaled, prominence=width)
     low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
     low_time = df_time.iloc[low_idx].to_frame(name="time_low")
     df_low = df_cumsum.to_frame(name="close_cumsum").join(low).join(low_time)
@@ -153,9 +153,14 @@ def add_lows(df_cumsum, df_time, width):
     del low_time
     return df_low
 
-
+def get_time(x, close_col):
+    if x[close_col] == x["close_back_cumsum"]:
+        return x["timestamp"]
+    else:
+        return None
+    
 # @profile
-def ticker_transform(raw_data, interval_minutes):
+def ticker_transform(raw_data, interval_minutes, base_price=500):
     ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
     means = ewm.mean()
     stds = ewm.std()
@@ -168,7 +173,7 @@ def ticker_transform(raw_data, interval_minutes):
     #df['close_pct_change'] = raw_data.close.pct_change(period=1)
     #df['volume_pct_change'] = raw_data.volume.pct_change(period=1)
     #df['dv_pct_change'] = raw_data.dv.pct_change(period=1)
-    raw_data['close_back'] = np.log(raw_data.close) - np.log(raw_data.close.shift(1))
+    raw_data['close_back'] = np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price)
     raw_data['volume_back'] = np.log(raw_data.volume) - np.log(raw_data.volume.shift(1))
     raw_data['dv_back'] = np.log(raw_data.dv) - np.log(raw_data.dv.shift(1))
     #df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
@@ -188,46 +193,66 @@ def ticker_transform(raw_data, interval_minutes):
     # find_peaks only with prominance which needs to be set to half of the width.
     # in case of high among 5 days, the high needs to be higher than 4 points around
     # it, 2 to the left and 2 to the right.
-    df = add_highs(close_back_cumsum, timestamp, width=2*interval_per_day)
-    raw_data["close_high_5_ff"] = df["close_cumsum_high_ff"]
-    raw_data["close_high_5_bf"] = df["close_cumsum_high_bf"]
-    raw_data["time_high_5_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=2 * interval_per_day)
-    raw_data["close_low_5_ff"] = df["close_cumsum_low_ff"]
-    raw_data["close_low_5_bf"] = df["close_cumsum_low_bf"]
-    raw_data["time_low_5_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=5 * interval_per_day)
-    raw_data["close_high_11_ff"] = df["close_cumsum_high_ff"]
-    raw_data["close_high_11_bf"] = df["close_cumsum_high_bf"]
-    raw_data["time_high_11_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=5 * interval_per_day)
-    raw_data["close_low_11_ff"] = df["close_cumsum_low_ff"]
-    raw_data["close_low_11_bf"] = df["close_cumsum_low_bf"]
-    raw_data["time_low_11_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=10 * interval_per_day)
-    raw_data["close_high_21_ff"] = df["close_cumsum_high_ff"]
-    raw_data["close_high_21_bf"] = df["close_cumsum_high_bf"]
-    raw_data["time_high_21_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=10 * interval_per_day)
-    raw_data["close_low_21_ff"] = df["close_cumsum_low_ff"]
-    raw_data["close_low_21_bf"] = df["close_cumsum_low_bf"]
-    raw_data["time_low_21_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=25 * interval_per_day)
-    raw_data["close_high_51_ff"] = df["close_cumsum_high_ff"]
-    raw_data["close_high_51_bf"] = df["close_cumsum_high_bf"]
-    raw_data["time_high_51_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=25 * interval_per_day)
-    raw_data["close_low_51_ff"] = df["close_cumsum_low_ff"]
-    raw_data["close_low_51_bf"] = df["close_cumsum_low_bf"]
-    raw_data["time_low_51_ff"] = df["time_low_ff"]
-    df = add_highs(close_back_cumsum, timestamp, width=100 * interval_per_day)
-    raw_data["close_high_201_ff"] = df["close_cumsum_high_ff"]
-    raw_data["close_high_201_bf"] = df["close_cumsum_high_bf"]
-    raw_data["time_high_201_ff"] = df["time_high_ff"]
-    df = add_lows(close_back_cumsum, timestamp, width=100 * interval_per_day)
-    raw_data["close_low_201_ff"] = df["close_cumsum_low_ff"]
-    raw_data["close_low_201_bf"] = df["close_cumsum_low_bf"]
-    raw_data["time_low_201_ff"] = df["time_low_ff"]
+    raw_data['close_rolling_5d_max'] = raw_data.close_back_cumsum.rolling(5*interval_per_day).max()
+    raw_data["close_high_5_ff"] = raw_data["close_rolling_5d_max"].ffill()
+    raw_data["close_high_5_bf"] = raw_data["close_rolling_5d_max"].bfill()
+    raw_data["time_high_5_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_5_ff"), axis=1)
+    raw_data["time_high_5_ff"]  = raw_data["time_high_5_ff"].ffill()
+
+    raw_data['close_rolling_5d_min'] = raw_data.close_back_cumsum.rolling(5*interval_per_day).min()
+    raw_data["close_low_5_ff"] = raw_data["close_rolling_5d_min"].ffill()
+    raw_data["close_low_5_bf"] = raw_data["close_rolling_5d_min"].bfill()
+    raw_data["time_low_5_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_5_ff"), axis=1)
+    raw_data["time_low_5_ff"]  = raw_data["time_low_5_ff"].ffill()
+
+    raw_data['close_rolling_11d_max'] = raw_data.close_back_cumsum.rolling(11*interval_per_day).max()
+    raw_data["close_high_11_ff"] = raw_data["close_rolling_11d_max"].ffill()
+    raw_data["close_high_11_bf"] = raw_data["close_rolling_11d_max"].bfill()
+    raw_data["time_high_11_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_11_ff"), axis=1)
+    raw_data["time_high_11_ff"]  = raw_data["time_high_11_ff"].ffill()
+
+    raw_data['close_rolling_11d_min'] = raw_data.close_back_cumsum.rolling(11*interval_per_day).min()
+    raw_data["close_low_11_ff"] = raw_data["close_rolling_11d_min"].ffill()
+    raw_data["close_low_11_bf"] = raw_data["close_rolling_11d_min"].bfill()
+    raw_data["time_low_11_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_11_ff"), axis=1)
+    raw_data["time_low_11_ff"]  = raw_data["time_low_11_ff"].ffill()
+ 
+    raw_data['close_rolling_21d_max'] = raw_data.close_back_cumsum.rolling(21*interval_per_day).max()
+    raw_data["close_high_21_ff"] = raw_data["close_rolling_21d_max"].ffill()
+    raw_data["close_high_21_bf"] = raw_data["close_rolling_21d_max"].bfill()
+    raw_data["time_high_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_21_ff"), axis=1)
+    raw_data["time_high_21_ff"]  = raw_data["time_high_21_ff"].ffill()
+
+    raw_data['close_rolling_21d_min'] = raw_data.close_back_cumsum.rolling(21*interval_per_day).min()
+    raw_data["close_low_21_ff"] = raw_data["close_rolling_21d_min"].ffill()
+    raw_data["close_low_21_bf"] = raw_data["close_rolling_21d_min"].bfill()
+    raw_data["time_low_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_21_ff"), axis=1)
+    raw_data["time_low_21_ff"]  = raw_data["time_low_21_ff"].ffill()
+
+    raw_data['close_rolling_51d_max'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).max()
+    raw_data["close_high_51_ff"] = raw_data["close_rolling_51d_max"].ffill()
+    raw_data["close_high_51_bf"] = raw_data["close_rolling_51d_max"].bfill()
+    raw_data["time_high_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_51_ff"), axis=1)
+    raw_data["time_high_51_ff"]  = raw_data["time_high_51_ff"].ffill()
+
+    raw_data['close_rolling_51d_min'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).min()
+    raw_data["close_low_51_ff"] = raw_data["close_rolling_51d_min"].ffill()
+    raw_data["close_low_51_bf"] = raw_data["close_rolling_51d_min"].bfill()
+    raw_data["time_low_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_51_ff"), axis=1)
+    raw_data["time_low_51_ff"]  = raw_data["time_low_51_ff"].ffill()
+
+    raw_data['close_rolling_201d_max'] = raw_data.close_back_cumsum.rolling(201*interval_per_day).max()
+    raw_data["close_high_201_ff"] = raw_data["close_rolling_201d_max"].ffill()
+    raw_data["close_high_201_bf"] = raw_data["close_rolling_201d_max"].bfill()
+    raw_data["time_high_201_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_201_ff"), axis=1)
+    raw_data["time_high_201_ff"]  = raw_data["time_high_201_ff"].ffill()
+
+    raw_data['close_rolling_201d_min'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).min()
+    raw_data["close_low_201_ff"] = raw_data["close_rolling_201d_min"].ffill()
+    raw_data["close_low_201_bf"] = raw_data["close_rolling_201d_min"].bfill()
+    raw_data["time_low_201_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_201_ff"), axis=1)
+    raw_data["time_low_201_ff"]  = raw_data["time_low_201_ff"].ffill()
+
     del close_back_cumsum
     # Compute RSI
     raw_data["rsi"] = ta.momentum.RSIIndicator(close=raw_data["close"]).rsi()
@@ -254,7 +279,10 @@ def ticker_transform(raw_data, interval_minutes):
 
 
 def time_diff(row, base_col, diff_col):
-    return row[diff_col] - row[base_col]
+    if pd.isna(row[diff_col]):
+        return np.nan
+    else:
+        return (row[diff_col] - row[base_col])
 
 
 @profile
