@@ -61,7 +61,7 @@ def get_series_observation(start_date, end_date, now, series_ids, start_series):
         logging.info(
             f"series_id:{series_id}, start_date:{start_date}, end_date:{end_date}"
         )
-        url = f"https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={api_key}&file_type=json&realtime_start={start_date_str}&realtime_end={end_date_str}"
+        url = f"https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={api_key}&file_type=json&observation_start={start_date_str}&observation_end={end_date_str}"
         logging.info(f"url:{url}")
         response = requests.get(url).json()
         logging.info(f"response:{response}")
