@@ -1003,6 +1003,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             attn_series=attn_output_weights, # series
             attn_priors=priors,
             sigmas=sigmas,
+            embedding=embedding
         )
 
     def on_fit_end(self):
