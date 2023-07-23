@@ -1,15 +1,20 @@
 device: cuda
 mode: eval
-train_start_date: 2008-06-01
-test_start_date: 2010-01-01
-test_end_date: 2023-01-01
-workers: 8
-max_epochs: 5
-log_mode: All
+
+eval_start_date: 2022-01-01
+eval_end_date: 2023-05-01
 eval_batches: 2
+
+workers: 8
+log_mode: All
 log_example_eval_every_n_epochs: 5
 tag: ${model.name}
-checkpoint:
-eval_top_k: 100
+checkpoint: ${hydra:runtime.cwd}/model/single_asset_mini_futures.ckpt
+eval_top_k: 1000
+market: CME_Equity
+max_lag: 365
+max_lead: 7
+
+
 
 

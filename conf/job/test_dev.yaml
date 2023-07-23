@@ -8,7 +8,7 @@ eval_end_date: 2009-08-01
 test_start_date: 2009-07-01
 test_end_date: 2009-08-01
 time_interval_minutes: 30
-max_lags: 365
+max_lag: 365
 workers: 8
 max_epochs: 3
 log_mode: All
