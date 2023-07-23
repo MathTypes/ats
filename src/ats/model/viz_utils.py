@@ -10,6 +10,7 @@ from plotly.subplots import make_subplots
 import torch
 import wandb
 
+from ats.prediction import prediction_data
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
@@ -235,6 +236,63 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
             0,  # 18
         )
     return data_table
+
+
+def add_market_viz(fig, train_data_rows):
+    raw_im = None
+    img = None
+    fig.add_trace(
+        go.Ohlc(
+            x=train_data_rows["time"],
+            open=train_data_rows["open"],
+            high=train_data_rows["high"],
+            low=train_data_rows["low"],
+            close=train_data_rows["close"],
+        ),
+        row=1,
+        col=2,
+    )
+    # add a bar at prediction time
+    fig.update(layout_xaxis_rangeslider_visible=False)
+    fig.update_layout(title=prediction_date_time, font=dict(size=20))
+    fig.update_xaxes(
+        rangebreaks=[
+            dict(bounds=["sat", "mon"]),  # hide weekends
+        ],
+    )
+
+
+def add_model_prediction(fig, pl_module, pred_input, pred_output):
+    fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
+    pl_module.plot_prediction(
+        pred_input.x,
+        pred_output.out,
+        idx=pred_input.idx,
+        ax=fig,
+        row=1,
+        col=1,
+        draw_mode="pred_cum",
+        x_time=pred_input.x_time,
+    )
+
+
+def add_model_interpretation(fig, pl_module, pred_input, pred_output):
+    interpretation = {}
+    for name in pred_output.interp_output.keys():
+        if interp_output[name].dim() > 1:
+            interpretation[name] = interp_output[name][idx]
+        else:
+            interpretation[name] = interp_output[name]
+    model.plot_interpretation(
+        interpretation,
+        ax=fig,
+        cells=[
+            {"row": 1, "col": 2},
+            {"row": 2, "col": 2},
+            {"row": 1, "col": 3},
+            {"row": 2, "col": 3},
+        ],
+    )
 
 
 # @profile

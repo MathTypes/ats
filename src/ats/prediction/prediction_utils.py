@@ -7,7 +7,7 @@ from ats.util.profile import profile
 
 
 @profile
-def predict(model, new_prediction_data, wandb_logger):
+def predict(model, new_prediction_data, wandb_logger, batch_size=1):
     # logging.info(f"new_prediction_data:{new_prediction_data}")
     # logging.info(f"index:{train_dataset.index.iloc[-5:]}")
     trainer_kwargs = {"logger": wandb_logger}
@@ -24,7 +24,7 @@ def predict(model, new_prediction_data, wandb_logger):
         new_prediction_data,
         mode="raw",
         return_x=True,
-        batch_size=1,
+        batch_size=batch_size,
         trainer_kwargs=trainer_kwargs,
     )
     # logging.info(f"new_raw_predictions:{new_raw_predictions}")
