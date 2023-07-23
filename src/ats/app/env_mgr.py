@@ -19,7 +19,7 @@ class EnvMgr(object):
     def init_env(self):
         self.market_cal = mcal.get_calendar(self.config.job.market)
         has_train_stage = self.config.job.mode in ["train", "test"]
-        has_eval_stage = self.config.job.mode in ["train", "eval"]
+        has_eval_stage = self.config.job.mode in ["train", "eval", "build_search"]
         has_test_stage = self.config.job.mode in ["test"]
 
         if has_eval_stage:
@@ -71,8 +71,11 @@ class EnvMgr(object):
         elif self.config.job.mode == "eval":
             data_start_date = self.eval_start_date
             data_end_date = self.eval_end_date
-        self.data_start_date = data_start_date - datetime.timedelta(days=config.job.max_lag)
-        self.data_end_date = data_end_date + datetime.timedelta(days=config.job.max_lead)
+        elif self.config.job.mode == "build_search":
+            data_start_date = self.eval_start_date
+            data_end_date = self.eval_end_date
+        self.data_start_date = data_start_date - datetime.timedelta(days=self.config.job.max_lag)
+        self.data_end_date = data_end_date + datetime.timedelta(days=self.config.job.max_lead)
         self.dataset_base_dir = self.config.dataset.base_dir
         self.model_tickers = self.config.dataset.model_tickers
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)

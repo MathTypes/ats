@@ -7,12 +7,9 @@ from ats.calendar import date_utils
 
 
 class MacroDataBuilder:
-    def __init__(self, config):
-        self.config = config
-        datetime.datetime.strptime(config.job.train_start_date, "%Y-%m-%d")
-        datetime.datetime.strptime(config.job.test_end_date, "%Y-%m-%d")
-        self.add_macro_event = config.features.add_macro_event
-        if self.add_macro_event:
+    def __init__(self, env_mgr):
+        self.config = env_mgr.config
+        if self.config.features.add_macro_event:
             self.load_events()
 
     def load_events(self):

@@ -77,7 +77,7 @@ class MarketDataMgr(object):
         self.env_mgr = env_mgr
         self.config = env_mgr.config
         self.market_cal = env_mgr.market_cal
-        self.macro_data_builder = MacroDataBuilder(self.config)
+        self.macro_data_builder = MacroDataBuilder(self.env_mgr)
         self.raw_data = self._get_snapshot()
         logging.info(f"summary raw_data:{self.raw_data.describe()}")
         self.data_module = self.create_data_module(simulation_mode=simulation_mode)
@@ -119,10 +119,12 @@ class MarketDataMgr(object):
 
     def _get_snapshot(self):
         raw_data = None
+        env_mgr = self.env_mgr
+        snapshot_dir = f"{self.config.dataset.snapshot}/{env_mgr.data_start_date}_{env_mgr.data_end_date}"
         try:
-            if self.config.dataset.read_snapshot and os.listdir(f"{self.config.dataset.snapshot}"):
-                logging.info(f"reading snapshot from {self.config.dataset.snapshot}")
-                raw_data = read_snapshot(self.config.dataset.snapshot)
+            if self.config.dataset.read_snapshot and os.listdir(f"{snapshot_dir}"):
+                logging.info(f"reading snapshot from {snapshot_dir}")
+                raw_data = read_snapshot(snapshot_dir)
         except Exception:
             # Will try regenerating when reading fails
             pass
@@ -132,13 +134,13 @@ class MarketDataMgr(object):
 
         train_data_vec = []
         refs = []
-        env_mgr = self.env_mgr
         for ticker in env_mgr.model_tickers:
-            logging.info(f"adding {ticker} from {env_mgr.dataset_base_dir}, {env_mgr.train_start_date}, {env_mgr.test_end_date}")
+            logging.info(f"adding {ticker} from {env_mgr.dataset_base_dir}")
+            logging.info(f"{env_mgr.data_start_date}, {env_mgr.data_end_date}")
             ticker_train_data = get_input_for_ticker.remote(
                 env_mgr.dataset_base_dir,
-                env_mgr.train_start_date,
-                env_mgr.test_end_date,
+                env_mgr.data_start_date,
+                env_mgr.data_end_date,
                 ticker,
                 "FUT",
                 env_mgr.time_interval,
@@ -190,5 +192,6 @@ class MarketDataMgr(object):
                                                         self.macro_data_builder)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(raw_data)
-            ds.write_parquet(self.config.dataset.snapshot)
+            os.makedirs(snapshot_dir, exist_ok=True)
+            ds.write_parquet(snapshot_dir)
         return raw_data
