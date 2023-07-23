@@ -1,0 +1,5 @@
+defaults:
+ - dataset: future_dev
+ - optimizer: adam
+ - model: patch_tft_supervised_single_asset_full_futures
+ - job: start_search_server
