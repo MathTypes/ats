@@ -342,7 +342,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         trainer_kwargs = {"logger": wandb_logger}
         logging.info(f"rows:{len(self.data_module.eval_data)}")
-        search_builder = FaissBuilder(self.env_mgr, self.model, self.md_mgr, wandb_logger)
+        search_builder = faiss_builder.FaissBuilder(self.env_mgr, self.model, self.md_mgr, wandb_logger)
         search_builder.build_embedding_cache_if_not_exists()
 
     def search_example(self):
