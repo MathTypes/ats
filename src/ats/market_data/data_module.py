@@ -1,7 +1,9 @@
 # import pytorch_lightning as pl
-import lightning.pytorch as pl
-import torch
 import logging
+
+import lightning.pytorch as pl
+import numpy as np
+import torch
 from torch.utils.data import DataLoader
 from omegaconf import OmegaConf
 from pytorch_forecasting.data.encoders import (
@@ -31,20 +33,22 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             # to cry
             train_data = eval_data
         #logging.info(f"train_data:{train_data.describe()}")
-        #train_data = train_data.fillna(-1)
-        #eval_data = eval_data.fillna(-1)
+        train_data.replace([np.inf, -np.inf], np.nan,inplace=True)
+        eval_data.replace([np.inf, -np.inf], np.nan,inplace=True)
+        test_data.replace([np.inf, -np.inf], np.nan,inplace=True)
+        train_data = train_data.fillna(-1)
+        eval_data = eval_data.fillna(-1)
+        test_data = test_data.fillna(-1)
         logging.info(f"train_data:{train_data.describe()}")
         logging.info(f"eval_data:{eval_data.describe()}")
         logging.info(f"test_data:{test_data.describe()}")
         self.train_data = train_data.dropna()
         self.eval_data = eval_data.dropna()
         self.test_data = test_data
-        logging.info(f"train_data after dropna:{train_data.describe()}")
-        logging.info(f"eval_data after dropna:{eval_data.describe()}")
+        logging.info(f"train_data after dropna:{self.train_data.describe()}")
+        logging.info(f"eval_data after dropna:{self.eval_data.describe()}")
+        logging.info(f"train_data:{len(self.train_data)}")
 
-        logging.info(f"train_data:{train_data.describe()}")
-        logging.info(f"train_data:{train_data.iloc[-5:]}")
-        logging.info(f"target:{target} {type(target)}")
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
         # target_normalizer = None

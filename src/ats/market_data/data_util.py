@@ -174,7 +174,8 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     #df['volume_pct_change'] = raw_data.volume.pct_change(period=1)
     #df['dv_pct_change'] = raw_data.dv.pct_change(period=1)
     raw_data['close_back'] = np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price)
-    raw_data['volume_back'] = np.log(raw_data.volume) - np.log(raw_data.volume.shift(1))
+    # Avoid inf
+    raw_data['volume_back'] = np.log(raw_data.volume+2) - np.log(raw_data.volume.shift(1)+2)
     raw_data['dv_back'] = np.log(raw_data.dv) - np.log(raw_data.dv.shift(1))
     #df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
     raw_data['close_fwd'] = np.log(raw_data.close.shift(1)) - np.log(raw_data.close)
