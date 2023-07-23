@@ -350,7 +350,7 @@ class TimeSeriesDataSet(Dataset):
                 prediction samples and everthing previous up to ``max_encoder_length`` samples as encoder samples.
         """
         super().__init__()
-        data = data.fillna(-1)
+        #data = data.fillna(-1)
         assert(min_encoder_length == max_encoder_length), "max encoder length must be equal to min encoder length"
         assert(min_prediction_length == max_prediction_length), "max prediction length must be equal to min prediction length"
         self.max_encoder_length = max_encoder_length
@@ -536,7 +536,7 @@ class TimeSeriesDataSet(Dataset):
             # minimal decoder index is always >= min_prediction_idx
             data = data[lambda x: x[self.time_idx] >= self.min_prediction_idx - self.max_encoder_length - self.max_lag]
         data = data.sort_values(self.group_ids + [self.time_idx])
-        logging.error(f"before process:{data.describe()}")
+        #logging.error(f"before process:{data.describe()}")
         # preprocess data
         data = self._preprocess_data(data)
         #logging.error(f"after process:{data.describe()}")
@@ -1177,7 +1177,7 @@ class TimeSeriesDataSet(Dataset):
 
         # reals
         elif name in self.reals:
-            logging.info(f"name:{name}, transformer:{transformer}, transform:{transform}")
+            #logging.info(f"name:{name}, transformer:{transformer}, transform:{transform}")
             if isinstance(transformer, GroupNormalizer):
                 return transform(values, data, **kwargs)
             elif isinstance(transformer, EncoderNormalizer):
@@ -2052,17 +2052,17 @@ class TimeSeriesDataSet(Dataset):
         # rescale continuous variables apart from target
         for name in self.reals:
             if name in self.target_names or name in self.lagged_variables:
-                logging.info(f"skip fitting {name}")
+                #logging.info(f"skip fitting {name}")
                 # lagged variables are only transformed - not fitted
                 continue
             elif name not in self.scalers:
-                logging.info(f"fit real with standard: {name}")
+                logging.info(f"fit real with standard: {name}, {data[[name]].iloc[:5]}")
                 self.scalers[name] = StandardScaler().fit(data[[name]])
             elif self.scalers[name] is not None:
                 try:
                     check_is_fitted(self.scalers[name])
                 except NotFittedError:
-                    logging.info(f"fit real: {name}")
+                    #logging.info(f"fit real: {name}")
                     if isinstance(self.scalers[name], GroupNormalizer):
                         self.scalers[name] = self.scalers[name].fit(data[name], data)
                     else:
@@ -2070,7 +2070,7 @@ class TimeSeriesDataSet(Dataset):
 
         # encode after fitting
         for name in self.reals:
-            logging.info(f"encode name:{name}")
+            #logging.info(f"encode name:{name}")
             # targets are handled separately
             transformer = self.get_transformer(name)
             if (
@@ -2323,7 +2323,7 @@ class TimeSeriesDataSet(Dataset):
         #logging.info(f"new_full_data_before_ffill:{self.raw_data.iloc[-3:]}")
         self.raw_data = self.raw_data.ffill()
         #logging.info(f"new_full_data_before_dropna:{self.raw_data.iloc[-3:]}")
-        self.raw_data = self.raw_data.fillna(0)
+        #self.raw_data = self.raw_data.fillna(0)
         #self.raw_data = self.raw_data.dropna()
         #logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
         data = self.preprocess_data(self.raw_data)
