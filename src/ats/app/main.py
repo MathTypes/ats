@@ -65,6 +65,12 @@ def my_app(cfg: DictConfig) -> None:
     elif cfg.job.mode == "eval":
         pipe.create_model(cfg.job.checkpoint)
         pipe.eval_model()
+    elif cfg.job.mode == "build_search":
+        pipe.create_model(cfg.job.checkpoint)
+        pipe.build_search()
+    elif cfg.job.mode == "search":
+        pipe.create_model(cfg.job.checkpoint)
+        pipe.search_examples()
     elif cfg.job.mode == "test":
         # train model until test start
         pipe.create_trainer()

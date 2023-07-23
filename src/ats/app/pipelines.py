@@ -39,6 +39,7 @@ from ats.model.timeseries_transformer import TimeSeriesTFT
 from ats.model import model_utils
 from ats.model.utils import Pipeline
 from ats.model import viz_utils
+from ats.search import faiss_builder
 from ats.trading.trader import Trader
 
 torch.manual_seed(0)
@@ -271,7 +272,6 @@ class PatchTftSupervisedPipeline(Pipeline):
         self.market_cal = self.env_mgr.market_cal
         self.heads = self.env_mgr.heads
         self.targets = self.env_mgr.targets
-        logging.info(f"head:{self.heads}, targets:{self.targets}")
         self.md_mgr = market_data_mgr.MarketDataMgr(self.env_mgr)
         self.data_module = self.md_mgr.data_module
 
@@ -448,6 +448,36 @@ class PatchTftSupervisedPipeline(Pipeline):
         trainer_kwargs = {"logger": wandb_logger}
         logging.info(f"rows:{len(self.data_module.eval_data)}")
         data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pred", type="evaluation")
+        metrics = SMAPE(reduction="none").to(self.device)
+        data_table = viz_utils.create_example_viz_table(
+            self.model.to(self.device),
+            self.data_module.val_dataloader(),
+            self.data_module.eval_data,
+            metrics,
+            self.config.job.eval_top_k,
+        )
+        data_artifact.add(data_table, "eval_data")
+
+        # Calling `use_artifact` uploads the data to W&B.
+        assert wandb.run is not None
+        wandb.run.use_artifact(data_artifact)
+        data_artifact.wait()
+
+    def build_search(self):
+        logging.info(f"device:{self.device}")
+        wandb_logger = WandbLogger(project="ATS", log_model=True)
+        trainer_kwargs = {"logger": wandb_logger}
+        logging.info(f"rows:{len(self.data_module.eval_data)}")
+        search_builder = FaissBuilder(self.env_mgr, self.model, self.md_mgr, wandb_logger)
+        search_builder.build_embedding_cache_if_not_exists()
+
+    def search_example(self):
+        logging.info(f"device:{self.device}")
+        wandb_logger = WandbLogger(project="ATS", log_model=True)
+        trainer_kwargs = {"logger": wandb_logger}
+        logging.info(f"rows:{len(self.data_module.eval_data)}")
+        data_artifact = wandb.Artifact(f"run_{wandb.run.id}_search", type="evaluation")
+        
         metrics = SMAPE(reduction="none").to(self.device)
         data_table = viz_utils.create_example_viz_table(
             self.model.to(self.device),
