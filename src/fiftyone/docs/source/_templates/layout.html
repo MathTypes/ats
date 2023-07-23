@@ -1,0 +1,315 @@
+{% extends "!layout.html" %} {% block extrahead %}
+<link
+  href="https://fonts.googleapis.com/css?family=Palanquin:400,600,700,800"
+  rel="stylesheet"
+/>
+<link
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+  rel="stylesheet"
+/>
+{% endblock %} {% block custom_header %}
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <!--
+  <a class="banner" href="{{banner_link}}">
+    <div>
+      <span>
+        With support from the COCO team,
+        <span><b class="text-secondary-on-dark">Fifty</b><b class="text-brand">One</b></span>
+        is now a recommended tool for the
+        <b class="gray">COCO dataset and evaluation</b>!</span
+      >
+    </div>
+  </a>
+  -->
+
+  <nav id="nav__main" class="nav__main">
+    <div class="nav__main__logo">
+      <a href="{{link_home}}">
+        <img
+          src="https://voxel51.com/images/logo/voxel51-logo-horz-color-600dpi.png"
+        />
+      </a>
+    </div>
+
+    <div class="nav__spacer desktop_only"></div>
+
+    <div id="nav__main__mobilebutton--on">
+      <a href="javascript:void(0);" onclick="navMobileButton()">
+        <i class="fa-solid fa-bars"></i>
+      </a>
+    </div>
+
+    <div id="nav__main__mobilebutton--off">
+      <a href="javascript:void(0);" onclick="navMobileButton()">
+        <i class="fa-solid fa-times"></i>
+      </a>
+    </div>
+
+    <div id="nav__main__items">
+
+      <div class="nav__item nav__dropdown">
+        <div class="nav__dropdown__trigger">Products</div>
+        <div class="nav__item nav__dropdown__menu has-arrows">
+          <div class="arrow-up--light-primary arrow-left20"></div>
+          <ul>
+            <li><a href="{{link_fiftyone}}">Open Source</a>
+            <li><a href="{{link_fiftyone_teams}}">FiftyOne Teams</a>
+            <li><a href="{{link_usecases}}">Use Cases</a>
+            <li><a href="{{link_success_stories}}">Success Stories</a>
+          </ul>
+        </div>
+      </div>
+
+      <div class="nav__item nav__dropdown">
+        <div class="nav__dropdown__trigger">Learn</div>
+        <div class="nav__item nav__dropdown__menu has-arrows">
+          <div class="arrow-up--light-primary arrow-left20"></div>
+          <ul>
+            <li><a href="{{link_voxel51_slack}}">Community Slack</a>
+            <li><a href="{{link_voxel51_blog}}">Blog</a>
+            <li><a href="{{link_events}}">Events</a>
+          </ul>
+        </div>
+      </div>
+
+      <div class="nav__item">
+        <a href="{{link_docs_fiftyone}}">Docs</a>
+      </div>
+
+      <div class="nav__item nav__dropdown">
+        <div class="nav__dropdown__trigger">Company</div>
+        <div class="nav__item nav__dropdown__menu has-arrows">
+          <div class="arrow-up--light-primary arrow-left20"></div>
+          <ul>
+            <li><a href="{{link_ourstory}}">About Us</a>
+            <li><a href="{{link_voxel51_jobs}}">Careers</a>
+            <li><a href="{{link_talk_to_sales}}">Talk to Sales</a>
+          </ul>
+        </div>
+      </div>
+
+      <div class="nav__item mobile_only">
+        <a href="{{link_voxel51_github}}fiftyone">GitHub</a>
+      </div>
+
+      <div class="nav__item desktop_only" id="octocat">
+        <!-- https://buttons.github.io -->
+        <a
+          class="github-button"
+          href="https://github.com/voxel51/fiftyone"
+          data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;"
+          data-size="large"
+          data-show-count="true"
+          aria-label="Star voxel51/fiftyone on GitHub"
+        >Star</a>
+      </div>
+
+      <div class="nav__item full_nav_only">
+        <a
+          class="button-primary"
+          href="{{link_workshop}}"
+          target="_blank"
+          >Schedule a workshop</a
+        >
+      </div>
+
+    </div>
+  </nav>
+</div>
+{% endblock %} {% block custom_mobile_menu %} {# delete PyTorch's menu because
+our own is reused on mobile #} {% endblock %} {% block menu %} {{
+toctree(maxdepth=10, collapse=True, includehidden=True, titles_only=True) }} {%
+endblock %} {% block custom_footer %}
+<footer class="footer-wrapper" id="docs-tutorials-resources">
+  <div class="footer pytorch-container">
+    <div class="footer__logo">
+      <a href="{{link_home}}"
+        ><img
+          src="https://voxel51.com/images/logo/voxel51-logo-horz-color-600dpi.png"
+      /></a>
+    </div>
+
+    <div class="footer__address">
+      {{address_main_line1}}<br />
+      {{address_main_line2}}<br />
+      {{phone_main}}<br />
+      <a href="mailto:{{email_info}}">{{email_info}}</a>
+    </div>
+
+    <!--
+    <div class="footer__contact">
+      <a href="mailto:{{email_info}}">{{email_info}}</a>
+    </div>
+    -->
+
+    <div class="footer__links">
+      <div class="footer__links--col2">
+        <p class="nav__item--brand">Products</p>
+        <a href="{{link_fiftyone}}">FiftyOne</a>
+        <a href="{{link_fiftyone_teams}}">FiftyOne Teams</a>
+        <a href="{{link_usecases}}">Use Cases</a>
+        <a href="{{link_success_stories}}">Success Stories</a>
+      </div>
+      <div class="footer__links--col3">
+        <p class="nav__item--brand">Resources</p>
+        <a href="{{link_voxel51_blog}}">Blog</a>
+        <a href="{{link_docs_fiftyone}}">Docs</a>
+        <a href="{{link_voxel51_github}}">GitHub</a>
+        <a href="{{link_voxel51_slack}}">Slack</a>
+        <a href="{{link_ourstory}}">About Us</a>
+        <a href="{{link_events}}">Events</a>
+        <a href="{{link_voxel51_jobs}}">Careers</a>
+        <a href="{{link_press}}">Press</a>
+      </div>
+    </div>
+
+    <div class="footer__icons">
+      <ul class="list-inline">
+        <li>
+          <a href="{{link_voxel51_linkedin}}">
+            <i class="fa-brands fa-linkedin"></i>
+          </a>
+        </li>
+        <li>
+          <a href="{{link_voxel51_github}}">
+            <i class="fa-brands fa-github"></i>
+          </a>
+        </li>
+        <li>
+          <a href="{{link_voxel51_twitter}}">
+            <i class="fa-brands fa-twitter"></i>
+          </a>
+        </li>
+        <li>
+          <a href="{{link_voxel51_facebook}}">
+            <i class="fa-brands fa-facebook"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="footer__copyright">
+      <ul class="list-inline">
+        <li>&copy; 2023 Voxel51 Inc.</li>
+        <li>
+          <a href="{{link_privacypolicy}}">Privacy Policy</a>
+        </li>
+        <li>
+          <a href="{{link_termsofservice}}">Terms of Service</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<!-- https://buttons.github.io -->
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XD15NFRY3M"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-XD15NFRY3M");
+</script>
+
+<script>
+  function open_modal(modal_id, modal_closer_id) {
+    // Get the modal
+    let the_modal = document.getElementById(modal_id);
+
+    the_modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+
+    let the_modal_closer = document.getElementById(modal_closer_id);
+
+    // When the user clicks on <span> (x), close the modal
+    the_modal_closer &&
+      (the_modal_closer.onclick = function () {
+        the_modal.style.display = "none";
+      });
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      if (event.target == the_modal) {
+        the_modal.style.display = "none";
+        document.body.style.overflow = "unset";
+        window.onclick = undefined;
+      }
+    };
+  }
+</script>
+
+<!-- bigpicture.io -->
+<script>
+  !(function (e, t, i) {
+    var r = (e.bigPicture = e.bigPicture || []);
+    if (!r.initialized)
+      if (r.invoked)
+        e.console &&
+          console.error &&
+          console.error("BigPicture.io snippet included twice.");
+      else {
+        (r.invoked = !0),
+          (r.SNIPPET_VERSION = 1.5),
+          (r.handler = function (e) {
+            if (void 0 !== r.callback)
+              try {
+                return r.callback(e);
+              } catch (e) {}
+          }),
+          (r.eventList = ["mousedown", "mouseup", "click", "submit"]),
+          (r.methods = [
+            "track",
+            "identify",
+            "page",
+            "group",
+            "alias",
+            "integration",
+            "ready",
+            "intelReady",
+            "consentReady",
+            "on",
+            "off",
+          ]),
+          (r.factory = function (e) {
+            return function () {
+              var t = Array.prototype.slice.call(arguments);
+              return t.unshift(e), r.push(t), r;
+            };
+          });
+        for (var n = 0; n < r.methods.length; n++) {
+          var o = r.methods[n];
+          r[o] = r.factory(o);
+        }
+        r.getCookie = function (e) {
+          var i = ("; " + t.cookie).split("; " + e + "=");
+          return 2 == i.length && i.pop().split(";").shift();
+        };
+        var c = (r.isEditor = (function () {
+          try {
+            return (
+              e.self !== e.top &&
+              (new RegExp("app" + i, "ig").test(t.referrer) ||
+                "edit" == r.getCookie("_bpr_edit"))
+            );
+          } catch (e) {
+            return !1;
+          }
+        })());
+        r.init = function (n, o) {
+          if (((r.projectId = n), (r._config = o), !c))
+            for (var a = 0; a < r.eventList.length; a++)
+              e.addEventListener(r.eventList[a], r.handler, !0);
+          var s = t.createElement("script");
+          s.async = !0;
+          var d = c ? "/editor/editor" : "/public-" + n;
+          (s.src = "//cdn" + i + d + ".js"),
+            t.getElementsByTagName("head")[0].appendChild(s);
+        };
+      }
+  })(window, document, ".bigpicture.io");
+  bigPicture.init("1646");
+</script>
+{% endblock %}
