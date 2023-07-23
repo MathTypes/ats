@@ -14,9 +14,6 @@ class FaissBuilder(object):
         this.model = model
         this.config = env_mgr.config
         this.data_module = market_data_mgr.data_module
-        self.val_x_batch = []
-        self.val_y_batch = []
-        self.indices_batch = []
         self.num_samples = self.config.job.eval_batches
         self.every_n_epochs = self.config.job.log_example_eval_every_n_epochs
         self.embedding_cache_path = self.config.job.embedding_cache_path
@@ -36,16 +33,6 @@ class FaissBuilder(object):
         # Number of clusters to explorer at search time. We will search for nearest neighbors in 3 clusters.
         self.index.nprobe = 3
 
-        data_iter = iter(data_module.val_dataloader())
-        for batch in range(self.num_samples):
-            val_x, val_y = next(data_iter)
-            indices = data_module.validation.x_to_index(val_x)
-            self.val_x_batch.append(val_x)
-            self.val_y_batch.append(val_y)
-            self.indices_batch.append(indices)
-            logging.info(
-                f"batch_size:{len(val_x)}, indices_batch:{len(self.indices_batch)}"
-            )
         self.validation = data_module.validation
         self.matched_eval_data = data_module.eval_data
 
@@ -108,15 +95,22 @@ class FaissBuilder(object):
                 self.wandb_logger,
                 batch_size=self.num_samples,
             )
+            logging.info(f"y_hats:{y_hats}")
+            logging.info(f"y_quantiles:{y_quantiles}")
+            logging.info(f"output:{output}")
+            exit(0)
             interp_output = self.pl_module.interpret_output(
                 detach(output),
                 reduction="none",
                 attention_prediction_horizon=0,  # attention only for first prediction horizon
             )
             for idx in range(len(y_hats)):
+                index = indices.iloc[idx]
                 pred_input = prediction_data.PredictionInput(
-                    x=output.x, idx=idx, train_data_rows=train_data_rows
+                    x=output.x, idx=idx
                 )
+                prediction_utils.add_pred_context(self.env_mgr, self.matched_eval_data, x, idx, pred_input)
+                logging.info(f"pred_input:{pred_input}")
                 pred_output = prediction_data.PredictionOutput(
                     out=output,
                     idx=idx,
@@ -127,6 +121,7 @@ class FaissBuilder(object):
                 )
                 corpus_embeddinds.append(pred_output.embedding)
                 corpus_images.append(self.create_image(pred_input, pred_output))
+
         print("Store file on disc")
         with open(self.embedding_cache_path, "wb") as fOut:
             pickle.dump(

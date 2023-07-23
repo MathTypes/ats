@@ -9,6 +9,8 @@ class PredictionInput:
     prediction_date_time: str
     x_time: List
     train_data_rows: List
+    train_data_row: Dict
+    decoder_time_idx: int
 
 
 @dataclass

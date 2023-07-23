@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from pytorch_forecasting.utils import to_list
@@ -5,6 +6,40 @@ import torch
 
 from ats.util.profile import profile
 
+
+def add_pred_context(env_mgr, matched_eval_data, x, idx, pred_input):
+    config = env_mgr.config
+    target_size = env_mgr.target_size
+    context_length = env_mgr.context_length
+    train_data_row = matched_eval_data[
+        matched_eval_data.time_idx == index.time_idx
+    ].iloc[0]
+    # logging.info(f"train_data_row:{train_data_row}")
+    dm = train_data_row["time"]
+    dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
+    train_data_rows = matched_eval_data[
+        (matched_eval_data.time_idx >= index.time_idx - config.model.context_length)
+        & (matched_eval_data.time_idx < index.time_idx + config.model.prediction_length)
+    ]
+    decoder_time_idx = x["decoder_time_idx"][idx][0].cpu().detach().numpy()
+    x_time = matched_eval_data[
+        (matched_eval_data.time_idx >= decoder_time_idx - context_length)
+        & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
+    ]["time"]
+    prediction_date_time = (
+        train_data_row["ticker"]
+        + " "
+        + dm_str
+        + " "
+        + day_of_week_map[train_data_row["day_of_week"]]
+        + " "
+        + str(train_data_row["close"])
+    )
+    pred_input.decoder_time_idx = decoder_time_idx
+    pred_input.prediction_date_time = prediction_date_time
+    pred_input.train_data_row = train_data_row
+    pred_input.train_data_rows = train_data_rows
+    pred_input.x_time = x_time
 
 @profile
 def predict(model, new_prediction_data, wandb_logger, batch_size=1):
