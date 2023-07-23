@@ -31,7 +31,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.eval_data = eval_data.dropna()
         self.test_data = test_data
 
-        if self.train_data.empty:
+        if self.train_data.empty and self.config.job.mode in ["eval", "build_search"]:
             # TODO: get rid of the hack to fake train data during
             # eval and build_search mode. In both case, we do
             # not have train data and do not want data_module
