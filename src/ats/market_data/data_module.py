@@ -24,19 +24,24 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self, config, train_data, eval_data, test_data, target, simulation_mode=False
     ):
         super().__init__()
-        logging.info(f"train_data:{train_data.describe()}")
-        train_data = train_data.fillna(-1)
-        eval_data = eval_data.fillna(-1)
-        self.train_data = train_data.dropna()
-        self.eval_data = eval_data.dropna()
-        self.test_data = test_data
-
-        if self.train_data.empty and self.config.job.mode in ["eval", "build_search"]:
+        if train_data.empty and config.job.mode in ["eval", "build_search"]:
             # TODO: get rid of the hack to fake train data during
             # eval and build_search mode. In both case, we do
             # not have train data and do not want data_module
             # to cry
-            self.train_data = self.eval_data
+            train_data = eval_data
+        #logging.info(f"train_data:{train_data.describe()}")
+        #train_data = train_data.fillna(-1)
+        #eval_data = eval_data.fillna(-1)
+        logging.info(f"train_data:{train_data.describe()}")
+        logging.info(f"eval_data:{eval_data.describe()}")
+        logging.info(f"test_data:{test_data.describe()}")
+        self.train_data = train_data.dropna()
+        self.eval_data = eval_data.dropna()
+        self.test_data = test_data
+        logging.info(f"train_data after dropna:{train_data.describe()}")
+        logging.info(f"eval_data after dropna:{eval_data.describe()}")
+
         logging.info(f"train_data:{train_data.describe()}")
         logging.info(f"train_data:{train_data.iloc[-5:]}")
         logging.info(f"target:{target} {type(target)}")
