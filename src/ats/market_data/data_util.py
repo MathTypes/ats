@@ -19,7 +19,7 @@ from ats.model.mom_trans.classical_strategies import (
     calc_daily_vol,
 )
 from ats.util import time_util
-from ats.util.profile import profile
+from ats.util import profile_util
 
 VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
@@ -120,7 +120,7 @@ def get_processed_data(
     return ds
 
 
-@profile
+@profile_util.profile
 def add_highs(df_cumsum, df_time, width):
     df_z_scaled = df_cumsum
     df_z_scaled = (df_z_scaled - df_z_scaled.mean()) / df_z_scaled.std()  
@@ -137,7 +137,7 @@ def add_highs(df_cumsum, df_time, width):
     return df_high
 
 
-@profile
+@profile_util.profile
 def add_lows(df_cumsum, df_time, width):
     df_z_scaled = df_cumsum.fillna(0)
     df_z_scaled = -(df_z_scaled - df_z_scaled.mean()) / df_z_scaled.std() * 20
@@ -286,7 +286,7 @@ def time_diff(row, base_col, diff_col):
         return (row[diff_col] - row[base_col])
 
 
-@profile
+@profile_util.profile
 def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
     for column in [
         "close_back",
@@ -371,7 +371,7 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
     return raw_data
 
 
-@profile
+@profile_util.profile
 def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder):
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x: x.isocalendar()[1])
     raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)

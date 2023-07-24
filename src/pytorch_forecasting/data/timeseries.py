@@ -37,7 +37,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import Sampler, SequentialSampler
 
 from ats.market_data import data_util
-from ats.util.profile import profile
+from ats.util import profile_util
 
 def _find_end_indices(diffs: np.ndarray, max_lengths: np.ndarray, min_length: int) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -430,7 +430,7 @@ class TimeSeriesDataSet(Dataset):
         if not simulation_mode:
             self.transform_data(data)
 
-    @profile
+    @profile_util.profile
     def preprocess_data(self, data : pd.DataFrame):
         data = data.sort_values(self.group_ids + [self.time_idx])
         #g = data.groupby(self.group_ids, observed=True)
@@ -458,7 +458,7 @@ class TimeSeriesDataSet(Dataset):
         self.reset_overwrite_values()
         return data
 
-    @profile
+    @profile_util.profile
     def transform_data(self, data : pd.DataFrame):
         #logging.info(f"data:{data.iloc[-30:]}")
         for target in self.target_names:
@@ -2297,7 +2297,7 @@ class TimeSeriesDataSet(Dataset):
         else:
             return None
 
-    @profile
+    @profile_util.profile
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes, cal, mdr):
         #self.raw_data = pd.concat([self.raw_data, new_data])
         #logging.info(f"adding new_data:{new_data}")

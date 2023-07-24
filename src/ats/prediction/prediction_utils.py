@@ -4,7 +4,7 @@ import logging
 from pytorch_forecasting.utils import to_list
 import torch
 
-from ats.util.profile import profile
+from ats.util import profile_util
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
@@ -44,7 +44,7 @@ def add_pred_context(env_mgr, matched_eval_data, idx, index, pred_input):
     pred_input.train_data_rows = train_data_rows
     pred_input.x_time = x_time
 
-@profile
+@profile_util.profile
 def predict(model, new_prediction_data, wandb_logger, batch_size=1):
     # logging.info(f"new_prediction_data:{new_prediction_data}")
     # logging.info(f"index:{train_dataset.index.iloc[-5:]}")
