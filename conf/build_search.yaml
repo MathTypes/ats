@@ -3,4 +3,4 @@ defaults:
  - features: dev
  - optimizer: adam
  - model: patch_tft_supervised_single_asset_full_futures
- - job: start_search_server
+ - job: build_search
