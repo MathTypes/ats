@@ -21,7 +21,7 @@ class EnvMgr(object):
     def init_env(self):
         self.market_cal = mcal.get_calendar(self.config.job.market)
         has_train_stage = self.config.job.mode in ["train", "test"]
-        has_eval_stage = self.config.job.mode in ["train", "eval", "build_search"]
+        has_eval_stage = self.config.job.mode in ["train", "test", "eval", "build_search"]
         has_test_stage = self.config.job.mode in ["test"]
 
         self.max_lags = self.config.job.max_lag
