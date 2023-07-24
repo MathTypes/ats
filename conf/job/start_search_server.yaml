@@ -4,7 +4,7 @@ mode: build_search
 eval_start_date: 2008-01-01
 #eval_end_date: 2023-05-01
 eval_end_date: 2010-05-01
-eval_batches: 10
+eval_batches: 2
 
 time_interval_minutes: 30
 workers: 8
@@ -14,8 +14,8 @@ tag: ${job.mode}_${model.name}
 checkpoint: ${hydra:runtime.cwd}/model/single_asset_mini_futures.ckpt
 eval_top_k: 1000
 market: CME_Equity
-embedding_cache_path: ${hydra:runtime.cwd}/embedding/mini_futures.pkl
-image_root_path: ${hydra:runtime.cwd}/image/
+embedding_cache_path: ${hydra:runtime.cwd}/data/embedding/mini_futures.pkl
+image_root_path: ${hydra:runtime.cwd}/data/image/
 max_lag: 365
 max_lead: 7
 example_bootstrap: akolotech/ATS/run_woaxoza1_pred_viz:v2

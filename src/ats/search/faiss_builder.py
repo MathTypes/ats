@@ -1,4 +1,4 @@
-
+import kaleido #required
 import logging
 import os
 import csv
@@ -9,12 +9,16 @@ import numpy as np
 
 from pytorch_forecasting.utils import detach, to_list
 import plotly.graph_objects as go
-import PIL
 from plotly.subplots import make_subplots
 
 from ats.prediction import prediction_data
 from ats.prediction import prediction_utils
 from ats.model import viz_utils
+#import plotly.io as pio
+#pio.orca.config.use_xvfb = True
+
+#import plotly.io as pio
+#pio.kaleido.scope.mathjax = None
 
 class FaissBuilder(object):
     def __init__(self, env_mgr, model, market_data_mgr, wandb_logger):
@@ -81,13 +85,28 @@ class FaissBuilder(object):
         )
         fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
         viz_utils.add_market_viz(fig, pred_input)
+        logging.info(f"after add_market_viz")
         viz_utils.add_model_prediction(fig, self.model, pred_input, pred_output)
+        logging.info(f"after add_model_prediction")
         viz_utils.add_model_interpretation(fig, self.model, pred_input, pred_output)
-        img_bytes = fig.to_image(format="png")  # kaleido library
-        output_file = f'{self.image_root_path}/{pred_output.prediction_date_time}.png'
-        fig.savefig(output_file)   # save the figure to file
-        plt.close(fig)
-        return output_file
+        logging.info(f"after add_model_interpretation")
+        #output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.png'
+        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.html'
+        output_file = output_file.replace(" ","_")
+        try:
+            #fig.show()
+            #fig.write_image(output_file)
+            #with Path("myfile.html").open("w") as f:
+            fig.write_html(output_file)
+            #img_bytes = fig.to_image(format="png")  # kaleido library
+            #with 
+            logging.info(f"generate image {output_file}")
+            #fig.savefig(output_file)   # save the figure to file
+            #plt.close(fig)
+            return output_file
+        except Exception as e:
+            logging.error(f"can not generate {output_file}, {e}")
+            return None
         #im = PIL.Image.open(BytesIO(img_bytes))
         #img = wandb.Image(im)
         #im.thumbnail((224,224))
@@ -97,7 +116,7 @@ class FaissBuilder(object):
         data_iter = iter(self.data_module.val_dataloader())
 
         corpus_images = list()
-        corpus_embeddinds = list()
+        corpus_embeddings = list()
 
         for batch in range(self.num_samples):
             val_x, val_y = next(data_iter)
@@ -145,7 +164,7 @@ class FaissBuilder(object):
                 )
                 embedding = pred_output.embedding[idx]
                 image = self.create_image(pred_input, pred_output)
-                corpus_embeddinds.append(embedding)
+                corpus_embeddings.append(embedding)
                 corpus_images.append(image)
                 logging.info(f"adding {idx} embedding:{embedding}, {image}")
 
@@ -207,7 +226,9 @@ class FaissBuilder(object):
             self.build_embedding_cache()
         else:
             print("Load pre-computed embeddings from disc")
-            with open(embedding_cache_path, "rb") as fIn:
+            with open(self.embedding_cache_path, "rb") as fIn:
                 cache_data = pickle.load(fIn)
-                corpus_sentences = cache_data["sentences"]
+                corpus_images = cache_data["images"]
                 corpus_embeddings = cache_data["embeddings"]
+                logging.info(f"corpus_images:{corpus_images}")
+                logging.info(f"corpus_embeddings:{corpus_embeddings}")
