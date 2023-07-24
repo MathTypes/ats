@@ -5,7 +5,7 @@ patch_len: 12
 stride: 6
 d_model: 6
 train_batch_size: 1024
-eval_batch_size: 512
+eval_batch_size: 2
 learning_rate: 0.0095
 attn_heads : 4
 attn_dropout: 0.1

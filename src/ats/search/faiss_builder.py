@@ -1,4 +1,5 @@
-from sentence_transformers import SentenceTransformer, util
+
+import logging
 import os
 import csv
 import pickle
@@ -6,17 +7,28 @@ import time
 import faiss
 import numpy as np
 
+from pytorch_forecasting.utils import detach, to_list
+import plotly.graph_objects as go
+import PIL
+from plotly.subplots import make_subplots
+
+from ats.prediction import prediction_data
+from ats.prediction import prediction_utils
+from ats.model import viz_utils
 
 class FaissBuilder(object):
     def __init__(self, env_mgr, model, market_data_mgr, wandb_logger):
         super().__init__()
-        this.env_mgr = env_mgr
-        this.model = model
-        this.config = env_mgr.config
-        this.data_module = market_data_mgr.data_module
+        self.env_mgr = env_mgr
+        self.model = model
+        self.wandb_logger = wandb_logger
+        self.config = env_mgr.config
+        self.data_module = market_data_mgr.data_module
         self.num_samples = self.config.job.eval_batches
         self.every_n_epochs = self.config.job.log_example_eval_every_n_epochs
         self.embedding_cache_path = self.config.job.embedding_cache_path
+        self.image_root_path = self.config.job.image_root_path + "/" + self.env_mgr.run_id
+        os.makedirs(self.image_root_path, exist_ok=True)
         self.embedding_size = 768  # Size of embeddings
         self.top_k_hits = 10  # Output k hits
         logging.info(f"num_samples:{self.num_samples}")
@@ -25,16 +37,16 @@ class FaissBuilder(object):
         self.n_clusters = 1024
 
         # We use Inner Product (dot-product) as Index. We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
-        self.quantizer = faiss.IndexFlatIP(embedding_size)
+        self.quantizer = faiss.IndexFlatIP(self.embedding_size)
         self.index = faiss.IndexIVFFlat(
-            quantizer, embedding_size, n_clusters, faiss.METRIC_INNER_PRODUCT
+            self.quantizer, self.embedding_size, self.n_clusters, faiss.METRIC_INNER_PRODUCT
         )
 
         # Number of clusters to explorer at search time. We will search for nearest neighbors in 3 clusters.
         self.index.nprobe = 3
 
-        self.validation = data_module.validation
-        self.matched_eval_data = data_module.eval_data
+        self.validation = self.data_module.validation
+        self.matched_eval_data = self.data_module.eval_data
 
     def create_image(self, pred_input, pred_output):
         fig = make_subplots(
@@ -68,61 +80,78 @@ class FaissBuilder(object):
             ],
         )
         fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
-        viz_utils.add_market_viz(fig, train_data_rows)
+        viz_utils.add_market_viz(fig, pred_input)
         viz_utils.add_model_prediction(fig, self.model, pred_input, pred_output)
         viz_utils.add_model_interpretation(fig, self.model, pred_input, pred_output)
         img_bytes = fig.to_image(format="png")  # kaleido library
-        im = PIL.Image.open(BytesIO(img_bytes))
-        img = wandb.Image(im)
+        output_file = f'{self.image_root_path}/{pred_output.prediction_date_time}.png'
+        fig.savefig(output_file)   # save the figure to file
+        plt.close(fig)
+        return output_file
+        #im = PIL.Image.open(BytesIO(img_bytes))
+        #img = wandb.Image(im)
+        #im.thumbnail((224,224))
 
     def build_embedding_cache(self):
-        device = self.pl_module.device
-        data_iter = iter(self.data_module.eval_dataloader())
+        device = self.model.device
+        data_iter = iter(self.data_module.val_dataloader())
 
-        corpuse_images = list()
+        corpus_images = list()
         corpus_embeddinds = list()
 
         for batch in range(self.num_samples):
             val_x, val_y = next(data_iter)
+            # indices are based on decoder time idx (first prediction point)
             indices = self.data_module.validation.x_to_index(val_x)
+            logging.info(f"val_x:{val_x}")
+            logging.info(f"val_y:{val_y}")
             logging.info(f"indices:{indices}")
-            filtered_dataset = self.train_dataset.filter(
-                lambda x: (x.time_idx_last % self.sample_n == 0)
+            decoder_time_idx = indices.time_idx
+            logging.info(f"decoder_time_idx:{decoder_time_idx}")
+            filtered_dataset = self.validation.filter(
+                lambda x: x.time_idx_first_prediction.isin(decoder_time_idx)
             )
-            y_hats, y_quantiles, output = prediction_utils.predict(
-                self.module,
+            y_hats, y_quantiles, output, ret_x = prediction_utils.predict(
+                self.model,
                 filtered_dataset,
                 self.wandb_logger,
                 batch_size=self.num_samples,
             )
             logging.info(f"y_hats:{y_hats}")
+            logging.info(f"ret_x:{ret_x}")
             logging.info(f"y_quantiles:{y_quantiles}")
-            logging.info(f"output:{output}")
-            exit(0)
-            interp_output = self.pl_module.interpret_output(
+            logging.info(f"output:{output.keys()}")
+            interp_output = self.model.interpret_output(
                 detach(output),
                 reduction="none",
                 attention_prediction_horizon=0,  # attention only for first prediction horizon
             )
+            logging.info(f"interp_output:{interp_output}")
             for idx in range(len(y_hats)):
                 index = indices.iloc[idx]
                 pred_input = prediction_data.PredictionInput(
-                    x=output.x, idx=idx
+                    x=ret_x,
+                    idx=idx
                 )
-                prediction_utils.add_pred_context(self.env_mgr, self.matched_eval_data, x, idx, pred_input)
-                logging.info(f"pred_input:{pred_input}")
+                prediction_utils.add_pred_context(self.env_mgr, self.matched_eval_data, idx, index, pred_input)
+                #logging.info(f"pred_input:{pred_input}")
                 pred_output = prediction_data.PredictionOutput(
                     out=output,
                     idx=idx,
-                    y_hats=out.y_hats,
-                    y_quantiles=out.y_quantiles,
+                    y_hats=y_hats,
+                    y_quantiles=y_quantiles,
                     interp_output=interp_output,
-                    embedding=output.embedding,
+                    embedding=output["embedding"],
                 )
-                corpus_embeddinds.append(pred_output.embedding)
-                corpus_images.append(self.create_image(pred_input, pred_output))
+                embedding = pred_output.embedding[idx]
+                image = self.create_image(pred_input, pred_output)
+                corpus_embeddinds.append(embedding)
+                corpus_images.append(image)
+                logging.info(f"adding {idx} embedding:{embedding}, {image}")
 
-        print("Store file on disc")
+        logging.info("Store file on disc")
+        base_dir = os.path.dirname(self.embedding_cache_path)
+        os.makedirs(base_dir, exist_ok=True)
         with open(self.embedding_cache_path, "wb") as fOut:
             pickle.dump(
                 {"images": corpus_images, "embeddings": corpus_embeddings}, fOut
@@ -175,7 +204,7 @@ class FaissBuilder(object):
     def build_embedding_cache_if_not_exists(self):
         # Check if embedding cache path exists
         if not os.path.exists(self.embedding_cache_path):
-            build_embedding_cache()
+            self.build_embedding_cache()
         else:
             print("Load pre-computed embeddings from disc")
             with open(embedding_cache_path, "rb") as fIn:

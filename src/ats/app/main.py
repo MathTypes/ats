@@ -45,7 +45,7 @@ def my_app(cfg: DictConfig) -> None:
     cfg["model"]["prediction_length"]
     cfg["model"]["context_length"]
     wandb.config = cfg
-    pipe = pipelines[cfg.model.name](dataset="FUT", config=cfg)
+    pipe = pipelines[cfg.model.name](dataset="FUT", config=cfg, run_id=run_id)
     if cfg.job.mode == "train":
         pipe.create_trainer()
         pipe.create_model(cfg.job.checkpoint)

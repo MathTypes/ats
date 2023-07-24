@@ -138,16 +138,17 @@ class TftParams(object):
 
 
 class PatchTftSupervisedPipeline(Pipeline):
-    def __init__(self, dataset="fut", config=None):
+    def __init__(self, dataset="fut", config=None, run_id=None):
         super().__init__(config)
         self.dataset = dataset
         self.config = config
-        self.env_mgr = EnvMgr(config)
+        self.env_mgr = EnvMgr(config, run_id)
         self.market_cal = self.env_mgr.market_cal
         self.heads = self.env_mgr.heads
         self.targets = self.env_mgr.targets
         self.md_mgr = market_data_mgr.MarketDataMgr(self.env_mgr)
         self.data_module = self.md_mgr.data_module
+        self.run_id = run_id
 
     def create_model(self, checkpoint):
         self.model = model_utils.get_patch_tft_supervised_model(

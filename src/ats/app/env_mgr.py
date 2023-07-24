@@ -12,8 +12,10 @@ class EnvMgr(object):
     def __init__(
         self,
         config,
+        run_id = None
     ):
         self.config = config
+        self.run_id = run_id
         self.init_env()
 
     def init_env(self):

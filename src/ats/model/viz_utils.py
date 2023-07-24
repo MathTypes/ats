@@ -238,9 +238,9 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     return data_table
 
 
-def add_market_viz(fig, train_data_rows):
-    raw_im = None
-    img = None
+def add_market_viz(fig, pred_input):
+    train_data_rows = pred_input.train_data_rows
+    prediction_date_time = pred_input.prediction_date_time
     fig.add_trace(
         go.Ohlc(
             x=train_data_rows["time"],
@@ -276,11 +276,12 @@ def add_model_prediction(fig, pl_module, pred_input, pred_output):
     )
 
 
-def add_model_interpretation(fig, pl_module, pred_input, pred_output):
+def add_model_interpretation(fig, model, pred_input, pred_output):
     interpretation = {}
-    for name in pred_output.interp_output.keys():
+    interp_output =  pred_output.interp_output
+    for name in interp_output.keys():
         if interp_output[name].dim() > 1:
-            interpretation[name] = interp_output[name][idx]
+            interpretation[name] = interp_output[name][pred_input.idx]
         else:
             interpretation[name] = interp_output[name]
     model.plot_interpretation(

@@ -6,11 +6,13 @@ import torch
 
 from ats.util.profile import profile
 
+day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
-def add_pred_context(env_mgr, matched_eval_data, x, idx, pred_input):
+def add_pred_context(env_mgr, matched_eval_data, idx, index, pred_input):
     config = env_mgr.config
     target_size = env_mgr.target_size
     context_length = env_mgr.context_length
+    prediction_length = env_mgr.prediction_length
     train_data_row = matched_eval_data[
         matched_eval_data.time_idx == index.time_idx
     ].iloc[0]
@@ -21,7 +23,8 @@ def add_pred_context(env_mgr, matched_eval_data, x, idx, pred_input):
         (matched_eval_data.time_idx >= index.time_idx - config.model.context_length)
         & (matched_eval_data.time_idx < index.time_idx + config.model.prediction_length)
     ]
-    decoder_time_idx = x["decoder_time_idx"][idx][0].cpu().detach().numpy()
+    decoder_time_idx = pred_input.x["decoder_time_idx"][idx][0].cpu().detach().numpy()
+    logging.info(f"decoder_time_idx:{decoder_time_idx}, idx:{idx}")
     x_time = matched_eval_data[
         (matched_eval_data.time_idx >= decoder_time_idx - context_length)
         & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
@@ -62,11 +65,12 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
         batch_size=batch_size,
         trainer_kwargs=trainer_kwargs,
     )
-    # logging.info(f"new_raw_predictions:{new_raw_predictions}")
+    logging.info(f"new_raw_predictions:{new_raw_predictions}")
     if isinstance(new_raw_predictions, (list)) and len(new_raw_predictions) < 1:
         logging.info(f"no prediction")
         return None, None
     prediction_kwargs = {}
+    x = new_raw_predictions.x
     output = new_raw_predictions.output
     output = {
         key: [v.to(device) for v in val] if isinstance(val, list) else val.to(device)
@@ -82,4 +86,4 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
     # logging.info(f"y_quantiles:{y_quantiles}")
     # logging.info(f"y_hats:{y_hats}")
     # logging.info(f"y:{new_raw_predictions.y}")
-    return prediction, y_quantiles, output
+    return prediction, y_quantiles, output, x

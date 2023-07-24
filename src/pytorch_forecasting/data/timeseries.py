@@ -2056,7 +2056,7 @@ class TimeSeriesDataSet(Dataset):
                 # lagged variables are only transformed - not fitted
                 continue
             elif name not in self.scalers:
-                logging.info(f"fit real with standard: {name}, {data[[name]].iloc[:5]}")
+                #logging.info(f"fit real with standard: {name}, {data[[name]].iloc[:5]}")
                 self.scalers[name] = StandardScaler().fit(data[[name]])
             elif self.scalers[name] is not None:
                 try:
