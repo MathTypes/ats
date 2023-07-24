@@ -1556,7 +1556,7 @@ class TimeSeriesDataSet(Dataset):
         if len(filtered_index) == 0:
             raise ValueError("After applying filter no sub-sequences left in dataset")
         if copy:
-            logging.info(f"filter_index:{filtered_index}")
+            #logging.info(f"filter_index:{filtered_index}")
             dataset = _copy(self)
             dataset.index = filtered_index
             return dataset
@@ -1793,14 +1793,14 @@ class TimeSeriesDataSet(Dataset):
         if isinstance(self.target_normalizer, str) and self.target_normalizer == "auto":
             normalizers = []
             for target in self.target_names:
-                logging.info(f"target:{target}")
+                #logging.info(f"target:{target}")
                 if data[target].dtype.kind != "f":  # category
                     normalizers.append(NaNLabelEncoder())
                     if self.add_target_scales:
                         warnings.warn("Target scales will be only added for continous targets", UserWarning)
                 else:
                     data_positive = (data[target] > 0).all()
-                    logging.info(f"data_positive:{data_positive}")
+                    #logging.info(f"data_positive:{data_positive}")
                     if data_positive:
                         if data[target].skew() > 2.5:
                             transformer = "log"
