@@ -123,6 +123,7 @@ class MarketDataMgr(object):
         data_start_date_str = env_mgr.data_start_date.strftime('%Y%m%d')
         data_end_date_str = env_mgr.data_end_date.strftime('%Y%m%d')
         snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}"
+        logging.info(f"checking snapshot:{snapshot_dir}")
         try:
             if self.config.dataset.read_snapshot and os.listdir(f"{snapshot_dir}"):
                 logging.info(f"reading snapshot from {snapshot_dir}")
