@@ -16,7 +16,7 @@ class LocalFunctionHandler(EnvFunctionHandler):
     Managing class for local environment methods.
     """
 
-    def get_best_score_imgs(self, results: list[ScoredPoint]) -> list[Image.Image]:
+    def get_best_score_imgs(self, results: list) -> list:
         """
         Handler for returning images with the highest similarity scores from local storage.
         Additionally, filenames are returned as future captions in front-end module.
@@ -26,7 +26,7 @@ class LocalFunctionHandler(EnvFunctionHandler):
 
     def get_random_images_from_collection(
         self, collection_name: MetricCollections, k: int
-    ) -> tuple[list[str], list[Image.Image]]:
+    ) -> tuple:
         """
         Pulls a random set of images from a selected collection in local storage.
         Used for image input suggestion in front-end component.
@@ -45,7 +45,7 @@ class LocalFunctionHandler(EnvFunctionHandler):
 
     def get_meta_json(
         self, collection_name: MetricCollections
-    ) -> dict[str, list[int] | str]:
+    ) -> dict:
         """
         Get meta.json dictionary created during model training from local storage.
         """

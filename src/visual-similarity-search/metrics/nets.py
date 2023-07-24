@@ -1,8 +1,9 @@
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, Union
 
 import torch
 from loguru import logger
-from pytorch_metric_learning.utils.common_functions import Identity
+from torch.nn import Identity
 from torch import Tensor, nn
 from torchvision import models as pretrained_models
 
@@ -11,7 +12,7 @@ from common.utils import WeightsPathGenerator
 from metrics.consts import DEVICE, METRIC_COLLECTION_NAMES, MetricCollections
 from metrics.utils import rgetattr, rsetattr
 
-MODEL_TYPE = nn.DataParallel | nn.Module
+MODEL_TYPE = Union[nn.DataParallel, nn.Module]
 
 # dictionary containing pretrained model names with name of last layer
 supported_trunk_models = {
@@ -71,7 +72,7 @@ def get_trunk_embedder(
     layer_sizes: list[int],
     data_parallel: bool = True,
     weights: Optional[WeightsPathGenerator] = None,
-) -> tuple[MODEL_TYPE, MODEL_TYPE]:
+) -> tuple:
     """
     Return trunk and embedder models.
     If you want to load checkpoints for models provide a dictionary with keys 'trunk' and 'embedder' with
@@ -98,7 +99,7 @@ def get_trunk_embedder(
 
 def get_full_pretrained_model(
     collection_name: MetricCollections, data_parallel: bool = True
-) -> MODEL_TYPE:
+):
     """Get full pretrained model with loaded weights"""
     if collection_name.value not in METRIC_COLLECTION_NAMES:
         raise UnsupportedModel(collection_name.value)
