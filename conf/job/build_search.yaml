@@ -1,5 +1,5 @@
 device: cuda
-mode: eval
+mode: build_search
 
 eval_start_date: 2008-01-01
 eval_end_date: 2023-05-01
