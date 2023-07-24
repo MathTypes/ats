@@ -49,6 +49,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 "act_close_pct_max",
                 "act_close_pct_min",
                 "close_back_cumsum",
+                "close_back",
                 "time_str",
                 "pred_time_idx",
                 "pred_close_pct_max",
@@ -156,6 +157,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             "act_close_pct_max",
             "act_close_pct_min",
             "close_back_cumsum",
+            "close_back",
             "time_str",
             "pred_time_idx",
             "pred_close_pct_max",
@@ -271,6 +273,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                         row["y_close_cum_max"],  # 9 max
                         row["y_close_cum_min"],  # 10 min
                         row["close_back_cumsum"],  # 11 close_back_cusum
+                        row["close_back"],
                         row["dm_str"],  # 12
                         row["decoder_time_idx"],
                         row["y_hat_cum_max"],

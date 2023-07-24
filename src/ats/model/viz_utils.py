@@ -325,7 +325,7 @@ def create_viz_row(
     train_data_row = matched_eval_data[
         matched_eval_data.time_idx == index.time_idx
     ].iloc[0]
-    # logging.info(f"train_data_row:{train_data_row}")
+    #logging.info(f"train_data_row:{train_data_row}")
     dm = train_data_row["time"]
     dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
     y_close_cum_sum_row = y_close_cum_sum[idx]
@@ -333,10 +333,10 @@ def create_viz_row(
     y_close_cum_max = torch.max(y_close_cum_sum_row)
     y_close_cum_min = torch.min(y_close_cum_sum_row)
     if filter_small and not (
-        abs(y_hat_cum_max) > 0.01
-        or abs(y_hat_cum_min) > 0.01
-        or abs(y_close_cum_max) > 0.01
-        or abs(y_close_cum_min) > 0.01
+        abs(y_hat_cum_max) > 0.005
+        or abs(y_hat_cum_min) > 0.005
+        or abs(y_close_cum_max) > 0.005
+        or abs(y_close_cum_min) > 0.005
     ):
         return {}
     train_data_rows = matched_eval_data[
@@ -477,6 +477,7 @@ def create_viz_row(
         "y_close_cum_max": y_close_cum_max,  # 9 max
         "y_close_cum_min": y_close_cum_min,  # 10 min
         "close_back_cumsum": 0,  # 11 close_back_cusum
+        "close_back": train_data_row["close_back"],
         "dm_str": dm_str,  # 12
         "decoder_time_idx": decoder_time_idx,
         "y_hat_cum_max": y_hat_cum_max,
