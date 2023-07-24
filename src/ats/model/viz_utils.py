@@ -253,7 +253,7 @@ def add_market_viz(fig, pred_input):
         col=2,
     )
     # add a bar at prediction time
-    fig.update(layout_xaxis_rangeslider_visible=False)
+    #fig.update(layout_xaxis_rangeslider_visible=False)
     fig.update_layout(title=prediction_date_time, font=dict(size=20))
     fig.update_xaxes(
         rangebreaks=[

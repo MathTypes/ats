@@ -6,6 +6,12 @@ import time
 import faiss
 import numpy as np
 
+#from kaleido.scopes.plotly import PlotlyScope
+import plotly.graph_objects as go
+#scope = PlotlyScope(
+#    plotlyjs="https://cdn.plot.ly/plotly-latest.min.js",
+#)
+
 from pytorch_forecasting.utils import detach, to_list
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -51,6 +57,48 @@ class FaissBuilder(object):
         self.validation = self.data_module.validation
         self.matched_eval_data = self.data_module.eval_data
 
+    def create_market_image(self, pred_input, pred_output):
+        fig = make_subplots(
+            rows=2,
+            cols=2,
+            specs=[
+                [
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                ],
+                [
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                ],
+            ],
+        )
+        fig.update_layout(
+            autosize=False,
+            width=1500,
+            height=800,
+            yaxis=dict(
+                side="right",
+            ),
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+        )
+        fig.update_xaxes(
+            rangebreaks=[
+                dict(bounds=["sat", "mon"]),  # hide weekends
+            ],
+        )
+        fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
+        viz_utils.add_market_viz(fig, pred_input)
+        logging.info(f"after add_market_viz")
+        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}_market.png'
+        output_file = output_file.replace(" ","_")
+        try:
+            fig.write_image(output_file)
+            logging.info(f"generate market_image {output_file}")
+            return output_file
+        except Exception as e:
+            logging.error(f"can not generate {output_file}, {e}")
+            return None
+
     def create_image(self, pred_input, pred_output):
         fig = make_subplots(
             rows=2,
@@ -83,32 +131,22 @@ class FaissBuilder(object):
             ],
         )
         fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
-        viz_utils.add_market_viz(fig, pred_input)
+        #viz_utils.add_market_viz(fig, pred_input)
         logging.info(f"after add_market_viz")
         viz_utils.add_model_prediction(fig, self.model, pred_input, pred_output)
         logging.info(f"after add_model_prediction")
         viz_utils.add_model_interpretation(fig, self.model, pred_input, pred_output)
         logging.info(f"after add_model_interpretation")
-        #output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.png'
-        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.html'
+        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.png'
+        #output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.html'
         output_file = output_file.replace(" ","_")
         try:
-            #fig.show()
-            #fig.write_image(output_file)
-            #with Path("myfile.html").open("w") as f:
-            fig.write_html(output_file)
-            #img_bytes = fig.to_image(format="png")  # kaleido library
-            #with 
+            fig.write_image(output_file)
             logging.info(f"generate image {output_file}")
-            #fig.savefig(output_file)   # save the figure to file
-            #plt.close(fig)
             return output_file
         except Exception as e:
             logging.error(f"can not generate {output_file}, {e}")
             return None
-        #im = PIL.Image.open(BytesIO(img_bytes))
-        #img = wandb.Image(im)
-        #im.thumbnail((224,224))
 
     def build_embedding_cache(self):
         device = self.model.device
@@ -163,8 +201,9 @@ class FaissBuilder(object):
                 )
                 embedding = pred_output.embedding[idx]
                 image = self.create_image(pred_input, pred_output)
+                market_image = self.create_market_image(pred_input, pred_output)
                 corpus_embeddings.append(embedding)
-                corpus_images.append(image)
+                corpus_images.append({"model":image, "market":market_image})
                 logging.info(f"adding {idx} embedding:{embedding}, {image}")
 
         logging.info("Store file on disc")
