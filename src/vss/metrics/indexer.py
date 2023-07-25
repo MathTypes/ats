@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Literal, Optional
+from typing import Callable, Literal, Optional, Union
 
 import numpy as np
 import torch
@@ -17,7 +17,7 @@ from vss.metrics.utils import DatasetCombined
 DISTANCES = Literal["Cosine", "Euclid", "Dot"]
 
 
-def shoes_filter(meta: list[dict]) -> list[dict]:
+def shoes_filter(meta: list) -> list:
     """Filter out most of the payload keys to prevent json decode error"""
     new_meta = []
     important_keys = {"file", "class", "label"}
@@ -30,7 +30,7 @@ def shoes_filter(meta: list[dict]) -> list[dict]:
 def create_collection(
     collection_name: MetricCollections,
     vector_size: int,
-    distance: Distance | DISTANCES,
+    distance: Union[Distance, DISTANCES],
 ) -> None:
     """Wrapper function for auto-injecting qdrant client object and creating collection"""
     qdrant_client.recreate_collection(
@@ -42,8 +42,8 @@ def create_collection(
 # TODO: add support for batch gpu inference to speed up index upload
 def upload_indexes(
     collection_name: MetricCollections,
-    meta_file: Path | str,
-    dataset_dir: Path | str,
+    meta_file: Union[Path, str],
+    dataset_dir: Union[Path,  str],
     qdrant_batch: int = 256,
     meta_filter: Optional[Callable] = None,
 ) -> None:
