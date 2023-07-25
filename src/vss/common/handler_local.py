@@ -22,7 +22,7 @@ class LocalFunctionHandler(EnvFunctionHandler):
         Additionally, filenames are returned as future captions in front-end module.
         """
         object_list = [PureWindowsPath(r.payload["file"]).as_posix() for r in results]
-        return [Image.open(obj) for obj in object_list]
+        return [Image.open(obj.replace("src/vss/","")) for obj in object_list]
 
     def get_random_images_from_collection(
         self, collection_name: MetricCollections, k: int

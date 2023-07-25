@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 import streamlit as st
@@ -145,6 +146,7 @@ class ModuleManager:
             )
             mygrid = self.make_grid(4, (2, 2, 2, 2))
             for idx, category_enum in enumerate(MetricCollections):
+                logging.info(f"add option: {category_enum}")
                 with mygrid[idx // 2][1 + idx % 2]:
                     if st.button(
                         CATEGORY_DESCR[category_enum.value]["description"]
@@ -154,19 +156,19 @@ class ModuleManager:
                         ]["description"]
                         st.session_state.category_option = category_enum
 
-            if st.session_state.category_option:
-                st.markdown(
-                    "<h3 style='text-align: center;'>Business Cases</h3>",
-                    unsafe_allow_html=True,
-                )
-                st.write(
-                    CATEGORY_DESCR[st.session_state.category_option.value][
-                        "business_usage"
-                    ]
-                )
-                st.write(
-                    f"Source Dataset: [link]({CATEGORY_DESCR[st.session_state.category_option.value]['source']})"
-                )
+            #if st.session_state.category_option:
+            #    st.markdown(
+            #        "<h3 style='text-align: center;'>Business Cases</h3>",
+            #        unsafe_allow_html=True,
+            #    )
+            #    st.write(
+            #        CATEGORY_DESCR[st.session_state.category_option.value][
+            #            "business_usage"
+            #        ]
+            #    )
+            #    st.write(
+            #        f"Source Dataset: [link]({CATEGORY_DESCR[st.session_state.category_option.value]['source']})"
+            #    )
 
     def create_image_provision_for_examples(self) -> None:
         """
@@ -365,9 +367,10 @@ class ModuleManager:
         """
         Shows images in order of their similarity to the original input image.
         """
+        logging.info(f"st.session_state.category_option:{st.session_state.category_option}")
         self.search_with_show(
             file=st.session_state.selected_img,
-            collection_name=st.session_state.category_option,
+            collection_name=st.session_state.category_option.value,
             k=st.session_state.similar_img_number,
             grid_nrow=st.session_state.grid_nrow_number,
             benchmark=st.session_state.benchmark_similarity_value,

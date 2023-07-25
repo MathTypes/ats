@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from typing import Union
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 
 import torch
@@ -76,11 +78,12 @@ class MetricClient:
 
     def search(
         self,
-        img: str | Path | Image.Image,
-        collection_name: str | MetricCollections,
+        img: Union[str, Path, Image.Image],
+        collection_name: Union[str, MetricCollections],
         limit: int = SEARCH_RESPONSE_LIMIT,
     ) -> list[ScoredPoint]:
         """Search for most similar images (vectors) using qdrant engine"""
+        logging.error(f"collection_name:{collection_name}")
         if isinstance(collection_name, MetricCollections):
             collection_name = collection_name.value
         if collection_name not in METRIC_COLLECTION_NAMES:
