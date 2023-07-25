@@ -87,9 +87,10 @@ class FaissBuilder(object):
             ],
         )
         fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
+        y_max, y_min, y_hat_max, y_hat_min = prediction_utils.loss_stats(pred_output)
         viz_utils.add_market_viz(fig, pred_input)
         logging.info(f"after add_market_viz")
-        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}_market.png'
+        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.market.png'
         output_file = output_file.replace(" ","_")
         try:
             fig.write_image(output_file)
@@ -137,8 +138,9 @@ class FaissBuilder(object):
         logging.info(f"after add_model_prediction")
         viz_utils.add_model_interpretation(fig, self.model, pred_input, pred_output)
         logging.info(f"after add_model_interpretation")
-        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.png'
-        #output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}.html'
+        viz_utils.add_market_viz(fig, pred_input)
+        logging.info(f"after add_market_viz")
+        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.png'
         output_file = output_file.replace(" ","_")
         try:
             fig.write_image(output_file)
@@ -157,6 +159,8 @@ class FaissBuilder(object):
 
         for batch in range(self.num_samples):
             val_x, val_y = next(data_iter)
+            y_close = val_y[0]
+            y_close_cum_sum = torch.cumsum(y_close, dim=-1)
             # indices are based on decoder time idx (first prediction point)
             indices = self.data_module.validation.x_to_index(val_x)
             logging.info(f"val_x:{val_x}")
@@ -194,6 +198,7 @@ class FaissBuilder(object):
                 pred_output = prediction_data.PredictionOutput(
                     out=output,
                     idx=idx,
+                    y_close_cum_sum=y_close_cum_sum,
                     y_hats=y_hats,
                     y_quantiles=y_quantiles,
                     interp_output=interp_output,

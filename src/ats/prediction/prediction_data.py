@@ -18,6 +18,7 @@ class PredictionOutput:
     idx: Optional[int] = None
     out: Optional[Dict] = None
     y_hats: Optional[List] = None
+    y_close_cum_sum: Optional[List] = None
     y_quantiles: Optional[List] = None
     embedding: Optional[List] = None
     interp_output: Optional[Dict] = None

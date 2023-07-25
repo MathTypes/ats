@@ -8,6 +8,15 @@ from ats.util import profile_util
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
+def loss_stats(pred_output):
+    y_close_cum_sum_row = pred_output.y_close_cum_sum[idx]
+    y_close_cum_max = torch.max(y_close_cum_sum_row)
+    y_close_cum_min = torch.min(y_close_cum_sum_row)
+    y_hat_cum = pred_output.y_hats_cum[idx]
+    y_hat_cum_max = torch.max(y_hat_cum)
+    y_hat_cum_min = torch.min(y_hat_cum)    
+    return y_close_cum_max, y_close_cum_min, y_hat_cum_max, y_hat_cum_min
+    
 def add_pred_context(env_mgr, matched_eval_data, idx, index, pred_input):
     config = env_mgr.config
     target_size = env_mgr.target_size
