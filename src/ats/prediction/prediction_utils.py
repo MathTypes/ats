@@ -12,7 +12,7 @@ def loss_stats(pred_output):
     y_close_cum_sum_row = pred_output.y_close_cum_sum[pred_output.idx]
     y_close_cum_max = torch.max(y_close_cum_sum_row)
     y_close_cum_min = torch.min(y_close_cum_sum_row)
-    y_hat = pred_output.y_hats[idx]
+    y_hat = pred_output.y_hats[pred_output.idx]
     y_hat_cum = torch.cumsum(y_hat, dim=-1)
     y_hat_cum_max = torch.max(y_hat_cum)
     y_hat_cum_min = torch.min(y_hat_cum)    
