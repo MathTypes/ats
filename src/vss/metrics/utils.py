@@ -16,7 +16,7 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 
-from metrics.consts import MEAN, STD, TEST_TRANSFORM, TRAIN_TRANSFORM
+from vss.metrics.consts import MEAN, STD, TEST_TRANSFORM, TRAIN_TRANSFORM
 
 
 class ImageDataset(Dataset):

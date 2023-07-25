@@ -11,9 +11,9 @@ from qdrant_client.grpc import ScoredPoint
 from torchvision.transforms.transforms import Compose
 from tqdm.auto import tqdm
 
-from common import env_handler, qdrant_client
-from common.utils import singleton
-from metrics.consts import (
+from vss.common import env_handler, qdrant_client
+from vss.common.utils import singleton
+from vss.metrics.consts import (
     DEVICE,
     INFER_TRANSFORM,
     METRIC_COLLECTION_NAMES,
@@ -21,7 +21,7 @@ from metrics.consts import (
     SEARCH_RESPONSE_LIMIT,
     MetricCollections,
 )
-from metrics.nets import MODEL_TYPE, get_full_pretrained_model
+from vss.metrics.nets import MODEL_TYPE, get_full_pretrained_model
 
 
 class InvalidCollectionName(Exception):

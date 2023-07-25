@@ -11,7 +11,7 @@ import torch
 from pytorch_metric_learning import losses, miners, samplers, testers, trainers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 
-from metrics.consts import (
+from vss.metrics.consts import (
     DATALOADER_WORKERS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_DATALOADER_NUM_WORKERS,
@@ -23,8 +23,8 @@ from metrics.consts import (
     DEFAULT_WEIGHT_DECAY,
     SIZE,
 )
-from metrics.nets import get_trunk_embedder
-from metrics.utils import (
+from vss.metrics.nets import get_trunk_embedder
+from vss.metrics.utils import (
     DatasetCombined,
     get_transformation_with_size,
     save_training_meta,

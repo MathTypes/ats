@@ -7,10 +7,10 @@ from minio import Minio
 from PIL import Image
 from qdrant_client.grpc import ScoredPoint
 
-from common.consts import MINIO_BUCKET_NAME, MINIO_MAIN_PATH
-from common.handler_env import EnvFunctionHandler
-from common.utils import WeightsPathGenerator, singleton
-from metrics.consts import MetricCollections
+from vss.common.consts import MINIO_BUCKET_NAME, MINIO_MAIN_PATH
+from vss.common.handler_env import EnvFunctionHandler
+from vss.common.utils import WeightsPathGenerator, singleton
+from vss.metrics.consts import MetricCollections
 
 
 @singleton

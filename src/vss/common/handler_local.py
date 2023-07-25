@@ -5,9 +5,9 @@ from pathlib import PureWindowsPath
 from PIL import Image
 from qdrant_client.grpc import ScoredPoint
 
-from common.handler_env import EnvFunctionHandler
-from common.utils import singleton
-from metrics.consts import MetricCollections
+from vss.common.handler_env import EnvFunctionHandler
+from vss.common.utils import singleton
+from vss.metrics.consts import MetricCollections
 
 
 @singleton

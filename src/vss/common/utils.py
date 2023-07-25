@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Any
 
-from common.consts import MINIO_MAIN_PATH, PROJECT_PATH
-from metrics.consts import MetricCollections
+from vss.common.consts import MINIO_MAIN_PATH, PROJECT_PATH
+from vss.metrics.consts import MetricCollections
 
 
 def singleton(cls) -> Any:

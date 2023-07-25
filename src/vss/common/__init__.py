@@ -2,8 +2,8 @@ import os
 
 from qdrant_client import QdrantClient
 
-from common.handler_cloud import CloudFunctionHandler
-from common.handler_local import LocalFunctionHandler
+from vss.common.handler_cloud import CloudFunctionHandler
+from vss.common.handler_local import LocalFunctionHandler
 
 env_handler = (
     LocalFunctionHandler() if os.getenv("TYPE") == "LOCAL" else CloudFunctionHandler()

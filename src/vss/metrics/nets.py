@@ -11,10 +11,10 @@ from pytorch_forecasting import (
     PatchTftSupervised,
 )
 
-from common import env_handler
-from common.utils import WeightsPathGenerator
-from metrics.consts import DEVICE, METRIC_COLLECTION_NAMES, MetricCollections
-from metrics.utils import rgetattr, rsetattr
+from vss.common import env_handler
+from vss.common.utils import WeightsPathGenerator
+from vss.metrics.consts import DEVICE, METRIC_COLLECTION_NAMES, MetricCollections
+from vss.metrics.utils import rgetattr, rsetattr
 
 MODEL_TYPE = Union[nn.DataParallel, nn.Module]
 

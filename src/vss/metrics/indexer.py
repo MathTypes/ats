@@ -9,10 +9,10 @@ from qdrant_client.conversions.common_types import Distance
 from qdrant_client.http import models
 from tqdm.auto import tqdm
 
-from common import qdrant_client
-from metrics.consts import INFER_TRANSFORM, MetricCollections
-from metrics.nets import get_full_pretrained_model
-from metrics.utils import DatasetCombined
+from vss.common import qdrant_client
+from vss.metrics.consts import INFER_TRANSFORM, MetricCollections
+from vss.metrics.nets import get_full_pretrained_model
+from vss.metrics.utils import DatasetCombined
 
 DISTANCES = Literal["Cosine", "Euclid", "Dot"]
 
