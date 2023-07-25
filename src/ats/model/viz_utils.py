@@ -31,18 +31,13 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     y_hats = to_list(
         model.to("cuda:0").to_prediction(raw_predictions.output, **prediction_kwargs)
     )
-    logging.info(
-        f"y_hats[0].shape:{y_hats[0].shape}, raw_predictions.y:{raw_predictions.y[0].shape}"
-    )
     # if isinstance(y_hats, (Tuple)):
     # yhats: [returns, position]
     y_hats = y_hats[0]
     mean_losses = metrics(y_hats, raw_predictions.y).mean(1)
     indices = mean_losses.argsort(descending=True)  # sort losses
-    logging.info(f"indices:{indices}")
     matched_eval_data = eval_data
     x = raw_predictions.x
-    logging.info(f"x:{x['encoder_cont'].shape}")
     y_close = raw_predictions.y[0]
     y_close_cum_sum = torch.cumsum(y_close, dim=-1)
     y_hats_cum_sum = torch.cumsum(y_hats, dim=-1)
@@ -71,7 +66,6 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     ]
     data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
     day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
-    logging.info(f"x['encoder_target']:{x['encoder_target'][0].shape}")
     interp_output = model.interpret_output(
         detach(raw_predictions.output),
         reduction="none",
@@ -79,7 +73,6 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
     )
     for k_idx in range(top_k):
         idx = indices[k_idx]
-        logging.info(f"k_idx:{k_idx}, idx:{idx}")
         # With multi-target, we have two encoder_targets.
         context_length = len(x["encoder_target"][0][idx])
         prediction_length = len(x["decoder_time_idx"][idx])
@@ -316,7 +309,6 @@ def create_viz_row(
     filter_small=True,
     show_viz=True,
 ):
-    y_hats[idx]
     y_hat_cum = y_hats_cum[idx]
     y_hat_cum_max = torch.max(y_hat_cum)
     y_hat_cum_min = torch.min(y_hat_cum)
@@ -329,7 +321,6 @@ def create_viz_row(
     dm = train_data_row["time"]
     dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
     y_close_cum_sum_row = y_close_cum_sum[idx]
-    y_close[idx]
     y_close_cum_max = torch.max(y_close_cum_sum_row)
     y_close_cum_min = torch.min(y_close_cum_sum_row)
     if filter_small and not (

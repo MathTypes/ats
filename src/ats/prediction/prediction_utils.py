@@ -9,10 +9,11 @@ from ats.util import profile_util
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
 def loss_stats(pred_output):
-    y_close_cum_sum_row = pred_output.y_close_cum_sum[idx]
+    y_close_cum_sum_row = pred_output.y_close_cum_sum[pred_output.idx]
     y_close_cum_max = torch.max(y_close_cum_sum_row)
     y_close_cum_min = torch.min(y_close_cum_sum_row)
-    y_hat_cum = pred_output.y_hats_cum[idx]
+    y_hat = pred_output.y_hats[idx]
+    y_hat_cum = torch.cumsum(y_hat, dim=-1)
     y_hat_cum_max = torch.max(y_hat_cum)
     y_hat_cum_min = torch.min(y_hat_cum)    
     return y_close_cum_max, y_close_cum_min, y_hat_cum_max, y_hat_cum_min
@@ -33,7 +34,6 @@ def add_pred_context(env_mgr, matched_eval_data, idx, index, pred_input):
         & (matched_eval_data.time_idx < index.time_idx + config.model.prediction_length)
     ]
     decoder_time_idx = pred_input.x["decoder_time_idx"][idx][0].cpu().detach().numpy()
-    logging.info(f"decoder_time_idx:{decoder_time_idx}, idx:{idx}")
     x_time = matched_eval_data[
         (matched_eval_data.time_idx >= decoder_time_idx - context_length)
         & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
@@ -74,7 +74,6 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
         batch_size=batch_size,
         trainer_kwargs=trainer_kwargs,
     )
-    logging.info(f"new_raw_predictions:{new_raw_predictions}")
     if isinstance(new_raw_predictions, (list)) and len(new_raw_predictions) < 1:
         logging.info(f"no prediction")
         return None, None
