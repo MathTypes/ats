@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from typing import Optional, Union
 
 import torch
@@ -6,6 +7,9 @@ from loguru import logger
 from torch.nn import Identity
 from torch import Tensor, nn
 from torchvision import models as pretrained_models
+from pytorch_forecasting import (
+    PatchTftSupervised,
+)
 
 from common import env_handler
 from common.utils import WeightsPathGenerator
@@ -80,6 +84,7 @@ def get_trunk_embedder(
     """
     trunk, trunk_output_size = get_trunk(trunk_model_name)
     embedder = EmbeddingNN([trunk_output_size] + layer_sizes).to(DEVICE)
+    logging.error(f"weights:{weights}")
     if weights:
         try:
             env_handler.get_weights_datasets(weights=weights)

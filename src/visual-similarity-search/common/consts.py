@@ -45,6 +45,30 @@ CATEGORY_DESCR = {
             },
         ],
     },
+    "futures": {
+        "description": "Futures market.",
+        "business_usage": """
+            Dogs are just an example and following use cases can be extrapolated to other animal species. \n
+            **USE CASE #1**: Identifying a breed of the dog based on its picture. 
+            It may be useful for veterinarians and other animal-specialized occupations. \n
+            **USE CASE #2**: Finding other breeds based on the similarity factor. 
+            It may be useful for breeders and people looking to buy an animal.
+        """,
+        "source": "https://www.kaggle.com/datasets/jessicali9530/stanford-dogs-dataset",
+        "bootstrap_icon": "bag",
+        "image_examples": [
+            {
+                "id": "dog_1",
+                "path": EXAMPLE_PATH / "dogs_img_1.png",
+                "label": "Cane Corso",
+            },
+            {
+                "id": "dog_2",
+                "path": EXAMPLE_PATH / "dogs_img_2.jpg",
+                "label": "St. Bernard",
+            },
+        ],
+    },
     "shoes": {
         "description": "Shoes - 4 major categories with individual brands.",
         "business_usage": """
