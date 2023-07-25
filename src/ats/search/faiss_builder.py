@@ -8,13 +8,10 @@ import numpy as np
 
 #from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
-#scope = PlotlyScope(
-#    plotlyjs="https://cdn.plot.ly/plotly-latest.min.js",
-#)
-
 from pytorch_forecasting.utils import detach, to_list
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import torch
 
 from ats.prediction import prediction_data
 from ats.prediction import prediction_utils
@@ -89,8 +86,9 @@ class FaissBuilder(object):
         fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
         y_max, y_min, y_hat_max, y_hat_min = prediction_utils.loss_stats(pred_output)
         viz_utils.add_market_viz(fig, pred_input)
+        decoder_time_idx = pred_input.decoder_time_idx
         logging.info(f"after add_market_viz")
-        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.market.png'
+        output_file = f'{self.image_root_path}/{decoder_time_idx}_{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.market.png'
         output_file = output_file.replace(" ","_")
         try:
             fig.write_image(output_file)
@@ -137,10 +135,11 @@ class FaissBuilder(object):
         viz_utils.add_model_prediction(fig, self.model, pred_input, pred_output)
         logging.info(f"after add_model_prediction")
         viz_utils.add_model_interpretation(fig, self.model, pred_input, pred_output)
+        decoder_time_idx = pred_input.decoder_time_idx
         logging.info(f"after add_model_interpretation")
         viz_utils.add_market_viz(fig, pred_input)
         logging.info(f"after add_market_viz")
-        output_file = f'{self.image_root_path}/{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.png'
+        output_file = f'{self.image_root_path}/{decoder_time_idx}_{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.png'
         output_file = output_file.replace(" ","_")
         try:
             fig.write_image(output_file)
@@ -159,6 +158,10 @@ class FaissBuilder(object):
 
         for batch in range(self.num_samples):
             val_x, val_y = next(data_iter)
+            if self.config.job.eval_batch_start_idx>-1 and batch<self.config.job.eval_batch_start_idx:
+                continue
+            if self.config.job.eval_batch_end_idx>-1 and batch>self.config.job.eval_batch_end_idx:
+                break
             y_close = val_y[0]
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
             # indices are based on decoder time idx (first prediction point)
