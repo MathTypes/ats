@@ -2,19 +2,21 @@
 #   PYTHONPATH=.. python3 write_monthly_ts.py --ticker=ES --asset_type=FUT --start_date=2008-01-01 --end_date=2009-01-01 --input_dir=. --output_dir=data
 #
 import datetime
+import glob
 import logging
 import os
 
-import modin.pandas as pd
+#import modin.pandas as pd
+import pandas as pd
 from pyarrow import csv
 import ray
 from ray.util.dask import enable_dask_on_ray
 from ray.data import ActorPoolStrategy
-from util import config_utils
-from util import logging_utils
-from util import time_util
-
 import re
+
+from ats.util import config_utils
+from ats.util import logging_utils
+from ats.util import time_util
 
 
 def get_id_time(id: str):
@@ -36,16 +38,19 @@ def pull_futures_sample_data(
     names = ["Time", "Open", "High", "Low", "Close", "Volume"]
     if asset_type == "FUT":
         file_path = os.path.join(
-            f"{raw_dir}/{asset_type}", f"{ticker}_1min_continuous_adjusted.txt"
+            f"{raw_dir}/{asset_type}", f"{ticker}_*1min_continuous_*.txt"
         )
     elif asset_type == "ETF":
         file_path = os.path.join(
-            f"{raw_dir}/{asset_type}", f"{ticker}_full_1min_adjsplitdiv.txt"
+            f"{raw_dir}/{asset_type}", f"{ticker}_*full_1min_*.txt"
         )
+    logging.info(f"glob {file_path}")
+    files = glob.glob(file_path)
+    logging.info(f"read from {files}")
     read_options = csv.ReadOptions(column_names=names, skip_rows=1)
     parse_options = csv.ParseOptions(delimiter=",")
     ds = ray.data.read_csv(
-        file_path, parse_options=parse_options, read_options=read_options
+        files, parse_options=parse_options, read_options=read_options
     )
     ds = ds.sort("Time")
     return ds
@@ -61,8 +66,8 @@ class Preprocessor:
         self.freq = freq
 
     def __call__(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = df.set_index("Time")
         logging.info(f"df:{df}")
+        df = df.set_index("Time")
         logging.info(f"since:{self.since}, until:{self.until}")
         df = df[self.since : self.until]
         df = df.rename(
@@ -125,7 +130,7 @@ def process_month(ds, cur_date, freq):
     ds = ds.map_batches(
         Preprocessor,
         batch_size=40096000,
-        compute=ActorPoolStrategy(1, 1),
+        compute=ActorPoolStrategy(min_size=1, max_size=1),
         fn_constructor_kwargs={
             "ticker": ticker,
             "orig_since": orig_since,
