@@ -81,7 +81,6 @@ class BaseTester:
             for i, data in enumerate(tqdm.tqdm(dataloader)):
                 img, label = self.data_and_label_getter(data)
                 label = c_f.process_label(label, "all", self.label_mapper)
-                logging.info(f"label:{label}")
                 q = self.get_embeddings_for_eval(trunk_model, embedder_model, img)
                 if label.dim() == 1:
                     label = label.unsqueeze(1)
@@ -284,7 +283,6 @@ class BaseTester:
         splits_to_eval=None,
         collate_fn=None,
     ):
-        traceback.print_stack()
         c_f.LOGGER.info("Evaluating epoch {}".format(epoch))
         if embedder_model is None:
             embedder_model = c_f.Identity()
