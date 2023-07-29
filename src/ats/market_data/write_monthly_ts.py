@@ -120,7 +120,7 @@ class Preprocessor:
         return df
 
 
-def process_month(ds, cur_date, freq):
+def process_month(ds, cur_date, freq, force):
     for_date = cur_date[0]
     orig_since = cur_date[0]
     orig_until = cur_date[1]
@@ -149,8 +149,9 @@ def process_month(ds, cur_date, freq):
     if not os.path.exists(file_path):
         os.makedirs(file_path)
     else:
-        logging.error(f"Directory {file_path} already exists, exiting!")
-        return
+        if not force:
+            logging.error(f"Directory {file_path} already exists, exiting!")
+            return
     ds.write_parquet(file_path)
 
 
@@ -159,6 +160,7 @@ if __name__ == "__main__":
     pd.set_option("display.max_rows", None)
     parser = config_utils.get_arg_parser("Scrape tweet by id")
     parser.add_argument("--input_dir", type=str)
+    parser.add_argument("--force", type=bool)
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--ticker", type=str)
     parser.add_argument("--asset_type", type=str)
@@ -193,5 +195,5 @@ if __name__ == "__main__":
         until = datetime.datetime.now().date()
     ds = pull_futures_sample_data(ticker, asset_type, since, until, args.input_dir)
     for cur_date in time_util.monthlist(since, until):
-        process_month(ds, cur_date, args.freq)
+        process_month(ds, cur_date, args.freq, args.force)
     ray.shutdown()
