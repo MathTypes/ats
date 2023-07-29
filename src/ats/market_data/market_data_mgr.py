@@ -61,9 +61,9 @@ def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_inte
 
 
 def read_snapshot(input_dirs) -> pd.DataFrame:
-    #ds = ray.data.read_parquet(input_dirs, parallelism=10)
-    #ds = ds.to_pandas(10000000)
-    ds = pd.read_parquet(input_dirs)
+    ds = ray.data.read_parquet(input_dirs, parallelism=10)
+    ds = ds.to_pandas(10000000)
+    #ds = pd.read_parquet(input_dirs)
     ds = ds.sort_index()
     ds = ds[~ds.index.duplicated(keep="first")]
     ds_dup = ds[ds.index.duplicated()]
@@ -75,14 +75,12 @@ def read_snapshot(input_dirs) -> pd.DataFrame:
 
 
 class MarketDataMgr(object):
-    def __init__(self, env_mgr, transform = None):
-        logging.error(f"transform:{transform}")
+    def __init__(self, env_mgr):
         super().__init__()
         self.env_mgr = env_mgr
         self.config = env_mgr.config
         self.market_cal = env_mgr.market_cal
         self.macro_data_builder = MacroDataBuilder(self.env_mgr)
-        self.transform = transform
         self._RAW_DATA = None
         self._DATA_MODULE = None
 
@@ -128,14 +126,12 @@ class MarketDataMgr(object):
         train_data = train_data.sort_values(["ticker", "time"])
         eval_data = eval_data.sort_values(["ticker", "time"])
         test_data = test_data.sort_values(["ticker", "time"])
-        logging.info(f"create, transform:{self.transform}")
         data_module = TimeSeriesDataModule(
             config,
             train_data,
             eval_data,
             test_data,
             env_mgr.targets,
-            transform = self.transform,
             transformed_data=(self.transformed_train, self.transformed_validation, self.transformed_test) 
         )
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
@@ -152,7 +148,7 @@ class MarketDataMgr(object):
             snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_test"
             ds = ray.data.from_pandas(data_module.test.transformed_data)
             os.makedirs(snapshot_dir, exist_ok=True)
-            ds.write_parquet(snapshot_dir)
+            ds.repartition(10).write_parquet(snapshot_dir)
         
         return data_module
 

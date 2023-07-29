@@ -48,7 +48,7 @@ def main(cfg: DictConfig) -> Any:
     torch.cuda.empty_cache()
     run_id = None
     env_mgr = EnvMgr(cfg, run_id)
-    md_mgr = MarketDataMgr(env_mgr, transform=cfg.job.dataset_transform)
+    md_mgr = MarketDataMgr(env_mgr)
     # get neural net models and custom dataset for easier manipulation during training setup
     transformation = get_transformation_with_size(cfg.job.input_size)
     dataset = DatasetCombined.get_dataset(

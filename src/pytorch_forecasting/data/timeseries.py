@@ -223,7 +223,6 @@ class TimeSeriesDataSet(Dataset):
         scalers: Dict[str, Union[StandardScaler, RobustScaler, TorchNormalizer, EncoderNormalizer]] = {},
         randomize_length: Union[None, Tuple[float, float], bool] = False,
         predict_mode: bool = False,
-        transform: bool = True,
         transformed_data = None
     ):
         """
@@ -400,8 +399,6 @@ class TimeSeriesDataSet(Dataset):
         self.constant_fill_strategy = {} if len(constant_fill_strategy) == 0 else constant_fill_strategy
         self.predict_mode = predict_mode
         #traceback.print_stack()
-        logging.info(f"time series transform:{transform}")
-        self.transform = transform
         self.allow_missing_timesteps = allow_missing_timesteps
         self.target_normalizer = target_normalizer
         #logging.info(f"target_normalizer:{self.target_normalizer}")
@@ -429,23 +426,41 @@ class TimeSeriesDataSet(Dataset):
 
         #traceback.print_stack()
         data = self.preprocess_data(data)
+        # add time index relative to prediction position
+        if self.add_relative_time_idx or self.add_encoder_length:
+            data = data.copy()  # only copies indices (underlying data is NOT copied)
+        if self.add_relative_time_idx:
+            assert (
+                "relative_time_idx" not in data.columns
+            ), "relative_time_idx is a protected column and must not be present in data"
+            data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
+
+        # add decoder length to static real variables
+        if self.add_encoder_length:
+            assert (
+                "encoder_length" not in data.columns
+            ), "encoder_length is a protected column and must not be present in data"
+            if "encoder_length" not in self.time_varying_known_reals and "encoder_length" not in self.reals:
+                self.static_reals.append("encoder_length")
+            data.loc[:, "encoder_length"] = 0  # dummy - real value will be set dynamiclly in __getitem__()
+
         #logging.error(f"data:{data.iloc[-5:]} simulation_mode:{self.simulation_mode}")
-        logging.error(f"transform_data:{transform}")
-        if transform:
+        if transformed_data is None:
+            self._create_encoder(data)
+            self.add_lag_variables(data, transformed=True)
             self.transform_data(data)
         else:
-            if transformed_data is not None:
-                logging.info(f"setting tranformed_data")
-                data = transformed_data
-                self._create_encoder(data)
-                self.add_lag_variables(data, transformed=True)
-                self.transformed_data = data
-                # create index
-                self.index = self._construct_index(data, predict_mode=self.predict_mode)
-                self.y = None
-                #logging.error(f"data:{data.describe()}")
-                # convert to torch tensor for high performance data loading later
-                self.data = self._data_to_tensors(data)                
+            logging.info(f"setting tranformed_data")
+            data = transformed_data
+            self._create_encoder(data)
+            self.add_lag_variables(data, transformed=True)
+            self.transformed_data = data
+            # create index
+            self.index = self._construct_index(data, predict_mode=self.predict_mode)
+            self.y = None
+            #logging.error(f"data:{data.describe()}")
+            # convert to torch tensor for high performance data loading later
+            self.data = self._data_to_tensors(data)                
 
     @profile_util.profile
     def preprocess_data(self, data : pd.DataFrame):
@@ -523,24 +538,6 @@ class TimeSeriesDataSet(Dataset):
             assert (
                 target not in self.time_varying_known_reals
             ), f"target {target} should be an unknown continuous variable in the future"
-
-        # add time index relative to prediction position
-        if self.add_relative_time_idx or self.add_encoder_length:
-            data = data.copy()  # only copies indices (underlying data is NOT copied)
-        if self.add_relative_time_idx:
-            assert (
-                "relative_time_idx" not in data.columns
-            ), "relative_time_idx is a protected column and must not be present in data"
-            data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
-
-        # add decoder length to static real variables
-        if self.add_encoder_length:
-            assert (
-                "encoder_length" not in data.columns
-            ), "encoder_length is a protected column and must not be present in data"
-            if "encoder_length" not in self.time_varying_known_reals and "encoder_length" not in self.reals:
-                self.static_reals.append("encoder_length")
-            data.loc[:, "encoder_length"] = 0  # dummy - real value will be set dynamiclly in __getitem__()
 
         # validate
         self._validate_data(data)
@@ -1084,11 +1081,13 @@ class TimeSeriesDataSet(Dataset):
                                 self.static_reals.append(feature_name)
 
         # rescale continuous variables apart from target
+        logging.info(f"data_columns: {data.columns}")
         for name in self.reals:
             if name in self.target_names or name in self.lagged_variables:
                 # lagged variables are only transformed - not fitted
                 continue
             elif name not in self.scalers:
+                logging.info(f"trying to fit {name}")
                 self.scalers[name] = StandardScaler().fit(data[[name]])
             elif self.scalers[name] is not None:
                 try:
