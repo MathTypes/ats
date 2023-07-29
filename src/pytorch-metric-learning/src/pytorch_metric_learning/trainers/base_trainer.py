@@ -1,3 +1,4 @@
+import logging
 import torch
 import tqdm
 
@@ -13,8 +14,8 @@ class BaseTrainer:
         optimizers,
         batch_size,
         loss_funcs,
+        mining_funcs,
         dataset,
-        mining_funcs=None,
         iterations_per_epoch=None,
         data_device=None,
         dtype=None,
@@ -37,8 +38,8 @@ class BaseTrainer:
         self.optimizers = optimizers
         self.batch_size = batch_size
         self.loss_funcs = loss_funcs
+        self.mining_funcs = mining_funcs
         self.dataset = dataset
-        self.mining_funcs = {} if mining_funcs is None else mining_funcs
         self.iterations_per_epoch = iterations_per_epoch
         self.data_device = data_device
         self.dtype = dtype
@@ -136,11 +137,17 @@ class BaseTrainer:
         labels = c_f.process_label(
             labels, self.label_hierarchy_level, self.label_mapper
         )
+        #logging.info(f"labels type:{type(labels)}, labels:{labels}")
         return self.maybe_do_batch_mining(data, labels)
 
     def compute_embeddings(self, data):
+        #logging.info(f"data:{data}")
         trunk_output = self.get_trunk_output(data)
-        embeddings = self.get_final_embeddings(trunk_output)
+        #logging.info(f"trunk_output:{trunk_output}")
+        #embeddings = self.get_final_embeddings(trunk_output)
+        embeddings = trunk_output["embedding"]
+        embeddings = torch.reshape(embeddings, (embeddings.size(0), -1))
+        #logging.info(f"embeddings:{embeddings}")
         return embeddings
 
     def get_final_embeddings(self, base_output):
@@ -254,7 +261,7 @@ class BaseTrainer:
 
     def initialize_models(self):
         if "embedder" not in self.models:
-            self.models["embedder"] = torch.nn.Identity()
+            self.models["embedder"] = c_f.Identity()
 
     def verify_dict_keys(self):
         self.allowed_lr_scheduler_key_suffixes = {

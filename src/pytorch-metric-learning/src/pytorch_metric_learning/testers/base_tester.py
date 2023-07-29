@@ -1,3 +1,7 @@
+#! /usr/bin/env python3
+
+import logging
+import traceback
 from collections import defaultdict
 
 import torch
@@ -77,6 +81,7 @@ class BaseTester:
             for i, data in enumerate(tqdm.tqdm(dataloader)):
                 img, label = self.data_and_label_getter(data)
                 label = c_f.process_label(label, "all", self.label_mapper)
+                logging.info(f"label:{label}")
                 q = self.get_embeddings_for_eval(trunk_model, embedder_model, img)
                 if label.dim() == 1:
                     label = label.unsqueeze(1)
@@ -109,7 +114,7 @@ class BaseTester:
         return_as_numpy=False,
     ):
         if embedder_model is None:
-            embedder_model = torch.nn.Identity()
+            embedder_model = c_f.Identity()
         if eval:
             trunk_model.eval()
             embedder_model.eval()
@@ -131,7 +136,10 @@ class BaseTester:
         trunk_output = trunk_model(input_imgs)
         if self.use_trunk_output:
             return trunk_output
-        return embedder_model(trunk_output)
+        #return embedder_model(trunk_output)
+        embedding = trunk_output["embedding"]
+        embedding = torch.reshape(embedding, (embedding.size(0), -1))
+        return embedding
 
     def maybe_visualize(self, embeddings_and_labels, epoch):
         if self.visualizer:
@@ -264,7 +272,7 @@ class BaseTester:
     ):
         raise NotImplementedError
 
-    def ref_includes_query(self, query_split_name, reference_split_names):
+    def embeddings_come_from_same_source(self, query_split_name, reference_split_names):
         return query_split_name in reference_split_names
 
     def test(
@@ -276,9 +284,10 @@ class BaseTester:
         splits_to_eval=None,
         collate_fn=None,
     ):
+        traceback.print_stack()
         c_f.LOGGER.info("Evaluating epoch {}".format(epoch))
         if embedder_model is None:
-            embedder_model = torch.nn.Identity()
+            embedder_model = c_f.Identity()
         trunk_model.eval()
         embedder_model.eval()
         (
