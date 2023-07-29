@@ -4,6 +4,9 @@ from typing import Any
 import streamlit as st
 from loguru import logger
 from PIL import Image
+import pygwalker as pyg
+import pandas as pd
+import streamlit.components.v1 as components
 
 from vss.common import env_handler
 from vss.common.consts import CATEGORY_DESCR, GRID_NROW_NUMBER, INTERACTIVE_ASSETS_DICT
@@ -289,6 +292,10 @@ class ModuleManager:
                 benchmark=benchmark,
             )
         )
+        self.df = pd.DataFrame(columns=best_images_dataset.results[0].payload.keys())
+        for r in best_images_dataset.results:
+            self.df = self.df.append(r.payload, ignore_index = True)
+        logging.error(f"df:{self.df}")
         captions_dict = [
             {
                 "file": r.payload["file"].split("/")[-1].split("\\")[-1],
@@ -404,6 +411,16 @@ class ModuleManager:
                 #logging.info(f"st.session_state.similar_images_found:{st.session_state.similar_images_found}")
                 #if st.session_state.similar_images_found:
                 self.extract_similar_images()
+
+            # Import your data
+            df = self.df
+ 
+            # Generate the HTML using Pygwalker
+            pyg_html = pyg.walk(df, return_html=True)
+ 
+            # Embed the HTML into the Streamlit app
+            components.html(pyg_html, height=1000, scrolling=True)
+
 
         except Exception as e:
             logging.error(f"can not run app {e}")
