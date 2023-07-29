@@ -18,7 +18,7 @@ DATALOADER_WORKERS = 2
 BASE_PAYLOAD_KEYS = ["file", "class", "label"]
 
 DEFAULT_EMBEDDER_LAYERS = [1024, 1024, 1024]
-SIZE = (300, 300)  # input size for neural net
+SIZE = (1500, 800)  # input size for neural net
 MEAN = (0.485, 0.456, 0.406)  # mean and std for imagenet dataset
 STD = (0.229, 0.224, 0.225)
 

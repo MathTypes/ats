@@ -316,20 +316,20 @@ class ModuleManager:
                     with col:
                         for j, col_img in enumerate(col_imgs):
                             st.image(col_img)
-                            st.markdown(
-                                f"<p style='text-align: start; color: red; font-weight: bold;'>Similarity: {col_imgs_captions_dict[j]['similarity']}</p>",
-                                unsafe_allow_html=True,
-                            )
-                            st.markdown(
-                                f"<p style='text-align: start; font-weight: bold;'>Class: {col_imgs_captions_dict[j]['class']}</p>",
-                                unsafe_allow_html=True,
-                            )
-                            st.markdown(
-                                f"<p style='text-align: start; font-weight: bold;'>File: {col_imgs_captions_dict[j]['file']}</p>",
-                                unsafe_allow_html=True,
-                            )
-                            st.write("")
-                            st.write("")
+                            #st.markdown(
+                            #    f"<p style='text-align: start; color: red; font-weight: bold;'>Similarity: {col_imgs_captions_dict[j]['similarity']}</p>",
+                            #    unsafe_allow_html=True,
+                            #)
+                            #st.markdown(
+                            #    f"<p style='text-align: start; font-weight: bold;'>Class: {col_imgs_captions_dict[j]['class']}</p>",
+                            #    unsafe_allow_html=True,
+                            #)
+                            #st.markdown(
+                            #    f"<p style='text-align: start; font-weight: bold;'>File: {col_imgs_captions_dict[j]['file']}</p>",
+                            #    unsafe_allow_html=True,
+                            #)
+                            #st.write("")
+                            #st.write("")
 
         else:
             no_results_text = st.write(
@@ -396,12 +396,8 @@ class ModuleManager:
             #self.create_main_filters()
 
             logger.info("Image Provisioning")
-            #if st.session_state.category_option:
-            if True:
-                self.create_image_load()
+            self.create_image_load()
 
-            logging.info(f"st.session_state.category_option:{st.session_state.category_option}")
-            logging.info(f"st.session_state.selected_img:{st.session_state.selected_img}")
             if st.session_state.category_option and st.session_state.selected_img:
                 logger.info("Similarity Search Filters")
                 self.create_similarity_search_filters()

@@ -48,13 +48,14 @@ class LocalFunctionHandler(EnvFunctionHandler):
         logging.error(f"collection_name.value:{collection_name}, dataset_dir:{self.local_metric_datasets_dir}")
         local_collection_dir = Path(f"{self.local_metric_datasets_dir}/{collection_name.value}")
         logging.error(f"collection_name.value:{collection_name.value}, local_collection_dir:{local_collection_dir}")
-        captions_local = random.choices(list(local_collection_dir.iterdir()), k=k)
+        captions_local = random.choices(list(local_collection_dir.iterdir()), k=k*2)
         logging.info(f"captions_local:{captions_local}")
         imgs_local = []
         captions_local_str = []
         for caption in captions_local:
+            if ".market." in caption.name:
+                continue
             logging.info(f"caption:{caption}")
-            #imgs_local.append(Image.open(f"{local_collection_dir}/{caption}"))
             imgs_local.append(Image.open(f"{caption}"))
             captions_local_str.append(
                 caption.name
