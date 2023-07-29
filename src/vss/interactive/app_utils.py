@@ -21,8 +21,8 @@ class ModuleManager:
     """
 
     def __init__(self, cfg) -> None:
-        self.metric_client = get_metric_client(cfg)
-
+        self.cfg = cfg
+    
     def widget_formatting(self) -> Any:
         """
         Defines Streamlit widget styles based on the input provided by style.css file.
@@ -37,6 +37,7 @@ class ModuleManager:
         """
         if "init" not in st.session_state:
             st.session_state.init = True
+            st.session_state.metric_client = get_metric_client(self.cfg)
             st.session_state.category_desc_option = None
             st.session_state.category_option = MetricCollections.FUTURES
             st.session_state.provisioning_options = None
@@ -277,9 +278,10 @@ class ModuleManager:
         """
         Shows images in order of their similarity to the original input image.
         """
+        metric_client = st.session_state.metric_client
         best_images_dataset = (
             BestChoiceImagesDataset.get_best_choice_for_uploaded_image(
-                client=self.metric_client,
+                client=metric_client,
                 key=key,
                 anchor=file,
                 collection_name=collection_name,
@@ -378,7 +380,12 @@ class ModuleManager:
 
     def run_app(self) -> None:
         try:
-            logger.info("Set main graphical options.")
+            # Check if 'key' already exists in session_state
+            # If not, then initialize it
+            if 'key' not in st.session_state:
+                st.session_state['key'] = 'value'
+
+            logger.info("Set main graphical options.")            
             st.set_page_config(page_title="visual-search.stxnext.pl", layout="wide")
             self.widget_formatting()
 
