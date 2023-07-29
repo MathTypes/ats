@@ -131,14 +131,11 @@ class FaissBuilder(object):
         )
         fig.update_layout(title=pred_input.prediction_date_time, font=dict(size=20))
         #viz_utils.add_market_viz(fig, pred_input)
-        logging.info(f"after add_market_viz")
         viz_utils.add_model_prediction(fig, self.model, pred_input, pred_output)
-        logging.info(f"after add_model_prediction")
         viz_utils.add_model_interpretation(fig, self.model, pred_input, pred_output)
         decoder_time_idx = pred_input.decoder_time_idx
-        logging.info(f"after add_model_interpretation")
         viz_utils.add_market_viz(fig, pred_input)
-        logging.info(f"after add_market_viz")
+        y_max, y_min, y_hat_max, y_hat_min = prediction_utils.loss_stats(pred_output)
         output_file = f'{self.image_root_path}/{decoder_time_idx}_{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.png'
         output_file = output_file.replace(" ","_")
         try:
@@ -157,6 +154,7 @@ class FaissBuilder(object):
         corpus_embeddings = list()
 
         for batch in range(self.num_samples):
+            logging.info(f"batch:{batch}")
             val_x, val_y = next(data_iter)
             if self.config.job.eval_batch_start_idx>-1 and batch<self.config.job.eval_batch_start_idx:
                 continue
@@ -166,9 +164,6 @@ class FaissBuilder(object):
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
             # indices are based on decoder time idx (first prediction point)
             indices = self.data_module.validation.x_to_index(val_x)
-            logging.info(f"val_x:{val_x}")
-            logging.info(f"val_y:{val_y}")
-            logging.info(f"indices:{indices}")
             decoder_time_idx = indices.time_idx
             logging.info(f"decoder_time_idx:{decoder_time_idx}")
             filtered_dataset = self.validation.filter(
@@ -180,16 +175,11 @@ class FaissBuilder(object):
                 self.wandb_logger,
                 batch_size=self.num_samples,
             )
-            logging.info(f"y_hats:{y_hats}")
-            logging.info(f"ret_x:{ret_x}")
-            logging.info(f"y_quantiles:{y_quantiles}")
-            logging.info(f"output:{output.keys()}")
             interp_output = self.model.interpret_output(
                 detach(output),
                 reduction="none",
                 attention_prediction_horizon=0,  # attention only for first prediction horizon
             )
-            logging.info(f"interp_output:{interp_output}")
             for idx in range(len(y_hats)):
                 index = indices.iloc[idx]
                 pred_input = prediction_data.PredictionInput(
@@ -212,7 +202,6 @@ class FaissBuilder(object):
                 market_image = self.create_market_image(pred_input, pred_output)
                 corpus_embeddings.append(embedding)
                 corpus_images.append({"model":image, "market":market_image})
-                logging.info(f"adding {idx} embedding:{embedding}, {image}")
 
         logging.info("Store file on disc")
         base_dir = os.path.dirname(self.embedding_cache_path)

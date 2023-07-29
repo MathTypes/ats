@@ -23,7 +23,8 @@ eval_batch_size = 10
 
 class TimeSeriesDataModule(pl.LightningDataModule):
     def __init__(
-        self, config, train_data, eval_data, test_data, target, simulation_mode=False
+            self, config, train_data, eval_data, test_data, target, transform=False,
+            transformed_data = None
     ):
         super().__init__()
         if train_data.empty and config.job.mode in ["eval", "build_search"]:
@@ -88,6 +89,8 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             },
             # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
             add_relative_time_idx=config.features.add_relative_time_idx,
+            transform=transform,
+            transformed_data=transformed_data[0] if transformed_data else None
         )
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128
@@ -100,10 +103,12 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         )
         self.eval_data = self.eval_data[:eval_data_size]
         logging.info(f"eval_data_size:{len(self.eval_data)}")
-        self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data)
+        self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data, transform=transform,
+                                                         transformed_data=transformed_data[1] if transformed_data else None)
         logging.info(f"test_data_size:{len(self.test_data)}")
         self.test = TimeSeriesDataSet.from_dataset(
-            self.training, self.test_data, simulation_mode=simulation_mode
+            self.training, self.test_data, transform=transform,
+            transformed_data=transformed_data[2] if transformed_data else None
         )
 
     def prepare_data(self):

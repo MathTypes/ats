@@ -10,6 +10,7 @@ from typing import Any, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import torch
 import torchvision.transforms as T
 from cycler import cycler
 from PIL import Image
@@ -42,6 +43,11 @@ class ImageDataset(Dataset):
             image = self.transformation(image)
         return image, self.labels[index]
 
+def get_decoder_time_idx(x):
+    x = x.split("_")[1]
+    x = x.split("/")[-1]
+    return int(x)
+    
 
 @dataclass
 class DatasetCombined:
@@ -58,6 +64,7 @@ class DatasetCombined:
     @classmethod
     def get_dataset(
         cls,
+        md_mgr,
         meta: Path | str,
         data_dir: Path | str,
         transformation: Optional[dict] = None,
@@ -69,21 +76,46 @@ class DatasetCombined:
             frac=1
         )  # shuffle dataframe just in case, because split is not class balanced (not guaranteed)
         # add data_dir path to meta file, so filenames will contain absolute path for data
-        df["file"] = df["file"].apply(lambda file: str(data_dir / file))
+        df["file"] = df["file"].apply(lambda file: f"{data_dir}/{file}")
         x_train, x_test, y_train, y_test = train_test_split(
             np.array(df["file"]), np.array(df["label"]), train_size=split
         )
+        logging.info(f"x_train:{x_train[:4]}")
+        logging.info(f"x_test:{x_test[:4]}")
+        logging.info(f"y_train:{y_train[:4]}")
+        logging.info(f"y_test:{y_test[:4]}")
+        if md_mgr.config.job.search_metric_trunk_model in ["patch_tft"]:
+            data_module = md_mgr.data_module()
+            validation_dataset = data_module.validation            
 
-        # load default or custom transformation for train/test dataset
-        train_transform = TRAIN_TRANSFORM
-        test_transform = TEST_TRANSFORM
-        if transformation:
-            train_transform = transformation.get("train", train_transform)
-            test_transform = transformation.get("test", test_transform)
+            applyall = np.vectorize(get_decoder_time_idx)
+            train_decoder_time_idx = applyall(x_train)
+            test_decoder_time_idx = applyall(x_test)
+            logging.info(f"train_decoder_time_idx:{train_decoder_time_idx[:4]}")
+            logging.info(f"test_decoder_time_idx:{test_decoder_time_idx[:4]}")
+            train_transform = None
+            test_transform = None
+            train_dataset = validation_dataset.filter(
+                lambda x: x.time_idx_first_prediction.isin(train_decoder_time_idx),
+                # Skip weight (None)
+                y=y_train
+            )
+            test_dataset = validation_dataset.filter(
+                lambda x: x.time_idx_first_prediction.isin(test_decoder_time_idx),
+                y=y_test
+            )
+        else:
+            # load default or custom transformation for train/test dataset
+            train_transform = TRAIN_TRANSFORM
+            test_transform = TEST_TRANSFORM
+            if transformation:
+                train_transform = transformation.get("train", train_transform)
+                test_transform = transformation.get("test", test_transform)
 
-        # create torch datasets
-        train_dataset = ImageDataset(x_train, y_train, transformation=train_transform)
-        test_dataset = ImageDataset(x_test, y_test, transformation=test_transform)
+                # create torch datasets
+            logging.info(f"train_transform:{train_transform}")
+            train_dataset = ImageDataset(x_train, y_train, transformation=train_transform)
+            test_dataset = ImageDataset(x_test, y_test, transformation=test_transform)
 
         return cls(
             df=df,
@@ -156,11 +188,12 @@ def save_training_meta(data: dict, path: Optional[Path] = None) -> None:
         if isinstance(v, Path):
             data[k] = str(v.absolute())
 
-    with open(path / "training_meta.json", "w") as f:
-        json.dump(data, f)
+    with open(f"{path}/training_meta.json", "w") as f:
+        json.dump({"epochs":data.job.epochs}, f)
 
-    with open(path / "meta.json", "w") as f:
+    with open(f"{path}/meta.json", "w") as f:
         json.dump(
-            {"trunk": data["trunk_model"], "embedder_layers": data["embedder_layers"]},
+            {"trunk": data.job.search_metric_trunk_model,
+             "embedder_layers": str(data.job.search_metric_embedder_layers)},
             f,
         )

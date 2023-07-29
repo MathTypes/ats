@@ -5,19 +5,23 @@ import streamlit as st
 from loguru import logger
 from PIL import Image
 
-from common import env_handler
-from common.consts import CATEGORY_DESCR, GRID_NROW_NUMBER, INTERACTIVE_ASSETS_DICT
-from metrics.consts import MetricCollections
-from metrics.core import BestChoiceImagesDataset, MetricClient
+from vss.common import env_handler
+from vss.common.consts import CATEGORY_DESCR, GRID_NROW_NUMBER, INTERACTIVE_ASSETS_DICT
+from vss.metrics.consts import MetricCollections
+from vss.metrics.core import BestChoiceImagesDataset, MetricClient
 
+
+#@st.cache_resource
+def get_metric_client(_cfg):
+    return MetricClient(cfg=_cfg)
 
 class ModuleManager:
     """
     List of components used for building the app.
     """
 
-    def __init__(self) -> None:
-        self.metric_client = MetricClient()
+    def __init__(self, cfg) -> None:
+        self.metric_client = get_metric_client(cfg)
 
     def widget_formatting(self) -> Any:
         """
@@ -34,7 +38,7 @@ class ModuleManager:
         if "init" not in st.session_state:
             st.session_state.init = True
             st.session_state.category_desc_option = None
-            st.session_state.category_option = None
+            st.session_state.category_option = MetricCollections.FUTURES
             st.session_state.provisioning_options = None
 
             # Option 1 States - Example Images
@@ -62,7 +66,7 @@ class ModuleManager:
             st.session_state.grid_nrow_number = GRID_NROW_NUMBER
 
             # Search Completed State - set after "Find Similar Images" is completed
-            # st.session_state.similar_images_found = None
+            #st.session_state.similar_images_found = None
 
     def reset_all_states_button(self) -> None:
         """
@@ -75,7 +79,7 @@ class ModuleManager:
         st.session_state.selected_img = None
         st.session_state.benchmark_similarity_value = None
         st.session_state.similar_img_number = None
-        # st.session_state.similar_images_found = None
+        #st.session_state.similar_images_found = None
 
         st.session_state.example_list_pull = None  # NEW
         st.session_state.img_storage_list_pull = None  # NEW
@@ -89,41 +93,7 @@ class ModuleManager:
         st.session_state.selected_img = None
         st.session_state.benchmark_similarity_value = None
         st.session_state.similar_img_number = None
-        # st.session_state.similar_images_found = None
-
-    def create_title_containers(self) -> None:
-        """
-        Creates initial global formatting and a header structure.
-        """
-        row_company_image = st.container()
-        with row_company_image:
-            st.image(Image.open(INTERACTIVE_ASSETS_DICT["logo_img_dir"]))
-
-        row_app_title = st.container()
-        with row_app_title:
-            col_company_title_1, col_company_title_2 = st.columns([2, 1])
-            with col_company_title_1:
-                st.title(INTERACTIVE_ASSETS_DICT["app_title"])
-        with st.expander("", expanded=True):
-            with col_company_title_2:
-                if st.button("Reset All"):  # reset all button
-                    self.reset_all_states_button()
-            st.write(INTERACTIVE_ASSETS_DICT["app_first_paragraph"])
-            st.markdown(
-                """
-                <style>
-                    div[data-testid="column"]:nth-of-type(1)
-                    {
-                        text-align: start;
-                    }
-                    div[data-testid="column"]:nth-of-type(2)
-                    {
-                        text-align: end;
-                    }
-                </style>
-                """,
-                unsafe_allow_html=True,
-            )
+        #st.session_state.similar_images_found = None
 
     def make_grid(self, cols, rows) -> Any:
         grid = [0] * cols
@@ -179,7 +149,8 @@ class ModuleManager:
             self.reset_states_after_image_provisioning_list()
 
         st.session_state.example_captions = [
-            s_img["label"]
+            # Need to use path so that we can get example key
+            s_img["path"]
             for s_img in CATEGORY_DESCR[st.session_state.category_option.value][
                 "image_examples"
             ]
@@ -200,6 +171,7 @@ class ModuleManager:
 
         if st.session_state.example_list_pull is True:
             st.session_state.selected_img = example_images_zip[img_selection]
+            logging.info(f"st.session_state.selected_img:{st.session_state.selected_img}")
             st.session_state.show_input_img = True
 
     def create_image_provision_for_random_storage_pull(self) -> None:
@@ -212,45 +184,44 @@ class ModuleManager:
         if st.session_state.img_storage_list_pull is True:
             self.reset_states_after_image_provisioning_list()
         st.session_state.pull_random_img_number = st.number_input(
-            label=f"Choose random images from {st.session_state.category_option.value} category.",
+            label=f"Choose random images",
             value=5,
             min_value=1,
             format="%i",
         )
-        if st.button("Generate Images"):
-            (
-                st.session_state.random_captions,
-                st.session_state.random_imgs,
-            ) = env_handler.get_random_images_from_collection(
-                collection_name=st.session_state.category_option,
-                k=st.session_state.pull_random_img_number,
-            )  # Pulls a sampled set of images from local/cloud storage
-        if st.session_state.random_captions and st.session_state.random_imgs:
+        #if st.button("Generate Images"):
+        if True:
+            try:
+                (
+                    st.session_state.random_captions,
+                    st.session_state.random_imgs,
+                ) = env_handler.get_random_images_from_collection(
+                    collection_name=st.session_state.category_option,
+                    #collection_name=MetricCollections.FUTURES,
+                    k=st.session_state.pull_random_img_number,
+                )  # Pulls a sampled set of images from local/cloud storage
+            except Exception as e:
+                logging.error(f"can not get random images: {e}")
+        logging.error(f"st.session_state.random_captions:{st.session_state.random_captions}");
+        #if st.session_state.random_captions and st.session_state.random_imgs:
+        if True:
             random_images_zip = dict(
                 zip(
                     st.session_state.random_captions,
                     st.session_state.random_imgs,
                 )
             )
+            logging.error(f"random_images_zip:{random_images_zip}")
             img_selection = st.selectbox("Choose an image", random_images_zip)
-
-            if st.session_state.img_storage_list_pull is True:
+            logging.error(f"img_selection:{img_selection}")
+            #if st.session_state.img_storage_list_pull is True:
+            if True:
+                st.session_state.selected_img_path = img_selection
                 st.session_state.selected_img = random_images_zip[
                     img_selection
                 ]  # returns an image based on selection
-                st.session_state.show_input_img = True
-
-    def create_image_provision_for_manual_upload(self) -> None:
-        """
-        Resets state of previous provisioning selection and provides upload button for a user.
-        Any RGB image can be uploaded.
-        """
-        if st.session_state.file_upload_pull is True:
-            self.reset_states_after_image_provisioning_list()
-        byte_img = st.file_uploader("Upload an image from a local disk.")
-        if byte_img:
-            if st.session_state.file_upload_pull is True:
-                st.session_state.selected_img = Image.open(byte_img)
+                logging.error(f"st.session_state.selected_img:{st.session_state.selected_img}")
+                logging.error(f"st.session_state.selected_img_path:{st.session_state.selected_img_path}")
                 st.session_state.show_input_img = True
 
     def create_similarity_search_filters(self) -> None:
@@ -258,7 +229,8 @@ class ModuleManager:
         Creates a set of similarity-search-specific filters - number of shown images an benchmark for
         minimum similarity value in %.
         """
-        if st.session_state.show_input_img:
+        if True:
+        #if st.session_state.show_input_img:
             st.markdown(
                 "<h2 style='text-align: center;'>Input Image</h2>",
                 unsafe_allow_html=True,
@@ -291,6 +263,7 @@ class ModuleManager:
                     button = st.button(
                         "Find Similar Images", key="similar_images_found"
                     )
+                    logger.info("After setting button")
 
     def search_with_show(
         self,
@@ -298,6 +271,7 @@ class ModuleManager:
         k: int,
         grid_nrow: int,
         benchmark: int,
+        key: str,
         file,
     ) -> None:
         """
@@ -306,6 +280,7 @@ class ModuleManager:
         best_images_dataset = (
             BestChoiceImagesDataset.get_best_choice_for_uploaded_image(
                 client=self.metric_client,
+                key=key,
                 anchor=file,
                 collection_name=collection_name,
                 k=k,
@@ -315,7 +290,7 @@ class ModuleManager:
         captions_dict = [
             {
                 "file": r.payload["file"].split("/")[-1].split("\\")[-1],
-                "class": r.payload["class"],
+                "class": r.payload["ticker"],
                 "similarity": "{0:.2f}%".format(100 * round(r.score, 4)),
             }
             for r in best_images_dataset.results
@@ -367,8 +342,10 @@ class ModuleManager:
         """
         Shows images in order of their similarity to the original input image.
         """
-        logging.info(f"st.session_state.category_option:{st.session_state.category_option}")
+        logging.error(f"st.session_state.category_option:{st.session_state.category_option}")
+        logging.error(f"session_state:{st.session_state}")
         self.search_with_show(
+            key=st.session_state.selected_img_path,
             file=st.session_state.selected_img,
             collection_name=st.session_state.category_option.value,
             k=st.session_state.similar_img_number,
@@ -391,85 +368,39 @@ class ModuleManager:
                 unsafe_allow_html=True,
             )
 
-            # TODO: Upload options other than storage pull temporarily turned off, uncomment when turning on
-            # provisioning_options = [
-            #     "Example List",
-            #     "Pull Randomly from the Storage",
-            #     "File Upload",
-            # ]
-
             col_image_load_1, col_image_load_2, col_image_load_3 = st.columns(3)
 
-            # TODO: Upload options other than storage pull temporarily turned off, uncomment when turning on
-            # with col_image_load_1:
-            #     st.checkbox(
-            #         f"{provisioning_options[0]}", value=False, key="example_list_pull"
-            #     )
-            #     self.create_image_provision_for_examples()
-
             with col_image_load_2:
-                # TODO: Upload options other than storage pull temporarily turned off, uncomment when turning on
-                # st.checkbox(
-                #     f"{provisioning_options[1]}",
-                #     value=False,
-                #     key="img_storage_list_pull",
-                # )
-                self.create_image_provision_for_random_storage_pull()
-
-            # TODO: Upload options other than storage pull temporarily turned off, uncomment when turning on
-            # with col_image_load_3:
-            #     st.checkbox(
-            #         f"{provisioning_options[2]}", value=False, key="file_upload_pull"
-            #     )
-            #     self.create_image_provision_for_manual_upload()
-
-            # checkbox_state_list = [
-            #     st.session_state.example_list_pull,
-            #     st.session_state.img_storage_list_pull,
-            #     st.session_state.file_upload_pull,
-            # ]
-            # if sum(checkbox_state_list) > 1:
-            #     st.write("")
-            #     st.write("")
-            #     st.markdown(
-            #         "<h4 style='text-align: center; color: red;'>Only one checkbox can be active at a time.</h4>",
-            #         unsafe_allow_html=True,
-            #     )
+                try:
+                    self.create_image_provision_for_random_storage_pull()
+                except Exception as e:
+                    logging.error(f"can not get random images:{e}")
 
     def run_app(self) -> None:
-        logger.info("Set main graphical options.")
-        st.set_page_config(page_title="visual-search.stxnext.pl", layout="wide")
-        self.widget_formatting()
+        try:
+            logger.info("Set main graphical options.")
+            st.set_page_config(page_title="visual-search.stxnext.pl", layout="wide")
+            self.widget_formatting()
 
-        logger.info("Create a title container.")
-        self.create_title_containers()
+            logger.info("Initialize states.")
+            self.initialize_states()
 
-        logger.info("Initialize states.")
-        self.initialize_states()
+            #logger.info("Create Main Filters - till category search")
+            #self.create_main_filters()
 
-        logger.info("Create Main Filters - till category search")
-        self.create_main_filters()
+            logger.info("Image Provisioning")
+            #if st.session_state.category_option:
+            if True:
+                self.create_image_load()
 
-        logger.info("Image Provisioning")
-        if st.session_state.category_option:
-            self.create_image_load()
-
-        if st.session_state.category_option and st.session_state.selected_img:
-            logger.info("Similarity Search Filters")
-            self.create_similarity_search_filters()
-
-            if st.session_state.similar_images_found:
+            logging.info(f"st.session_state.category_option:{st.session_state.category_option}")
+            logging.info(f"st.session_state.selected_img:{st.session_state.selected_img}")
+            if st.session_state.category_option and st.session_state.selected_img:
+                logger.info("Similarity Search Filters")
+                self.create_similarity_search_filters()
+                #logging.info(f"st.session_state.similar_images_found:{st.session_state.similar_images_found}")
+                #if st.session_state.similar_images_found:
                 self.extract_similar_images()
 
-        logger.info("GitHub Fork")
-
-        with st.expander("", expanded=True):
-            st.markdown(
-                "<h3 style='text-align: start;'>Credits</h3>", unsafe_allow_html=True
-            )
-            fork_text = (
-                f"Fork us on [GitHub]({INTERACTIVE_ASSETS_DICT['github_link']})."
-            )
-            contact_text = f"Want to talk about [Machine Learning Services]({INTERACTIVE_ASSETS_DICT['our_ml_site_link']}) visit our webpage."
-            st.write(fork_text)
-            st.write(contact_text)
+        except Exception as e:
+            logging.error(f"can not run app {e}")

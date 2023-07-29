@@ -51,11 +51,11 @@ class MetricCollections(Enum):
     Enum of available collections and pretrained models for similarity.
     """
 
-    DOGS = "dogs"
-    SHOES = "shoes"
-    CELEBRITIES = "celebrities"
-    LOGOS = "logos"
-    WASTE = "waste"
+    #DOGS = "dogs"
+    #SHOES = "shoes"
+    #CELEBRITIES = "celebrities"
+    #LOGOS = "logos"
+    #WASTE = "waste"
     FUTURES = "futures"
 
 

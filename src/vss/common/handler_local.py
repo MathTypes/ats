@@ -1,7 +1,8 @@
 import json
+import logging
 import random
-from pathlib import PureWindowsPath
-
+from pathlib import Path, PurePath
+import traceback
 from PIL import Image
 from qdrant_client.grpc import ScoredPoint
 
@@ -10,18 +11,30 @@ from vss.common.utils import singleton
 from vss.metrics.consts import MetricCollections
 
 
+    
 @singleton
 class LocalFunctionHandler(EnvFunctionHandler):
     """
     Managing class for local environment methods.
     """
 
-    def get_best_score_imgs(self, results: list) -> list:
+    def get_best_score_imgs(self, results: list, client) -> list:
         """
         Handler for returning images with the highest similarity scores from local storage.
         Additionally, filenames are returned as future captions in front-end module.
         """
-        object_list = [PureWindowsPath(r.payload["file"]).as_posix() for r in results]
+        #logging.error(f"results:{results}")
+        object_list = []
+        for r in results:
+            time_idx = r.payload["time_idx"]
+            logging.error(f"time_idx:{time_idx}")
+            file = client.interp_map[str(time_idx)]
+            logging.error(f"time_idx:{time_idx}, file:{file}")
+            object_list.append(file)
+            logging.info(f"r before:{r}")
+            r.payload["file"] = file
+            logging.info(f"r after:{r}")
+        logging.error(f"object_list:{object_list}")
         return [Image.open(obj.replace("src/vss/","")) for obj in object_list]
 
     def get_random_images_from_collection(
@@ -32,12 +45,17 @@ class LocalFunctionHandler(EnvFunctionHandler):
         Used for image input suggestion in front-end component.
         Additionally, filenames are returned as captions.
         """
-        local_collection_dir = self.local_metric_datasets_dir / collection_name.value
+        logging.error(f"collection_name.value:{collection_name}, dataset_dir:{self.local_metric_datasets_dir}")
+        local_collection_dir = Path(f"{self.local_metric_datasets_dir}/{collection_name.value}")
+        logging.error(f"collection_name.value:{collection_name.value}, local_collection_dir:{local_collection_dir}")
         captions_local = random.choices(list(local_collection_dir.iterdir()), k=k)
+        logging.info(f"captions_local:{captions_local}")
         imgs_local = []
         captions_local_str = []
         for caption in captions_local:
-            imgs_local.append(Image.open(local_collection_dir / caption))
+            logging.info(f"caption:{caption}")
+            #imgs_local.append(Image.open(f"{local_collection_dir}/{caption}"))
+            imgs_local.append(Image.open(f"{caption}"))
             captions_local_str.append(
                 caption.name
             )  # this result is loaded directly to the application state
@@ -49,5 +67,5 @@ class LocalFunctionHandler(EnvFunctionHandler):
         """
         Get meta.json dictionary created during model training from local storage.
         """
-        with open(self.local_models_dir / collection_name.value / "meta.json") as f:
+        with open(f"{self.local_models_dir}/{collection_name.value}/meta.json") as f:
             return json.load(f)

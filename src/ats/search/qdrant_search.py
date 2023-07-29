@@ -26,6 +26,13 @@ client = QdrantClient(host="localhost", port=6333)
 client.get_collections()
 
 query_vector = np.random.rand(1024)
+
+hits = client.count(
+    collection_name=MetricCollections.FUTURES.value,
+)
+logging.info(f"{hits}")
+
+exit(0)
 hits = client.search(
     collection_name=MetricCollections.FUTURES.value,
     query_vector=query_vector,

@@ -1,10 +1,12 @@
 import datetime
+from functools import cached_property
 import logging
 import numpy as np
 import pandas as pd
 import os
 import ray
 import time
+import traceback
 
 from ats.calendar import market_time
 from ats.event.macro_indicator import MacroDataBuilder
@@ -59,8 +61,9 @@ def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_inte
 
 
 def read_snapshot(input_dirs) -> pd.DataFrame:
-    ds = ray.data.read_parquet(input_dirs, parallelism=100)
-    ds = ds.to_pandas(10000000)
+    #ds = ray.data.read_parquet(input_dirs, parallelism=10)
+    #ds = ds.to_pandas(10000000)
+    ds = pd.read_parquet(input_dirs)
     ds = ds.sort_index()
     ds = ds[~ds.index.duplicated(keep="first")]
     ds_dup = ds[ds.index.duplicated()]
@@ -72,21 +75,40 @@ def read_snapshot(input_dirs) -> pd.DataFrame:
 
 
 class MarketDataMgr(object):
-    def __init__(self, env_mgr, simulation_mode = False):
+    def __init__(self, env_mgr, transform = None):
+        logging.error(f"transform:{transform}")
         super().__init__()
         self.env_mgr = env_mgr
         self.config = env_mgr.config
         self.market_cal = env_mgr.market_cal
         self.macro_data_builder = MacroDataBuilder(self.env_mgr)
-        self.raw_data = self._get_snapshot()
-        logging.info(f"summary raw_data:{self.raw_data.describe()}")
-        self.data_module = self.create_data_module(simulation_mode=simulation_mode)
-        
-    def create_data_module(self, simulation_mode=False):
+        self.transform = transform
+        self._RAW_DATA = None
+        self._DATA_MODULE = None
+
+    
+    #@cached_property
+    def raw_data(self):
+        logging.info(f"self._RAW_DATA:{self._RAW_DATA}")
+        if self._RAW_DATA is None:
+            logging.info("costly raw_data creation")
+            self._RAW_DATA = self._get_snapshot()
+        return self._RAW_DATA
+
+    #@cached_property
+    def data_module(self):
+        logging.info(f"self._DATA_MODULE:{self._DATA_MODULE}")
+        if self._DATA_MODULE is None:
+            logging.info("costly data_module creation")
+            self._DATA_MODULE = self.create_data_module()
+        logging.info(f"return_data_module:{self._DATA_MODULE}")
+        return self._DATA_MODULE
+    
+    def create_data_module(self):
         env_mgr = self.env_mgr
         config = env_mgr.config
         start = time.time()
-        raw_data = self.raw_data
+        raw_data = self.raw_data()
         train_data = raw_data[
             (raw_data.timestamp >= env_mgr.train_start_timestamp)
             & (raw_data.timestamp < env_mgr.test_start_timestamp)
@@ -106,17 +128,35 @@ class MarketDataMgr(object):
         train_data = train_data.sort_values(["ticker", "time"])
         eval_data = eval_data.sort_values(["ticker", "time"])
         test_data = test_data.sort_values(["ticker", "time"])
-        time.time() - start
+        logging.info(f"create, transform:{self.transform}")
         data_module = TimeSeriesDataModule(
             config,
             train_data,
             eval_data,
             test_data,
             env_mgr.targets,
-            simulation_mode=simulation_mode,
+            transform = self.transform,
+            transformed_data=(self.transformed_train, self.transformed_validation, self.transformed_test) 
         )
+        if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
+            data_start_date_str = env_mgr.data_start_date.strftime('%Y%m%d')
+            data_end_date_str = env_mgr.data_end_date.strftime('%Y%m%d')
+            snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_train"
+            ds = ray.data.from_pandas(data_module.training.transformed_data)
+            os.makedirs(snapshot_dir, exist_ok=True)
+            ds.write_parquet(snapshot_dir)
+            snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_validation"
+            ds = ray.data.from_pandas(data_module.validation.transformed_data)
+            os.makedirs(snapshot_dir, exist_ok=True)
+            ds.write_parquet(snapshot_dir)
+            snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_test"
+            ds = ray.data.from_pandas(data_module.test.transformed_data)
+            os.makedirs(snapshot_dir, exist_ok=True)
+            ds.write_parquet(snapshot_dir)
+        
         return data_module
 
+    
     def _get_snapshot(self):
         raw_data = None
         env_mgr = self.env_mgr
@@ -124,11 +164,22 @@ class MarketDataMgr(object):
         data_end_date_str = env_mgr.data_end_date.strftime('%Y%m%d')
         snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}"
         logging.info(f"checking snapshot:{snapshot_dir}")
+        self.transformed_train = None
+        self.transformed_validation = None
+        self.transformed_test = None
         try:
             if self.config.dataset.read_snapshot and os.listdir(f"{snapshot_dir}"):
                 logging.info(f"reading snapshot from {snapshot_dir}")
                 raw_data = read_snapshot(snapshot_dir)
-        except Exception:
+                snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_train"
+                self.transformed_train = read_snapshot(snapshot_dir)
+                snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_validation"
+                self.transformed_validation = read_snapshot(snapshot_dir)
+                snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_test"
+                self.transformed_test = read_snapshot(snapshot_dir)                
+                
+        except Exception as e:
+            logging.error(f"can not read snapshot:{e}")
             # Will try regenerating when reading fails
             pass
 

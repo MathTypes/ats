@@ -12,9 +12,9 @@ class EnvFunctionHandler(ABC):
     Base class for listing shared methods.
     """
 
-    local_data_dir = PROJECT_PATH / "data"
-    local_models_dir = local_data_dir / "models"
-    local_metric_datasets_dir = local_data_dir / "metric_datasets"
+    local_data_dir = f"{PROJECT_PATH}/../../data"
+    local_models_dir = f"{local_data_dir}/models"
+    local_metric_datasets_dir = f"{local_data_dir}/metric_datasets"
 
     @abstractmethod
     def get_best_score_imgs(self, results: list) -> list:

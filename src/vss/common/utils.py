@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +28,8 @@ class WeightsPathGenerator:
         """
         Create collection/model specific paths to files containing weights and models.
         """
-        return prefix / "data" / "models" / self.collection_name_value / suffix
+        logging.info(f"weight_prefix:{prefix}")
+        return f"{prefix}/../../data/models/{self.collection_name_value}/{suffix}"
 
     @property
     def trunk_minio(self):

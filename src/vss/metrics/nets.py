@@ -11,6 +11,7 @@ from pytorch_forecasting import (
     PatchTftSupervised,
 )
 
+from ats.model import model_utils
 from vss.common import env_handler
 from vss.common.utils import WeightsPathGenerator
 from vss.metrics.consts import DEVICE, METRIC_COLLECTION_NAMES, MetricCollections
@@ -22,6 +23,7 @@ MODEL_TYPE = Union[nn.DataParallel, nn.Module]
 supported_trunk_models = {
     "resnet50": "fc",
     "densnset121": "classifier",
+    "patch_tft":"output_layer"
 }
 
 
@@ -29,15 +31,25 @@ class UnsupportedModel(Exception):
     """Exception raised when unsupported model is chosen"""
 
 
-def get_trunk(
-    trunk_model_name: str,
-) -> tuple[nn.Module, int]:
+def get_trunk(md_mgr) -> tuple[nn.Module, int]:
     """Return pretrained model from torchvision with identity function on last layer and size of last layer"""
-    if trunk_model_name not in supported_trunk_models:
-        raise UnsupportedModel(trunk_model_name)
-    trunk = getattr(pretrained_models, trunk_model_name)(pretrained=True)
+    config = md_mgr.config
+    trunk_model_name = config.job.search_metric_trunk_model
+    logging.info(f"trunk_model_name:{trunk_model_name}")
+    if trunk_model_name in ["patch_tft"]:
+        data_module = md_mgr.data_module()
+        logging.info(f"data_module:{data_module}")
+        trunk = model_utils.get_patch_tft_supervised_model(
+            config, data_module, md_mgr.env_mgr.heads
+        )
+    else:    
+        if trunk_model_name not in supported_trunk_models:
+            raise UnsupportedModel(trunk_model_name)
+        trunk = getattr(pretrained_models, trunk_model_name)(pretrained=True)
+    #logging.info(f"trunk:{trunk}")
     last_layer_name = supported_trunk_models[trunk_model_name]
     last_layer_size = rgetattr(trunk, f"{last_layer_name}.in_features")
+    logging.info(f"last_layer_size:{last_layer_size}")
     rsetattr(trunk, last_layer_name, Identity())
     trunk = trunk.to(DEVICE)
     return trunk, last_layer_size
@@ -72,7 +84,7 @@ class EmbeddingNN(nn.Module):
 
 
 def get_trunk_embedder(
-    trunk_model_name: str,
+    md_mgr,
     layer_sizes: list[int],
     data_parallel: bool = True,
     weights: Optional[WeightsPathGenerator] = None,
@@ -82,10 +94,11 @@ def get_trunk_embedder(
     If you want to load checkpoints for models provide a dictionary with keys 'trunk' and 'embedder' with
     filepath as values
     """
-    trunk, trunk_output_size = get_trunk(trunk_model_name)
+    trunk, trunk_output_size = get_trunk(md_mgr)
+    logging.info(f"trunk:{trunk}, {trunk_output_size}")
     embedder = EmbeddingNN([trunk_output_size] + layer_sizes).to(DEVICE)
-    logging.error(f"weights:{weights}")
     if weights:
+        logging.error(f"weights:{weights.trunk_local}")
         try:
             env_handler.get_weights_datasets(weights=weights)
         except:
@@ -96,27 +109,32 @@ def get_trunk_embedder(
         embedder.load_state_dict(
             torch.load(weights.embedder_local, map_location=DEVICE)
         )
-    if data_parallel:
-        trunk = nn.DataParallel(trunk)
-        embedder = nn.DataParallel(embedder)
+    #if data_parallel:
+    #    trunk = nn.DataParallel(trunk)
+    #    embedder = nn.DataParallel(embedder)
     return trunk, embedder
 
 
 def get_full_pretrained_model(
-    collection_name: MetricCollections, data_parallel: bool = True
+        md_mgr,
+        collection_name: MetricCollections, data_parallel: bool = True
 ):
     """Get full pretrained model with loaded weights"""
     if collection_name.value not in METRIC_COLLECTION_NAMES:
         raise UnsupportedModel(collection_name.value)
     meta = env_handler.get_meta_json(collection_name=collection_name)
     weights = WeightsPathGenerator(collection_name=collection_name)
+    logging.info(f"meta:{meta}, md_mgr:{md_mgr}")
     trunk, embedder = get_trunk_embedder(
-        meta["trunk"], meta["embedder_layers"], data_parallel=False, weights=weights
+        md_mgr,
+        md_mgr.config.job.search_metric_embedder_layers,
+        data_parallel=False, weights=weights
     )
     trunk.to(DEVICE)
-    embedder.to(DEVICE)
-    model = nn.Sequential(trunk, embedder)
-    if data_parallel:
-        model = nn.DataParallel(model)
+    #embedder.to(DEVICE)
+    model = trunk
+    #model = nn.Sequential(trunk, embedder)
+    #if data_parallel:
+    #    model = nn.DataParallel(model)
     model.eval()
     return model

@@ -21,7 +21,7 @@ class EnvMgr(object):
     def init_env(self):
         self.market_cal = mcal.get_calendar(self.config.job.market)
         has_train_stage = self.config.job.mode in ["train", "test"]
-        has_eval_stage = self.config.job.mode in ["train", "test", "eval", "build_search"]
+        has_eval_stage = self.config.job.mode in ["train", "test", "eval", "build_search", "search"]
         has_test_stage = self.config.job.mode in ["test"]
 
         self.max_lags = self.config.job.max_lag
@@ -81,7 +81,7 @@ class EnvMgr(object):
             self.train_start_timestamp = self.eval_start_timestamp
             self.test_start_timestamp = self.eval_start_timestamp
             self.test_end_timestamp = self.eval_end_timestamp
-        elif self.config.job.mode == "build_search":
+        elif self.config.job.mode in ["build_search", "search"]:
             data_start_date = self.eval_start_date
             data_end_date = self.eval_end_date
             # Still need to fail train/test time since data_module

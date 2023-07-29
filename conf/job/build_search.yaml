@@ -3,8 +3,9 @@ mode: build_search
 
 eval_start_date: 2008-01-01
 eval_end_date: 2023-05-01
-#eval_end_date: 2010-05-01
-eval_batches: 200000
+eval_batches: 2000
+eval_batch_start_idx: -1
+eval_batch_end_idx: -1
 time_interval_minutes: 30
 workers: 8
 log_mode: All
@@ -19,6 +20,13 @@ max_lag: 365
 max_lead: 7
 example_bootstrap: akolotech/ATS/run_woaxoza1_pred_viz:v2
 
-
-
-
+epochs: 20
+# input_size is not really used as it only affects resnet input transformation
+input_size: 1
+log_dir : ${hydra:runtime.cwd}/log
+search_metric_embedder_layers: [1024, 1024, 1024]
+search_metric_trunk_model: patch_tft
+search_metric_data_dir: ${hydra:runtime.cwd}/data/metric_datasets/futures
+search_metric_meta: ${hydra:runtime.cwd}/data/qdrant_storage/meta_futures.csv
+search_metric_name: metric_futures
+dataset_transform: True

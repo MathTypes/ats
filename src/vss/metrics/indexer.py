@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Callable, Literal, Optional, Union
 
@@ -9,6 +10,7 @@ from qdrant_client.conversions.common_types import Distance
 from qdrant_client.http import models
 from tqdm.auto import tqdm
 
+from ats.util import tensor_utils
 from vss.common import qdrant_client
 from vss.metrics.consts import INFER_TRANSFORM, MetricCollections
 from vss.metrics.nets import get_full_pretrained_model
@@ -26,11 +28,17 @@ def shoes_filter(meta: list) -> list:
     return new_meta
 
 
+def delete_collection(
+        collection_name: MetricCollections
+) -> None:
+    qdrant_client.delete_collection(collection_name=collection_name.value)
+
 # TODO: check if we need wrapper func for singleton client
 def create_collection(
-    collection_name: MetricCollections,
-    vector_size: int,
-    distance: Union[Distance, DISTANCES],
+        cfg,
+        collection_name: MetricCollections,
+        vector_size: int,
+        distance: Union[Distance, DISTANCES],
 ) -> None:
     """Wrapper function for auto-injecting qdrant client object and creating collection"""
     qdrant_client.recreate_collection(
@@ -41,19 +49,21 @@ def create_collection(
 
 # TODO: add support for batch gpu inference to speed up index upload
 def upload_indexes(
-    collection_name: MetricCollections,
-    meta_file: Union[Path, str],
-    dataset_dir: Union[Path,  str],
-    qdrant_batch: int = 256,
-    meta_filter: Optional[Callable] = None,
+        md_mgr,
+        collection_name: MetricCollections,
+        meta_file: Union[Path, str],
+        dataset_dir: Union[Path,  str],
+        qdrant_batch: int = 256,
+        meta_filter: Optional[Callable] = None,
 ) -> None:
     """Helper function for creating embeddings and uploading them to qdrant"""
     logger.info(f"Loading model: {collection_name.value}")
+    config = md_mgr.config
     model = get_full_pretrained_model(
-        collection_name=collection_name, data_parallel=False
-    )
+        md_mgr,
+        collection_name=collection_name, data_parallel=False)
     model.eval()
-    dataset = DatasetCombined.get_dataset(meta_file, dataset_dir)
+    dataset = DatasetCombined.get_dataset(md_mgr, meta_file, dataset_dir)
     embeddings = []
     meta_data = []
     df = dataset.df
@@ -61,15 +71,35 @@ def upload_indexes(
     logger.info(
         f"Started indexing {len(df)} vectors for collection {collection_name.value}"
     )
-    for i, row in tqdm(df.iterrows(), total=df.shape[0]):
-        img = INFER_TRANSFORM(Image.open(row["file"]).convert("RGB"))
+    # Need train=False to avoid shuffle
+    train_dataloader = dataset.train_dataset.to_dataloader(train=False, batch_size=64)
+    test_dataloader = dataset.test_dataset.to_dataloader(train=False, batch_size=64)
+    matched_eval_data = md_mgr.data_module().eval_data
+    logging.info(f"matched_eval_data:{matched_eval_data.iloc[:10]}")
+    logging.info(f"matched_eval_data:{matched_eval_data.describe()}")
+    for val_x, val_y in iter(train_dataloader):
+    #for i, row in tqdm(df.iterrows(), total=df.shape[0]):
+        #img = INFER_TRANSFORM(Image.open(row["file"]).convert("RGB"))
         with torch.no_grad():
             if torch.cuda.is_available():
-                embedding = model(img.cuda().unsqueeze(0))[0, :]
+                output = model(tensor_utils.to_cuda(val_x))
             else:
-                embedding = model(img.unsqueeze(0))[0, :]
-        embeddings.append(embedding.cpu().data.numpy())
-        meta_data.append(dict(row))
+                output = model(val_x)
+            logging.info(f"output:{output}")
+            embedding = output["embedding"]
+            embedding = torch.reshape(embedding, (embedding.size(0), -1))
+        logging.info(f"embedding:{embedding.shape}")
+        embeddings.extend(embedding.cpu().data.numpy())
+        for idx in range(embedding.size(0)):
+            decoder_time_idx = int(val_x["decoder_time_idx"][idx][0].cpu().detach().numpy())
+            #logging.info(f"checking {decoder_time_idx}")
+            train_data_row = matched_eval_data[
+                matched_eval_data.time_idx == decoder_time_idx
+            ].iloc[0]
+            logging.info(f"adding {train_data_row}")
+            meta_data_row = dict(train_data_row)
+            meta_data_row = tensor_utils.np_to_native(meta_data_row)
+            meta_data.append(meta_data_row)
     embeddings = np.array(embeddings)
 
     if meta_filter:
