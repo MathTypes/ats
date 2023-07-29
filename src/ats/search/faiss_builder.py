@@ -31,13 +31,14 @@ class FaissBuilder(object):
         self.config = env_mgr.config
         self.data_module = market_data_mgr.data_module()
         self.num_samples = self.config.job.eval_batches
+        self.eval_batch_size = self.config.model.eval_batch_size
         self.every_n_epochs = self.config.job.log_example_eval_every_n_epochs
         self.embedding_cache_path = self.config.job.embedding_cache_path
         self.image_root_path = self.config.job.image_root_path + "/" + self.env_mgr.run_id
         os.makedirs(self.image_root_path, exist_ok=True)
         self.embedding_size = 768  # Size of embeddings
         self.top_k_hits = 10  # Output k hits
-        logging.info(f"num_samples:{self.num_samples}")
+        logging.info(f"num_samples:{self.num_samples}, eval_batch_size={self.eval_batch_size}")
         # Defining our FAISS index
         # Number of clusters used for faiss. Select a value 4*sqrt(N) to 16*sqrt(N) - https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index
         self.n_clusters = 1024
@@ -161,6 +162,7 @@ class FaissBuilder(object):
             if self.config.job.eval_batch_end_idx>-1 and batch>self.config.job.eval_batch_end_idx:
                 break
             y_close = val_y[0]
+            logging.info(f"y_close:{y_close.shape}")
             y_close_cum_sum = torch.cumsum(y_close, dim=-1)
             # indices are based on decoder time idx (first prediction point)
             indices = self.data_module.validation.x_to_index(val_x)
@@ -173,21 +175,21 @@ class FaissBuilder(object):
                 self.model,
                 filtered_dataset,
                 self.wandb_logger,
-                batch_size=self.num_samples,
+                batch_size=self.eval_batch_size,
             )
             interp_output = self.model.interpret_output(
                 detach(output),
                 reduction="none",
                 attention_prediction_horizon=0,  # attention only for first prediction horizon
             )
-            for idx in range(len(y_hats)):
+            logging.info(f"y_hats:{len(y_hats)}")
+            for idx in range(y_hats.size(0)):
                 index = indices.iloc[idx]
                 pred_input = prediction_data.PredictionInput(
                     x=ret_x,
                     idx=idx
                 )
                 prediction_utils.add_pred_context(self.env_mgr, self.matched_eval_data, idx, index, pred_input)
-                #logging.info(f"pred_input:{pred_input}")
                 pred_output = prediction_data.PredictionOutput(
                     out=output,
                     idx=idx,
@@ -258,13 +260,13 @@ class FaissBuilder(object):
     def build_embedding_cache_if_not_exists(self):
         # Check if embedding cache path exists
         #if not os.path.exists(self.embedding_cache_path):
-        #    self.build_embedding_cache()
+        self.build_embedding_cache()
         #else:
-        if True:
-            print("Load pre-computed embeddings from disc")
-            with open(self.embedding_cache_path, "rb") as fIn:
-                cache_data = pickle.load(fIn)
-                corpus_images = cache_data["images"]
-                corpus_embeddings = cache_data["embeddings"]
+        #if True:
+        #    print("Load pre-computed embeddings from disc")
+        #    with open(self.embedding_cache_path, "rb") as fIn:
+        #        cache_data = pickle.load(fIn)
+        #        corpus_images = cache_data["images"]
+        #        corpus_embeddings = cache_data["embeddings"]
                 #logging.info(f"corpus_images:{corpus_images}")
                 #logging.info(f"corpus_embeddings:{corpus_embeddings}")

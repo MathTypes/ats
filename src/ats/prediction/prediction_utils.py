@@ -58,13 +58,12 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
     # logging.info(f"new_prediction_data:{new_prediction_data}")
     # logging.info(f"index:{train_dataset.index.iloc[-5:]}")
     trainer_kwargs = {"logger": wandb_logger}
-    # logging.info(f"trainer_kwargs:{trainer_kwargs}")
     # TODO: it is not clear why to_prediction fails complaining
     # about tensors on cpu even with to("cuda:0"). Maybe
     # something is going on with sampling ops which is placed on
     # cpu.
-    device = torch.device("cpu")
-    model.to(device)
+    #device = torch.device("cpu")
+    #model.to(device)
     # logging.info(f"model:{model}, device:{model.device}")
     device = model.device
     new_raw_predictions = model.predict(
@@ -84,14 +83,11 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
         key: [v.to(device) for v in val] if isinstance(val, list) else val.to(device)
         for key, val in output.items()
     }
-    y_hats = to_list(model.to_prediction(output, **prediction_kwargs))
-    # logging.info(f"y_hats:{y_hats}")
-    prediction = y_hats
-    # logging.info(f"prediction:{prediction}")
+    y_hats = model.to_prediction(output, **prediction_kwargs)
     quantiles_kwargs = {}
     y_quantiles = to_list(model.to_quantiles(output, **quantiles_kwargs))[0]
     del new_raw_predictions
-    # logging.info(f"y_quantiles:{y_quantiles}")
-    # logging.info(f"y_hats:{y_hats}")
+    logging.info(f"y_quantiles:{y_quantiles}")
+    logging.info(f"y_hats:{y_hats}")
     # logging.info(f"y:{new_raw_predictions.y}")
-    return prediction, y_quantiles, output, x
+    return y_hats, y_quantiles, output, x
