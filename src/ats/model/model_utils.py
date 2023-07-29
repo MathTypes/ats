@@ -199,7 +199,7 @@ def get_patch_tst_model(config, data_module):
 
 def get_patch_tst_tft_model(config, data_module):
     config.job.device
-    training = data_module.training
+    training = data_module().training
     prediction_length = config.model.prediction_length
     context_length = config.model.context_length
     patch_len = config.model.patch_len

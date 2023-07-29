@@ -29,7 +29,7 @@ class FaissBuilder(object):
         self.model = model
         self.wandb_logger = wandb_logger
         self.config = env_mgr.config
-        self.data_module = market_data_mgr.data_module
+        self.data_module = market_data_mgr.data_module()
         self.num_samples = self.config.job.eval_batches
         self.every_n_epochs = self.config.job.log_example_eval_every_n_epochs
         self.embedding_cache_path = self.config.job.embedding_cache_path
@@ -71,7 +71,7 @@ class FaissBuilder(object):
         )
         fig.update_layout(
             autosize=False,
-            width=1500,
+            width=800,
             height=800,
             yaxis=dict(
                 side="right",
@@ -87,7 +87,7 @@ class FaissBuilder(object):
         y_max, y_min, y_hat_max, y_hat_min = prediction_utils.loss_stats(pred_output)
         viz_utils.add_market_viz(fig, pred_input)
         decoder_time_idx = pred_input.decoder_time_idx
-        logging.info(f"after add_market_viz")
+        #logging.info(f"after add_market_viz")
         output_file = f'{self.image_root_path}/{decoder_time_idx}_{pred_input.prediction_date_time}_{y_max}_{y_min}_{y_hat_max}_{y_hat_min}.market.png'
         output_file = output_file.replace(" ","_")
         try:
@@ -117,7 +117,7 @@ class FaissBuilder(object):
         )
         fig.update_layout(
             autosize=False,
-            width=1500,
+            width=800,
             height=800,
             yaxis=dict(
                 side="right",
@@ -154,7 +154,7 @@ class FaissBuilder(object):
         corpus_embeddings = list()
 
         for batch in range(self.num_samples):
-            logging.info(f"batch:{batch}")
+            #logging.info(f"batch:{batch}")
             val_x, val_y = next(data_iter)
             if self.config.job.eval_batch_start_idx>-1 and batch<self.config.job.eval_batch_start_idx:
                 continue
@@ -165,7 +165,7 @@ class FaissBuilder(object):
             # indices are based on decoder time idx (first prediction point)
             indices = self.data_module.validation.x_to_index(val_x)
             decoder_time_idx = indices.time_idx
-            logging.info(f"decoder_time_idx:{decoder_time_idx}")
+            #logging.info(f"decoder_time_idx:{decoder_time_idx}")
             filtered_dataset = self.validation.filter(
                 lambda x: x.time_idx_first_prediction.isin(decoder_time_idx)
             )
@@ -257,13 +257,14 @@ class FaissBuilder(object):
 
     def build_embedding_cache_if_not_exists(self):
         # Check if embedding cache path exists
-        if not os.path.exists(self.embedding_cache_path):
-            self.build_embedding_cache()
-        else:
+        #if not os.path.exists(self.embedding_cache_path):
+        #    self.build_embedding_cache()
+        #else:
+        if True:
             print("Load pre-computed embeddings from disc")
             with open(self.embedding_cache_path, "rb") as fIn:
                 cache_data = pickle.load(fIn)
                 corpus_images = cache_data["images"]
                 corpus_embeddings = cache_data["embeddings"]
-                logging.info(f"corpus_images:{corpus_images}")
-                logging.info(f"corpus_embeddings:{corpus_embeddings}")
+                #logging.info(f"corpus_images:{corpus_images}")
+                #logging.info(f"corpus_embeddings:{corpus_embeddings}")

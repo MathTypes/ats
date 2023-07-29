@@ -147,7 +147,7 @@ class PatchTftSupervisedPipeline(Pipeline):
         self.heads = self.env_mgr.heads
         self.targets = self.env_mgr.targets
         self.md_mgr = market_data_mgr.MarketDataMgr(self.env_mgr)
-        self.data_module = self.md_mgr.data_module
+        self.data_module = self.md_mgr.data_module()
         self.run_id = run_id
 
     def create_model(self, checkpoint):
