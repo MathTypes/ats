@@ -11,6 +11,7 @@ if __name__ == "__main__":
     parser.add_argument("--columns", type=str)
     parser.add_argument("--min_time", type=str)
     parser.add_argument("--max_time", type=str)
+    parser.add_argument("--nrows", type=int)
     args = parser.parse_args()
     config_utils.set_args(args)
     logging_utils.init_logging()
@@ -20,4 +21,6 @@ if __name__ == "__main__":
         df = df.loc[(df.time > args.min_time) & (df.time < args.max_time)]
     if args.columns:
         df = df[args.columns]
+    if args.nrows:
+        df = df.iloc[:args.nrows]
     print(df)
