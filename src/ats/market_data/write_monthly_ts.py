@@ -187,6 +187,10 @@ if __name__ == "__main__":
 
     since = args.start_date
     until = args.end_date
+    if not since:
+        since = datetime.datetime.now().date() - datetime.timedelta(days=60)
+    if not until:
+        until = datetime.datetime.now().date()
     ds = pull_futures_sample_data(ticker, asset_type, since, until, args.input_dir)
     for cur_date in time_util.monthlist(since, until):
         process_month(ds, cur_date, args.freq)
