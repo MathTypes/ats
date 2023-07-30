@@ -1,0 +1,7 @@
+.ipynb_checkpoints
+config.py
+__pycache__
+data/
+secrets.toml
+temp.jpg
+.DS_Store
