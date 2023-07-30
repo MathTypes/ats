@@ -47,9 +47,10 @@ def my_app(cfg: DictConfig) -> None:
     cfg["model"]["context_length"]
     wandb.config = cfg
     pipe = pipelines[cfg.model.name](dataset="FUT", config=cfg, run_id=run_id)
+    checkpoint = cfg.model.checkpoint
     if cfg.job.mode == "train":
         pipe.create_trainer()
-        pipe.create_model(cfg.job.checkpoint)
+        pipe.create_model(checkpoint)
         logging.info(f"NUMBER OF PARAMS: {count_parameters(pipe.model)}")
         if cfg.job.tune_learning_rate:
             pipe.set_learning_rate()
@@ -58,18 +59,18 @@ def my_app(cfg: DictConfig) -> None:
     elif cfg.job.mode == "tune":
         pipe.tune_model(run_id)
     elif cfg.job.mode == "eval":
-        pipe.create_model(cfg.job.checkpoint)
+        pipe.create_model(checkpoint)
         pipe.eval_model()
     elif cfg.job.mode == "build_search":
-        pipe.create_model(cfg.job.checkpoint)
+        pipe.create_model(checkpoint)
         pipe.build_search()
     elif cfg.job.mode == "search":
-        pipe.create_model(cfg.job.checkpoint)
+        pipe.create_model(checkpoint)
         pipe.search_examples()
     elif cfg.job.mode == "test":
         # train model until test start
         pipe.create_trainer()
-        pipe.create_model(cfg.job.checkpoint)
+        pipe.create_model(checkpoint)
         if cfg.job.tune_learning_rate:
             pipe.set_learning_rate()
         if cfg.job.retrain_model_before_test_start:

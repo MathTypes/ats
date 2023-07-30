@@ -1,0 +1,42 @@
+hidden_size: 20
+prediction_length: 48
+context_length: 2560
+patch_len: 12
+stride: 6
+d_model: 6
+train_batch_size: 1024
+eval_batch_size: 512
+learning_rate: 0.0095
+attn_heads : 4
+attn_dropout: 0.1
+n_layers: 4
+lstm_layers: 4
+multitask: True
+
+heads:
+  - returns_prediction
+  #- position_optimization
+returns_prediction:
+  #loss_name: MQF2DistributionLoss
+  loss_name: "SMAPE"
+  target: "close_back"
+  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+position_optimization:
+  loss_name: SharpeLoss
+  # TODO: figure out how to allow multi loss when same targets are
+  # used in different heads.
+  target: "close_back_cumsum"
+  logging_metrics: []
+name: patch_tft_supervised
+
+checkpoint: ${hydra:runtime.cwd}/model/single_asset_fixed_features_v2.ckpt
+checkpoint_output_dir: ${hydra:runtime.cwd}/model
+
+features:
+  static_categoricals: ["ticker"]
+  time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month","time_to_new_york_open", "time_to_new_york_close", "time_to_london_open", "time_to_london_open","time_to_london_close"]
+  time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_5_ff", "close_low_5_ff", "close_high_11_ff", "close_low_11_ff","close_high_21_ff", "close_low_21_ff", "close_high_51_ff", "close_low_51_ff", "close_low_201_ff", "close_high_201_ff", "macd_8_24", "macd_16_48", "macd_32_96", "macd", "macd_signal", "bb_high", "bb_low", "sma_50", "sma_200", "macd", "macd_signal", "bb_high", "bb_low", "sma_50", "sma_200", "time_to_high_5_ff", "time_to_low_5_ff", "time_to_high_11_ff", "time_to_low_11_ff", "time_to_high_21_ff", "time_to_low_21_ff", "time_to_high_51_ff", "time_to_low_51_ff", "time_to_high_201_ff", "time_to_low_201_ff"]
+  lags: {}
+  add_relative_time_idx: True
+  add_macro_event: False
+

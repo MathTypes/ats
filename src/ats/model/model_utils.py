@@ -227,7 +227,8 @@ def get_patch_tst_tft_model(config, data_module):
         attn_dropout=0.1,  # between 0.1 and 0.3 are good values
         # hidden_continuous_size=8,  # set to <= hidden_size
         # loss=QuantileLoss(),
-        optimizer="Ranger"
+        #optimizer="Ranger"
+        optimizer="sgd",
         # reduce learning rate if no improvement in validation loss after x epochs
         # reduce_on_plateau_patience=1000,
     )

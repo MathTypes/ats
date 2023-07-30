@@ -119,7 +119,6 @@ class Pipeline:
             self.model.hparams.learning_rate = suggested_learning_rate
 
     def create_trainer(self):
-        self.config
         checkpoint_callback = ModelCheckpoint(
             dirpath=MODELS_DIR, monitor="val_loss", save_top_k=1, verbose=True
         )
@@ -151,7 +150,7 @@ class Pipeline:
             # stochastic_weight_avg=True,
             # precision="bf16",
             # gradient_clip_val=0.5,
-            default_root_dir=LIGHTNING_DIR,
+            default_root_dir=f"{self.config.model.checkpoint_output_dir}/{self.run_id}",
             log_every_n_steps=LOG_EVERY_N_STEPS,
             detect_anomaly=True,
             # profiler="advanced",
