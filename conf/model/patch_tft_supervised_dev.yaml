@@ -28,7 +28,7 @@ position_optimization:
   logging_metrics: []
 name: patch_tft_supervised
 
-checkpoint: ${hydra:runtime.cwd}/model/single_asset_fixed_features_v2.ckpt
+checkpoint:
 checkpoint_output_dir: ${hydra:runtime.cwd}/model
 
 features:

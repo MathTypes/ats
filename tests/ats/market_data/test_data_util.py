@@ -40,7 +40,7 @@ def test_add_highs_trending_no_high():
     assert row_two["cum_volume"] == 6
     assert row_two["cum_dv"] == 6
     assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
-    assert math.isclose(row_two["volume_back"], -0.4054651081081643, rel_tol=0.01) # 3=>2
+    assert math.isclose(row_two["volume_back"], -0.2231435513142097, rel_tol=0.01) # 3=>2
     assert pd.isna(row_two["close_high_5_ff"])
     assert pd.isna(row_two["time_high_5_ff"])
     assert pd.isna(row_two["close_low_5_ff"])
@@ -73,7 +73,7 @@ def test_with_high():
     assert row_two["cum_volume"] == 9
     assert row_two["cum_dv"] == 9
     assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
-    assert math.isclose(row_two["volume_back"], -0.405465, rel_tol=0.01)
+    assert math.isclose(row_two["volume_back"], -0.2231435513142097, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
@@ -123,7 +123,7 @@ def test_with_negative_price():
     assert row_two["cum_volume"] == 6
     assert row_two["cum_dv"] == 6
     assert math.isclose(row_two["close_back"], -0.0020100509280238654, rel_tol=0.01)
-    assert math.isclose(row_two["volume_back"], -0.405465, rel_tol=0.01)
+    assert math.isclose(row_two["volume_back"], -0.2231435513142097, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
@@ -157,7 +157,7 @@ def test_with_low():
     assert row_two["cum_volume"] == 9
     assert row_two["cum_dv"] == 9
     assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
-    assert math.isclose(row_two["volume_back"], -0.405465, rel_tol=0.01)
+    assert math.isclose(row_two["volume_back"], -0.2231435513142097, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
@@ -215,7 +215,7 @@ def test_add_example_features():
         )
         env_mgr = EnvMgr(cfg)
         market_cal = env_mgr.market_cal
-        macro_data_builder = MacroDataBuilder(cfg)
+        macro_data_builder = MacroDataBuilder(env_mgr)
         start_timestamp = 1325689200
         delta = 30*60
         timestamps = [start_timestamp + i*delta for i in range(8)]

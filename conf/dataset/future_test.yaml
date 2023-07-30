@@ -3,6 +3,6 @@ time_interval: "30min"
 model_tickers: ['ES']
 trading_tickers: ['ES']
 max_stale_minutes: 30
-snapshot: ${hydra:runtime.cwd}/data/snapshot/test/
+snapshot: ${hydra.runtime.cwd}/data/snapshot/test
 write_snapshot: False
 read_snapshot: False

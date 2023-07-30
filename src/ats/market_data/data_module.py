@@ -53,6 +53,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             time_varying_unknown_reals = OmegaConf.to_object(time_varying_unknown_reals)
         self.full_data = full_data
         self.train_data = full_data[full_data.time_idx.isin(training_time_idx)]
+        self.eval_data = full_data[full_data.time_idx.isin(validation_time_idx)]
         self.test_data = full_data[full_data.time_idx.isin(test_time_idx)]
         logging.info(f"full_data:{len(self.full_data)}, train_data:{len(self.train_data)}, test_data:{len(self.test_data)}")
         self.full = TimeSeriesDataSet(

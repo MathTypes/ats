@@ -169,10 +169,6 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
     raw_data["cum_volume"] = raw_data.volume.cumsum()
     raw_data["cum_dv"] = raw_data.dv.cumsum()
-    #df_pct_back = raw_data[["close", "volume", "dv"]].pct_change(periods=1)
-    #df['close_pct_change'] = raw_data.close.pct_change(period=1)
-    #df['volume_pct_change'] = raw_data.volume.pct_change(period=1)
-    #df['dv_pct_change'] = raw_data.dv.pct_change(period=1)
     raw_data['close_back'] = np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price)
     # Avoid inf
     raw_data['volume_back'] = np.log(raw_data.volume+2) - np.log(raw_data.volume.shift(1)+2)
@@ -182,9 +178,6 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data['volume_fwd'] = np.log(raw_data.volume.shift(-1)) - np.log(raw_data.volume)
     raw_data['dv_fwd'] = np.log(raw_data.dv.shift(-1)) - np.log(raw_data.dv)
     
-    #raw_data = raw_data.join(df_pct_back, rsuffix="_back").join(
-    #    df_pct_forward, rsuffix="_fwd"
-    #)
     raw_data["close_back_cumsum"] = raw_data["close_back"].cumsum()
     raw_data["volume_back_cumsum"] = raw_data["volume_back"].cumsum()
 
@@ -351,11 +344,6 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
     # logging.info(f"new_features:{new_features.columns}")
     new_features = new_features.drop(columns=["volume", "dv", "close", "timestamp"])
     raw_data = raw_data.join(new_features)
-    # raw_data.reset_index(drop = True, inplace = True)
-    # raw_data["new_idx"] = raw_data.apply(lambda x: x.ticker + "_" + str(x.timestamp), axis=1)
-    # raw_data = raw_data.set_index("new_idx")
-    # raw_data = raw_data.sort_index()
-    # logging.info(f"raw_data: {raw_data.iloc[:4]}, {raw_data.columns}")
 
     # winsorize using rolling 5X standard deviations to remove outliers
     raw_data["daily_returns"] = calc_returns(raw_data["close"])
