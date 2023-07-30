@@ -64,6 +64,7 @@ nvidia-cuda-runtime-cu11 = "^11.8.89"
 nvidia-cudnn-cu11 = "^8.9.2.26"
 #torch = "^2.0.1"
 tensorflow = "^2.13.0"
+cpflows = "^0.1.2"
 
 
 [build-system]
