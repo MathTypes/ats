@@ -1,0 +1,8 @@
+base_dir: ${hydra:runtime.cwd}/data
+time_interval: "30min"
+model_tickers: ['ES']
+trading_tickers: ['ES']
+max_stale_minutes: 30
+snapshot: ${hydra:runtime.cwd}/data/snapshot/es
+write_snapshot: False
+read_snapshot: True
