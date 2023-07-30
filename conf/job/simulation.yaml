@@ -1,12 +1,12 @@
 device: cuda
 mode: test
-retrain_model_before_test_start: True
+retrain_model_before_test_start: False
 data_start_date: 2008-01-01
 train_start_date: 2008-01-01
-eval_start_date: 2022-01-01
-eval_end_date: 2023-05-01
-test_start_date: 2022-01-01
-test_end_date: 2023-05-01
+eval_start_date: 2023-07-24
+eval_end_date: 2023-07-28
+test_start_date: 2023-07-24
+test_end_date: 2023-07-28
 time_interval_minutes: 30
 max_lag: 365
 max_lead: 7
@@ -16,7 +16,7 @@ log_mode: All
 eval_batches: 10
 log_example_eval_every_n_epochs: 1
 tag: default
-checkpoint:
+checkpoint: ${hydra:runtime.cwd}/model/single_asset_fixed_features.ckpt
 market: CME_Equity
 tune_learning_rate: False
 num_tune_iter: 20

@@ -23,33 +23,16 @@ eval_batch_size = 10
 
 class TimeSeriesDataModule(pl.LightningDataModule):
     def __init__(
-            self, config, train_data, eval_data, test_data, target,
-            transformed_data = None
+            self, config, full_data, training_time_idx, validation_time_idx, test_time_idx,
+            target, transformed_full = None
     ):
         super().__init__()
-        if train_data.empty and config.job.mode in ["eval", "build_search"]:
+        if training_time_idx.empty and config.job.mode in ["eval", "build_search"]:
             # TODO: get rid of the hack to fake train data during
             # eval and build_search mode. In both case, we do
             # not have train data and do not want data_module
             # to cry
-            train_data = eval_data
-        #logging.info(f"train_data:{train_data.describe()}")
-        train_data.replace([np.inf, -np.inf], np.nan,inplace=True)
-        eval_data.replace([np.inf, -np.inf], np.nan,inplace=True)
-        test_data.replace([np.inf, -np.inf], np.nan,inplace=True)
-        train_data = train_data.fillna(-1)
-        eval_data = eval_data.fillna(-1)
-        test_data = test_data.fillna(-1)
-        logging.info(f"train_data:{train_data.describe()}")
-        logging.info(f"eval_data:{eval_data.describe()}")
-        logging.info(f"test_data:{test_data.describe()}")
-        self.train_data = train_data.dropna()
-        self.eval_data = eval_data.dropna()
-        self.test_data = test_data
-        logging.info(f"train_data after dropna:{self.train_data.describe()}")
-        logging.info(f"eval_data after dropna:{self.eval_data.describe()}")
-        logging.info(f"train_data:{len(self.train_data)}")
-
+            train_time_idx = eval_time_idx
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
         # target_normalizer = None
@@ -68,9 +51,12 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         time_varying_unknown_reals = config.features.time_varying_unknown_reals
         if OmegaConf.is_list(time_varying_unknown_reals):
             time_varying_unknown_reals = OmegaConf.to_object(time_varying_unknown_reals)
-        logging.info(f"train_data:{len(self.train_data)}")
-        self.training = TimeSeriesDataSet(
-            self.train_data,
+        self.full_data = full_data
+        self.train_data = full_data[full_data.time_idx.isin(training_time_idx)]
+        self.test_data = full_data[full_data.time_idx.isin(test_time_idx)]
+        logging.info(f"full_data:{len(self.full_data)}, train_data:{len(self.train_data)}, test_data:{len(self.test_data)}")
+        self.full = TimeSeriesDataSet(
+            self.full_data,
             time_idx="time_idx",
             target=target,
             group_ids=["ticker"],
@@ -85,11 +71,11 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             time_varying_known_reals=time_varying_known_reals,
             time_varying_unknown_reals=time_varying_unknown_reals,
             categorical_encoders={
-                "ticker": NaNLabelEncoder().fit(self.train_data.ticker)
+                "ticker": NaNLabelEncoder().fit(self.full_data.ticker)
             },
             # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
             add_relative_time_idx=config.features.add_relative_time_idx,
-            transformed_data=transformed_data[0] if transformed_data else None
+            transformed_data=transformed_full
         )
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128
@@ -97,17 +83,25 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.eval_batch_size = config.model.eval_batch_size
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
-        eval_data_size = (
-            int(len(self.eval_data) / self.eval_batch_size) * self.eval_batch_size
+        #eval_data_size = (
+        #    int(len(self.eval_data) / self.eval_batch_size) * self.eval_batch_size
+        #)
+        #self.eval_data = self.eval_data[:eval_data_size]
+        #self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data,
+        #                                                 transformed_data=transformed_data[1] if transformed_data else None)
+        self.training = self.full.filter(
+            lambda x: x.time_idx_first_prediction.isin(training_time_idx)
         )
-        self.eval_data = self.eval_data[:eval_data_size]
-        logging.info(f"eval_data_size:{len(self.eval_data)}")
-        self.validation = TimeSeriesDataSet.from_dataset(self.training, self.eval_data,
-                                                         transformed_data=transformed_data[1] if transformed_data else None)
-        logging.info(f"test_data_size:{len(self.test_data)}")
-        self.test = TimeSeriesDataSet.from_dataset(
-            self.training, self.test_data,
-            transformed_data=transformed_data[2] if transformed_data else None
+        self.validation = self.full.filter(
+            lambda x: x.time_idx_first_prediction.isin(validation_time_idx)
+        )
+        #self.test = TimeSeriesDataSet.from_dataset(
+        #    self.training, self.test_data,
+        #    transformed_data=transformed_data[2] if transformed_data else None
+        #)
+        #logging.info(f"test_time_idx:{test_time_idx}")
+        self.test = self.full.filter(
+            lambda x: x.time_idx_first_prediction.isin(test_time_idx)
         )
 
     def prepare_data(self):

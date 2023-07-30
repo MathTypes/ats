@@ -1,6 +1,6 @@
 base_dir: ${hydra:runtime.cwd}/data
 time_interval: "30min"
 model_tickers: ["ES", "NQ", "RTY", "CL", "GC", "ZN", "HG", "NKD", "DX"]
-snapshot: ${hydra:runtime.cwd}/data/snapshot/mini_futures
+snapshot: ${hydra:runtime.cwd}/data/snapshot/mini_futures_transformed
 write_snapshot: False
 read_snapshot: True

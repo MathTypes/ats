@@ -1,8 +1,16 @@
 device: cuda
 mode: train
+
 train_start_date: 2008-06-01
-test_start_date: 2022-06-01
-test_end_date: 2023-01-01
+eval_start_date: 2020-01-01
+eval_end_date: 2023-07-28
+test_start_date: 2020-01-01
+test_end_date: 2023-07-28
+
+market: CME_Equity
+max_lag: 7
+max_lead: 7
+
 workers: 8
 num_tune_iter: 20
 max_epochs: 5
@@ -12,4 +20,3 @@ tune_learning_rate: False
 log_example_eval_every_n_epochs: 5
 tag: default
 checkpoint:
-

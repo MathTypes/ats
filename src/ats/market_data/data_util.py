@@ -336,10 +336,15 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
         "close_low_51_bf",
         "close_high_201_bf",
         "close_low_201_bf",
+        'close_rolling_5d_max', 'close_rolling_5d_min', 'close_rolling_11d_max',
+        'close_rolling_11d_min', 'close_rolling_21d_max',
+        'close_rolling_21d_min', 'close_rolling_51d_max',
+        'close_rolling_51d_min', 'close_rolling_201d_max',
+        'close_rolling_201d_min'
     ]:
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
-    logging.info(f"raw_data:{raw_data.describe()}")
+    #logging.info(f"raw_data:{raw_data.describe()}")
     new_features = raw_data.groupby(["ticker"], group_keys=False)[
         ["volume", "dv", "close", "timestamp"]
     ].apply(ticker_transform, interval_minutes=interval_minutes)

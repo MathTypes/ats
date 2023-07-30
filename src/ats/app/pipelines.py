@@ -200,6 +200,8 @@ class PatchTftSupervisedPipeline(Pipeline):
         train_dataset = self.data_module.training
         train_data = self.data_module.train_data
         future_data = self.data_module.test_data
+        train_data = train_data[train_data.ticker.isin(["ES"])]
+        future_data = future_data[future_data.ticker.isin(["ES"])]
 
         # logging.info(f"train_data:{train_data.iloc[-2:]}")
         # logging.info(f"future_data:{future_data.iloc[:2]}")

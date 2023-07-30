@@ -81,17 +81,17 @@ class MarketDataMgr(object):
         self.config = env_mgr.config
         self.market_cal = env_mgr.market_cal
         self.macro_data_builder = MacroDataBuilder(self.env_mgr)
-        self._RAW_DATA = None
+        self._FULL_DATA = None
         self._DATA_MODULE = None
 
     
     #@cached_property
-    def raw_data(self):
-        logging.info(f"self._RAW_DATA:{self._RAW_DATA}")
-        if self._RAW_DATA is None:
-            logging.info("costly raw_data creation")
-            self._RAW_DATA = self._get_snapshot()
-        return self._RAW_DATA
+    def full_data(self):
+        logging.info(f"self._FULL_DATA:{self._FULL_DATA}")
+        if self._FULL_DATA is None:
+            logging.info("costly full_data creation")
+            self._FULL_DATA = self._get_snapshot()
+        return self._FULL_DATA
 
     #@cached_property
     def data_module(self):
@@ -106,81 +106,80 @@ class MarketDataMgr(object):
         env_mgr = self.env_mgr
         config = env_mgr.config
         start = time.time()
-        raw_data = self.raw_data()
-        train_data = raw_data[
-            (raw_data.timestamp >= env_mgr.train_start_timestamp)
-            & (raw_data.timestamp < env_mgr.test_start_timestamp)
+        full_data = self.full_data()
+        full_data.replace([np.inf, -np.inf], np.nan,inplace=True)
+        full_data = full_data.fillna(-1)
+        logging.info(f"full_data, max_time:{full_data.timestamp.max()}, min_time:{full_data.timestamp.min()}")
+        logging.info(f"env_mgr.train_start_timestamp:{env_mgr.train_start_timestamp}, test_start:{env_mgr.test_start_timestamp}, test_end:{env_mgr.test_end_timestamp}")
+        # TODO: full_data might need to extend beyond test_end_timestamp to pick up
+        # lead data
+        full_data = full_data[
+            (full_data.timestamp >= env_mgr.train_start_timestamp)
+            & (full_data.timestamp <= env_mgr.test_end_timestamp)
         ]
-        eval_data = raw_data[
-            (raw_data.timestamp >= env_mgr.eval_start_timestamp)
-            & (raw_data.timestamp < env_mgr.eval_end_timestamp)
+        # TODO: it is a hack to add env_mgr.test_start_timestamp to train_data.
+        # The reason is that without it, train_data would end at 16:30 EST prior day and
+        # eval data would start at 18:30 EST prior day. So we have a 18:00 missing.
+        train_data = full_data[
+            (full_data.timestamp >= env_mgr.train_start_timestamp)
+            & (full_data.timestamp <= env_mgr.test_start_timestamp)
         ]
-        test_data = raw_data[
-            (raw_data.timestamp >= env_mgr.test_start_timestamp)
-            & (raw_data.timestamp < env_mgr.test_end_timestamp)
+        eval_data = full_data[
+            (full_data.timestamp >= env_mgr.eval_start_timestamp)
+            & (full_data.timestamp <= env_mgr.eval_end_timestamp)
         ]
+        test_data = full_data[
+            (full_data.timestamp >= env_mgr.test_start_timestamp)
+            & (full_data.timestamp <= env_mgr.test_end_timestamp)
+        ]
+        train_time_idx = train_data["time_idx"]    
+        eval_time_idx = eval_data["time_idx"]    
+        test_time_idx = test_data["time_idx"]    
+        logging.info(f"full data after filtering: {full_data.iloc[-3:]}")
         logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
-        logging.info(f"eval data after filtering: {eval_data.iloc[:3]}")
-        logging.info(f"test data after filtering: {test_data.iloc[:3]}")
-        logging.info(f"train_data:{len(train_data)}, eval_data: {len(eval_data)}, test_data:{len(test_data)}")
-        train_data = train_data.sort_values(["ticker", "time"])
-        eval_data = eval_data.sort_values(["ticker", "time"])
-        test_data = test_data.sort_values(["ticker", "time"])
+        logging.info(f"eval data after filtering: {eval_data.iloc[-3:]}")
+        logging.info(f"test data after filtering: {test_data.iloc[-3:]}")
+        logging.info(f"full_data:{len(full_data)}, train:{len(train_time_idx)}, eval:{len(eval_time_idx)}, test:{len(test_time_idx)}")
+        full_data = full_data.sort_values(["ticker", "time"])
         data_module = TimeSeriesDataModule(
             config,
-            train_data,
-            eval_data,
-            test_data,
+            full_data, train_time_idx, eval_time_idx, test_time_idx,
             env_mgr.targets,
-            transformed_data=(self.transformed_train, self.transformed_validation, self.transformed_test) 
+            transformed_full=self.transformed_full
         )
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             data_start_date_str = env_mgr.data_start_date.strftime('%Y%m%d')
             data_end_date_str = env_mgr.data_end_date.strftime('%Y%m%d')
-            snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_train"
-            ds = ray.data.from_pandas(data_module.training.transformed_data)
+            snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_full"
+            ds = ray.data.from_pandas(data_module.full.transformed_data)
             os.makedirs(snapshot_dir, exist_ok=True)
             ds.write_parquet(snapshot_dir)
-            snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_validation"
-            ds = ray.data.from_pandas(data_module.validation.transformed_data)
-            os.makedirs(snapshot_dir, exist_ok=True)
-            ds.write_parquet(snapshot_dir)
-            snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_test"
-            ds = ray.data.from_pandas(data_module.test.transformed_data)
-            os.makedirs(snapshot_dir, exist_ok=True)
-            ds.repartition(10).write_parquet(snapshot_dir)
         
         return data_module
 
     
     def _get_snapshot(self):
-        raw_data = None
+        full_data = None
         env_mgr = self.env_mgr
         data_start_date_str = env_mgr.data_start_date.strftime('%Y%m%d')
         data_end_date_str = env_mgr.data_end_date.strftime('%Y%m%d')
         snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}"
         logging.info(f"checking snapshot:{snapshot_dir}")
-        self.transformed_train = None
-        self.transformed_validation = None
-        self.transformed_test = None
+        self.transformed_full = None
         try:
             if self.config.dataset.read_snapshot and os.listdir(f"{snapshot_dir}"):
                 logging.info(f"reading snapshot from {snapshot_dir}")
-                raw_data = read_snapshot(snapshot_dir)
-                snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_train"
-                self.transformed_train = read_snapshot(snapshot_dir)
-                snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_validation"
-                self.transformed_validation = read_snapshot(snapshot_dir)
-                snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_test"
-                self.transformed_test = read_snapshot(snapshot_dir)                
+                full_data = read_snapshot(snapshot_dir)
+                snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_full"
+                self.transformed_full = read_snapshot(snapshot_dir)
                 
         except Exception as e:
             logging.error(f"can not read snapshot:{e}")
             # Will try regenerating when reading fails
             pass
 
-        if not raw_data is None:
-            return raw_data
+        if not full_data is None:
+            return full_data
 
         train_data_vec = []
         refs = []
@@ -206,16 +205,16 @@ class MarketDataMgr(object):
             )
             ticker_train_data = ticker_train_data.set_index("new_idx")
             train_data_vec.append(ticker_train_data)
-        raw_data = pd.concat(train_data_vec)
+        full_data = pd.concat(train_data_vec)
         # TODO: the original time comes from aggregated time is UTC, but actually
         # has New York time in it.
-        raw_data["time"] = raw_data.time.apply(
+        full_data["time"] = full_data.time.apply(
             market_time.utc_to_nyse_time,
             interval_minutes=self.config.job.time_interval_minutes,
         )
-        raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
+        full_data["timestamp"] = full_data.time.apply(lambda x: int(x.timestamp()))
         # Do not use what are in serialized files as we need to recompute across different months.
-        raw_data = raw_data.drop(
+        full_data = full_data.drop(
             columns=[
                 "close_back",
                 "volume_back",
@@ -227,21 +226,21 @@ class MarketDataMgr(object):
                 "cum_dv",
             ]
         )
-        raw_data = raw_data.reset_index()
-        raw_data["new_idx"] = raw_data.apply(
+        full_data = full_data.reset_index()
+        full_data["new_idx"] = full_data.apply(
             lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
-        raw_data = raw_data.set_index("new_idx")
-        raw_data = raw_data.sort_index()
-        raw_data["time_idx"] = range(0, len(raw_data))
+        full_data = full_data.set_index("new_idx")
+        full_data = full_data.sort_index()
+        full_data["time_idx"] = range(0, len(full_data))
 
-        raw_data = data_util.add_group_features(
-            raw_data, self.config.job.time_interval_minutes
+        full_data = data_util.add_group_features(
+            full_data, self.config.job.time_interval_minutes
         )
-        raw_data = data_util.add_example_level_features(raw_data, self.market_cal,
-                                                        self.macro_data_builder)
+        full_data = data_util.add_example_level_features(full_data, self.market_cal,
+                                                         self.macro_data_builder)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
-            ds = ray.data.from_pandas(raw_data)
+            ds = ray.data.from_pandas(full_data)
             os.makedirs(snapshot_dir, exist_ok=True)
             ds.write_parquet(snapshot_dir)
-        return raw_data
+        return full_data

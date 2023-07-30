@@ -70,17 +70,21 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.every_n_epochs = config.job.log_example_eval_every_n_epochs
         logging.info(f"num_samples:{self.num_samples}")
         data_iter = iter(data_module.val_dataloader())
-        for batch in range(self.num_samples):
-            val_x, val_y = next(data_iter)
-            indices = data_module.validation.x_to_index(val_x)
-            self.val_x_batch.append(val_x)
-            self.val_y_batch.append(val_y)
-            self.indices_batch.append(indices)
-            logging.info(
-                f"batch_size:{len(val_x)}, indices_batch:{len(self.indices_batch)}"
-            )
+        try:
+            for batch in range(self.num_samples):
+                val_x, val_y = next(data_iter)
+                indices = data_module.validation.x_to_index(val_x)
+                self.val_x_batch.append(val_x)
+                self.val_y_batch.append(val_y)
+                self.indices_batch.append(indices)
+                logging.info(
+                    f"batch_size:{len(val_x)}, indices_batch:{len(self.indices_batch)}"
+                )
+        except StopIteration as e:
+            logging.warn(f"next of iter:{e}")
+
         self.validation = data_module.validation
-        self.matched_eval_data = data_module.eval_data
+        self.matched_eval_data = data_module.full_data
         self.returns_target_name = self.validation.target_names[0]
         transformer = self.validation.get_transformer(self.returns_target_name)
         logging.info(f"transformer:{transformer}")

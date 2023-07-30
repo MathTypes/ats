@@ -29,6 +29,7 @@ class Trader(object):
         super().__init__()
         self.market_data_mgr = md_mgr
         self.last_time_idx = train_data.iloc[-1]["time_idx"]
+        logging.info(f"train_data:{train_data.iloc[-3:]}")
         self.last_data_time = None
         self.last_px_map = {}
         last_data = train_data.iloc[-1]
@@ -67,19 +68,16 @@ class Trader(object):
         )
         predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
         logging.info(f"utc_time:{utc_time}, trading_times:{trading_times}")
-        if self.first_update:
-            # logging.info(f"future_data:{future_data.iloc[:3]}")
-            new_data = self.future_data[
-                (self.future_data.timestamp >= trading_times[0])
-                & (self.future_data.timestamp <= trading_times[-1])
-                & (self.future_data.ticker == "ES")
-            ]
-        else:
-            new_data = self.future_data[
-                (self.future_data.timestamp == trading_times[-1])
-                & (self.future_data.ticker == "ES")
-            ]
-            self.first_update = False
+        # logging.info(f"future_data:{future_data.iloc[:3]}")
+        new_data = self.future_data[
+            (self.future_data.timestamp >= trading_times[0])
+            & (self.future_data.timestamp <= trading_times[-1])
+            & (self.future_data.ticker == "ES")
+        ]
+        bad_new_data = new_data[new_data.isna().any(axis=1)]
+        if not bad_new_data.empty:
+            logging.error(f"bad_new_data:{bad_new_data}")
+            exit(0)
         if new_data.empty:
             if (
                 self.last_data_time is None
@@ -105,21 +103,21 @@ class Trader(object):
             self.market_cal,
             self.market_data_mgr,
         )
-        predict_time_idx = new_data.time_idx.max()
+        predict_time_idx_end = new_data.time_idx.max()
         # logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
         logging.info(
-            f"last_time_idex={self.last_time_idx}, predict_time_idx:{predict_time_idx}"
+            f"last_time_idex={self.last_time_idx}, predict_time_idx:{predict_time_idx_end}"
         )
         filtered_dataset = self.train_dataset.filter(
-            lambda x: (x.time_idx_last == predict_time_idx)
+            lambda x: (x.time_idx_last == predict_time_idx_end)
         )
         x, y = next(iter(filtered_dataset.to_dataloader(train=False, batch_size=1)))
-        # logging.info(f"x:{x}, y:{y}")
+        logging.info(f"x:{x}, y:{y}")
         # new_prediction_data is the last encoder_data, we need to add decoder_data based on
         # known features or lagged unknown features
         # logging.info(f"new_prediction_data:{new_prediction_data}")
         y_hats, y_quantiles, out = prediction_utils.predict(
-            self.model, filtered_dataset, self.wandb_logger
+            self.model, filtered_dataset, self.wandb_logger, batch_size=1
         )
         # logging.info(f"y_hats:{y_hats}")
         if isinstance(y_hats, list):

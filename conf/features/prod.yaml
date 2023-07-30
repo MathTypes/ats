@@ -2,6 +2,7 @@ static_categoricals: ["ticker"]
 time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month","time_to_new_york_open", "time_to_new_york_close", "time_to_london_open", "time_to_london_open","time_to_london_close"]
 time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_5_ff", "close_low_5_ff", "close_high_11_ff", "close_low_11_ff","close_high_21_ff", "close_low_21_ff", "close_high_51_ff", "close_low_51_ff", "close_low_201_ff", "close_high_201_ff", "macd_8_24", "macd_16_48", "macd_32_96", "macd", "macd_signal", "bb_high", "bb_low", "sma_50", "sma_200", "macd", "macd_signal", "bb_high", "bb_low", "sma_50", "sma_200", "time_to_high_5_ff\
 ", "time_to_low_5_ff", "time_to_high_11_ff", "time_to_low_11_ff", "time_to_high_21_ff", "time_to_low_21_ff", "time_to_high_51_ff", "time_to_low_51_ff", "time_to_high_201_ff", "time_to_low_201_ff"]
-lags: {"close_high_21_ff":[21], "close_low_21_ff":[21], "close_high_51_ff":[51], "close_low_51_ff":[51], "close_back_cumsum":[1], "close_low_201_ff":[201], "close_high_201_ff":[201], "close":[1], "high":[1], "low":[1], "open":[1], "volume_back":[1], "close_back":[1], "macd_8_24":[1], "macd_16_48":[1], "macd_32_96":[1],}
+#lags: {"close_high_21_ff":[21], "close_low_21_ff":[21], "close_high_51_ff":[51], "close_low_51_ff":[51], "close_back_cumsum":[1], "close_low_201_ff":[201], "close_high_201_ff":[201], "close":[1], "high":[1], "low":[1], "open":[1], "volume_back":[1], "close_back":[1], "macd_8_24":[1], "macd_16_48":[1], "macd_32_96":[1],}
+lags: {}
 add_relative_time_idx: True
 add_macro_event: False

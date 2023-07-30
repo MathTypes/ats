@@ -429,11 +429,6 @@ class TimeSeriesDataSet(Dataset):
         # add time index relative to prediction position
         if self.add_relative_time_idx or self.add_encoder_length:
             data = data.copy()  # only copies indices (underlying data is NOT copied)
-        if self.add_relative_time_idx:
-            assert (
-                "relative_time_idx" not in data.columns
-            ), "relative_time_idx is a protected column and must not be present in data"
-            data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
 
         # add decoder length to static real variables
         if self.add_encoder_length:
@@ -446,12 +441,20 @@ class TimeSeriesDataSet(Dataset):
 
         #logging.error(f"data:{data.iloc[-5:]} simulation_mode:{self.simulation_mode}")
         if transformed_data is None:
+            if self.add_relative_time_idx:
+                assert (
+                    "relative_time_idx" not in data.columns
+                ), "relative_time_idx is a protected column and must not be present in data"
+                data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
             self._create_encoder(data)
             self.add_lag_variables(data, transformed=True)
             self.transform_data(data)
         else:
-            logging.info(f"setting tranformed_data")
+            #logging.info(f"setting tranformed_data")
             data = transformed_data
+            if self.add_relative_time_idx:
+                data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
+
             self._create_encoder(data)
             self.add_lag_variables(data, transformed=True)
             self.transformed_data = data
@@ -485,6 +488,8 @@ class TimeSeriesDataSet(Dataset):
         # Needs to keep raw_data so that we can transform newly arrived data. This is 
         # required because of the lagged feature transformation requires raw data.
         self.raw_data = data
+        if self.add_relative_time_idx:
+            self.raw_data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
 
         # overwrite values
         self.reset_overwrite_values()
@@ -558,11 +563,16 @@ class TimeSeriesDataSet(Dataset):
         #logging.info(f"preprocessed_data:{data.iloc[-3:]}")
         for target in self.target_names:
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
+        data = data.dropna()
         self.transformed_data = data
         # create index
         self.index = self._construct_index(data, predict_mode=self.predict_mode)
+        logging.info(f"index:{self.index[-4:]}")
         self.y = None
+        #nan_values = data[data.isna().any(axis=1)]
+        #logging.error(f"nan_values:{nan_values[:3]}")
         #logging.error(f"data:{data.describe()}")
+        #logging.error(f"data:{data.iloc[-4:]}")
         # convert to torch tensor for high performance data loading later
         self.data = self._data_to_tensors(data)
 
@@ -931,6 +941,8 @@ class TimeSeriesDataSet(Dataset):
                         self.scalers[name] = self.scalers[name].fit(data[[name]])
 
         # encode after fitting
+        #logging.info(f"data:{data.columns}")
+        #logging.info(f"data_describe:{data.describe()}")
         for name in self.reals:
             #logging.info(f"encode name:{name}")
             # targets are handled separately
@@ -1081,13 +1093,13 @@ class TimeSeriesDataSet(Dataset):
                                 self.static_reals.append(feature_name)
 
         # rescale continuous variables apart from target
-        logging.info(f"data_columns: {data.columns}")
+        #logging.info(f"data_columns: {data.columns}")
         for name in self.reals:
             if name in self.target_names or name in self.lagged_variables:
                 # lagged variables are only transformed - not fitted
                 continue
             elif name not in self.scalers:
-                logging.info(f"trying to fit {name}")
+                #logging.info(f"trying to fit {name}")
                 self.scalers[name] = StandardScaler().fit(data[[name]])
             elif self.scalers[name] is not None:
                 try:
@@ -1648,15 +1660,13 @@ class TimeSeriesDataSet(Dataset):
         # ensure that there is a sequence that finishes on every timestep
         if len(missing_sequences) > 0:
             shortened_sequences = df_index.iloc[missing_sequences[:, 0]].assign(index_end=missing_sequences[:, 1])
-
             # concatenate shortened sequences
             df_index = pd.concat([df_index, shortened_sequences], axis=0, ignore_index=True)
 
         # filter out where encode and decode length are not satisfied
         df_index["sequence_length"] = df_index["time"].iloc[df_index["index_end"]].to_numpy() - df_index["time"] + 1
-        #logging.info(f"df_index:{df_index}")
-        #logging.info(f"min_sequence_length:{min_sequence_length}")
         # filter too short sequences
+        #logging.info(f"df_index:{df_index}")
         df_index = df_index[
             # sequence must be at least of minimal prediction length
             lambda x: (x.sequence_length >= min_sequence_length)
@@ -1710,7 +1720,8 @@ class TimeSeriesDataSet(Dataset):
             TimeSeriesDataSet: filtered dataset
         """
         # calculate filter
-        #logging.info(f"decoded_index:{self.decoded_index[:10]}")
+        logging.info(f"decoded_index:{self.decoded_index[:10]}")
+        logging.info(f"decoded_index:{self.decoded_index[-10:]}")
         filtered_index = self.index[np.asarray(filter_func(self.decoded_index))]
         # raise error if filter removes all entries
         if len(filtered_index) == 0:
@@ -1742,6 +1753,8 @@ class TimeSeriesDataSet(Dataset):
         # get dataframe to filter
         index_start = self.index["index_start"].to_numpy()
         index_last = self.index["index_end"].to_numpy()
+        #logging.info(f"index_start:{index_start}")
+        #logging.info(f"index_last:{index_last}")
         index = (
             # get group ids in order of index
             pd.DataFrame(self.data["groups"][index_start].numpy(), columns=self.group_ids)
@@ -2062,433 +2075,56 @@ class TimeSeriesDataSet(Dataset):
         assert isinstance(obj, cls), f"Loaded file is not of class {cls}"
         return obj
 
-    def _preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Scale continuous variables, encode categories and set aside target and weight.
-
-        Args:
-            data (pd.DataFrame): original data
-
-        Returns:
-            pd.DataFrame: pre-processed dataframe
-        """
-        # add lags to data
-        for name in self.lags:
-            # todo: add support for variable groups
-            assert (
-                name not in self.variable_groups
-            ), f"lagged variables that are in {self.variable_groups} are not supported yet"
-            for lagged_name, lag in self._get_lagged_names(name).items():
-                data[lagged_name] = data.groupby(self.group_ids, observed=True)[name].shift(lag)
-
-        # encode group ids - this encoding
-        for name, group_name in self._group_ids_mapping.items():
-            # use existing encoder - but a copy of it not too loose current encodings
-            encoder = deepcopy(self.categorical_encoders.get(group_name, NaNLabelEncoder()))
-            self.categorical_encoders[group_name] = encoder.fit(data[name].to_numpy().reshape(-1), overwrite=False)
-            data[group_name] = self.transform_values(name, data[name], inverse=False, group_id=True)
-            #logging.info(f"data[{group_name}]:{data[group_name][:100]}")
-
-        # encode categoricals first to ensure that group normalizer for relies on encoded categories
-        if isinstance(
-            self.target_normalizer, (GroupNormalizer, MultiNormalizer)
-        ):  # if we use a group normalizer, group_ids must be encoded as well
-            group_ids_to_encode = self.group_ids
-        else:
-            group_ids_to_encode = []
-        for name in dict.fromkeys(group_ids_to_encode + self.categoricals):
-            if name in self.lagged_variables:
-                continue  # do not encode here but only in transform
-            if name in self.variable_groups:  # fit groups
-                columns = self.variable_groups[name]
-                if name not in self.categorical_encoders:
-                    self.categorical_encoders[name] = NaNLabelEncoder().fit(data[columns].to_numpy().reshape(-1))
-                elif self.categorical_encoders[name] is not None:
-                    try:
-                        check_is_fitted(self.categorical_encoders[name])
-                    except NotFittedError:
-                        #logging.info(f"fitting:{name}")
-                        self.categorical_encoders[name] = self.categorical_encoders[name].fit(
-                            data[columns].to_numpy().reshape(-1)
-                        )
-            else:
-                if name not in self.categorical_encoders:
-                    self.categorical_encoders[name] = NaNLabelEncoder().fit(data[name])
-                elif self.categorical_encoders[name] is not None and name not in self.target_names:
-                    try:
-                        check_is_fitted(self.categorical_encoders[name])
-                    except NotFittedError:
-                        self.categorical_encoders[name] = self.categorical_encoders[name].fit(data[name])
-
-        # encode them
-        for name in dict.fromkeys(group_ids_to_encode + self.flat_categoricals):
-            # targets and its lagged versions are handled separetely
-            if name not in self.target_names and name not in self.lagged_targets:
-                #logging.info(f"transorm:{name}")
-                data[name] = self.transform_values(
-                    name, data[name], inverse=False, ignore_na=name in self.lagged_variables
-                )
-        # save special variables
-        assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
-        data["__time_idx__"] = data[self.time_idx]  # save unscaled
-        #logging.info(f"target_names:type{self.target_names}")
-        for target in self.target_names:
-            #logging.info(f"target:{target}")
-            assert (
-                f"__target__{target}" not in data.columns
-            ), f"__target__{target} is a protected column and must not be present in data"
-            data[f"__target__{target}"] = data[target]
-        if self.weight is not None:
-            data["__weight__"] = data[self.weight]
-
-        # train target normalizer
-        if self.target_normalizer is not None:
-            # fit target normalizer
-            try:
-                check_is_fitted(self.target_normalizer)
-            except NotFittedError:
-                if isinstance(self.target_normalizer, EncoderNormalizer):
-                    self.target_normalizer.fit(data[self.target])
-                elif isinstance(self.target_normalizer, (GroupNormalizer, MultiNormalizer)):
-                    self.target_normalizer.fit(data[self.target], data)
-                else:
-                    self.target_normalizer.fit(data[self.target])
-
-            # transform target
-            if isinstance(self.target_normalizer, EncoderNormalizer):
-                # we approximate the scales and target transformation by assuming one
-                # transformation over the entire time range but by each group
-                common_init_args = [
-                    name
-                    for name in inspect.signature(GroupNormalizer.__init__).parameters.keys()
-                    if name in inspect.signature(EncoderNormalizer.__init__).parameters.keys()
-                    and name not in ["data", "self"]
-                ]
-                copy_kwargs = {name: getattr(self.target_normalizer, name) for name in common_init_args}
-                normalizer = GroupNormalizer(groups=self.group_ids, **copy_kwargs)
-                data[self.target], scales = normalizer.fit_transform(data[self.target], data, return_norm=True)
-
-
-            elif isinstance(self.target_normalizer, GroupNormalizer):
-                data[self.target], scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-
-
-            elif isinstance(self.target_normalizer, MultiNormalizer):
-                transformed, scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-
-                for idx, target in enumerate(self.target_names):
-                    data[target] = transformed[idx]
-
-                    if isinstance(self.target_normalizer[idx], NaNLabelEncoder):
-                        # overwrite target because it requires encoding (continuous targets should not be normalized)
-                        data[f"__target__{target}"] = data[target]
-
-            elif isinstance(self.target_normalizer, NaNLabelEncoder):
-                data[self.target] = self.target_normalizer.transform(data[self.target])
-                #logging.info(f"nan label normalizr scales:{scales}")
-                # overwrite target because it requires encoding (continuous targets should not be normalized)
-                data[f"__target__{self.target}"] = data[self.target]
-                scales = None
-
-            else:
-                data[self.target], scales = self.target_normalizer.transform(data[self.target], return_norm=True)
-                #logging.info(f"default normalizr scales:{scales}")
-            # add target scales
-            if self.add_target_scales:
-                #logging.info(f"does not expect add_target_scales")
-                #exit(0)
-                if not isinstance(self.target_normalizer, MultiNormalizer):
-                    scales = [scales]
-                for target_idx, target in enumerate(self.target_names):
-                    if not isinstance(self.target_normalizers[target_idx], NaNLabelEncoder):
-                        for scale_idx, name in enumerate(["center", "scale"]):
-                            feature_name = f"{target}_{name}"
-                            assert (
-                                feature_name not in data.columns
-                            ), f"{feature_name} is a protected column and must not be present in data"
-                            data[feature_name] = scales[target_idx][:, scale_idx].squeeze()
-                            if feature_name not in self.reals:
-                                self.static_reals.append(feature_name)
-
-        # rescale continuous variables apart from target
-        for name in self.reals:
-            if name in self.target_names or name in self.lagged_variables:
-                #logging.info(f"skip fitting {name}")
-                # lagged variables are only transformed - not fitted
-                continue
-            elif name not in self.scalers:
-                #logging.info(f"fit real with standard: {name}, {data[[name]].iloc[:5]}")
-                self.scalers[name] = StandardScaler().fit(data[[name]])
-            elif self.scalers[name] is not None:
-                try:
-                    check_is_fitted(self.scalers[name])
-                except NotFittedError:
-                    #logging.info(f"fit real: {name}")
-                    if isinstance(self.scalers[name], GroupNormalizer):
-                        self.scalers[name] = self.scalers[name].fit(data[name], data)
-                    else:
-                        self.scalers[name] = self.scalers[name].fit(data[[name]])
-
-        # encode after fitting
-        for name in self.reals:
-            #logging.info(f"encode name:{name}")
-            # targets are handled separately
-            transformer = self.get_transformer(name)
-            if (
-                name not in self.target_names
-                and transformer is not None
-                and not isinstance(transformer, EncoderNormalizer)
-            ):
-                #logging.info(f"name:{name}, data:{data[name]}")
-                # See https://stackoverflow.com/questions/69326639/sklearn-warning-valid-feature-names-in-version-1-0
-                # why .values is need. Lagged variables do not have their own scaler and use scaler from original
-                # variable.
-                data[name] = self.transform_values(name, data[name].values, data=data, inverse=False)
-
-        # encode lagged categorical targets
-        for name in self.lagged_targets:
-            # normalizer only now available
-            if name in self.flat_categoricals:
-                data[name] = self.transform_values(name, data[name], inverse=False, ignore_na=True)
-
-        # encode constant values
-        self.encoded_constant_fill_strategy = {}
-        for name, value in self.constant_fill_strategy.items():
-            if name in self.target_names:
-                self.encoded_constant_fill_strategy[f"__target__{name}"] = value
-            self.encoded_constant_fill_strategy[name] = self.transform_values(
-                name, np.array([value]), data=data, inverse=False
-            )[0]
-
-        # shorten data by maximum of lagged sequences to avoid NA values - shorten only after encoding
-        if self.max_lag > 0:
-            # negative tail implementation as .groupby().tail(-self.max_lag) is not implemented in pandas
-            g = data.groupby(self._group_ids, observed=True)
-            data = g._selected_obj[g.cumcount() >= self.max_lag]
-        return data
-
-    def _transform_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Scale continuous variables, encode categories and set aside target and weight.
-
-        Args:
-            data (pd.DataFrame): original data
-
-        Returns:
-            pd.DataFrame: pre-processed dataframe
-        """
-        # add lags to data
-        #logging.info(f"tranforming data:{data.iloc[-3:]}")
-        for name in self.lags:
-            # todo: add support for variable groups
-            assert (
-                name not in self.variable_groups
-            ), f"lagged variables that are in {self.variable_groups} are not supported yet"
-            for lagged_name, lag in self._get_lagged_names(name).items():
-                #logging.info(f"shitting {lagged_name}, {lag}")
-                data[lagged_name] = data.groupby(self.group_ids, observed=True)[name].shift(lag)
-
-        # encode group ids - this encoding
-        for name, group_name in self._group_ids_mapping.items():
-            # use existing encoder - but a copy of it not too loose current encodings
-            data[group_name] = self.transform_values(name, data[name], inverse=False, group_id=True)
-            #logging.info(f"data[{group_name}]:{data[group_name][:100]}")
-
-        # encode categoricals first to ensure that group normalizer for relies on encoded categories
-        if isinstance(
-            self.target_normalizer, (GroupNormalizer, MultiNormalizer)
-        ):  # if we use a group normalizer, group_ids must be encoded as well
-            group_ids_to_encode = self.group_ids
-        else:
-            group_ids_to_encode = []
-
-        # encode them
-        for name in dict.fromkeys(group_ids_to_encode + self.flat_categoricals):
-            # targets and its lagged versions are handled separetely
-            if name not in self.target_names and name not in self.lagged_targets:
-                #logging.info(f"transorm:{name}")
-                data[name] = self.transform_values(
-                    name, data[name], inverse=False, ignore_na=name in self.lagged_variables
-                )
-        #logging.info(f"transformed_data:{data.iloc[-3:]}")
-        # save special variables
-        assert "__time_idx__" not in data.columns, "__time_idx__ is a protected column and must not be present in data"
-        data["__time_idx__"] = data[self.time_idx]  # save unscaled
-        #logging.info(f"target_names:type{self.target_names}")
-        for target in self.target_names:
-            #logging.info(f"target:{target}")
-            assert (
-                f"__target__{target}" not in data.columns
-            ), f"__target__{target} is a protected column and must not be present in data"
-            data[f"__target__{target}"] = data[target]
-        if self.weight is not None:
-            data["__weight__"] = data[self.weight]
-
-        # train target normalizer
-        if self.target_normalizer is not None:
-            # transform target
-            if isinstance(self.target_normalizer, EncoderNormalizer):
-                # we approximate the scales and target transformation by assuming one
-                # transformation over the entire time range but by each group
-                common_init_args = [
-                    name
-                    for name in inspect.signature(GroupNormalizer.__init__).parameters.keys()
-                    if name in inspect.signature(EncoderNormalizer.__init__).parameters.keys()
-                    and name not in ["data", "self"]
-                ]
-                copy_kwargs = {name: getattr(self.target_normalizer, name) for name in common_init_args}
-                normalizer = GroupNormalizer(groups=self.group_ids, **copy_kwargs)
-                data[self.target], scales = normalizer.fit_transform(data[self.target], data, return_norm=True)
-                #logging.info(f"encoder normalizr scales:{scales}")
-
-            elif isinstance(self.target_normalizer, GroupNormalizer):
-                data[self.target], scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-                #logging.info(f"group normalizr scales:{scales}")
-
-            elif isinstance(self.target_normalizer, MultiNormalizer):
-                transformed, scales = self.target_normalizer.transform(data[self.target], data, return_norm=True)
-                #logging.info(f"multi normalizr scales:{scales}")
-
-                for idx, target in enumerate(self.target_names):
-                    data[target] = transformed[idx]
-
-                    if isinstance(self.target_normalizer[idx], NaNLabelEncoder):
-                        # overwrite target because it requires encoding (continuous targets should not be normalized)
-                        data[f"__target__{target}"] = data[target]
-
-            elif isinstance(self.target_normalizer, NaNLabelEncoder):
-                data[self.target] = self.target_normalizer.transform(data[self.target])
-                #logging.info(f"nan label normalizr scales:{scales}")
-                # overwrite target because it requires encoding (continuous targets should not be normalized)
-                data[f"__target__{self.target}"] = data[self.target]
-                scales = None
-
-            else:
-                data[self.target], scales = self.target_normalizer.transform(data[self.target], return_norm=True)
-                #logging.info(f"default normalizr scales:{scales}")
-
-            # add target scales
-            if self.add_target_scales:
-                #logging.info(f"does not expect add_target_scales")
-                #exit(0)
-                if not isinstance(self.target_normalizer, MultiNormalizer):
-                    scales = [scales]
-                for target_idx, target in enumerate(self.target_names):
-                    if not isinstance(self.target_normalizers[target_idx], NaNLabelEncoder):
-                        for scale_idx, name in enumerate(["center", "scale"]):
-                            feature_name = f"{target}_{name}"
-                            assert (
-                                feature_name not in data.columns
-                            ), f"{feature_name} is a protected column and must not be present in data"
-                            data[feature_name] = scales[target_idx][:, scale_idx].squeeze()
-                            if feature_name not in self.reals:
-                                self.static_reals.append(feature_name)
-
-        # encode after fitting
-        for name in self.reals:
-            #logging.info(f"encode name:{name}")
-            # targets are handled separately
-            transformer = self.get_transformer(name)
-            if (
-                name not in self.target_names
-                and transformer is not None
-                and not isinstance(transformer, EncoderNormalizer)
-            ):
-                data[name] = self.transform_values(name, data[name], data=data, inverse=False)
-
-        # encode lagged categorical targets
-        for name in self.lagged_targets:
-            # normalizer only now available
-            if name in self.flat_categoricals:
-                data[name] = self.transform_values(name, data[name], inverse=False, ignore_na=True)
-
-        # encode constant values
-        self.encoded_constant_fill_strategy = {}
-        for name, value in self.constant_fill_strategy.items():
-            if name in self.target_names:
-                self.encoded_constant_fill_strategy[f"__target__{name}"] = value
-            self.encoded_constant_fill_strategy[name] = self.transform_values(
-                name, np.array([value]), data=data, inverse=False
-            )[0]
-
-        # shorten data by maximum of lagged sequences to avoid NA values - shorten only after encoding
-        # logging.info(f"before select:{data}, max_lag:{self.max_lag}")
-        if self.max_lag > 0:
-            # negative tail implementation as .groupby().tail(-self.max_lag) is not implemented in pandas
-            g = data.groupby(self._group_ids, observed=True)
-            data = g._selected_obj[g.cumcount() >= self.max_lag]
-        return data
-
-    def get_transformer(self, name: str, group_id: bool = False):
-        """
-        Get transformer for variable.
-
-        Args:
-            name (str): variable name
-            group_id (bool, optional): If the passed name refers to a group id (different encoders are used for these).
-                Defaults to False.
-
-        Returns:
-            transformer
-        """
-        if group_id:
-            name = self._group_ids_mapping[name]
-        elif name in self.lagged_variables:  # recover transformer fitted on non-lagged variable
-            #logging.info(f"name:{name}, lagged:{self.lagged_variables[name]}")
-            name = self.lagged_variables[name]
-
-        if name in self.flat_categoricals + self.group_ids + self._group_ids:
-            name = self.variable_to_group_mapping.get(name, name)  # map name to encoder
-
-            # take target normalizer if required
-            if name in self.target_names:
-                transformer = self.target_normalizers[self.target_names.index(name)]
-            else:
-                transformer = self.categorical_encoders.get(name, None)
-            return transformer
-
-        elif name in self.reals:
-            # take target normalizer if required
-            if name in self.target_names:
-                transformer = self.target_normalizers[self.target_names.index(name)]
-            else:
-                transformer = self.scalers.get(name, None)
-            #logging.info(f"scalers:{self.scalers}")
-            return transformer
-        else:
-            return None
-
     @profile_util.profile
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes, cal, mdr):
         #self.raw_data = pd.concat([self.raw_data, new_data])
         #logging.info(f"adding new_data:{new_data}")
+        #logging.info(f"self.add_relative_time_idx:{self.add_relative_time_idx}")
+        if self.add_relative_time_idx:
+            assert (
+                "relative_time_idx" not in new_data.columns
+            ), "relative_time_idx is a protected column and must not be present in data"
+            new_data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
+        raw_data = self.raw_data
+        start_timestamp = new_data.iloc[0]["timestamp"]
+        logging.info(f"removing from {start_timestamp}, {new_data.iloc[0]['time']}")
+        raw_data = raw_data[(raw_data.timestamp<start_timestamp) & (raw_data.ticker=="ES")]
+        #logging.info(f"raw_data:{raw_data.iloc[-3:]}")
         for index, row in new_data.iterrows():
-            idx = self.raw_data[self.raw_data.time_idx==row["time_idx"]].index
-            #logging.info(f"index:{idx}")
+            idx = raw_data[(raw_data.time_idx==row["time_idx"])].index
+            #logging.info(f"index:{idx}, row:{row}")
             if not idx.empty:
-                self.raw_data.loc[idx,
-                                  ["open", "close", "high", "low", "volume", "dv", "time", "timestamp", "ticker", "series_idx", "time_idx"]] = [
-                                      row["open"], row["close"], row["high"], row["low"], row["volume"], row["dv"],
-                                      row["time"], row["timestamp"], row["ticker"], row["series_idx"], row["time_idx"]]
+                logging.error(f"does not expect duplicate time_idx")
+                exit(0)
+                raw_data.loc[idx,
+                             ["open", "close", "high", "low", "volume", "dv", "time", "timestamp", "ticker",
+                              "series_idx", "time_idx", "relative_time_idx"]] = [
+                                  row["open"], row["close"], row["high"], row["low"], row["volume"], row["dv"],
+                                  row["time"], row["timestamp"], row["ticker"], row["series_idx"],
+                                  row["time_idx"], row["relative_time_idx"]]
             else:
-                self.raw_data.loc[len(self.raw_data.index)] = row
-        #logging.info(f"new_full_data_before_add_group_features:{self.raw_data.iloc[-5:]}")
-        self.raw_data = data_util.add_group_features(self.raw_data, interval_minutes)
+                raw_data.loc[len(raw_data.index)] = row
+        #logging.info(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
+        raw_data = data_util.add_group_features(raw_data, interval_minutes)
         # This assumes we only have single ticker per timeseries dataset.
-        new_data_idx = self.raw_data.time_idx.isin(new_data.time_idx)
-        new_raw_data = self.raw_data[new_data_idx]
-        #logging.info(f"new_raw_data:{new_raw_data}")
-        new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr)
-        #logging.info(f"new_raw_data after adding example level features:{new_raw_data}")
-        self.raw_data[new_data_idx] = new_raw_data
-        #logging.info(f"new_full_data_before_ffill:{self.raw_data.iloc[-3:]}")
-        self.raw_data = self.raw_data.ffill()
-        #logging.info(f"new_full_data_before_dropna:{self.raw_data.iloc[-3:]}")
+        #logging.info(f"new_data:{new_data.iloc[2]}")
+        new_data_idx = raw_data.time_idx.isin(new_data.time_idx)
+        #logging.info(f"new_data_idx:{new_data_idx[:2]}")
+        new_raw_data = raw_data[new_data_idx]
+        #logging.info(f"new_raw_data:{new_raw_data[:2]}")
+        new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
+        #logging.info(f"new_raw_data after adding example level features:{new_raw_data[:2]}")
+        raw_data[new_data_idx] = new_raw_data
+        #logging.info(f"new_full_data_before_ffill:{raw_data.iloc[-3:]}")
+        raw_data = raw_data.ffill()
+        #logging.info(f"new_full_data_before_dropna:{raw_data.iloc[-3:]}")
         #self.raw_data = self.raw_data.fillna(0)
         #self.raw_data = self.raw_data.dropna()
         #logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
-        data = self.preprocess_data(self.raw_data)
+        data = self.preprocess_data(raw_data)
+        self.raw_data = data
         self.transform_data(data)
+        logging.info(f"transformed_data:{data.iloc[-3:]}")
     
     def __getitem__(self, idx: int) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
         """
