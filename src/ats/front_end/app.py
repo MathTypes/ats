@@ -8,18 +8,19 @@ import news_analyzer
 import os
 import pandas as pd
 import rvl
-import sentiment_analyzer
 import streamlit as st
-import token_analyzer
-import trading_data
-import visualization
 
-from data.front_end_utils import data_process
-from market_data import ts_read_api
-from neo4j_util import sentiment_api
-from util import config_utils
-from util import logging_utils
-from util import nlp_utils
+import ats.front_end.sentiment_analyzer
+import ats.front_end.token_analyzer
+import ats.front_end.trading_data
+import ats.front_end.visualization
+
+from ats.data.front_end_utils import data_process
+from ats.market_data import ts_read_api
+from ats.neo4j_util import sentiment_api
+from ats.util import config_utils
+from ats.util import logging_utils
+from ats.util import nlp_utils
 
 
 parser = config_utils.get_arg_parser("Preprocess tweet")
@@ -75,6 +76,8 @@ def load_data(from_date, to_date):
 
 market_df, news_df = load_data(from_date, to_date)
 news_df = data_process(news_df)
+
+logging.info(f"navigated:{navigated}")
 
 if navigated == "XE Token Analyzer":
     token_analyzer.render_token_analyzer()

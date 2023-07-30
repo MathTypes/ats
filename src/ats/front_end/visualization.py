@@ -7,10 +7,9 @@ import plotly.express as px
 import pyLDAvis
 import streamlit as st
 from textblob import TextBlob
-from util import nlp_utils
 from wordcloud import WordCloud
 
-from data.front_end_utils import (
+from ats.data.front_end_utils import (
     analyze_token_sentiment,
     display_text,
     get_list_ner,
@@ -20,6 +19,7 @@ from data.front_end_utils import (
     visualize_ner,
 )
 from data_analysis.topic_modeling import LatentDirichletAllocation
+from ats.util import nlp_utils
 
 
 def render_visualization(news_df, start_day, end_day):

@@ -6,16 +6,22 @@ authors = ["Jianjun Chen <jianjun00@gmail.com>"]
 readme = "README.md"
 packages = [
 	 {include = "ats", from = "src"},
+	 {include = "vss", from = "src"},
 	 {include = "pytorch_forecasting", from = "src"},
 	 {include = "pytorch_metric_learning", from = "src"},
 	 {include = "fiftyone", from = "src"},
 ]
 
+
 [tool.poetry.dependencies]
-python = "^3.8"
-numpy = "1.24.4"
-torch = "2.0.1"
-hydra = "^2.5"
+#python = "^3.8"
+#python = ">=3.8,<3.9.7"
+#python = ">=3.9,<3.9.7"
+python = ">=3.10,<3.12"
+#numpy = "1.24.4"
+#torch = "^2"
+#torch
+#hydra = "^2.5"
 omegaconf = "^2.3.0"
 pandas-market-calendars = "^4.1.4"
 empyrical = "^0.5.5"
@@ -35,7 +41,7 @@ transformers = "^4.30.2"
 cvxpy = "^1.3.2"
 #scikit-learn = "0.22.2.post1"
 #kaleido = "0.2.1"
-pandas = "1.5.3"
+#pandas = "1.5.3"
 pytest-profiling = "^1.7.0"
 matplotlib = "^3.7.2"
 statsmodels = "^0.14.0"
@@ -46,8 +52,23 @@ scikit-learn = "^1.3.0"
 plotly = "^5.15.0"
 kaleido = "0.2.1"
 pygwalker = "^0.2.1"
+defillama = "^1.1.0"
+spacy-streamlit = "^1.0.6"
+streamlit-vega-lite = "^0.1.0"
+streamlit-aggrid = "^0.3.4.post3"
+panel = "^1.2.1"
+nvidia-cuda-cupti-cu11 = "^11.7.101"
+nvidia-cublas-cu11 = "^11.11.3.6"
+nvidia-cuda-nvrtc-cu11 = "^11.8.89"
+nvidia-cuda-runtime-cu11 = "^11.8.89"
+nvidia-cudnn-cu11 = "^8.9.2.26"
+#torch = "^2.0.1"
+tensorflow = "^2.13.0"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

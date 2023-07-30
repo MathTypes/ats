@@ -24,7 +24,7 @@ class EnvMgr(object):
         has_eval_stage = self.config.job.mode in ["train", "test", "eval", "build_search", "search"]
         has_test_stage = self.config.job.mode in ["test"]
 
-        self.max_lags = self.config.job.max_lag
+        self.max_lags = self.config.model.max_lag
         if has_train_stage:
             self.train_start_date = datetime.datetime.strptime(
                 self.config.job.train_start_date, "%Y-%m-%d"
@@ -94,8 +94,8 @@ class EnvMgr(object):
             self.test_start_timestamp = self.eval_start_timestamp
             self.test_end_timestamp = self.eval_end_timestamp
             
-        self.data_start_date = data_start_date - datetime.timedelta(days=self.config.job.max_lag)
-        self.data_end_date = data_end_date + datetime.timedelta(days=self.config.job.max_lead)
+        self.data_start_date = data_start_date - datetime.timedelta(days=self.config.model.max_lag)
+        self.data_end_date = data_end_date + datetime.timedelta(days=self.config.model.max_lead)
         self.dataset_base_dir = self.config.dataset.base_dir
         self.model_tickers = self.config.dataset.model_tickers
         self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
