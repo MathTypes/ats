@@ -9,7 +9,7 @@ from ats.calendar import date_utils
 class MacroDataBuilder:
     def __init__(self, env_mgr):
         self.config = env_mgr.config
-        self.add_macro_event = self.config.features.add_macro_event
+        self.add_macro_event = self.config.model.features.add_macro_event
         if self.add_macro_event:
             self.load_events()
 

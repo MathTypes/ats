@@ -1,7 +1,6 @@
 defaults:
  - dataset: future_intg
- - features: prod
  - optimizer: adam
- - model: patch_tft_supervised_single_asset_full_futures
+ - model: patch_tft_supervised_single_asset_full_futures_v2
  - job: simulation
  - trading: dev

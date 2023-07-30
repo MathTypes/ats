@@ -16,7 +16,6 @@ log_mode: All
 eval_batches: 10
 log_example_eval_every_n_epochs: 1
 tag: default
-checkpoint: ${hydra:runtime.cwd}/model/single_asset_fixed_features.ckpt
 market: CME_Equity
 tune_learning_rate: False
 num_tune_iter: 20

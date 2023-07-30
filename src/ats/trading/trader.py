@@ -116,13 +116,13 @@ class Trader(object):
         # new_prediction_data is the last encoder_data, we need to add decoder_data based on
         # known features or lagged unknown features
         # logging.info(f"new_prediction_data:{new_prediction_data}")
-        y_hats, y_quantiles, out = prediction_utils.predict(
+        y_hats, y_quantiles, out, x = prediction_utils.predict(
             self.model, filtered_dataset, self.wandb_logger, batch_size=1
         )
         # logging.info(f"y_hats:{y_hats}")
         if isinstance(y_hats, list):
             y_hats = y_hats[0]
-        returns_fcst = y_hats.numpy()
+        returns_fcst = y_hats.cpu().numpy()
         min_y_quantiles = y_quantiles[:, :, 0]
         max_y_quantiles = y_quantiles[:, :, -1]
         # logging.info(f"min_y_quantiles:{min_y_quantiles}, max_y_quantiles:{max_y_quantiles}")
@@ -133,10 +133,10 @@ class Trader(object):
         max_fcst = torch.max(cum_max_y_quantiles)
         # logging.info(f"min_fcst:{min_fcst}, max_fcst:{max_fcst}")
         min_neg_fcst = (
-            torch.minimum(min_fcst, torch.tensor(0)).unsqueeze(0).detach().numpy()
+            torch.minimum(min_fcst, torch.tensor(0)).unsqueeze(0).detach().cpu().numpy()
         )
         max_pos_fcst = (
-            torch.maximum(max_fcst, torch.tensor(0)).unsqueeze(0).detach().numpy()
+            torch.maximum(max_fcst, torch.tensor(0)).unsqueeze(0).detach().cpu().numpy()
         )
         # logging.info(f"returns_fcst:{returns_fcst}, min_neg_fcst:{min_neg_fcst}, max_pos_fcst:{max_pos_fcst}")
         new_positions, ret, val = self.optimizer.optimize(
@@ -158,7 +158,7 @@ class Trader(object):
             attention_prediction_horizon=0,  # attention only for first prediction horizon
         )
         # logging.info(f"interp_output:{interp_output}")
-        log_viz = self.cnt % self.config.log_viz_every_n == 0
+        log_viz = self.cnt % self.config.trading.log_viz_every_n == 0
         row = viz_utils.create_viz_row(
             0,
             y_hats,

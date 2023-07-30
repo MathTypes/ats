@@ -45,10 +45,10 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         #        EncoderNormalizer(transformation="relu") for i in range(len(target))
         #    ]
         #    target_normalizer = MultiNormalizer(normalizer_list)
-        time_varying_known_reals = config.features.time_varying_known_reals
+        time_varying_known_reals = config.model.features.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)
-        time_varying_unknown_reals = config.features.time_varying_unknown_reals
+        time_varying_unknown_reals = config.model.features.time_varying_unknown_reals
         if OmegaConf.is_list(time_varying_unknown_reals):
             time_varying_unknown_reals = OmegaConf.to_object(time_varying_unknown_reals)
         self.full_data = full_data
@@ -66,15 +66,15 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             max_prediction_length=prediction_length,
             allow_missing_timesteps=True,
             target_normalizer=target_normalizer,
-            lags=config.features.lags,
-            static_categoricals=config.features.static_categoricals,
+            lags=config.model.features.lags,
+            static_categoricals=config.model.features.static_categoricals,
             time_varying_known_reals=time_varying_known_reals,
             time_varying_unknown_reals=time_varying_unknown_reals,
             categorical_encoders={
                 "ticker": NaNLabelEncoder().fit(self.full_data.ticker)
             },
             # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
-            add_relative_time_idx=config.features.add_relative_time_idx,
+            add_relative_time_idx=config.model.features.add_relative_time_idx,
             transformed_data=transformed_full
         )
         # create dataloaders for model

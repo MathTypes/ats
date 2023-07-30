@@ -441,11 +441,6 @@ class TimeSeriesDataSet(Dataset):
 
         #logging.error(f"data:{data.iloc[-5:]} simulation_mode:{self.simulation_mode}")
         if transformed_data is None:
-            if self.add_relative_time_idx:
-                assert (
-                    "relative_time_idx" not in data.columns
-                ), "relative_time_idx is a protected column and must not be present in data"
-                data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
             self._create_encoder(data)
             self.add_lag_variables(data, transformed=True)
             self.transform_data(data)
