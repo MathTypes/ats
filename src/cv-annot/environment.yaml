@@ -1,0 +1,19 @@
+name: cv-annot
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - pip
+  - pytorch
+  - torchvision
+  - pip:
+    - fiftyone
+    - jupyterlab
+    - ipywidgets
+    - tqdm
+    - yacs
+    - python-dotenv
+    - pycocotools
+    - imagehash
+    - flickrapi  # flickr image retrieval
+    - git+https://github.com/liruilong940607/OCHumanApi.git  # for OCHuman annotations
