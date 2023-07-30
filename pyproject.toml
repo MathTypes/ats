@@ -8,6 +8,7 @@ packages = [
 	 {include = "ats", from = "src"},
 	 {include = "pytorch_forecasting", from = "src"},
 	 {include = "pytorch_metric_learning", from = "src"},
+	 {include = "fiftyone", from = "src"},
 ]
 
 [tool.poetry.dependencies]
