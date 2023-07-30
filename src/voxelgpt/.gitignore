@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+*.egg-info
+**/*.DS_store
+.chroma
+.fiftyone_docs_db
+.ipynb_checkpoints
+node_modules
+settings.json
+archives
