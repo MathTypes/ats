@@ -66,6 +66,7 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
     #model.to(device)
     # logging.info(f"model:{model}, device:{model.device}")
     device = model.device
+    model._log_hyperparams = False
     new_raw_predictions = model.predict(
         new_prediction_data,
         mode="raw",

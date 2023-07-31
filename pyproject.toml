@@ -65,6 +65,7 @@ nvidia-cudnn-cu11 = "^8.9.2.26"
 #torch = "^2.0.1"
 tensorflow = "^2.13.0"
 cpflows = "^0.1.2"
+undetected-chromedriver = "^3.5.0"
 
 
 [build-system]

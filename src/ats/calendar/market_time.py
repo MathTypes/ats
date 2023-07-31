@@ -7,7 +7,7 @@ import pytz
 
 from ats.calendar import date_util
 from ats.util import time_util
-
+from ats.util import profile_util
 
 @functools.lru_cache(maxsize=None)
 def get_macro_event_time(cal, x_date, mdb):
@@ -92,6 +92,7 @@ def utc_to_nyse_time(utc_time, interval_minutes):
 
 # TODO: currently we take date from cal. That means if cal is weekly close
 # date, it will use that date instead of jumping to next week.
+
 def compute_weekly_close_time(x, cal):
     try:
         x = datetime.datetime.fromtimestamp(x)
@@ -134,7 +135,6 @@ def compute_open_time(x, cal):
         logging.error(f"can not compute open for {x}, {e}")
         return None
 
-
 def compute_close_time(x, cal):
     # logging.info(f"x:{x}, {type(x)}")
     try:
@@ -144,7 +144,6 @@ def compute_close_time(x, cal):
         logging.error(f"can not compute open for {x}, {e}")
         return None
 
-
 def compute_next_open_time(x, cal):
     try:
         x = datetime.datetime.fromtimestamp(x)
@@ -153,7 +152,6 @@ def compute_next_open_time(x, cal):
     except Exception as e:
         logging.error(f"can not compute open for {x}, {e}")
         return None
-
 
 def get_next_trading_times(cal, interval, now, k):
     start_date = now.date()

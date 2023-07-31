@@ -1,12 +1,12 @@
 device: cuda
 mode: test
 retrain_model_before_test_start: False
-data_start_date: 2009-06-01
+data_start_date: 2008-01-01
 train_start_date: 2009-06-01
-eval_start_date: 2009-07-01
-eval_end_date: 2009-08-01
-test_start_date: 2009-07-01
-test_end_date: 2009-08-01
+eval_start_date: 2010-07-01
+eval_end_date: 2010-08-01
+test_start_date: 2010-07-01
+test_end_date: 2010-08-01
 time_interval_minutes: 30
 max_lags: 365
 workers: 8

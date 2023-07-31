@@ -465,14 +465,14 @@ def create_viz_row(
         "month": train_data_row["month"],  # 6 month
         "day_of_month": train_data_row["day_of_month"],  # 7 day_of_month
         "image": wandb.Image(raw_im),  # 8 image
-        "y_close_cum_max": y_close_cum_max,  # 9 max
-        "y_close_cum_min": y_close_cum_min,  # 10 min
+        "y_close_cum_max": y_close_cum_max.item(),  # 9 max
+        "y_close_cum_min": y_close_cum_min.item(),  # 10 min
         "close_back_cumsum": 0,  # 11 close_back_cusum
         "close_back": train_data_row["close_back"],
         "dm_str": dm_str,  # 12
-        "decoder_time_idx": decoder_time_idx,
-        "y_hat_cum_max": y_hat_cum_max,
-        "y_hat_cum_min": y_hat_cum_min,
+        "decoder_time_idx": decoder_time_idx.item(),
+        "y_hat_cum_max": y_hat_cum_max.item(),
+        "y_hat_cum_min": y_hat_cum_min.item(),
         "pred_img": img,
         "error_cum_max": y_hat_cum_max - y_close_cum_max,
         "error_cum_min": y_hat_cum_min - y_close_cum_min,

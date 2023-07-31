@@ -67,8 +67,7 @@ class Trader(object):
             utc_time, max_prediction_length + 1
         )
         predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
-        logging.info(f"utc_time:{utc_time}, trading_times:{trading_times}")
-        # logging.info(f"future_data:{future_data.iloc[:3]}")
+        logging.info(f"future_data:{self.future_data.iloc[:3]}")
         new_data = self.future_data[
             (self.future_data.timestamp >= trading_times[0])
             & (self.future_data.timestamp <= trading_times[-1])
@@ -104,7 +103,7 @@ class Trader(object):
             self.market_data_mgr,
         )
         predict_time_idx_end = new_data.time_idx.max()
-        # logging.info(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
+        # logging.error(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
         logging.info(
             f"last_time_idex={self.last_time_idx}, predict_time_idx:{predict_time_idx_end}"
         )
@@ -191,7 +190,7 @@ class Trader(object):
         row["delta_position"] = new_position - last_position
         row["px"] = px
         row["pnl_delta"] = pnl_delta
-        df2 = {
+        new_pnl_row = {
             "ticker": ticker,
             "timestamp": new_data_row.timestamp,
             "px": px,
@@ -199,8 +198,10 @@ class Trader(object):
             "pos": new_position,
             "pnl": pnl_delta,
         }
-        logging.info(f"new_df:{df2}")
-        self.pnl_df = self.pnl_df.append(df2, ignore_index=True)
+        logging.info(f"new_pnl_row:{new_pnl_row}")
+        self.current_data_row = new_data_row
+        self.pnl_df.loc[len(self.pnl_df)] = new_pnl_row
+        #self.pnl_df = self.pnl_df.append(df2, ignore_index=True)
         self.last_position_map[ticker] = new_position
         self.last_px_map[ticker] = px
         logging.info(f"return row:{row}")

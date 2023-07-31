@@ -93,7 +93,7 @@ def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_inte
     # logging.info(f"reading files:{input_dirs}")
     return input_dirs
 
-
+@profile_util.profile
 def get_processed_data(
     base_dir, start_date, end_date, ticker: str, asset_type: str, time_interval
 ) -> pd.DataFrame:
@@ -159,7 +159,7 @@ def get_time(x, close_col):
     else:
         return None
     
-# @profile
+@profile_util.profile
 def ticker_transform(raw_data, interval_minutes, base_price=500):
     ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
     means = ewm.mean()
@@ -246,8 +246,8 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["close_low_201_bf"] = raw_data["close_rolling_201d_min"].bfill()
     raw_data["time_low_201_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_201_ff"), axis=1)
     raw_data["time_low_201_ff"]  = raw_data["time_low_201_ff"].ffill()
-
     del close_back_cumsum
+
     # Compute RSI
     raw_data["rsi"] = ta.momentum.RSIIndicator(close=raw_data["close"]).rsi()
 
@@ -270,7 +270,6 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     ).sma_indicator()
 
     return raw_data
-
 
 def time_diff(row, base_col, diff_col):
     if pd.isna(row[diff_col]):
