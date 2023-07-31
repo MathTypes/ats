@@ -120,7 +120,8 @@ class Pipeline:
 
     def create_trainer(self):
         checkpoint_callback = ModelCheckpoint(
-            dirpath=MODELS_DIR, monitor="val_loss", save_top_k=1, verbose=True
+            dirpath=f"{self.config.model.checkpoint_output_dir}/{self.run_id}",
+            monitor="val_loss", save_top_k=1, verbose=True
         )
         # es = EarlyStopping(monitor="val_loss", mode="min", patience=16)
         lr_monitor = LearningRateMonitor(logging_interval="epoch")
