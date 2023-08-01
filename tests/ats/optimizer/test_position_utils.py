@@ -53,16 +53,63 @@ def test_single_asset_gamma_zero():
 def test_single_asset_gamma_two():
     initial_positions = torch.tensor([0])
     optimizer = Optimizer(
-        name="opt", max_loss=0.2, gamma=2, initial_positions=initial_positions
+        name="opt", max_loss=0.2, gamma=2, sigma=1,
+        initial_positions=initial_positions
     )
     returns_fcst = np.array([[0.1, 0.1, 0.1, 0.1]])
-    min_neg_fcst = np.array([-0.1])
+    min_neg_fcst = np.array([-0.2])
     max_pos_fcst = np.array([0.2])
     new_positions, ret, val = optimizer.optimize(
         returns_fcst, min_neg_fcst, max_pos_fcst
     )
-    assert math.isclose(new_positions, 2, rel_tol=0.01)
+    logging.error(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
+    assert math.isclose(new_positions, 1, rel_tol=0.01)
 
+
+def test_single_asset_gamma_two_neg_fcst_med_med_risk():
+    initial_positions = torch.tensor([0])
+    optimizer = Optimizer(
+        name="opt", max_loss=0.2, gamma=2, sigma=2,
+        initial_positions=initial_positions
+    )
+    returns_fcst = np.array([[0.1, 0.1, 0.1, 0.1]])
+    min_neg_fcst = np.array([-0.2])
+    max_pos_fcst = np.array([0.2])
+    new_positions, ret, val = optimizer.optimize(
+        returns_fcst, min_neg_fcst, max_pos_fcst
+    )
+    logging.error(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
+    assert math.isclose(new_positions, 0.2, rel_tol=0.01)
+
+def test_single_asset_gamma_two_neg_fcst_med():
+    initial_positions = torch.tensor([0])
+    optimizer = Optimizer(
+        name="opt", max_loss=0.2, gamma=2, sigma=1,
+        initial_positions=initial_positions
+    )
+    returns_fcst = np.array([[0.1, 0.1, 0.1, 0.1]])
+    min_neg_fcst = np.array([-0.2])
+    max_pos_fcst = np.array([0.2])
+    new_positions, ret, val = optimizer.optimize(
+        returns_fcst, min_neg_fcst, max_pos_fcst
+    )
+    logging.error(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
+    assert math.isclose(new_positions, 1, rel_tol=0.01)
+
+def test_single_asset_gamma_two_neg_fcst_large():
+    initial_positions = torch.tensor([0])
+    optimizer = Optimizer(
+        name="opt", max_loss=0.2, gamma=2, sigma=1,
+        initial_positions=initial_positions
+    )
+    returns_fcst = np.array([[0.1, 0.1, 0.1, 0.1]])
+    min_neg_fcst = np.array([-0.4])
+    max_pos_fcst = np.array([0.2])
+    new_positions, ret, val = optimizer.optimize(
+        returns_fcst, min_neg_fcst, max_pos_fcst
+    )
+    logging.error(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
+    assert math.isclose(new_positions, 0.2, rel_tol=0.01)
 
 def test_single_asset_large_pos_no_max_loss_hit_gamma():
     initial_positions = torch.tensor([0])
@@ -138,7 +185,7 @@ def test_single_asset_large_pos_some_max_loss():
     new_positions, ret, val = optimizer.optimize(
         returns_fcst, min_neg_fcst, max_pos_fcst
     )
-    assert math.isclose(new_positions, 3.3, rel_tol=0.01)
+    assert math.isclose(new_positions, 0, rel_tol=0.01)
     
 
 def test_single_asset_large_neg_some_max_loss():
@@ -155,9 +202,9 @@ def test_single_asset_large_neg_some_max_loss():
     new_positions, ret, val = optimizer.optimize(
         returns_fcst, min_neg_fcst, max_pos_fcst
     )
-    assert math.isclose(new_positions, -3.3, rel_tol=0.01)
+    assert math.isclose(new_positions, 0, rel_tol=0.01)
 
-def test_single_asset_large_neg_some_max_loss():
+def test_single_asset_large_neg_some_max_loss2():
     # some risk tolerance
     initial_positions = torch.tensor([0])
     returns_fcst = np.array([[-0.1, -0.3, -0.2, -0.7]])
@@ -171,7 +218,7 @@ def test_single_asset_large_neg_some_max_loss():
     new_positions, ret, val = optimizer.optimize(
         returns_fcst, min_neg_fcst, max_pos_fcst
     )
-    assert math.isclose(new_positions, -0.2, rel_tol=0.01)
+    assert math.isclose(new_positions, 0, rel_tol=0.01)
 
 def test_single_asset_large_neg_drawback():
     initial_positions = torch.tensor([0])
@@ -186,7 +233,7 @@ def test_single_asset_large_neg_drawback():
     )
     # Even though return fcst is positive, there are large neg
     # fcst to hold it back
-    assert math.isclose(new_positions, 0.4, rel_tol=0.01)
+    assert math.isclose(new_positions, 0, rel_tol=0.01)
 
 
 def test_single_asset_small_neg_drawback():
@@ -221,7 +268,7 @@ def test_two_assets_gamma_two():
         returns_fcst, min_neg_fcst, max_pos_fcst
     )
     logging.info(f"new_positions:{new_positions}")
-    assert math.isclose(new_positions[0], 4, rel_tol=0.01)
+    assert math.isclose(new_positions[0], 2, rel_tol=0.01)
     assert math.isclose(new_positions[1], 0, rel_tol=0.01)
 
 
