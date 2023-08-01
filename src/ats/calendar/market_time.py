@@ -158,12 +158,18 @@ def get_next_trading_times(cal, interval, now, k):
     schedule = cal.schedule(
         start_date=start_date, end_date=start_date + datetime.timedelta(days=5)
     )
-    time_range = mcal.date_range(schedule, frequency=interval)
+    time_range = mcal.date_range(schedule, frequency=f"{interval}min")
     results = []
+    last_time = None
     for utc_time in time_range:
         nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
         if nyc_time < now:
             continue
+        # There are cases where market stops around 16:15 EST and it will be
+        # included in schedule. We would like to skip it.
+        if last_time and nyc_time < last_time + datetime.timedelta(minutes=interval):
+            continue
+        last_time = nyc_time
         results.append(nyc_time.timestamp())
         if len(results) >= k:
             break

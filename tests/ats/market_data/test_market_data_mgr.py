@@ -39,17 +39,14 @@ def test_get_snapshot():
         assert first_train_data_row["timestamp"] == 1243807200
         last_train_data_row = data_module.train_data.iloc[-1]
         # Tue Jun 30 2009 22:00:00 UTC
-        assert last_train_data_row["timestamp"] == 1246399200
+        assert last_train_data_row["timestamp"] == 1277935200
         first_eval_data_row = data_module.eval_data.iloc[0]
         # 2009-06-30 18:00:00
-        assert first_eval_data_row["timestamp"] == 1246399200
+        assert first_eval_data_row["timestamp"] == 1277935200
         last_eval_data_row = data_module.eval_data.iloc[-1]
         # 2009-07-30 21:30:00.
-        # TODO: figure out why it is 21:30. Is it due to batch_size rounding?
-        assert last_eval_data_row["timestamp"] == 1249333200
+        assert last_eval_data_row["timestamp"] == 1280782800
         first_test_data_row = data_module.test_data.iloc[0]
-        # 2009-06-30 18:00:00
-        assert first_test_data_row["timestamp"] == 1246399200
+        assert first_test_data_row["timestamp"] == 1277935200
         last_test_data_row = data_module.test_data.iloc[-1]
-        # 2009-08-03 16:30:00
-        assert last_test_data_row["timestamp"] == 1249333200
+        assert last_test_data_row["timestamp"] == 1280782800

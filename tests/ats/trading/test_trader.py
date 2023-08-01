@@ -348,3 +348,195 @@ def test_on_interval():
         }
         logging.error(f"trader.current_data_row:{trader.current_data_row}")
         assert_map_close(trader.current_data_row, expected_data_row2)
+
+
+def test_on_interval_no_future():
+    pd.set_option("display.max_columns", None)
+    pd.set_option("display.max_rows", None)
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+                "job.test_start_date=2010-07-30",
+                "job.test_end_date=2010-07-30",
+            ],
+            return_hydra_config=True,
+        )
+        env_mgr = EnvMgr(cfg)
+        md_mgr = market_data_mgr.MarketDataMgr(env_mgr)
+        market_cal = md_mgr.market_cal
+        wandb_logger = None
+        data_module = md_mgr.data_module()
+        model = model_utils.get_patch_tft_supervised_model(
+            cfg, data_module, env_mgr.heads
+        )
+        train_dataset = data_module.training
+        train_data = data_module.train_data
+        future_data = data_module.test_data
+
+        trader = Trader(
+            md_mgr,
+            model,
+            wandb_logger,
+            env_mgr.target_size,
+            future_data,
+            train_data,
+            train_dataset,
+            cfg,
+            market_cal,
+        )
+        first_train_data_row = train_data.iloc[0]
+        logging.info(f"first_train_data_row:{first_train_data_row}")
+        last_train_data_row = train_data.iloc[-1]
+        logging.info(f"last_train_data_row:{last_train_data_row}")
+        test_date = cfg.job.test_start_date
+        schedule = market_cal.schedule(start_date=test_date, end_date=test_date)
+        time_range = mcal.date_range(
+            schedule, frequency=f"{cfg.job.time_interval_minutes}min"
+        )
+        logging.info(f"sod {test_date}, schedule:{time_range}")
+        utc_time1 = time_range[-3]
+        row1 = trader.on_interval(utc_time1)
+        logging.error(f"row1:{row1}")
+        expected_row1 = {
+            "ticker": "ES",
+            "time_idx": 27931,
+            "day_of_week": 4.0,
+            "hour_of_day": 17.0,
+            "year": 2010.0,
+            "month": 7.0,
+            "day_of_month": 30.0,
+            "y_close_cum_max": -0.22017043828964233,
+            "y_close_cum_min": -0.449798583984375,
+            "close_back_cumsum": 0,
+            "close_back": -0.22017044435548794,
+            "dm_str": "20100730-170000",
+            "decoder_time_idx": 27931,
+            "y_hat_cum_max": 0.0015224037924781442,
+            "y_hat_cum_min": -0.0005837633507326245,
+            "error_cum_max": 0.2217,
+            "error_cum_min": 0.4492,
+            "rmse": 0,
+            "mae": 0,
+            "last_position": 0,
+            "new_position": 2.0,
+            "delta_position": 2.0,
+            "px": 958.0,
+            "pnl_delta": 0.0,
+        }
+        assert_map_close(row1, expected_row1)
+        expected_pnl1 = {
+            "ticker": "ES",
+            "timestamp": 1280520000,
+            "px": 958.0,
+            "last_px": 954.75,
+            "pos": 2.0,
+            "pnl": 0.0,
+        }
+        logging.error(f"actual_pnl1:{trader.pnl_df.iloc[-1]}")
+        assert_map_close(trader.pnl_df.iloc[-1], expected_pnl1)
+
+        expected_data_row1 = {
+            "open": 955.5,
+            "high": 958.25,
+            "low": 954.75,
+            "close": 958.0,
+            "volume": 101481,
+            "dv": 97116725.25,
+            "ticker": "ES",
+            "month": 7.0,
+            "year": 2010.0,
+            "hour_of_day": 16.0,
+            "day_of_week": 4.0,
+            "day_of_month": 30.0,
+            "timestamp": 1280520000.0,
+            "time_idx": 27930,
+            "cum_volume": 1300138526.0,
+            "cum_dv": 1157691495270.0,
+            "close_back": 0.0015444018513743885,
+            "volume_back": -0.8110188970884149,
+            "dv_back": -0.8118538513872089,
+            "close_back_cumsum": -0.13710439142991326,
+            "volume_back_cumsum": 4.452683377785577,
+            "close_rolling_5d_max": -0.12585107574318588,
+            "close_high_5_ff": -0.12585107574318588,
+            "close_high_5_bf": -0.12585107574318588,
+            "time_high_5_ff": 1280235600.0,
+            "close_rolling_5d_min": -0.14709930489552736,
+            "close_low_5_ff": -0.14709930489552736,
+            "close_low_5_bf": -0.14709930489552736,
+            "time_low_5_ff": 1280493000.0,
+            "close_rolling_11d_max": -0.12585107574318588,
+            "close_high_11_ff": -0.12585107574318588,
+            "close_high_11_bf": -0.12585107574318588,
+            "time_high_11_ff": 1280235600.0,
+            "close_rolling_11d_min": -0.1711123770368328,
+            "close_low_11_ff": -0.1711123770368328,
+            "close_low_11_bf": -0.1711123770368328,
+            "time_low_11_ff": 1278376200.0,
+            "close_rolling_21d_max": -0.12585107574318588,
+            "close_high_21_ff": -0.12585107574318588,
+            "close_high_21_bf": -0.12585107574318588,
+            "time_high_21_ff": 1280235600.0,
+            "close_rolling_21d_min": -0.20521581728905947,
+            "close_low_21_ff": -0.20521581728905947,
+            "close_low_21_bf": -0.20521581728905947,
+            "time_low_21_ff": 1278376200.0,
+            "close_rolling_51d_max": -0.11791385599352555,
+            "close_high_51_ff": -0.11791385599352555,
+            "close_high_51_bf": -0.11791385599352555,
+            "time_high_51_ff": 1272265200.0,
+            "close_rolling_51d_min": -0.20521581728905947,
+            "close_low_51_ff": -0.20521581728905947,
+            "close_low_51_bf": -0.20521581728905947,
+            "time_low_51_ff": 1278376200.0,
+            "close_rolling_201d_max": -0.06373155126548458,
+            "close_high_201_ff": -0.06373155126548458,
+            "close_high_201_bf": -0.06373155126548458,
+            "time_high_201_ff": 1272265200.0,
+            "close_rolling_201d_min": -0.20521581728905947,
+            "close_low_201_ff": -0.20521581728905947,
+            "close_low_201_bf": -0.20521581728905947,
+            "time_low_201_ff": 1278376200.0,
+            "rsi": 57.51492745111251,
+            "macd": 1.2978315214612621,
+            "macd_signal": 0.5510027828234041,
+            "bb_high": 960.4832145273099,
+            "bb_low": 944.11678547269,
+            "sma_50": 952.22,
+            "sma_200": 962.4575,
+            "daily_returns": 0.002354172116139086,
+            "daily_vol": 0.002773383976208923,
+            "macd_8_24": 0.14574731347309913,
+            "macd_16_48": -0.6073307285120481,
+            "macd_32_96": -0.43809601528415787,
+            "week_of_year": 30.0,
+            "month_of_year": 7.0,
+            "weekly_close_time": 1280523600.0,
+            "monthly_close_time": 1280523600.0,
+            "option_expiration_time": 1282338000.0,
+            "new_york_open_time": 1280440800.0,
+            "new_york_close_time": 1280523600.0,
+            "london_open_time": 1280473200.0,
+            "london_close_time": 1280503800.0,
+            "time_to_new_york_open": -79200.0,
+            "time_to_new_york_close": 3600.0,
+            "time_to_london_open": -46800.0,
+            "time_to_london_close": -16200.0,
+            "time_to_weekly_close": 3600.0,
+            "time_to_monthly_close": 3600.0,
+            "time_to_option_expiration": 1818000.0,
+            "time_to_high_5_ff": -284400.0,
+            "time_to_low_5_ff": -27000.0,
+            "time_to_high_11_ff": -284400.0,
+            "time_to_low_11_ff": -2143800.0,
+            "time_to_high_21_ff": -284400.0,
+            "time_to_low_21_ff": -2143800.0,
+            "time_to_high_51_ff": -8254800.0,
+            "time_to_low_51_ff": -2143800.0,
+            "time_to_high_201_ff": -8254800.0,
+            "time_to_low_201_ff": -2143800.0,
+            "relative_time_idx": 0.0,
+        }
+        logging.error(f"trader.current_data_row:{trader.current_data_row.to_dict()}")
+        assert_map_close(trader.current_data_row, expected_data_row1)

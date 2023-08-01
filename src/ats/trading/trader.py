@@ -65,30 +65,43 @@ class Trader(object):
         max_prediction_length = self.config.model.prediction_length
         # prediction is at current time, so we need max_prediction_length + 1.
         trading_times = market_time.get_next_trading_times(
-            self.market_cal, f"{self.config.job.time_interval_minutes}min",
+            self.market_cal, self.config.job.time_interval_minutes,
             utc_time, max_prediction_length + 1
         )
         predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
-        logging.info(f"future_data:{self.future_data.iloc[:3]}")
+        logging.error(f"trading_times:{trading_times}")
         new_data = self.future_data[
             (self.future_data.timestamp >= trading_times[0])
             & (self.future_data.timestamp <= trading_times[-1])
             & (self.future_data.ticker == "ES")
         ]
+        train_raw_data = self.train_dataset.raw_data[
+            (self.train_dataset.raw_data.timestamp < trading_times[0])
+            & (self.train_dataset.raw_data.ticker == "ES")
+        ]
+        logging.error(f"new_data_from_future:{new_data.iloc[:10][['time','timestamp','close_back']]}")
         missing_times = len(trading_times) - len(new_data)
-        logging.info(f"missing_times:{missing_times}, trading_times:{len(trading_times)}, new_data:{len(new_data)}")
+        logging.error(f"missing_times:{missing_times}, trading_times:{len(trading_times)}, new_data:{len(new_data)}")
         if missing_times>0:
             starting_trading_times = len(new_data)
+            new_data_df = pd.DataFrame(columns=["open","close","high","low","volume","dv","ticker","new_idx"])
             for idx in range(missing_times):
-                new_row = {"time":trading_times[starting_trading_times+idx],
-                           "timestamp":trading_times[starting_trading_times+idx],
-                           "open":0.1, "close":0.1, "high":0.1, "low":0.1, "volume":1, "dv":1, "ticker":"ES"}
-                new_data = pd.concat([new_data, pd.DataFrame(new_row)])
-        logging.info(f"new_data:{new_data}")
-        bad_new_data = new_data[new_data.isna().any(axis=1)]
-        if not bad_new_data.empty:
-            logging.error(f"bad_new_data:{bad_new_data}")
-            exit(0)
+                timestamp = int(trading_times[starting_trading_times+idx])
+                time = datetime.datetime.utcfromtimestamp(timestamp).astimezone(pytz.timezone("America/New_York"))
+                logging.error(f"adding timestamp:{timestamp}, idx:{idx}, starting_trading_times:{starting_trading_times}")
+                new_row = {"time":time,
+                           "timestamp":timestamp,
+                           "open":0.1, "close":0.1, "high":0.1, "low":0.1, "volume":1, "dv":1,
+                           "series_idx":str(time),
+                           "ticker":"ES","new_idx":"ES_" + str(timestamp)}
+                new_data_df = pd.concat([new_data_df, pd.DataFrame(new_row, index=["new_idx"])])
+            new_data_df = new_data_df.set_index("new_idx")
+            new_data = pd.concat([new_data, new_data_df])
+        #logging.error(f"new_data:{new_data}")
+        #bad_new_data = new_data[new_data.isna().any(axis=1)]
+        #if not bad_new_data.empty:
+        #    logging.error(f"bad_new_data:{bad_new_data}")
+        #    exit(0)
         if new_data.empty:
             if (
                 self.last_data_time is None
@@ -103,6 +116,7 @@ class Trader(object):
                 )
                 return None
         self.last_data_time = predict_nyc_time
+        self.last_time_idx = train_raw_data.iloc[-1]["time_idx"]
         self.last_time_idx += 1
         new_data["time_idx"] = range(
             self.last_time_idx, self.last_time_idx + len(new_data)

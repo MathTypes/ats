@@ -466,11 +466,11 @@ class TimeSeriesDataSet(Dataset):
     def preprocess_data(self, data : pd.DataFrame):
         #g = data.groupby(self.group_ids, observed=True)
         # reduce return to bring down loss
-        #logging.info(f"data:{data.iloc[-3:]}")
+        logging.error(f"data:{data.iloc[-10:][['time','timestamp','close_back']]}")
         #logging.info(f"data:{data.describe()}")
         data_dup = data[data.index.duplicated()]
         if not data_dup.empty:
-            logging.info(f"data_dup:{data_dup}")
+            logging.error(f"data_dup:{data_dup}")
             exit(0)
         data_bad = data[data['close_back']<-0.2]
         if not data_bad.empty:
@@ -559,16 +559,16 @@ class TimeSeriesDataSet(Dataset):
         data = self._preprocess_data(data)
         # Keep raw data for processing new data
         #self.raw_data = data
-        logging.error(f"after process:{data.describe()}")
-        logging.info(f"preprocessed_data_head:{data.iloc[:3][['time','time_idx','close_back','close_back_cumsum']]}")
-        logging.info(f"preprocessed_data_tail:{data.iloc[-3:][['time','time_idx','close_back','close_back_cumsum']]}")
+        #logging.error(f"after process:{data.describe()}")
+        #logging.info(f"preprocessed_data_head:{data.iloc[:3][['time','time_idx','close_back','close_back_cumsum']]}")
+        #logging.info(f"preprocessed_data_tail:{data.iloc[-3:][['time','time_idx','close_back','close_back_cumsum']]}")
         for target in self.target_names:
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
-        logging.error(f"before dropna head: {data[:3]}")
-        logging.error(f"before dropna tail: {data[-3:][['time','time_idx','close_back','close_back_cumsum']]}")
+        #logging.error(f"before dropna head: {data[:3]}")
+        #logging.error(f"before dropna tail: {data[-3:]}")
         data = data.dropna()
-        logging.error(f"after dropna head: {data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
-        logging.error(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
+        #logging.error(f"after dropna head: {data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
+        #logging.error(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
         self.transformed_data = data
         # create index
         #logging.info(f"before construct_index:{data[-4:]}")
@@ -1530,7 +1530,7 @@ class TimeSeriesDataSet(Dataset):
                 It contains a list of all possible subsequences.
         """
         g = data.groupby(self._group_ids, observed=True)
-        logging.error(f"data_head:{data[:2]}")
+        #logging.error(f"data_head:{data[:2]}")
         #logging.error(f"data:{data.describe()}")
         df_index_first = g["__time_idx__"].transform("first").to_frame("time_first")
         df_index_last = g["__time_idx__"].transform("last").to_frame("time_last")
@@ -1543,7 +1543,7 @@ class TimeSeriesDataSet(Dataset):
         df_index["sequence_id"] = sequence_ids
         min_sequence_length = self.min_prediction_length + self.min_encoder_length
         max_sequence_length = self.max_prediction_length + self.max_encoder_length
-        logging.error(f"df_index:{df_index[:3]}")
+        #logging.error(f"df_index:{df_index[:3]}")
         #logging.error(f"min_sequence_length:{min_sequence_length}, {max_sequence_length}")
         # calculate maximum index to include from current index_start
         max_time = (df_index["time"] + max_sequence_length - 1).clip(upper=df_index["count"] + df_index.time_first - 1)
@@ -1572,9 +1572,9 @@ class TimeSeriesDataSet(Dataset):
         df_index["sequence_length"] = df_index["time"].iloc[df_index["index_end"]].to_numpy() - df_index["time"] + 1
         #logging.error(f"df_index beforesequence:{df_index[-10:]}")
         # filter too short sequences
-        logging.info(f"df_index head:{df_index[:10]}")
-        logging.info(f"df_index tail:{df_index[-10:]}")
-        logging.info(f"min_sequence_length:{min_sequence_length}, self.min_prediction_idx:{self.min_prediction_idx}, predict_mode:{predict_mode}")
+        #logging.info(f"df_index head:{df_index[:10]}")
+        #logging.info(f"df_index tail:{df_index[-10:]}")
+        #logging.info(f"min_sequence_length:{min_sequence_length}, self.min_prediction_idx:{self.min_prediction_idx}, predict_mode:{predict_mode}")
         df_index = df_index[
             # sequence must be at least of minimal prediction length
             lambda x: (x.sequence_length >= min_sequence_length)
@@ -1583,7 +1583,7 @@ class TimeSeriesDataSet(Dataset):
             (x["sequence_length"] + x["time"] >= self.min_prediction_idx + self.min_prediction_length)
         ]
 
-        logging.error(f"df_index before predict_mode:{df_index[-10:]}")
+        #logging.error(f"df_index before predict_mode:{df_index[-10:]}")
         #logging.error(f"predict_mode:{predict_mode}")
         if predict_mode:  # keep longest element per series (i.e. the first element that spans to the end of the series)
             # filter all elements that are longer than the allowed maximum sequence length
@@ -1593,7 +1593,7 @@ class TimeSeriesDataSet(Dataset):
             ]
             # choose longest sequence
             df_index = df_index.loc[df_index.groupby("sequence_id").sequence_length.idxmax()]
-        logging.info(f"df_index:{df_index[-10:]}")
+        #logging.info(f"df_index:{df_index[-10:]}")
         # check that all groups/series have at least one entry in the index
         if not sequence_ids.isin(df_index.sequence_id).all():
             missing_groups = data.loc[~sequence_ids.isin(df_index.sequence_id), self._group_ids].drop_duplicates()
@@ -2018,11 +2018,11 @@ class TimeSeriesDataSet(Dataset):
                 #logging.error(f"adding {row['time_idx']} to {raw_data.shape[0]}")
                 raw_data.loc[raw_data.shape[0]] = row
         raw_data["new_idx"] = raw_data.apply(
-            lambda x: x.ticker + "_" + str(x.series_idx), axis=1
+            lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
         raw_data = raw_data.set_index("new_idx")
-        #logging.info(f"raw_data_head_before_group:{raw_data.iloc[:5][['time','timestamp','close_back']]}")
-        #logging.info(f"raw_data_tail_before_group:{raw_data.iloc[-5:][['time','timestamp','close_back']]}")
+        #logging.error(f"raw_data_head_before_group:{raw_data.iloc[:5][['time','timestamp','close_back']]}")
+        #logging.error(f"raw_data_tail_before_group:{raw_data.iloc[-5:][['time','timestamp','close_back']]}")
         #logging.info(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
         raw_data = data_util.add_group_features(raw_data, interval_minutes)
         # This assumes we only have single ticker per timeseries dataset.
@@ -2055,7 +2055,7 @@ class TimeSeriesDataSet(Dataset):
         #logging.error(f"new_full_data_before_dropna:{raw_data.iloc[-3:]}")
         #self.raw_data = self.raw_data.fillna(0)
         #self.raw_data = self.raw_data.dropna()
-        #logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
+        #logging.error(f"new_full_data:{self.raw_data.iloc[-10:][['time','time_idx','close_back','close_back_cumsum']]}")
         data = self.preprocess_data(raw_data)
         self.raw_data = data
         #logging.error(f"raw_data head:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")

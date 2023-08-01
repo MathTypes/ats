@@ -350,7 +350,7 @@ def create_viz_row(
         + " "
         + dm_str
         + " "
-        + day_of_week_map[train_data_row["day_of_week"]]
+        + day_of_week_map[int(train_data_row["day_of_week"])]
         + " "
         + str(train_data_row["close"])
     )
