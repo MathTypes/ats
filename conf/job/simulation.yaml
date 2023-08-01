@@ -19,3 +19,4 @@ tag: default
 market: CME_Equity
 tune_learning_rate: False
 num_tune_iter: 20
+max_stale_minutes: 30

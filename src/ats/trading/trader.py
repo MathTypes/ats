@@ -55,9 +55,11 @@ class Trader(object):
         self.target_size = target_size
         self.future_data = future_data
         self.pnl_df = pd.DataFrame(
-            columns=["ticker", "timestamp", "px", "last_px", "pos", "pnl"]
+            columns=["pos", "pnl", "timestamp", "y_close_cum_max", "y_close_cum_min", "y_hat_cum_max", "y_hat_cum_min",
+                     "px", "last_px", "ticker"]
         )
         self.cnt = 0
+
 
     def on_interval(self, utc_time):
         max_prediction_length = self.config.model.prediction_length
@@ -73,6 +75,16 @@ class Trader(object):
             & (self.future_data.timestamp <= trading_times[-1])
             & (self.future_data.ticker == "ES")
         ]
+        missing_times = len(trading_times) - len(new_data)
+        logging.info(f"missing_times:{missing_times}, trading_times:{len(trading_times)}, new_data:{len(new_data)}")
+        if missing_times>0:
+            starting_trading_times = len(new_data)
+            for idx in range(missing_times):
+                new_row = {"time":trading_times[starting_trading_times+idx],
+                           "timestamp":trading_times[starting_trading_times+idx],
+                           "open":0.1, "close":0.1, "high":0.1, "low":0.1, "volume":1, "dv":1, "ticker":"ES"}
+                new_data = pd.concat([new_data, pd.DataFrame(new_row)])
+        logging.info(f"new_data:{new_data}")
         bad_new_data = new_data[new_data.isna().any(axis=1)]
         if not bad_new_data.empty:
             logging.error(f"bad_new_data:{bad_new_data}")
@@ -82,7 +94,7 @@ class Trader(object):
                 self.last_data_time is None
                 or predict_nyc_time
                 < self.last_data_time
-                + datetime.timedelta(minutes=self.config.dataset.max_stale_minutes)
+                + datetime.timedelta(minutes=self.config.job.max_stale_minutes)
             ):
                 return None
             else:
@@ -104,8 +116,8 @@ class Trader(object):
         )
         predict_time_idx_end = new_data.time_idx.max()
         # logging.error(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
-        logging.info(
-            f"last_time_idex={self.last_time_idx}, predict_time_idx:{predict_time_idx_end}"
+        logging.error(
+            f"last_time_idex={self.last_time_idx}, predict_time_idx_end:{predict_time_idx_end}"
         )
         filtered_dataset = self.train_dataset.filter(
             lambda x: (x.time_idx_last == predict_time_idx_end)
@@ -148,7 +160,7 @@ class Trader(object):
         # logging.info(f"x:{x}")
         indices = self.train_dataset.x_to_index(x)
         matched_data = self.train_dataset.raw_data
-        # logging.info(f"indices:{indices}")
+        logging.error(f"indices:{indices}")
         rmse = [0]
         mae = [0]
         interp_output = self.model.interpret_output(
@@ -191,12 +203,16 @@ class Trader(object):
         row["px"] = px
         row["pnl_delta"] = pnl_delta
         new_pnl_row = {
-            "ticker": ticker,
-            "timestamp": new_data_row.timestamp,
-            "px": px,
-            "last_px": last_px,
             "pos": new_position,
             "pnl": pnl_delta,
+            "timestamp": new_data_row.timestamp,
+            "y_close_cum_max":row["y_close_cum_max"],
+            "y_close_cum_min":row["y_close_cum_min"],
+            "y_hat_cum_max":row["y_hat_cum_max"],
+            "y_hat_cum_min":row["y_hat_cum_min"],
+            "px": px,
+            "last_px": last_px,
+            "ticker": ticker,
         }
         logging.info(f"new_pnl_row:{new_pnl_row}")
         self.current_data_row = new_data_row

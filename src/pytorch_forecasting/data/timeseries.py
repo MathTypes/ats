@@ -427,6 +427,7 @@ class TimeSeriesDataSet(Dataset):
         data = data.sort_values(self.group_ids + [self.time_idx])
         #traceback.print_stack()
         data = self.preprocess_data(data)
+        self.raw_data = data
         # add time index relative to prediction position
         if self.add_relative_time_idx or self.add_encoder_length:
             data = data.copy()  # only copies indices (underlying data is NOT copied)
@@ -482,9 +483,9 @@ class TimeSeriesDataSet(Dataset):
         #data = data.dropna()
         # Needs to keep raw_data so that we can transform newly arrived data. This is 
         # required because of the lagged feature transformation requires raw data.
-        self.raw_data = data
+        #self.raw_data = data
         if self.add_relative_time_idx:
-            self.raw_data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
+            data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
 
         # overwrite values
         self.reset_overwrite_values()
@@ -547,6 +548,7 @@ class TimeSeriesDataSet(Dataset):
         self.add_lag_variables(data)
 
         # filter data
+        #logging.error(f"self.min_prediction_idx:{self.min_prediction_idx}")
         if self.min_prediction_idx is not None:
             # filtering for min_prediction_idx will be done on subsequence level ensuring
             # minimal decoder index is always >= min_prediction_idx
@@ -555,11 +557,18 @@ class TimeSeriesDataSet(Dataset):
         #logging.error(f"before process:{data.describe()}")
         # preprocess data
         data = self._preprocess_data(data)
-        #logging.error(f"after process:{data.describe()}")
-        #logging.info(f"preprocessed_data:{data.iloc[-3:]}")
+        # Keep raw data for processing new data
+        #self.raw_data = data
+        logging.error(f"after process:{data.describe()}")
+        logging.info(f"preprocessed_data_head:{data.iloc[:3][['time','time_idx','close_back','close_back_cumsum']]}")
+        logging.info(f"preprocessed_data_tail:{data.iloc[-3:][['time','time_idx','close_back','close_back_cumsum']]}")
         for target in self.target_names:
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
+        logging.error(f"before dropna head: {data[:3]}")
+        logging.error(f"before dropna tail: {data[-3:][['time','time_idx','close_back','close_back_cumsum']]}")
         data = data.dropna()
+        logging.error(f"after dropna head: {data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
+        logging.error(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
         self.transformed_data = data
         # create index
         #logging.info(f"before construct_index:{data[-4:]}")
@@ -571,27 +580,9 @@ class TimeSeriesDataSet(Dataset):
         #logging.error(f"data:{data.describe()}")
         #logging.error(f"data:{data.iloc[-4:]}")
         # convert to torch tensor for high performance data loading later
+        #logging.error(f"transformed_data:{data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
         self.data = self._data_to_tensors(data)
-
-    @property
-    def dropout_categoricals(self) -> List[str]:
-        """
-        list of categorical variables that are unknown when making a
-        forecast without observed history
-        """
-        return [name for name, encoder in self.categorical_encoders.items() if encoder.add_nan]
-
-    def _get_lagged_names(self, name: str) -> Dict[str, int]:
-        """
-        Generate names for lagged variables
-
-        Args:
-            name (str): name of variable to lag
-
-        Returns:
-            Dict[str, int]: dictionary mapping new variable names to lags
-        """
-        return {f"{name}_lagged_by_{lag}": lag for lag in self.lags.get(name, [])}
+        #logging.error(f"transformed_self.data:{self.data['time'][-10:]}")
 
     @property
     @lru_cache(None)
@@ -607,94 +598,6 @@ class TimeSeriesDataSet(Dataset):
         for name in self.lags:
             vars.update({lag_name: name for lag_name in self._get_lagged_names(name)})
         return vars
-
-    @property
-    @lru_cache(None)
-    def lagged_targets(self) -> Dict[str, str]:
-        """Subset of `lagged_variables` but only includes variables that are lagged targets."""
-        vars = {}
-        for name in self.lags:
-            vars.update({lag_name: name for lag_name in self._get_lagged_names(name) if name in self.target_names})
-        return vars
-
-    @property
-    @lru_cache(None)
-    def min_lag(self) -> int:
-        """
-        Minimum number of time steps variables are lagged.
-
-        Returns:
-            int: minimum lag
-        """
-        if len(self.lags) == 0:
-            return 1e9
-        else:
-            return min([min(lag) for lag in self.lags.values()])
-
-    @property
-    @lru_cache(None)
-    def max_lag(self) -> int:
-        """
-        Maximum number of time steps variables are lagged.
-
-        Returns:
-            int: maximum lag
-        """
-        if len(self.lags) == 0:
-            return 0
-        else:
-            return max([max(lag) for lag in self.lags.values()])
-
-    def _set_target_normalizer(self, data: pd.DataFrame):
-        """
-        Determine target normalizer.
-
-        Args:
-            data (pd.DataFrame): input data
-        """
-        #logging.info(f"target_normalizer:{self.target_normalizer}")
-        if isinstance(self.target_normalizer, str) and self.target_normalizer == "auto":
-            normalizers = []
-            for target in self.target_names:
-                if data[target].dtype.kind != "f":  # category
-                    normalizers.append(NaNLabelEncoder())
-                    if self.add_target_scales:
-                        warnings.warn("Target scales will be only added for continous targets", UserWarning)
-                else:
-                    data_positive = (data[target] > 0).all()
-                    if data_positive:
-                        if data[target].skew() > 2.5:
-                            transformer = "log"
-                        else:
-                            transformer = "relu"
-                    else:
-                        transformer = None
-                    if self.max_encoder_length > 20 and self.min_encoder_length > 1:
-                        normalizers.append(EncoderNormalizer(transformation=transformer))
-                    else:
-                        normalizers.append(GroupNormalizer(transformation=transformer))
-            #logging.info(f"normailizer:{normalizers}")
-            #exit(0)
-            if self.multi_target:
-                self.target_normalizer = MultiNormalizer(normalizers)
-            else:
-                self.target_normalizer = normalizers[0]
-        elif isinstance(self.target_normalizer, (tuple, list)):
-            self.target_normalizer = MultiNormalizer(self.target_normalizer)
-        elif self.target_normalizer is None:
-            self.target_normalizer = TorchNormalizer(method="identity")
-        assert (
-            not isinstance(self.target_normalizer, EncoderNormalizer)
-            or self.min_encoder_length >= self.target_normalizer.min_length
-        ), "EncoderNormalizer is only allowed if min_encoder_length > 1"
-        assert isinstance(
-            self.target_normalizer, (TorchNormalizer, NaNLabelEncoder)
-        ), f"target_normalizer has to be either None or of class TorchNormalizer but found {self.target_normalizer}"
-        assert not self.multi_target or isinstance(self.target_normalizer, MultiNormalizer), (
-            "multiple targets / list of targets requires MultiNormalizer as target_normalizer "
-            f"but found {self.target_normalizer}"
-        )
-        #logging.info(f"self.target_normalizer:{self.target_normalizer}")
 
     @property
     @lru_cache(None)
@@ -1627,7 +1530,7 @@ class TimeSeriesDataSet(Dataset):
                 It contains a list of all possible subsequences.
         """
         g = data.groupby(self._group_ids, observed=True)
-        #logging.error(f"data:{data[-2:]}")
+        logging.error(f"data_head:{data[:2]}")
         #logging.error(f"data:{data.describe()}")
         df_index_first = g["__time_idx__"].transform("first").to_frame("time_first")
         df_index_last = g["__time_idx__"].transform("last").to_frame("time_last")
@@ -1640,7 +1543,7 @@ class TimeSeriesDataSet(Dataset):
         df_index["sequence_id"] = sequence_ids
         min_sequence_length = self.min_prediction_length + self.min_encoder_length
         max_sequence_length = self.max_prediction_length + self.max_encoder_length
-        #logging.error(f"df_index:{df_index[-3:]}")
+        logging.error(f"df_index:{df_index[:3]}")
         #logging.error(f"min_sequence_length:{min_sequence_length}, {max_sequence_length}")
         # calculate maximum index to include from current index_start
         max_time = (df_index["time"] + max_sequence_length - 1).clip(upper=df_index["count"] + df_index.time_first - 1)
@@ -1667,8 +1570,11 @@ class TimeSeriesDataSet(Dataset):
 
         # filter out where encode and decode length are not satisfied
         df_index["sequence_length"] = df_index["time"].iloc[df_index["index_end"]].to_numpy() - df_index["time"] + 1
+        #logging.error(f"df_index beforesequence:{df_index[-10:]}")
         # filter too short sequences
-        #logging.info(f"df_index:{df_index}")
+        logging.info(f"df_index head:{df_index[:10]}")
+        logging.info(f"df_index tail:{df_index[-10:]}")
+        logging.info(f"min_sequence_length:{min_sequence_length}, self.min_prediction_idx:{self.min_prediction_idx}, predict_mode:{predict_mode}")
         df_index = df_index[
             # sequence must be at least of minimal prediction length
             lambda x: (x.sequence_length >= min_sequence_length)
@@ -1677,6 +1583,8 @@ class TimeSeriesDataSet(Dataset):
             (x["sequence_length"] + x["time"] >= self.min_prediction_idx + self.min_prediction_length)
         ]
 
+        logging.error(f"df_index before predict_mode:{df_index[-10:]}")
+        #logging.error(f"predict_mode:{predict_mode}")
         if predict_mode:  # keep longest element per series (i.e. the first element that spans to the end of the series)
             # filter all elements that are longer than the allowed maximum sequence length
             df_index = df_index[
@@ -1685,7 +1593,7 @@ class TimeSeriesDataSet(Dataset):
             ]
             # choose longest sequence
             df_index = df_index.loc[df_index.groupby("sequence_id").sequence_length.idxmax()]
-
+        logging.info(f"df_index:{df_index[-10:]}")
         # check that all groups/series have at least one entry in the index
         if not sequence_ids.isin(df_index.sequence_id).all():
             missing_groups = data.loc[~sequence_ids.isin(df_index.sequence_id), self._group_ids].drop_duplicates()
@@ -1722,8 +1630,8 @@ class TimeSeriesDataSet(Dataset):
             TimeSeriesDataSet: filtered dataset
         """
         # calculate filter
-        #logging.info(f"decoded_index:{self.decoded_index[:10]}")
-        #logging.info(f"decoded_index:{self.decoded_index[-10:]}")
+        #logging.error(f"decoded_index:{self.decoded_index[:10]}")
+        #logging.error(f"decoded_index:{self.decoded_index[-10:]}")
         filtered_index = self.index[np.asarray(filter_func(self.decoded_index))]
         # raise error if filter removes all entries
         if len(filtered_index) == 0:
@@ -1755,8 +1663,11 @@ class TimeSeriesDataSet(Dataset):
         # get dataframe to filter
         index_start = self.index["index_start"].to_numpy()
         index_last = self.index["index_end"].to_numpy()
-        #logging.info(f"index_start:{index_start}")
-        #logging.info(f"index_last:{index_last}")
+        #logging.error(f"index_start:{index_start[-10:]}")
+        #logging.error(f"index_last:{index_last[-10:]}")
+        #logging.error(f"data_groups:{self.data['groups'][-10:]}")
+        #logging.error(f"data_time:{self.data['time'][-10:]}")
+        #logging.error(f"raw_data:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
         index = (
             # get group ids in order of index
             pd.DataFrame(self.data["groups"][index_start].numpy(), columns=self.group_ids)
@@ -1906,21 +1817,6 @@ class TimeSeriesDataSet(Dataset):
             Dict[str, int]: dictionary mapping new variable names to lags
         """
         return {f"{name}_lagged_by_{lag}": lag for lag in self.lags.get(name, [])}
-
-    @property
-    @lru_cache(None)
-    def lagged_variables(self) -> Dict[str, str]:
-        """
-        Lagged variables.
-
-        Returns:
-            Dict[str, str]: dictionary of variable names corresponding to lagged variables
-                mapped to variable that is lagged
-        """
-        vars = {}
-        for name in self.lags:
-            vars.update({lag_name: name for lag_name in self._get_lagged_names(name)})
-        return vars
 
     @property
     @lru_cache(None)
@@ -2082,7 +1978,8 @@ class TimeSeriesDataSet(Dataset):
     @profile_util.profile
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes, cal, mdr):
         #self.raw_data = pd.concat([self.raw_data, new_data])
-        #logging.info(f"adding new_data:{new_data}")
+        #logging.info(f"adding new_data head:{new_data.iloc[:5][['time','timestamp','close_back']]}")
+        #logging.info(f"adding new_data tail:{new_data.iloc[-5:][['time','timestamp','close_back']]}")
         #logging.info(f"self.add_relative_time_idx:{self.add_relative_time_idx}")
         if self.add_relative_time_idx:
             assert (
@@ -2090,12 +1987,21 @@ class TimeSeriesDataSet(Dataset):
             ), "relative_time_idx is a protected column and must not be present in data"
             new_data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
         raw_data = self.raw_data
+        #logging.info(f"raw_data tail:{raw_data[['time','time_idx','close_back','close_back_cumsum']][-5:]}")
+        #logging.info(f"new_data head:{new_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
         start_timestamp = new_data.iloc[0]["timestamp"]
         # start_timestamp is the close time at time of prediction. prediction should be for
         # next timestamp.
         #logging.error(f"removing from {start_timestamp}, {new_data.iloc[0]['time']}")
+        old_timestamp = start_timestamp - 365*24*60*60*3
+        #logging.error(f"start_timestamp:{start_timestamp}, old_timestamp:{old_timestamp}")
+        old_raw_data = raw_data[(raw_data.timestamp<old_timestamp) & (raw_data.ticker=="ES")]
+        raw_data = raw_data[(raw_data.timestamp>=old_timestamp) & (raw_data.ticker=="ES")]
         raw_data = raw_data[(raw_data.timestamp<start_timestamp) & (raw_data.ticker=="ES")]
         #logging.error(f"existing_data:{raw_data.iloc[-3:]}")
+        #logging.info(f"raw_data before iterrows head:{raw_data[['time','time_idx','close_back','close_back_cumsum']][:5]}")
+        #logging.info(f"raw_data before iterrows tail:{raw_data[['time','time_idx','close_back','close_back_cumsum']][-5:]}")
+        #logging.info(f"new_data before iterrows head:{new_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
         for index, row in new_data.iterrows():
             idx = raw_data[(raw_data.time_idx==row["time_idx"])].index
             #logging.error(f"index:{idx}, row:{row}")
@@ -2109,27 +2015,51 @@ class TimeSeriesDataSet(Dataset):
                                   row["time"], row["timestamp"], row["ticker"], row["series_idx"],
                                   row["time_idx"], row["relative_time_idx"]]
             else:
-                raw_data.loc[len(raw_data.index)] = row
-        #logging.error(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
+                #logging.error(f"adding {row['time_idx']} to {raw_data.shape[0]}")
+                raw_data.loc[raw_data.shape[0]] = row
+        raw_data["new_idx"] = raw_data.apply(
+            lambda x: x.ticker + "_" + str(x.series_idx), axis=1
+        )
+        raw_data = raw_data.set_index("new_idx")
+        #logging.info(f"raw_data_head_before_group:{raw_data.iloc[:5][['time','timestamp','close_back']]}")
+        #logging.info(f"raw_data_tail_before_group:{raw_data.iloc[-5:][['time','timestamp','close_back']]}")
+        #logging.info(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
         raw_data = data_util.add_group_features(raw_data, interval_minutes)
         # This assumes we only have single ticker per timeseries dataset.
-        #logging.error(f"new_data:{new_data.iloc[:2]}")
+        #logging.info(f"new_data_time_idx:{new_data.time_idx}")
+        #logging.info(f"raw_data_after_group:{raw_data.iloc[-10:][['time','timestamp','close_back']]}")
         new_data_idx = raw_data.time_idx.isin(new_data.time_idx)
-        #logging.error(f"new_data_idx:{new_data_idx[:2]}")
+        #logging.info(f"new_data_idx:{new_data_idx[-10:]}")
         new_raw_data = raw_data[new_data_idx]
-        #logging.error(f"new_raw_data:{new_raw_data[:2]}")
+        #logging.error(f"new_raw_data:{new_raw_data[:10][['time','timestamp','close_back']]}")
         new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
         #logging.error(f"new_raw_data after adding example level features:{new_raw_data[:2]}")
         raw_data[new_data_idx] = new_raw_data
-        #logging.info(f"new_full_data_before_ffill:{raw_data.iloc[-3:]}")
-        raw_data = raw_data.ffill()
-        #logging.error(f"raw_data:{raw_data.describe()}")
+        #logging.error(f"new_full_data_before_ffill:{raw_data.iloc[-10:][['time','time_idx','close_back']]}")
+        # Only selected columns can be ffilled
+        #raw_data = raw_data.ffill()
+        #if not old_raw_data.empty:
+        if False:
+            last_time = old_raw_data["time"][-1]
+            last_cum_volume = old_raw_data["cum_volume"][-1]
+            last_close_back_cumsum = old_raw_data["close_back_cumsum"][-1]
+            last_volume_back_cumsum = old_raw_data["volume_back_cumsum"][-1]
+            #logging.error(f"last_time:{last_time}, last_cum_volume:{last_cum_volume}, last_close_back_cumsum:{last_close_back_cumsum}, last_volume_back_cumsum:{last_volume_back_cumsum}")
+            new_raw_data["cum_volume"] = new_raw_data["cum_volume"] + last_cum_volume
+            new_raw_data["close_back_cumsum"] = new_raw_data["close_back_cumsum"] + last_close_back_cumsum
+            new_raw_data["volume_back_cumsum"] = new_raw_data["volume_back_cumsum"] + last_volume_back_cumsum
+            #logging.error(f"old_raw_data_tail:{old_raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
+            #logging.error(f"raw_data_head:{raw_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
+            raw_data = pd.concat([old_raw_data, raw_data])
+            #logging.error(f"merged_raw_data_tail:{raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
         #logging.error(f"new_full_data_before_dropna:{raw_data.iloc[-3:]}")
         #self.raw_data = self.raw_data.fillna(0)
         #self.raw_data = self.raw_data.dropna()
         #logging.info(f"new_full_data:{self.raw_data.iloc[-3:]}")
         data = self.preprocess_data(raw_data)
         self.raw_data = data
+        #logging.error(f"raw_data head:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
+        #logging.error(f"raw_data tail:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
         self.transform_data(data)
         #logging.info(f"transformed_data:{data.iloc[-3:]}")
     

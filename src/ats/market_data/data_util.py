@@ -174,9 +174,9 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data['volume_back'] = np.log(raw_data.volume+2) - np.log(raw_data.volume.shift(1)+2)
     raw_data['dv_back'] = np.log(raw_data.dv) - np.log(raw_data.dv.shift(1))
     #df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
-    raw_data['close_fwd'] = np.log(raw_data.close.shift(1)) - np.log(raw_data.close)
-    raw_data['volume_fwd'] = np.log(raw_data.volume.shift(-1)) - np.log(raw_data.volume)
-    raw_data['dv_fwd'] = np.log(raw_data.dv.shift(-1)) - np.log(raw_data.dv)
+    #raw_data['close_fwd'] = np.log(raw_data.close.shift(1)) - np.log(raw_data.close)
+    #raw_data['volume_fwd'] = np.log(raw_data.volume.shift(-1)) - np.log(raw_data.volume)
+    #raw_data['dv_fwd'] = np.log(raw_data.dv.shift(-1)) - np.log(raw_data.dv)
     
     raw_data["close_back_cumsum"] = raw_data["close_back"].cumsum()
     raw_data["volume_back_cumsum"] = raw_data["volume_back"].cumsum()
@@ -284,9 +284,9 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
         "close_back",
         "volume_back",
         "dv_back",
-        "close_fwd",
-        "volume_fwd",
-        "dv_fwd",
+        #"close_fwd",
+        #"volume_fwd",
+        #"dv_fwd",
         "cum_volume",
         "cum_dv",
         "close_back_cumsum",
@@ -353,13 +353,6 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
             raw_data["close"], short_window, long_window
         )
 
-    # Drop duplicae columns
-    # raw_data = raw_data.loc[:,~raw_data.columns.duplicated()]
-    # time_idx needs to be globally unique. It is ok for it to be not in order
-    # across tickers.
-    # raw_data["time_idx"] = range(0, len(raw_data))
-    # logging.info(f"raw_data: {raw_data.iloc[-5:]}")
-    # raw_data = raw_data.dropna()
     return raw_data
 
 
@@ -493,8 +486,9 @@ class Preprocessor:
         df["cum_volume"] = df.volume.cumsum()
         df["cum_dv"] = df.dv.cumsum()
         df_pct_back = df[["close", "volume", "dv"]].pct_change(periods=1)
-        df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
-        df = df.join(df_pct_back, rsuffix="_back").join(df_pct_forward, rsuffix="_fwd")
+        #df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
+        #df = df.join(df_pct_back, rsuffix="_back").join(df_pct_forward, rsuffix="_fwd")
+        df = df.join(df_pct_back, rsuffix="_back")
         df["month"] = df.time.dt.month  # categories have be strings
         df["year"] = df.time.dt.year  # categories have be strings
         df["hour_of_day"] = df.time.apply(lambda x: x.hour)
