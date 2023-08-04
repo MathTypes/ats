@@ -80,15 +80,15 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
     prediction_kwargs = {}
     x = new_raw_predictions.x
     output = new_raw_predictions.output
-    output = {
-        key: [v.to(device) for v in val] if isinstance(val, list) else val.to(device)
-        for key, val in output.items()
-    }
+    #output = {
+    #    key: [v.to(device) for v in val] if isinstance(val, list) else val.to(device)
+    #    for key, val in output.items()
+    #}
     y_hats = model.to_prediction(output, **prediction_kwargs)
     quantiles_kwargs = {}
     y_quantiles = to_list(model.to_quantiles(output, **quantiles_kwargs))[0]
     del new_raw_predictions
-    logging.info(f"y_quantiles:{y_quantiles}")
-    logging.info(f"y_hats:{y_hats}")
+    #logging.info(f"y_quantiles:{y_quantiles}")
+    #logging.info(f"y_hats:{y_hats}")
     # logging.info(f"y:{new_raw_predictions.y}")
     return y_hats, y_quantiles, output, x

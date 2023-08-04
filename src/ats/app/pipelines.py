@@ -249,7 +249,8 @@ class PatchTftSupervisedPipeline(Pipeline):
             self.config,
             self.market_cal,
         )
-        for test_date in test_dates:
+        for idx in range(len(test_dates)-1):
+            test_date = test_dates[idx]
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date
             )
@@ -257,9 +258,9 @@ class PatchTftSupervisedPipeline(Pipeline):
             logging.info(f"sod {test_date}, schedule:{time_range}")
             for utc_time in time_range:
                 row = trader.on_interval(utc_time)
-                logging.info(f"got row:{row}")
+                #logging.info(f"got row:{row}")
                 if row:
-                    logging.info(f"row:{row}")
+                    #logging.info(f"row:{row}")
                     data_table.add_data(
                         row["ticker"],  # 0 ticker
                         row["dm"],  # 1 time

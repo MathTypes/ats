@@ -270,5 +270,101 @@ def test_add_example_features():
             decimal=3, verbose=True, err_msg="can not match option_expiration_time",
         )
 
+def test_group_features():
+    raw_data = {
+        "ticker": ["ES", "ES", "ES"],
+        "open": [1, 2, 3],
+        "high": [3, 4, 5],
+        "low": [1, 2, 3],
+        "close": [3, 4, 5],
+        "volume": [1, 2, 3],
+        "dv": [1, 2, 3],
+        "timestamp": [1325689200, 1325691000, 1349357400],
+    }
+    raw_data = pd.DataFrame(data=raw_data)
+    raw_data = data_util.add_group_features(raw_data, 30)
+    row_two = raw_data.iloc[2]
+    assert row_two["ticker"] == "ES"
+    # base price 500 is used as denominator
+    assert math.isclose(row_two["close_back"], 0.001982161203990529, rel_tol=0.01)
+
+
+def test_add_example_features_vwap_before_new_york_open():
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+            ],
+            return_hydra_config=True
+        )
+        env_mgr = EnvMgr(cfg)
+        market_cal = env_mgr.market_cal
+        macro_data_builder = MacroDataBuilder(env_mgr)
+        start_timestamp = 1325689200
+        delta = 30*60
+        timestamps = [start_timestamp + i*delta for i in range(8)]
+        raw_data = {
+            "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
+            "open": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048],
+            "high": [1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050],
+            "low": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048],
+            "close": [1041, 1042, 1043, 1044, 1540, 1046, 1047, 1048],
+            "volume": [1, 3, 2, 1, 2, 3, 4, 5],
+            "dv": [1, 2, 3, 1, 2, 3, 1, 2],
+            "timestamp": timestamps
+        }
+        raw_data = pd.DataFrame(data=raw_data)
+        raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
+        # fake the time interval to one day so that we can have 5 day high with 5
+        # intervals
+        raw_data = data_util.add_group_features(raw_data, 30*23*2)
+        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        logging.error(f"raw_data:{raw_data}")
+        np.testing.assert_array_almost_equal(
+            raw_data["vwap_since_new_york_open"],
+            [np.nan] * data_len,
+            decimal=3, verbose=True, err_msg="can not match weekly_close_time",
+        )
+
+def test_add_example_features_vwap_around_new_york_open():
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+            ],
+            return_hydra_config=True
+        )
+        env_mgr = EnvMgr(cfg)
+        market_cal = env_mgr.market_cal
+        macro_data_builder = MacroDataBuilder(env_mgr)
+        start_timestamp = datetime.datetime(2023,8,3,12,0,0).timestamp()
+        delta = 30*60
+        timestamps = [start_timestamp + i*delta for i in range(8)]
+        raw_data = {
+            "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
+            "open": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048],
+            "high": [1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050],
+            "low": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048],
+            "close": [1041, 1042, 1043, 1044, 1540, 1046, 1047, 1048],
+            "volume": [1, 3, 2, 1, 2, 3, 4, 5],
+            "dv": [1, 2, 3, 1, 2, 3, 1, 2],
+            "timestamp": timestamps
+        }
+        raw_data = pd.DataFrame(data=raw_data)
+        data_len = len(raw_data.timestamp)
+        raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
+        # fake the time interval to one day so that we can have 5 day high with 5
+        # intervals
+        raw_data = data_util.add_group_features(raw_data, 30*23*2)
+        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        logging.error(f"raw_data:{raw_data}")
+        np.testing.assert_array_almost_equal(
+            raw_data["vwap_since_new_york_open"],
+            [np.nan] * data_len,
+            decimal=3, verbose=True, err_msg="can not match weekly_close_time",
+        )
+
 if __name__ == "__main__":
     logging_utils.init_logging()

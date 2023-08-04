@@ -2,6 +2,7 @@ import logging
 import cvxpy as cp
 import numpy as np
 
+from ats.util import profile_util
 
 def min_max_rets(returns_fcst):
     cumsum = returns_fcst.cumsum()
@@ -30,7 +31,12 @@ class Optimizer(object):
         self.pnl_risk_norm = pnl_risk_norm
         self.pnl_risk = pnl_risk
 
+    @profile_util.profile
     def optimize(self, returns_fcst, min_neg_fcst, max_pos_fcst):
+        # Only look at next 4 hours prediction
+        returns_fcst = returns_fcst[:,:8]
+        min_neg_fcst = min_neg_fcst[:8]
+        max_pos_fcst = max_pos_fcst[:8]
         w = cp.Variable(self.n)
         logging.info(f"returns_fcst:{returns_fcst}, w:{w}")
         cum_rets = np.sum(returns_fcst, axis=-1)

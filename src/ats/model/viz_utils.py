@@ -11,6 +11,7 @@ import torch
 import wandb
 
 from ats.prediction import prediction_data
+from ats.util import profile_util
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
 
@@ -289,7 +290,6 @@ def add_model_interpretation(fig, model, pred_input, pred_output):
     )
 
 
-# @profile
 def create_viz_row(
     idx,
     y_hats,

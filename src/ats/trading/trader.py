@@ -2,6 +2,17 @@ from collections import defaultdict
 import datetime
 import logging
 
+from empyrical import (
+    sharpe_ratio,
+    calmar_ratio,
+    sortino_ratio,
+    max_drawdown,
+    downside_risk,
+    annual_return,
+    annual_volatility,
+    # cum_returns,
+)
+import numpy as np
 import pandas as pd
 import pytz
 from pytorch_forecasting.utils import detach
@@ -11,7 +22,7 @@ from ats.calendar import market_time
 from ats.model import viz_utils
 from ats.prediction import prediction_utils
 from ats.optimizer import position_utils
-
+from ats.util import profile_util
 
 class Trader(object):
     def __init__(
@@ -29,17 +40,17 @@ class Trader(object):
         super().__init__()
         self.market_data_mgr = md_mgr
         self.last_time_idx = train_data.iloc[-1]["time_idx"]
-        logging.info(f"train_data:{train_data.iloc[-3:]}")
+        #logging.info(f"train_data:{train_data.iloc[-3:]}")
         self.last_data_time = None
         self.last_px_map = {}
         last_data = train_data.iloc[-1]
-        logging.info(f"last_data:{last_data}")
+        #logging.info(f"last_data:{last_data}")
         self.last_px_map[last_data.ticker] = last_data.close
         self.last_position_map = defaultdict(lambda: 0, {})
         self.first_update = True
         initial_positions = torch.tensor([0])
         self.config = config
-        logging.info(f"sigma:{self.config.trading.sigma}")
+        #logging.info(f"sigma:{self.config.trading.sigma}")
         self.market_cal = market_cal
         self.model = model
         self.optimizer = position_utils.Optimizer(
@@ -55,12 +66,26 @@ class Trader(object):
         self.target_size = target_size
         self.future_data = future_data
         self.pnl_df = pd.DataFrame(
-            columns=["pos", "pnl", "timestamp", "y_close_cum_max", "y_close_cum_min", "y_hat_cum_max", "y_hat_cum_min",
-                     "px", "last_px", "ticker"]
+            columns=["pos", "px", "y_hat_cum_max", "y_hat_cum_min", "pnl", "time", "y_close_cum_max", "y_close_cum_min",
+                     "last_px", "ticker"]
         )
         self.cnt = 0
 
+    def compute_stats(self, srs: pd.DataFrame, metric_suffix=""):
+        return {
+            f"annual_return{metric_suffix}": annual_return(srs),
+            f"annual_volatility{metric_suffix}": annual_volatility(srs),
+            f"sharpe_ratio{metric_suffix}": sharpe_ratio(srs),
+            f"downside_risk{metric_suffix}": downside_risk(srs),
+            f"sortino_ratio{metric_suffix}": sortino_ratio(srs),
+            f"max_drawdown{metric_suffix}": -max_drawdown(srs),
+            f"calmar_ratio{metric_suffix}": calmar_ratio(srs),
+            f"perc_pos_return{metric_suffix}": len(srs[srs > 0.0]) / len(srs),
+            f"profit_loss_ratio{metric_suffix}": np.mean(srs[srs > 0.0])
+            / np.mean(np.abs(srs[srs < 0.0])),
+        }
 
+    @profile_util.profile
     def on_interval(self, utc_time):
         max_prediction_length = self.config.model.prediction_length
         # prediction is at current time, so we need max_prediction_length + 1.
@@ -69,7 +94,7 @@ class Trader(object):
             utc_time, max_prediction_length + 1
         )
         predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
-        logging.error(f"trading_times:{trading_times}")
+        #logging.error(f"trading_times:{trading_times}")
         new_data = self.future_data[
             (self.future_data.timestamp >= trading_times[0])
             & (self.future_data.timestamp <= trading_times[-1])
@@ -79,9 +104,9 @@ class Trader(object):
             (self.train_dataset.raw_data.timestamp < trading_times[0])
             & (self.train_dataset.raw_data.ticker == "ES")
         ]
-        logging.error(f"new_data_from_future:{new_data.iloc[:10][['time','timestamp','close_back']]}")
+        #logging.error(f"new_data_from_future:{new_data.iloc[:10][['time','timestamp','close_back']]}")
         missing_times = len(trading_times) - len(new_data)
-        logging.error(f"missing_times:{missing_times}, trading_times:{len(trading_times)}, new_data:{len(new_data)}")
+        #logging.error(f"missing_times:{missing_times}, trading_times:{len(trading_times)}, new_data:{len(new_data)}")
         if missing_times>0:
             starting_trading_times = len(new_data)
             new_data_df = pd.DataFrame(columns=["open","close","high","low","volume","dv","ticker","new_idx"])
@@ -137,14 +162,17 @@ class Trader(object):
             lambda x: (x.time_idx_last == predict_time_idx_end)
         )
         x, y = next(iter(filtered_dataset.to_dataloader(train=False, batch_size=1)))
-        logging.info(f"x:{x}, y:{y}")
+        logging.info(f"x:{x}")
+        logging.info(f"y:{y}")
         # new_prediction_data is the last encoder_data, we need to add decoder_data based on
         # known features or lagged unknown features
         # logging.info(f"new_prediction_data:{new_prediction_data}")
         y_hats, y_quantiles, out, x = prediction_utils.predict(
             self.model, filtered_dataset, self.wandb_logger, batch_size=1
         )
-        # logging.info(f"y_hats:{y_hats}")
+        logging.info(f"y_hats:{y_hats}")
+        logging.info(f"y_quantiles:{y_quantiles}")
+        logging.info(f"out:{out}")
         if isinstance(y_hats, list):
             y_hats = y_hats[0]
         returns_fcst = y_hats.cpu().numpy()
@@ -167,14 +195,14 @@ class Trader(object):
         new_positions, ret, val = self.optimizer.optimize(
             returns_fcst, min_neg_fcst, max_pos_fcst
         )
-        logging.info(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
+        #logging.info(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
         y_hats_cum = torch.cumsum(y_hats, dim=-1)
         y_close = y[0]
         y_close_cum_sum = torch.cumsum(y_close, dim=-1)
         # logging.info(f"x:{x}")
         indices = self.train_dataset.x_to_index(x)
         matched_data = self.train_dataset.raw_data
-        logging.error(f"indices:{indices}")
+        #logging.error(f"indices:{indices}")
         rmse = [0]
         mae = [0]
         interp_output = self.model.interpret_output(
@@ -218,13 +246,13 @@ class Trader(object):
         row["pnl_delta"] = pnl_delta
         new_pnl_row = {
             "pos": new_position,
-            "pnl": pnl_delta,
-            "timestamp": new_data_row.timestamp,
-            "y_close_cum_max":row["y_close_cum_max"],
-            "y_close_cum_min":row["y_close_cum_min"],
+            "px": px,
             "y_hat_cum_max":row["y_hat_cum_max"],
             "y_hat_cum_min":row["y_hat_cum_min"],
-            "px": px,
+            "pnl": pnl_delta,
+            "time": new_data_row.time,
+            "y_close_cum_max":row["y_close_cum_max"],
+            "y_close_cum_min":row["y_close_cum_min"],
             "last_px": last_px,
             "ticker": ticker,
         }
@@ -237,4 +265,8 @@ class Trader(object):
         logging.info(f"return row:{row}")
         logging.info(f"last_position_map:{self.last_position_map}")
         logging.info(f"last_px_map:{self.last_px_map}")
+        if not self.pnl_df.empty:
+            stats = self.compute_stats(self.pnl_df.pnl/500)
+            logging.info(f"stats:{stats}")
+            #logging.info(f"pnl_df:{self.pnl_df}")
         return row

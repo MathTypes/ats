@@ -466,7 +466,7 @@ class TimeSeriesDataSet(Dataset):
     def preprocess_data(self, data : pd.DataFrame):
         #g = data.groupby(self.group_ids, observed=True)
         # reduce return to bring down loss
-        logging.error(f"data:{data.iloc[-10:][['time','timestamp','close_back']]}")
+        #logging.error(f"data:{data.iloc[-10:][['time','timestamp','close_back']]}")
         #logging.info(f"data:{data.describe()}")
         data_dup = data[data.index.duplicated()]
         if not data_dup.empty:
@@ -1978,8 +1978,8 @@ class TimeSeriesDataSet(Dataset):
     @profile_util.profile
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes, cal, mdr):
         #self.raw_data = pd.concat([self.raw_data, new_data])
-        #logging.info(f"adding new_data head:{new_data.iloc[:5][['time','timestamp','close_back']]}")
-        #logging.info(f"adding new_data tail:{new_data.iloc[-5:][['time','timestamp','close_back']]}")
+        logging.error(f"adding new_data head:{new_data.iloc[:5][['time','timestamp','close_back']]}")
+        logging.error(f"adding new_data tail:{new_data.iloc[-5:][['time','timestamp','close_back']]}")
         #logging.info(f"self.add_relative_time_idx:{self.add_relative_time_idx}")
         if self.add_relative_time_idx:
             assert (
@@ -1987,8 +1987,8 @@ class TimeSeriesDataSet(Dataset):
             ), "relative_time_idx is a protected column and must not be present in data"
             new_data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
         raw_data = self.raw_data
-        #logging.info(f"raw_data tail:{raw_data[['time','time_idx','close_back','close_back_cumsum']][-5:]}")
-        #logging.info(f"new_data head:{new_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
+        #logging.error(f"raw_data tail:{raw_data[['time','time_idx','close_back','close_back_cumsum']][-5:]}")
+        #logging.error(f"new_data head:{new_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
         start_timestamp = new_data.iloc[0]["timestamp"]
         # start_timestamp is the close time at time of prediction. prediction should be for
         # next timestamp.
@@ -2021,21 +2021,21 @@ class TimeSeriesDataSet(Dataset):
             lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
         raw_data = raw_data.set_index("new_idx")
-        #logging.error(f"raw_data_head_before_group:{raw_data.iloc[:5][['time','timestamp','close_back']]}")
-        #logging.error(f"raw_data_tail_before_group:{raw_data.iloc[-5:][['time','timestamp','close_back']]}")
-        #logging.info(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
+        logging.error(f"raw_data_head_before_group:{raw_data.iloc[:5]}")
+        logging.error(f"raw_data_tail_before_group:{raw_data.iloc[-5:]}")
+        #logging.error(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
         raw_data = data_util.add_group_features(raw_data, interval_minutes)
         # This assumes we only have single ticker per timeseries dataset.
-        #logging.info(f"new_data_time_idx:{new_data.time_idx}")
-        #logging.info(f"raw_data_after_group:{raw_data.iloc[-10:][['time','timestamp','close_back']]}")
-        new_data_idx = raw_data.time_idx.isin(new_data.time_idx)
+        logging.error(f"new_data_time_idx:{new_data.time_idx}")
+        logging.error(f"raw_data_after_group:{raw_data.iloc[-10:][['time','timestamp','close_back']]}")
+        min_new_data_idx = new_data.time_idx.min()
         #logging.info(f"new_data_idx:{new_data_idx[-10:]}")
-        new_raw_data = raw_data[new_data_idx]
+        new_raw_data = raw_data[raw_data.time_idx>min_new_data_idx-46*2]
         #logging.error(f"new_raw_data:{new_raw_data[:10][['time','timestamp','close_back']]}")
         new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
-        #logging.error(f"new_raw_data after adding example level features:{new_raw_data[:2]}")
-        raw_data[new_data_idx] = new_raw_data
-        #logging.error(f"new_full_data_before_ffill:{raw_data.iloc[-10:][['time','time_idx','close_back']]}")
+        logging.error(f"new_raw_data after adding example level features:{new_raw_data[-3:]}")
+        raw_data[raw_data.time_idx>=min_new_data_idx] = new_raw_data[new_raw_data.time_idx>=min_new_data_idx]
+        logging.error(f"new_full_data_before_ffill:{raw_data.iloc[-10:]}")
         # Only selected columns can be ffilled
         #raw_data = raw_data.ffill()
         #if not old_raw_data.empty:
@@ -2058,10 +2058,10 @@ class TimeSeriesDataSet(Dataset):
         #logging.error(f"new_full_data:{self.raw_data.iloc[-10:][['time','time_idx','close_back','close_back_cumsum']]}")
         data = self.preprocess_data(raw_data)
         self.raw_data = data
-        #logging.error(f"raw_data head:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
-        #logging.error(f"raw_data tail:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
+        logging.error(f"raw_data head:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
+        logging.error(f"raw_data tail:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
         self.transform_data(data)
-        #logging.info(f"transformed_data:{data.iloc[-3:]}")
+        logging.info(f"transformed_data:{data.iloc[-3:]}")
     
     def __getitem__(self, idx: int) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
         """

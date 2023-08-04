@@ -173,10 +173,6 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     # Avoid inf
     raw_data['volume_back'] = np.log(raw_data.volume+2) - np.log(raw_data.volume.shift(1)+2)
     raw_data['dv_back'] = np.log(raw_data.dv) - np.log(raw_data.dv.shift(1))
-    #df_pct_forward = raw_data[["close", "volume", "dv"]].pct_change(periods=-1)
-    #raw_data['close_fwd'] = np.log(raw_data.close.shift(1)) - np.log(raw_data.close)
-    #raw_data['volume_fwd'] = np.log(raw_data.volume.shift(-1)) - np.log(raw_data.volume)
-    #raw_data['dv_fwd'] = np.log(raw_data.dv.shift(-1)) - np.log(raw_data.dv)
     
     raw_data["close_back_cumsum"] = raw_data["close_back"].cumsum()
     raw_data["volume_back_cumsum"] = raw_data["volume_back"].cumsum()
@@ -248,6 +244,8 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["time_low_201_ff"]  = raw_data["time_low_201_ff"].ffill()
     del close_back_cumsum
 
+    raw_data['close_rolling_5d_max'] = raw_data.close_back_cumsum.rolling(5*interval_per_day).max()
+    
     # Compute RSI
     raw_data["rsi"] = ta.momentum.RSIIndicator(close=raw_data["close"]).rsi()
 
@@ -277,6 +275,32 @@ def time_diff(row, base_col, diff_col):
     else:
         return (row[diff_col] - row[base_col])
 
+def compute_vwap(row, dv_col, volume_col):
+    if pd.isna(row[dv_col]) or pd.isna(row[volume_col]):
+        return np.nan
+    else:
+        if row["cum_volume"]-row[volume_col]>0:
+            return row["close"] - (row["cum_dv"] - row[dv_col])/(row["cum_volume"]-row[volume_col])
+        else:
+            return 0
+
+def fill_dv(row, time_col):
+    if pd.isna(row[time_col]):
+        return np.nan
+    else:
+        if row[time_col] == row["timestamp"]:
+            return row["cum_dv"]
+        else:
+            return np.nan
+
+def fill_volume(row, time_col):
+    if pd.isna(row[time_col]):
+        return np.nan
+    else:
+        if row[time_col] == row["timestamp"]:
+            return row["cum_volume"]
+        else:
+            return np.nan
 
 @profile_util.profile
 def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
@@ -340,11 +364,9 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
     new_features = raw_data.groupby(["ticker"], group_keys=False)[
         ["volume", "dv", "close", "timestamp"]
     ].apply(ticker_transform, interval_minutes=interval_minutes)
-    # logging.info(f"new_features:{new_features.columns}")
     new_features = new_features.drop(columns=["volume", "dv", "close", "timestamp"])
     raw_data = raw_data.join(new_features)
 
-    # winsorize using rolling 5X standard deviations to remove outliers
     raw_data["daily_returns"] = calc_returns(raw_data["close"])
     raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
     trend_combinations = [(8, 24), (16, 48), (32, 96)]
@@ -357,7 +379,9 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
 
 
 @profile_util.profile
-def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder):
+def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder, add_vwap=False):
+    new_york_cal = mcal.get_calendar("NYSE")
+    lse_cal = mcal.get_calendar("LSE")
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x: x.isocalendar()[1])
     raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)
 
@@ -376,14 +400,26 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder):
             market_time.compute_macro_event_time, cal=cal, mdb=macro_data_builder
         )
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(
-        market_time.compute_open_time, cal=cal
+        market_time.compute_open_time, cal=new_york_cal
     )
+    raw_data["new_york_open_dv"] = raw_data.apply(fill_dv, time_col="new_york_open_time", axis=1)
+    raw_data["new_york_open_volume"] = raw_data.apply(fill_volume, time_col="new_york_open_time", axis=1)
+    raw_data["new_york_open_dv"] = raw_data.new_york_open_dv.ffill()
+    raw_data["new_york_open_volume"] = raw_data.new_york_open_volume.ffill()
+    raw_data["vwap_since_new_york_open"] = raw_data.apply(compute_vwap, dv_col="new_york_open_dv",
+                                                          volume_col="new_york_open_volume", axis=1)
     raw_data["new_york_close_time"] = raw_data.timestamp.apply(
-        market_time.compute_close_time, cal=cal
+        market_time.compute_close_time, cal=new_york_cal
     )
     raw_data["london_open_time"] = raw_data.timestamp.apply(
         market_time.compute_open_time, cal=lse_cal
     )
+    raw_data["london_open_dv"] = raw_data.apply(fill_dv, time_col="london_open_time", axis=1)
+    raw_data["london_open_volume"] = raw_data.apply(fill_volume, time_col="london_open_time", axis=1)
+    raw_data["london_open_dv"] = raw_data.london_open_dv.ffill()
+    raw_data["london_open_volume"] = raw_data.london_open_volume.ffill()
+    raw_data["vwap_since_london_open"] = raw_data.apply(compute_vwap, dv_col="london_open_dv",
+                                                        volume_col="london_open_volume", axis=1)    
     raw_data["london_close_time"] = raw_data.timestamp.apply(
         market_time.compute_close_time, cal=lse_cal
     )

@@ -32,6 +32,8 @@ from .layers.PatchTST_layers import *
 from .layers.RevIN import RevIN
 
 
+from ats.util import profile_util
+
 class PredictionHead(nn.Module):
     def __init__(self, individual, n_vars, d_model, num_patch, forecast_len, head_dropout=0, flatten=False):
         super().__init__()
@@ -605,6 +607,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 min_max_output_size = output_size["min_max"]
             if "anomaly_returns" in output_size:
                 anomaly_returns_output_size = output_size["anomaly_returns"]
+        logging.error(f"anomaly_returns_output_size:{anomaly_returns_output_size}")
+        #anomaly_returns_output_size = 1
         #logging.info(f"returns_output_size:{returns_output_size}")
         if self.n_head_targets(head="returns_prediction") > 1:  # if to run with multiple targets
             self.output_layer = nn.ModuleList(
@@ -620,6 +624,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 )
             else:
                 self.anomaly_returns_output_layer = nn.Linear(d_model, anomaly_returns_output_size)
+            self.generate_anomaly = True
         self.min_max_output_layer = None
         if min_max_output_size:
             if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
@@ -637,7 +642,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         # S: [batch_size, layer_num, windows_size, windows_size]
         P = torch.mean(prior, dim=3)
         S = torch.mean(series, dim=3)
-        logging.info(f"series:{series.shape}, prior:{prior.shape}, P:{P.shape}, S:{S.shape}")
+        #logging.info(f"series:{series.shape}, prior:{prior.shape}, P:{P.shape}, S:{S.shape}")
         # R: [batch_size, layer_num, windows_size]
         R = torch.sum(self.KL(P, S), dim=-1) + torch.sum(self.KL(S, P), dim=-1)
 
@@ -652,8 +657,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
         # detach() create new Tensor，but point to original tensor and requires_grad=false
         series_loss = torch.mean(torch.abs(self._get_AssociationDiscrepancy(series, prior.detach())))
         prior_loss = torch.mean(torch.abs(self._get_AssociationDiscrepancy(series.detach(), prior)))
-        logging.info(f"output:{output[0].shape}")
-        logging.info(f"y:{y[0][0].shape}")
+        #logging.info(f"output:{output[0].shape}")
+        #logging.info(f"y:{y[0][0].shape}")
         # first y is returns and second one is position
         rec_loss = torch.mean(torch.mean(self.MSE(output[0], y[0][0]), dim=-1))
         return series_loss, prior_loss, rec_loss
@@ -671,13 +676,17 @@ class PatchTftSupervised(BaseModelWithCovariates):
         # prior: [batch_size, layer_num, head_num, windows_size, windows_size]
         #series = torch.concat([outputs.encoder_attention, outputs.decoder_attention], dim=-1)
         #logging.info(f"outputs.attn_output:{outputs.attn_series.shape}, priors:{outputs.attn_priors.shape}")
+        #logging.error(f"self.generate_anomaly:{self.generate_anomaly}, outputs.attn_priors:{outputs.attn_priors}, outputs.attn_series:{outputs.attn_series}")
         if self.generate_anomaly:
+            logging.error(f"outputs.attn_series:{outputs.attn_series.shape}, outputs.attn_priors:{outputs.attn_priors.shape}")
             series_loss, prior_loss, rec_loss = self._get_loss(y, outputs.prediction, outputs.attn_series,
                                                                outputs.attn_priors)
             #logging.info(f"series_loss:{series_loss}, prior_loss:{prior_loss}, rec_loss:{rec_loss}")
             loss1 = rec_loss + self.k * prior_loss
             loss2 = rec_loss - self.k * series_loss
-        
+            logging.error(f"rec_loss:{rec_loss}")
+            logging.error(f"prior_loss:{prior_loss}")
+            logging.error(f"series_loss:{series_loss}")
             self.manual_backward(loss1, retain_graph=True)
             self.manual_backward(loss2)
         else:
@@ -991,8 +1000,9 @@ class PatchTftSupervised(BaseModelWithCovariates):
             output = [output, min_max_output]
         
         return self.to_network_output(
-            prediction=self.transform_output(output,
-                                             target_scale=x["target_scale"]),
+            prediction=self.transform_output(output, target_scale=x["target_scale"]),
+            anomaly_returns_output=anomaly_returns_output,
+            min_max_output=min_max_output,
             encoder_attention=attn_output_weights[..., :new_encoder_length],
             decoder_attention=attn_output_weights[..., new_encoder_length:],
             static_variables=static_variable_selection,
@@ -1032,6 +1042,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         if self.log_interval > 0 and not self.training:
             self.log_interpretation(outputs)
 
+    @profile_util.profile
     def interpret_output(
         self,
         out: Dict[str, torch.Tensor],
