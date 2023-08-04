@@ -10,17 +10,22 @@ from ats.util import time_util
 from ats.util import profile_util
 
 @functools.lru_cache(maxsize=None)
-def get_macro_event_time(cal, x_date, mdb):
-    schedule = cal.schedule(
-        start_date=x_date, end_date=x_date + datetime.timedelta(days=35)
-    )
-    open_time = None
-    for idx in range(len(schedule.market_open)):
-        if mdb.has_event(schedule.market_open[idx]):
-            open_time = schedule.market_open[idx]
-            break
-    return open_time.timestamp()
-
+def get_last_macro_event_time(cal, x_time, mdb):
+    events = mdb.get_last_events(x_time)
+    for ix, val in events.event_time.iloc[::-1].items():
+        logging.error(f"last_macro_event_time:{val}")
+        if val<=x_time:
+            return val
+    return None
+    
+@functools.lru_cache(maxsize=None)
+def get_next_macro_event_time(cal, x_time, mdb):
+    events = mdb.get_next_events(x_time)
+    for	et in events.event_time:
+        if et>=x_time:
+            return et
+    return None
+    
 
 @functools.lru_cache(maxsize=None)
 def get_open_time(cal, x_date):
@@ -109,11 +114,24 @@ def compute_monthly_close_time(x, cal):
         logging.error(f"can not compute monthly close for {x}, {e}")
         return None
 
-def compute_macro_event_time(x, cal, mdb):
-    # logging.info(f"x:{x}, {type(x)}")
+def compute_last_macro_event_time(x, cal, mdb):
     try:
-        x = datetime.datetime.fromtimestamp(x)
-        return int(get_macro_event_time(cal, x.date(), mdb))
+        event_time = get_last_macro_event_time(cal, x, mdb)
+        if event_time is None:
+            return None
+        last_macro_event = int(event_time)
+        return last_macro_event
+    except Exception as e:
+        logging.error(f"can not compute macro event for {x}, {e}")
+        return None
+
+def compute_next_macro_event_time(x, cal, mdb):
+    try:
+        event_time = get_next_macro_event_time(cal, x, mdb)
+        if event_time is None:
+            return None
+        next_macro_event = int(event_time)
+        return next_macro_event
     except Exception as e:
         logging.error(f"can not compute macro event for {x}, {e}")
         return None

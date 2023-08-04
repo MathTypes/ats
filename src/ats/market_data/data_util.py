@@ -275,29 +275,46 @@ def time_diff(row, base_col, diff_col):
     else:
         return (row[diff_col] - row[base_col])
 
-def compute_vwap(row, dv_col, volume_col):
+def compute_vwap(row, dv_col, volume_col, base_price=500):
+    logging.error(f"volume_col:{volume_col}")
     if pd.isna(row[dv_col]) or pd.isna(row[volume_col]):
         return np.nan
     else:
-        if row["cum_volume"]-row[volume_col]>0:
-            return row["close"] - (row["cum_dv"] - row[dv_col])/(row["cum_volume"]-row[volume_col])
+        logging.error(f"row['cum_volume']:{row['cum_volume']}")
+        logging.error(f"row['cum_dv']:{row['cum_dv']}")
+        logging.error(f"row[{volume_col}]:{row[volume_col]}")
+        logging.error(f"row[{dv_col}]:{row[dv_col]}")
+        logging.error(f"row[close]:{row['close']}")
+        if row["cum_volume"]>row[volume_col]:
+            if row["cum_dv"] == row[dv_col]:
+                logging.error(f"no cum_dv change")
+                return 0
+            else:
+                vwap_price = (row["cum_dv"] - row[dv_col])/(row["cum_volume"]-row[volume_col])
+                logging.error(f"vwap_price:{vwap_price}, close:{row['close']}")
+                return np.log(row["close"]+base_price) - np.log(vwap_price+base_price)
         else:
+            logging.error(f"cum volume does not change")
             return 0
 
-def fill_dv(row, time_col):
+def fill_dv(row, time_col, interval_minutes=30):
     if pd.isna(row[time_col]):
         return np.nan
     else:
-        if row[time_col] == row["timestamp"]:
+        time_diff_threshold = interval_minutes*30+1
+        if ((row[time_col] > row["timestamp"]-time_diff_threshold) and
+            (row[time_col] < row["timestamp"]+time_diff_threshold)):
             return row["cum_dv"]
         else:
             return np.nan
 
-def fill_volume(row, time_col):
+def fill_volume(row, time_col, interval_minutes=30):
     if pd.isna(row[time_col]):
         return np.nan
     else:
-        if row[time_col] == row["timestamp"]:
+        time_diff_threshold = interval_minutes*30+1
+        if ((row[time_col] > row["timestamp"]-time_diff_threshold) and
+            (row[time_col] < row["timestamp"]+time_diff_threshold)):
             return row["cum_volume"]
         else:
             return np.nan
@@ -396,30 +413,40 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder, 
         market_time.compute_option_expiration_time, cal=cal
     )
     if macro_data_builder.add_macro_event:
-        raw_data["macro_event_time"] = raw_data.timestamp.apply(
-            market_time.compute_macro_event_time, cal=cal, mdb=macro_data_builder
+        raw_data["last_macro_event_time"] = raw_data.timestamp.apply(
+            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder
         )
+        raw_data["last_macro_event_cum_dv"] = raw_data.apply(fill_dv, time_col="last_macro_event_time", axis=1)
+        raw_data["last_macro_event_cum_volume"] = raw_data.apply(fill_volume, time_col="last_macro_event_time", axis=1)
+        raw_data["last_macro_event_cum_dv"] = raw_data.last_macro_event_cum_dv.ffill()
+        raw_data["last_macro_event_cum_volume"] = raw_data.last_macro_event_cum_volume.ffill()
+        raw_data["vwap_since_last_macro_event"] = raw_data.apply(compute_vwap, dv_col="last_macro_event_cum_dv",
+                                                                 volume_col="last_macro_event_cum_volume", axis=1)
+        raw_data["next_macro_event_time"] = raw_data.timestamp.apply(
+            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder
+        )
+
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(
         market_time.compute_open_time, cal=new_york_cal
     )
-    raw_data["new_york_open_dv"] = raw_data.apply(fill_dv, time_col="new_york_open_time", axis=1)
-    raw_data["new_york_open_volume"] = raw_data.apply(fill_volume, time_col="new_york_open_time", axis=1)
-    raw_data["new_york_open_dv"] = raw_data.new_york_open_dv.ffill()
-    raw_data["new_york_open_volume"] = raw_data.new_york_open_volume.ffill()
-    raw_data["vwap_since_new_york_open"] = raw_data.apply(compute_vwap, dv_col="new_york_open_dv",
-                                                          volume_col="new_york_open_volume", axis=1)
+    raw_data["new_york_open_cum_dv"] = raw_data.apply(fill_dv, time_col="new_york_open_time", axis=1)
+    raw_data["new_york_open_cum_volume"] = raw_data.apply(fill_volume, time_col="new_york_open_time", axis=1)
+    raw_data["new_york_open_cum_dv"] = raw_data.new_york_open_cum_dv.ffill()
+    raw_data["new_york_open_cum_volume"] = raw_data.new_york_open_cum_volume.ffill()
+    raw_data["vwap_since_new_york_open"] = raw_data.apply(compute_vwap, dv_col="new_york_open_cum_dv",
+                                                          volume_col="new_york_open_cum_volume", axis=1)
     raw_data["new_york_close_time"] = raw_data.timestamp.apply(
         market_time.compute_close_time, cal=new_york_cal
     )
     raw_data["london_open_time"] = raw_data.timestamp.apply(
         market_time.compute_open_time, cal=lse_cal
     )
-    raw_data["london_open_dv"] = raw_data.apply(fill_dv, time_col="london_open_time", axis=1)
-    raw_data["london_open_volume"] = raw_data.apply(fill_volume, time_col="london_open_time", axis=1)
-    raw_data["london_open_dv"] = raw_data.london_open_dv.ffill()
-    raw_data["london_open_volume"] = raw_data.london_open_volume.ffill()
-    raw_data["vwap_since_london_open"] = raw_data.apply(compute_vwap, dv_col="london_open_dv",
-                                                        volume_col="london_open_volume", axis=1)    
+    raw_data["london_open_cum_dv"] = raw_data.apply(fill_dv, time_col="london_open_time", axis=1)
+    raw_data["london_open_cum_volume"] = raw_data.apply(fill_volume, time_col="london_open_time", axis=1)
+    raw_data["london_open_cum_dv"] = raw_data.london_open_cum_dv.ffill()
+    raw_data["london_open_cum_volume"] = raw_data.london_open_cum_volume.ffill()
+    raw_data["vwap_since_london_open"] = raw_data.apply(compute_vwap, dv_col="london_open_cum_dv",
+                                                        volume_col="london_open_cum_volume", axis=1)    
     raw_data["london_close_time"] = raw_data.timestamp.apply(
         market_time.compute_close_time, cal=lse_cal
     )
@@ -452,8 +479,11 @@ def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder, 
         time_diff, axis=1, base_col="timestamp", diff_col="option_expiration_time"
     )
     if macro_data_builder.add_macro_event:
-        raw_data["time_to_macro_event"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="macro_event_time"
+        raw_data["time_to_last_macro_event"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time"
+        )
+        raw_data["time_to_next_macro_event"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time"
         )
     raw_data["time_to_high_5_ff"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="time_high_5_ff"
