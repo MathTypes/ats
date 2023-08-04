@@ -2030,11 +2030,13 @@ class TimeSeriesDataSet(Dataset):
         logging.error(f"raw_data_after_group:{raw_data.iloc[-10:][['time','timestamp','close_back']]}")
         min_new_data_idx = new_data.time_idx.min()
         #logging.info(f"new_data_idx:{new_data_idx[-10:]}")
+        new_data_idx = raw_data.time_idx>=min_new_data_idx
         new_raw_data = raw_data[raw_data.time_idx>min_new_data_idx-46*2]
         #logging.error(f"new_raw_data:{new_raw_data[:10][['time','timestamp','close_back']]}")
         new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
+        logging.error(f"new_data_idx:{new_data_idx.iloc[-3:]}")
         logging.error(f"new_raw_data after adding example level features:{new_raw_data[-3:]}")
-        raw_data[raw_data.time_idx>=min_new_data_idx] = new_raw_data[new_raw_data.time_idx>=min_new_data_idx]
+        raw_data[new_data_idx] = new_raw_data[new_data_idx]
         logging.error(f"new_full_data_before_ffill:{raw_data.iloc[-10:]}")
         # Only selected columns can be ffilled
         #raw_data = raw_data.ffill()
