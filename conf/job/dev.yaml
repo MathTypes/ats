@@ -1,12 +1,12 @@
 device: cuda
 mode: test
-retrain_model_before_test_start: True
+retrain_model_before_test_start: False
 data_start_date: 2009-06-01
 train_start_date: 2009-06-01
 eval_start_date: 2020-06-01
-eval_end_date: 2023-06-01
+eval_end_date: 2023-07-28
 test_start_date: 2020-06-01
-test_end_date: 2023-06-01
+test_end_date: 2023-07-28
 time_interval_minutes: 30
 max_lags: 1
 workers: 8
