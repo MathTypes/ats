@@ -1,0 +1,27 @@
+
+To train model
+  - poetry run python3 src/ats/app/main.py --config-name=single_asset_mini_futures_train --config-path=/home/ubuntu/ats/conf
+
+To run a job with snapshot generation
+  - poetry run python3 src/ats/app/main.py --config-name=single_asset_mini_futures_train --config-path=/home/ubuntu/ats/conf  dataset.write_snapshot=True
+
+To run visual search app
+  - poetry run streamlit run src/vss/interactive/search_app.py --server.port=$INTERACTIVE_PORT --server.address=0.0.0.0
+
+
+To run main app
+  - poetry run streamlit run src/ats/front_end/app.py
+
+To run test
+  - poetry run pytest -s   tests/ats/trading/test_trader.py -k test_on_interval
+  - poetry run pytest -s --disable-warnings   tests/ats/trading/test_trader.py -k test_on_interval
+  
+
+Env
+ - pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+ - pip install nvidia-cuda-cupti-cu11==11.7.101
+ - python -m torch.utils.collect_env
+ - cp /home/ubuntu/.ats_env/lib/python3.8/site-packages/nvidia/cuda_cupti/lib/libcupti.so.11.7 /home/ubuntu/.local/share/virtualenvs/ubuntu-7Wf190Ea/lib/python3.10/site-packages/nvidia/cuda_cupti/lib/
+ - sudo cp  /home/ubuntu/.ats_env/lib/python3.8/site-packages/nvidia/cuda_cupti/lib/libcupti.so.11.7 /usr/lib/x86_64-linux-gnu/ (fixed)
+
+
