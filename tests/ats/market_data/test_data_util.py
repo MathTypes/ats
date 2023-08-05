@@ -251,7 +251,7 @@ def test_add_example_features():
         )
         np.testing.assert_array_almost_equal(
             raw_data["new_york_open_time"],
-            [1325631600] * data_len,
+            [1325687400] * data_len,
             decimal=3, verbose=True, err_msg="can not match new_york_open_time",
         )
         np.testing.assert_array_almost_equal(
@@ -315,6 +315,7 @@ def test_add_example_features_vwap_before_new_york_open():
             "timestamp": timestamps
         }
         raw_data = pd.DataFrame(data=raw_data)
+        data_len = len(raw_data.timestamp)
         raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
@@ -327,7 +328,7 @@ def test_add_example_features_vwap_before_new_york_open():
             decimal=3, verbose=True, err_msg="can not match weekly_close_time",
         )
 
-def test_add_example_features_vwap_around_new_york_open():
+def test_add_example_features_vwap_around_new_york_open_no_event():
     with initialize(version_base=None, config_path="../../../conf"):
         cfg = compose(
             config_name="test",
@@ -362,8 +363,118 @@ def test_add_example_features_vwap_around_new_york_open():
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_new_york_open"],
-            [np.nan] * data_len,
+            [np.nan, np.nan, np.nan, 0., 1.404, 1.127, 1.128, 1.129],
+            decimal=3, verbose=True, err_msg="can not match vwap_since_new_york_open",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["ret_from_vwap_around_new_york_open"],
+            [np.nan, np.nan, np.nan, np.nan, 1.404, 1.127, 1.127, 1.128],
+            decimal=3, verbose=True, err_msg="can not match vwap_since_new_york_open",
+        )
+
+
+def test_add_example_features_vwap_around_new_york_open():
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+                "model.features.add_macro_event=True",
+                "job.test_start_date=2023-07-01",
+                "job.test_end_date=2023-07-28",
+            ],
+            return_hydra_config=True
+        )
+        env_mgr = EnvMgr(cfg)
+        market_cal = env_mgr.market_cal
+        macro_data_builder = MacroDataBuilder(env_mgr)
+        start_timestamp = datetime.datetime(2023,7,27,11,0,0).timestamp()
+        delta = 30*60
+        timestamps = [start_timestamp + i*delta for i in range(10)]
+        raw_data = {
+            "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
+            "open": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050],
+            "high": [1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052],
+            "low": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050],
+            "close": [1041, 1042, 1043, 1044, 1540, 1046, 1047, 1048, 1149, 1050],
+            "volume": [1, 1, 1, 1, 1, 1, 1, 1, 300, 7],
+            "dv": [1041, 1042, 1043, 1044, 1540, 1046, 1047, 1048, 300*1149, 1050*7],
+            "timestamp": timestamps
+        }
+        raw_data = pd.DataFrame(data=raw_data)
+        data_len = len(raw_data.timestamp)
+        raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
+        # fake the time interval to one day so that we can have 5 day high with 5
+        # intervals
+        raw_data = data_util.add_group_features(raw_data, 30*23*2)
+        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        logging.error(f"raw_data:{raw_data}")
+        np.testing.assert_array_almost_equal(
+            raw_data["vwap_since_new_york_open"],
+            [np.nan, np.nan, np.nan, np.nan, np.nan, 0.00000, 0.00000, 0.00032, 0.00041, -0.06015],
             decimal=3, verbose=True, err_msg="can not match weekly_close_time",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["vwap_since_last_macro_event"],
+            [np.nan, np.nan, np.nan, 0.00000, 0.00000, -0.14822, -0.10076, -0.07601, -0.00017, -0.06073],
+            decimal=3, verbose=True, err_msg="can not match weekly_close_time",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["ret_from_vwap_around_macro_event"],
+            [np.nan, np.nan, np.nan, np.nan, 0.00000, -0.27728, -0.27663, -0.27599, -0.21278, -0.27469],
+            decimal=3, verbose=True, err_msg="can not match weekly_close_time",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["ret_from_vwap_around_new_york_open"],
+            [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0.00000, 0.00065, 0.06385, 0.00194],
+            decimal=3, verbose=True, err_msg="can not match weekly_close_time",
+        )
+
+
+def test_add_example_features_vwap_around_london_open():
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+                "model.features.add_macro_event=True",
+                "job.test_start_date=2023-07-01",
+                "job.test_end_date=2023-07-28",
+            ],
+            return_hydra_config=True
+        )
+        env_mgr = EnvMgr(cfg)
+        market_cal = env_mgr.market_cal
+        macro_data_builder = MacroDataBuilder(env_mgr)
+        start_timestamp = datetime.datetime(2023,7,27,6,0,0).timestamp()
+        delta = 30*60
+        timestamps = [start_timestamp + i*delta for i in range(10)]
+        raw_data = {
+            "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES", "ES"],
+            "open": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050],
+            "high": [1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052],
+            "low": [1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050],
+            "close": [1041, 1042, 1043, 1044, 1540, 1046, 1047, 1048, 1149, 1050],
+            "volume": [1, 1, 1, 1, 1, 1, 1, 1, 300, 7],
+            "dv": [1041, 1042, 1043, 1044, 1540, 1046, 1047, 1048, 300*1149, 1050*7],
+            "timestamp": timestamps
+        }
+        raw_data = pd.DataFrame(data=raw_data)
+        data_len = len(raw_data.timestamp)
+        raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
+        # fake the time interval to one day so that we can have 5 day high with 5
+        # intervals
+        raw_data = data_util.add_group_features(raw_data, 30*23*2)
+        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        np.testing.assert_array_almost_equal(
+            raw_data["vwap_since_london_open"],
+            [np.nan, np.nan, 0.00000, 0.00000, 0.12962, -0.10082, -0.07606, -0.06078, 0.00004, -0.06053],
+            decimal=3, verbose=True, err_msg="can not match vwap_since_london_open",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["ret_from_vwap_around_london_open"],
+            [np.nan, np.nan, np.nan, 0.00000, 0.27857, 0.00129, 0.00194, 0.00259, 0.06579, 0.00388],
+            decimal=3, verbose=True, err_msg="can not match ret_from_vwap_around_london_open",
         )
 
 if __name__ == "__main__":
