@@ -140,6 +140,7 @@ class MarketDataMgr(object):
         logging.info(f"eval data after filtering: {eval_data.iloc[-3:]}")
         logging.info(f"test data after filtering: {test_data.iloc[-3:]}")
         logging.info(f"full_data:{len(full_data)}, train:{len(train_time_idx)}, eval:{len(eval_time_idx)}, test:{len(test_time_idx)}")
+        logging.info(f"full_data:{full_data.describe()}")
         full_data = full_data.sort_values(["ticker", "time"])
         data_module = TimeSeriesDataModule(
             config,

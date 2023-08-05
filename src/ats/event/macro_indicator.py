@@ -37,9 +37,9 @@ class MacroDataBuilder:
         self.observations = pd.concat(df_vec)
         self.observations = self.observations.set_index(["date"])
         self.observations = self.observations.sort_index()
-        logging.error(f"self.observations:{self.observations.iloc[-3:]}")
+        #logging.error(f"self.observations:{self.observations.iloc[-3:]}")
         self.observations = self.observations[(self.observations.currency=="USD") & (self.observations.importance>2)]
-        logging.error(f"after self.observations:{self.observations.iloc[-3:]}")
+        #logging.error(f"after self.observations:{self.observations.iloc[-3:]}")
 
     def load_events(self):
         df_vec = []
@@ -60,11 +60,8 @@ class MacroDataBuilder:
             )
         observations = pd.concat(df_vec)
         self.observations = observations[["date", "value", "series_id", "event_time"]]
-        logging.info(f"observations:{self.observations.iloc[-3:]}")
 
     def get_last_events(self, dt):
-        logging.error(f"self.observations:{self.observations.iloc[-3:]}")
-        logging.error(f"dt:{dt}")
         df = self.observations[
             (self.observations.event_time <= dt)
             & (self.observations.event_time > dt - 2 * 86400000)

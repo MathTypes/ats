@@ -13,7 +13,6 @@ from ats.util import profile_util
 def get_last_macro_event_time(cal, x_time, mdb):
     events = mdb.get_last_events(x_time)
     for ix, val in events.event_time.iloc[::-1].items():
-        logging.error(f"last_macro_event_time:{val}")
         if val<=x_time:
             return val
     return None
@@ -142,6 +141,22 @@ def compute_option_expiration_time(x, cal):
         return int(get_option_expiration_time(cal, x.date()))
     except Exception as e:
         logging.error(f"can not compute option expiration for {x}, {e}")
+        return None
+
+def compute_last_open_time(x, cal):
+    try:
+        x_time = datetime.datetime.fromtimestamp(x)
+        x_date = x_time.date()
+        schedule = cal.schedule(
+            start_date=x_date+datetime.timedelta(days=-3),
+            end_date=x_date + datetime.timedelta(days=5)
+        )
+        for market_open in schedule.market_open[::-1]:
+            if market_open.timestamp()<=x:
+                return market_open.timestamp()
+        return None
+    except Exception as e:
+        logging.error(f"can not compute open for {x}, {e}")
         return None
 
 def compute_open_time(x, cal):
