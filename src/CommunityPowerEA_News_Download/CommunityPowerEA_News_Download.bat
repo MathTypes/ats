@@ -1,0 +1,1 @@
+c:\Python310\python.exe CommunityPowerEA_News_Download.py

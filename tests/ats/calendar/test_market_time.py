@@ -7,6 +7,18 @@ import pytz
 from ats.calendar import market_time
 from ats.util import logging_utils
 
+def test_compute_last_open_time_nyse():
+    market_cal = mcal.get_calendar("NYSE")
+    open_time = market_time.compute_last_open_time(datetime.datetime(2009, 6, 1, 20, 0, 0).timestamp(), market_cal)
+    # Mon Jun 01 2009 13:30:00
+    assert open_time == 1243863000
+
+def test_compute_last_open_time_nyse_before_open():
+    market_cal = mcal.get_calendar("NYSE")
+    open_time = market_time.compute_last_open_time(datetime.datetime(2009, 6, 1, 10, 0, 0).timestamp(), market_cal)
+    # Fri May 29 2009 13:30:00
+    assert open_time == 1243603800
+
 def test_compute_open_time_cme():
     market_cal = mcal.get_calendar("CME_Equity")
     # 2009-06-01 is Monday

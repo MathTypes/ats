@@ -3,7 +3,7 @@ import logging
 
 import pandas as pd
 
-from ats.calendar import date_utils
+from ats.calendar import date_util
 from ats.calendar import market_time
 
 class MacroDataBuilder:
@@ -16,7 +16,7 @@ class MacroDataBuilder:
 
     def load_forex_factory_events(self):
         df_vec = []
-        for begin, end in date_utils.monthlist(self.env_mgr.data_start_date, self.env_mgr.data_end_date):
+        for begin, end in date_util.monthlist(self.env_mgr.data_start_date.date(), self.env_mgr.data_end_date.date()):
             date_str = begin.strftime("%Y.%m.%d")
             # 2023.08.01 00:30:00;AUD;3;Cash Rate;4.10%;4.35%;4.10%;;;
             observations = pd.read_csv(

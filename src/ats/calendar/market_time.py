@@ -147,14 +147,11 @@ def compute_last_open_time(x, cal):
     try:
         x_time = datetime.datetime.fromtimestamp(x)
         x_date = x_time.date()
-        schedule = cal.schedule(
-            start_date=x_date+datetime.timedelta(days=-3),
-            end_date=x_date + datetime.timedelta(days=5)
-        )
-        for market_open in schedule.market_open[::-1]:
-            if market_open.timestamp()<=x:
-                return market_open.timestamp()
-        return None
+        open_time = compute_open_time(x, cal)
+        while open_time > x:
+            x_time = x_time + datetime.timedelta(days=-1)
+            open_time = compute_open_time(x_time.timestamp(), cal)
+        return open_time
     except Exception as e:
         logging.error(f"can not compute open for {x}, {e}")
         return None

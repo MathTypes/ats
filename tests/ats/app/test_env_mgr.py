@@ -14,10 +14,7 @@ def test_env_mgr_init():
             ],
         )
         env_mgr = EnvMgr(cfg)
-        # Sun May 31 2009 15:00:00
         assert env_mgr.train_start_timestamp == 1243807200.0
-        # Wed Jun 03 2009 15:00:00
-        assert env_mgr.eval_start_timestamp == 1277935200
-        assert env_mgr.test_start_timestamp == 1277935200
-        # Mon Aug 03 2009 14:00:00
-        assert env_mgr.test_end_timestamp == 1280782800
+        assert env_mgr.eval_start_timestamp == 1246399200
+        assert env_mgr.test_start_timestamp == 1246399200
+        assert env_mgr.test_end_timestamp == 1249333200.0
