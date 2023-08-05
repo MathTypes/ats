@@ -219,7 +219,10 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["time_low_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_21_ff"), axis=1)
     raw_data["time_low_21_ff"]  = raw_data["time_low_21_ff"].ffill()
 
+    logging.error(f"51*interval_per_day:{51*interval_per_day}")
+    logging.error(f"raw_data.close_back_cumsum:{raw_data.close_back_cumsum.describe()}")
     raw_data['close_rolling_51d_max'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).max()
+    logging.error(f"raw_data.close_rolling_51d_max:{raw_data.close_rolling_51d_max.describe()}")
     raw_data["close_high_51_ff"] = raw_data["close_rolling_51d_max"].ffill()
     raw_data["close_high_51_bf"] = raw_data["close_rolling_51d_max"].bfill()
     raw_data["time_high_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_51_ff"), axis=1)
@@ -266,7 +269,7 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["sma_200"] = ta.trend.SMAIndicator(
         close=raw_data["close"], window=200
     ).sma_indicator()
-
+    logging.error(f"raw_data:{raw_data.iloc[-10:]}")
     return raw_data
 
 def time_diff(row, base_col, diff_col):

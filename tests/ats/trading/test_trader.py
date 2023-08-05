@@ -62,7 +62,12 @@ def test_on_interval():
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     with initialize(version_base=None, config_path="../../../conf"):
-        cfg = compose(config_name="test", overrides=[], return_hydra_config=True)
+        cfg = compose(config_name="test",
+                      overrides=[
+                          "job.test_start_date=2010-07-30",
+                          "job.test_end_date=2010-07-30",
+                      ],
+                      return_hydra_config=True)
         env_mgr = EnvMgr(cfg)
         md_mgr = market_data_mgr.MarketDataMgr(env_mgr)
         market_cal = md_mgr.market_cal

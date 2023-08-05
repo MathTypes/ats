@@ -120,22 +120,6 @@ def check_for_nonfinite(tensor: torch.Tensor, names: Union[str, List[str]]) -> t
 
 NORMALIZER = Union[TorchNormalizer, NaNLabelEncoder, EncoderNormalizer]
 
-def add_highs(df, width):
-    df_cumsum = df.cumsum()
-    high_idx, _ = find_peaks(df_cumsum, width=width)
-    high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
-    df_high = df_cumsum.to_frame(name="close_cumsum").join(high)
-    df_high = df_high.bfill()
-    return df_high["close_cumsum_high"]
-
-def add_lows(df, width):
-    df_cumsum = df.cumsum()
-    low_idx, _ = find_peaks(np.negative(df_cumsum), width=width)
-    low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
-    df_low = df_cumsum.to_frame(name="close_cumsum").join(low)
-    df_low = df_low.bfill()
-    return df_low["close_cumsum_low"]
-
 class TimeSeriesDataSet(Dataset):
     """
     PyTorch Dataset for fitting timeseries models.
@@ -548,7 +532,7 @@ class TimeSeriesDataSet(Dataset):
         self.add_lag_variables(data)
 
         # filter data
-        #logging.error(f"self.min_prediction_idx:{self.min_prediction_idx}")
+        logging.error(f"self.min_prediction_idx:{self.min_prediction_idx}")
         if self.min_prediction_idx is not None:
             # filtering for min_prediction_idx will be done on subsequence level ensuring
             # minimal decoder index is always >= min_prediction_idx
@@ -565,10 +549,10 @@ class TimeSeriesDataSet(Dataset):
         for target in self.target_names:
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
         #logging.error(f"before dropna head: {data[:3]}")
-        #logging.error(f"before dropna tail: {data[-3:]}")
+        logging.error(f"before dropna tail: {data[-3:]}")
         data = data.dropna()
         #logging.error(f"after dropna head: {data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
-        #logging.error(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
+        logging.error(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
         self.transformed_data = data
         # create index
         #logging.info(f"before construct_index:{data[-4:]}")
@@ -2025,13 +2009,14 @@ class TimeSeriesDataSet(Dataset):
         logging.error(f"raw_data_tail_before_group:{raw_data.iloc[-5:]}")
         #logging.error(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
         raw_data = data_util.add_group_features(raw_data, interval_minutes)
+        logging.error(f"raw_data:{raw_data.describe()}")
         # This assumes we only have single ticker per timeseries dataset.
         logging.error(f"new_data_time_idx:{new_data.time_idx}")
-        logging.error(f"raw_data_after_group:{raw_data.iloc[-10:][['time','timestamp','close_back']]}")
+        logging.error(f"raw_data_after_group:{raw_data.iloc[-6:]}")
         min_new_data_idx = new_data.time_idx.min()
         #logging.info(f"new_data_idx:{new_data_idx[-10:]}")
         new_data_idx = raw_data.time_idx>=min_new_data_idx
-        new_raw_data = raw_data[raw_data.time_idx>min_new_data_idx-46*2]
+        new_raw_data = raw_data[raw_data.time_idx>min_new_data_idx-46*250]
         #logging.error(f"new_raw_data:{new_raw_data[:10][['time','timestamp','close_back']]}")
         new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
         logging.error(f"new_data_idx:{new_data_idx.iloc[-3:]}")

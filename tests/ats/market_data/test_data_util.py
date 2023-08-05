@@ -16,6 +16,34 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 pd.options.display.float_format = "{:.5f}".format
 
+def test_rolling():
+    start_timestamp = 1325689200
+    delta = 30*60
+    timestamps = [start_timestamp + i*delta for i in range(7)]
+    raw_data = {
+        "ticker": ["ES", "ES", "ES", "ES", "ES", "ES", "ES"],
+        "open": [1, 2, 3, 4, 5, 6, 7],
+        "high": [3, 4, 5, 6, 7, 8, 9],
+        "low": [1, 2, 3, 4, 5, 6, 7],
+        "close": [1, 2, 3, 4, 5, 6, 7],
+        "volume": [1, 3, 2, 1, 2, 3, 4],
+        "dv": [1, 2, 3, 1, 2, 3, 1],
+        "timestamp": timestamps
+    }
+    raw_data = pd.DataFrame(data=raw_data)
+    raw_data['close_rolling_3d_max'] = raw_data.close.rolling(3).max()
+    np.testing.assert_array_almost_equal(
+        raw_data["close_rolling_3d_max"],
+        [np.nan, np.nan, 3, 4, 5, 6, 7],
+        decimal=3
+    )
+    raw_data['volume_rolling_3d_max'] = raw_data.volume.rolling(3).max()
+    np.testing.assert_array_almost_equal(
+        raw_data["volume_rolling_3d_max"],
+        [np.nan, np.nan, 3.,  3.,  2.,  3.,  4],
+        decimal=3
+    )
+    
 def test_add_highs_trending_no_high():
     start_timestamp = 1325689200
     delta = 30*60

@@ -9,7 +9,7 @@ from ats.calendar import date_util
 from ats.util import time_util
 from ats.util import profile_util
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=128000)
 def get_last_macro_event_time(cal, x_time, mdb):
     events = mdb.get_last_events(x_time)
     for ix, val in events.event_time.iloc[::-1].items():
@@ -17,7 +17,7 @@ def get_last_macro_event_time(cal, x_time, mdb):
             return val
     return None
     
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=128000)
 def get_next_macro_event_time(cal, x_time, mdb):
     events = mdb.get_next_events(x_time)
     for	et in events.event_time:
@@ -26,7 +26,7 @@ def get_next_macro_event_time(cal, x_time, mdb):
     return None
     
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=128000)
 def get_open_time(cal, x_date):
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=5)
@@ -34,7 +34,7 @@ def get_open_time(cal, x_date):
     return schedule.market_open[0].timestamp()
 
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=128000)
 def get_close_time(cal, x_date):
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=5)
@@ -42,7 +42,7 @@ def get_close_time(cal, x_date):
     return schedule.market_close[0].timestamp()
 
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=128000)
 def get_weekly_close_time(cal, x_date):
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=8)
@@ -57,7 +57,7 @@ def get_weekly_close_time(cal, x_date):
     return curr_close_time.timestamp()
 
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=128000)
 def get_monthly_close_time(cal, x_date):
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=38)
@@ -72,7 +72,7 @@ def get_monthly_close_time(cal, x_date):
     return curr_close_time.timestamp()
 
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=128000)
 def get_option_expiration_time(cal, x_date):
     x_date = date_util.get_option_expiration_day(x_date)
     return get_weekly_close_time(cal, x_date)
