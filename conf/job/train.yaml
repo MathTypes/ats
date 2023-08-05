@@ -15,7 +15,7 @@ max_lead: 7
 
 workers: 8
 num_tune_iter: 20
-max_epochs: 5
+max_epochs: 50
 log_mode: All
 eval_batches: 2
 tune_learning_rate: False

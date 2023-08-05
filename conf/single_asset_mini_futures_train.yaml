@@ -2,5 +2,5 @@ defaults:
  - dataset: mini_futures
  - features: prod
  - optimizer: adam
- - model: patch_tft_supervised_single_asset_full_futures
+ - model: patch_tft_supervised_v3
  - job: train
