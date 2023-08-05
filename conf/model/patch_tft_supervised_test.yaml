@@ -40,5 +40,5 @@ features:
   add_relative_time_idx: True
   add_macro_event: False
 
-max_lag: 365
-max_lead: 7
+max_lag: 1
+max_lead: 1
