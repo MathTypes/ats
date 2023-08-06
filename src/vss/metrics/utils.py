@@ -74,7 +74,8 @@ class DatasetCombined:
         df = pd.read_csv(meta, index_col=0)
         df = df.sample(
             frac=1
-        )  # shuffle dataframe just in case, because split is not class balanced (not guaranteed)
+        )
+        # shuffle dataframe just in case, because split is not class balanced (not guaranteed)
         # add data_dir path to meta file, so filenames will contain absolute path for data
         df["file"] = df["file"].apply(lambda file: f"{data_dir}/{file}")
         x_train, x_test, y_train, y_test = train_test_split(

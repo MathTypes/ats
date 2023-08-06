@@ -37,8 +37,8 @@ if __name__ == "__main__":
         if not symbol in symbol_map:
             symbol_map[symbol] = len(symbol_map) + 1
         symbol_label = symbol_map[symbol]
-        new_df = new_df.append({"idx":idx, "file":filepath, "class":label_class,
-                                "label":label}, ignore_index=True)
+        row = {"idx":idx, "file":filepath, "class":label_class, "label":label}
+        new_df.loc[new_df.shape[0]] = row
     new_df.to_csv(args.output)
 
         

@@ -3,7 +3,7 @@ import glob
 import logging
 import os
 import re
-
+import traceback
 import numpy as np
 import scipy.stats
 import torch
@@ -53,11 +53,18 @@ def numpy_to_torch(v):
 
 
 def to_numpy(v):
+    if is_list_or_tuple(v):
+        if isinstance(v[0], np.int64):
+            logging.info(f"type(v):{type(v)}, v:{v}")
+            return np.array(v)
+        else:
+            shapes = [to_numpy(sub_v).shape for sub_v in v]
+            logging.error(f"v:{v}, shapes:{shapes}")
+            return np.stack([to_numpy(sub_v) for sub_v in v], axis=1)
     try:
         return v.cpu().numpy()
     except AttributeError:
         return v
-
 
 def get_hierarchy_label(batch_labels, hierarchy_level):
     if hierarchy_level == "all":
@@ -74,10 +81,7 @@ def get_hierarchy_label(batch_labels, hierarchy_level):
 
 
 def map_labels(label_map, labels):
-    if is_list_or_tuple(labels):
-        labels = np.stack([to_numpy(sub) for sub in labels], axis=1)
-    else:
-        labels = to_numpy(labels)
+    labels = to_numpy(labels)
     if labels.ndim == 2:
         new_labels = np.zeros(labels.shape, dtype=int)
         for h in range(labels.shape[1]):
@@ -159,24 +163,26 @@ def set_layers_to_eval(layer_name):
 
 
 def get_train_dataloader(dataset, batch_size, sampler, num_workers, collate_fn):
-    if isinstance(sampler, torch.utils.data.BatchSampler):
-        return torch.utils.data.DataLoader(
-            dataset,
-            batch_sampler=sampler,
-            num_workers=num_workers,
-            collate_fn=collate_fn,
-            pin_memory=False,
-        )
-    return torch.utils.data.DataLoader(
-        dataset,
-        batch_size=int(batch_size),
-        sampler=sampler,
-        drop_last=True,
-        num_workers=num_workers,
-        collate_fn=collate_fn,
-        shuffle=sampler is None,
-        pin_memory=False,
-    )
+    #if isinstance(sampler, torch.utils.data.BatchSampler):
+    #    return torch.utils.data.DataLoader(
+    #        dataset,
+    #        batch_sampler=sampler,
+    #        num_workers=num_workers,
+    #        collate_fn=collate_fn,
+    #        pin_memory=False,
+    #    )
+    return dataset.to_dataloader(train=True, batch_size=batch_size)
+    #return torch.utils.data.DataLoader(
+    #    dataset,
+    #    batch_size=int(batch_size),
+    #    sampler=sampler,
+    #    drop_last=True,
+    #    num_workers=num_workers,
+    #    collate_fn=collate_fn,
+    #    shuffle=sampler is None,
+    #
+    #pin_memory=False,
+    #)
 
 
 def get_eval_dataloader(dataset, batch_size, num_workers, collate_fn):
@@ -461,10 +467,17 @@ def to_dtype(x, tensor=None, dtype=None):
 
 def to_device(x, tensor=None, device=None, dtype=None):
     dv = device if device is not None else tensor.device
-    if x.device != dv:
-        x = x.to(dv)
-    if dtype is not None:
-        x = to_dtype(x, dtype=dtype)
+    if isinstance(x, (dict)):
+        x = {key : to_device(val, tensor, device, dtype) for key, val in x.items()}
+    elif isinstance(x, (list)):
+        x = [to_device(val, tensor, device, dtype) for val in x]
+    elif isinstance(x, np.int64):
+        x = torch.tensor(x).to(dv)
+    else:
+        if x.device != dv:
+            x = x.to(dv)
+        if dtype is not None:
+            x = to_dtype(x, dtype=dtype)
     return x
 
 

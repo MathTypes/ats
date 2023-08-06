@@ -81,6 +81,7 @@ class MetricClient:
         self.env_mgr = EnvMgr(cfg, run_id)
         logging.info(f"cfg.job.dataset_transform:{cfg.job.dataset_transform}")
         self.md_mgr = MarketDataMgr(env_mgr=self.env_mgr, transform=cfg.job.dataset_transform)
+        self.data_module = self.md_mgr.data_module
         self.models = init_all_metric_models(self.md_mgr)
         local_collection_dir = Path(f"{cfg.job.search_metric_data_dir}")
         logging.error(f"local_collection_dir:{local_collection_dir}")
@@ -93,11 +94,10 @@ class MetricClient:
             else:
                 self.interp_map[time_idx] = file
 
-    def _single_img_infer(self, model: MetricModel, img_path: str) -> list[float]:
+    def _single_img_infer(self, model: MetricModel, ticker: str, decoder_time_idx: int) -> list[float]:
         """Perform single inference of image with proper model and return embeddings"""
         model = model.model
-        decoder_time_idx = int(decode_file_path(img_path)[0])
-        logging.error(f"decoder_time_idx:{decoder_time_idx}")
+        logging.error(f"decoder_time_idx:{decoder_time_idx}, ticker:{ticker}")
         eval_dataset = self.md_mgr.data_module().validation
         filtered_dataset = eval_dataset.filter(
             lambda x: x.time_idx_first_prediction==decoder_time_idx
@@ -117,9 +117,10 @@ class MetricClient:
             logging.error(f"embedding:{embedding.shape}")
         return embedding
 
-    def search(
+    def search_by_ticker_time_idx(
         self,
-        img_path: str,
+        ticker: str,
+        timestamp: float,
         collection_name: Union[str, MetricCollections],
         limit: int = SEARCH_RESPONSE_LIMIT,
     ) -> list[ScoredPoint]:
@@ -131,8 +132,7 @@ class MetricClient:
             raise InvalidCollectionName(collection_name)
 
         model = self.models[collection_name]
-        embedding = self._single_img_infer(model, img_path).detach().cpu().numpy()
-        #embedding = np.resize(embedding, (1024))
+        embedding = self._single_img_infer(model, ticker, decoder_time_idx).detach().cpu().numpy()
         try:
             search_result = qdrant_client.search(
                 collection_name=collection_name,
@@ -146,6 +146,16 @@ class MetricClient:
         except Exception as e:
             logging.error(f"can not search collection:{collection_name}, embedding:{embedding}, limit:{limit}, e:{e}")
         return search_result
+
+    def search(
+        self,
+        img_path: str,
+        collection_name: Union[str, MetricCollections],
+        limit: int = SEARCH_RESPONSE_LIMIT,
+    ) -> list[ScoredPoint]:
+        """Search for most similar images (vectors) using qdrant engine"""
+        decoder_time_idx = int(decode_file_path(img_path)[0])
+        return self.search_by_ticker_time_idx(ticker, decoder_time_idx, collection_name, limit)
 
 
 @dataclass
