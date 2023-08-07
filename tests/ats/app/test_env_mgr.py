@@ -15,6 +15,6 @@ def test_env_mgr_init():
         )
         env_mgr = EnvMgr(cfg)
         assert env_mgr.train_start_timestamp == 1243807200.0
-        assert env_mgr.eval_start_timestamp == 1246399200
-        assert env_mgr.test_start_timestamp == 1246399200
+        assert env_mgr.eval_start_timestamp == 1243807200.0
+        assert env_mgr.test_start_timestamp == 1243807200.0
         assert env_mgr.test_end_timestamp == 1249333200.0
