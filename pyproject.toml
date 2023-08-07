@@ -66,6 +66,11 @@ nvidia-cudnn-cu11 = "^8.9.2.26"
 tensorflow = "^2.13.0"
 cpflows = "^0.1.2"
 undetected-chromedriver = "^3.5.0"
+loguru = "^0.7.0"
+qdrant-client = "^1.4.0"
+minio = "^7.1.15"
+record-keeper = "^0.9.32"
+modin = "^0.23.0"
 
 
 [build-system]

@@ -4,4 +4,4 @@ defaults:
  - model: patch_tft_supervised_v3
  - job: simulation
  - trading: dev
- checkpoint: ${hydra:runtime.cwd}/model/20230805-033138/epoch=4-step=5785.ckpt
+ 
