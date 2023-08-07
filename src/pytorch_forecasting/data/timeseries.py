@@ -5,7 +5,7 @@ Timeseries data is special and has to be processed and fed to algorithms in a sp
 defines a class that is able to handle a wide variety of timeseries data problems.
 """
 from copy import copy as _copy, deepcopy
-from functools import lru_cache
+from functools import lru_cache, partial
 import inspect
 import math
 from typing import Any, Callable, Dict, List, Tuple, Union
@@ -17,6 +17,8 @@ import traceback
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import ray
+
 from pytorch_forecasting.data.encoders import (
     EncoderNormalizer,
     GroupNormalizer,
@@ -2005,10 +2007,16 @@ class TimeSeriesDataSet(Dataset):
             lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
         raw_data = raw_data.set_index("new_idx")
+        full_ds = ray.data.from_pandas(raw_data)
+        add_group_features = partial(data_util.add_group_features, interval_minutes)
+        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+        add_example_features = partial(data_util.add_example_level_features, cal, mdr.macro_data_builder)
+        full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
+        raw_data = full_ds.to_pandas(limit=10000000)
         #logging.error(f"raw_data_head_before_group:{raw_data.iloc[:5]}")
         #logging.error(f"raw_data_tail_before_group:{raw_data.iloc[-5:]}")
         #logging.error(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
-        raw_data = data_util.add_group_features(raw_data, interval_minutes)
+        #raw_data = data_util.add_group_features(raw_data, interval_minutes)
         #logging.error(f"raw_data:{raw_data.describe()}")
         # This assumes we only have single ticker per timeseries dataset.
         #logging.error(f"new_data_time_idx:{new_data.time_idx}")
@@ -2018,7 +2026,12 @@ class TimeSeriesDataSet(Dataset):
         new_data_idx = raw_data.time_idx>=min_new_data_idx
         new_raw_data = raw_data[raw_data.time_idx>min_new_data_idx-46*250]
         #logging.error(f"new_raw_data:{new_raw_data[:10][['time','timestamp','close_back']]}")
-        new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
+        new_full_ds = ray.data.from_pandas(new_raw_data)
+        add_example_features = partial(data_util.add_example_level_features, cal, mdr.macro_data_builder)
+        new_full_ds = new_full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
+        new_raw_data = new_full_ds.to_pandas(limit=10000000)
+        #new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
+        
         #logging.error(f"new_data_idx:{new_data_idx.iloc[-3:]}")
         #logging.error(f"new_raw_data after adding example level features:{new_raw_data[-3:]}")
         raw_data[new_data_idx] = new_raw_data[new_data_idx]

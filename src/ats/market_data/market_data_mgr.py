@@ -243,15 +243,16 @@ class MarketDataMgr(object):
         add_example_features = partial(
             data_util.add_example_level_features, self.market_cal,
             self.macro_data_builder)
-        full_ds = full_ds.map_batches(add_example_features)
+        full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
         #full_data = data_util.add_group_features(
         #    full_data, self.config.job.time_interval_minutes
         #)
         #full_data = data_util.add_example_level_features(full_data, self.market_cal,
         #                                                 self.macro_data_builder)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
-            ds = ray.data.from_pandas(full_ds)
+            #ds = ray.data.from_pandas(full_ds)
+            ds = full_ds
             os.makedirs(snapshot_dir, exist_ok=True)
             ds.write_parquet(snapshot_dir)
-        full_data = full_ds.to_pandas()
+        full_data = full_ds.to_pandas(limit=10000000)
         return full_data
