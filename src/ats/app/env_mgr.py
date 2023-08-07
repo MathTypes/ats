@@ -20,8 +20,8 @@ class EnvMgr(object):
 
     def init_env(self):
         self.market_cal = mcal.get_calendar(self.config.job.market)
-        has_train_stage = self.config.job.mode in ["train", "test"]
-        has_eval_stage = self.config.job.mode in ["train", "test", "eval", "build_search", "search"]
+        has_train_stage = self.config.job.mode in ["train", "test", "tune"]
+        has_eval_stage = self.config.job.mode in ["train", "tune", "test", "eval", "build_search", "search"]
         has_test_stage = self.config.job.mode in ["test"]
 
         self.max_lags = self.config.model.max_lag
@@ -67,7 +67,7 @@ class EnvMgr(object):
             )
         data_start_date = None
         data_end_date = None
-        if self.config.job.mode == "train":
+        if self.config.job.mode in ["train", "tune"]:
             data_start_date = self.train_start_date
             data_end_date = self.eval_end_date
             self.test_start_date = self.eval_start_date
@@ -90,7 +90,10 @@ class EnvMgr(object):
             data_end_date = self.eval_end_date
             # Still need to fail train/test time since data_module
             # build train/eval/test dataset
+            # A quick hack to give train data 30 days so that timeseries
+            # dataset does not cry.
             self.train_start_timestamp = self.eval_start_timestamp
+            self.eval_start_timestamp = self.train_start_timestamp+90*60*60*24
             self.test_start_timestamp = self.eval_start_timestamp
             self.test_end_timestamp = self.eval_end_timestamp
             
