@@ -107,7 +107,6 @@ class Pipeline:
             train_dataloaders=self.data_module.train_dataloader(),
             val_dataloaders=self.data_module.val_dataloader(),
             early_stop_threshold=None,
-            num_iter=self.config.job.num_tune_iter,
             max_lr=0.1,
             min_lr=1e-3,
         )
