@@ -36,11 +36,11 @@ def get_open_time(cal, x_date):
         return open_time_dict[x_date]    
     
     schedule = cal.schedule(
-        start_date=x_date, end_date=x_date + datetime.timedelta(days=365)
+        start_date=x_date, end_date=x_date + datetime.timedelta(days=3)
     )
     for idx in range(len(schedule.market_open)):
         x_date_idx = x_date + datetime.timedelta(days=idx)
-        open_time_dict[x_date_idx] = schedule.market_open[0].timestamp()
+        open_time_dict[x_date_idx] = schedule.market_open[idx].timestamp()
     return schedule.market_open[0].timestamp()
 
 
@@ -175,7 +175,6 @@ def compute_last_open_time(x, cal):
         return None
 
 def compute_open_time(x, cal):
-    # logging.info(f"x:{x}, {type(x)}")
     try:
         x = datetime.datetime.fromtimestamp(x)
         return int(get_open_time(cal, x.date()))

@@ -7,6 +7,14 @@ import pytz
 from ats.calendar import market_time
 from ats.util import logging_utils
 
+# Test that caches are working properly
+def test_compute_last_open_time_nyse_consecutive_call():
+    market_cal = mcal.get_calendar("NYSE")
+    open_time = market_time.compute_last_open_time(datetime.datetime(2023, 8, 3, 12, 0, 0).timestamp(), market_cal)
+    assert open_time == 1690983000
+    open_time = market_time.compute_last_open_time(datetime.datetime(2023, 8, 3, 14, 0, 0).timestamp(), market_cal)
+    assert open_time == 1691069400
+
 def test_compute_last_open_time_nyse():
     market_cal = mcal.get_calendar("NYSE")
     open_time = market_time.compute_last_open_time(datetime.datetime(2009, 6, 1, 20, 0, 0).timestamp(), market_cal)
