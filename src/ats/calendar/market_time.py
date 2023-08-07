@@ -36,7 +36,7 @@ def get_open_time(cal, x_date):
         return open_time_dict[x_date]    
     
     schedule = cal.schedule(
-        start_date=x_date, end_date=x_date + datetime.timedelta(days=3)
+        start_date=x_date, end_date=x_date + datetime.timedelta(days=30)
     )
     for idx in range(len(schedule.market_open)):
         x_date_idx = x_date + datetime.timedelta(days=idx)
