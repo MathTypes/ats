@@ -692,8 +692,12 @@ class PatchTftSupervised(BaseModelWithCovariates):
         else:
             log, loss = self.compute_loss(outputs.prediction, y, x, **kwargs)
             self.manual_backward(loss)
+
+            lr = opt.param_groups[0]["lr"]
+            if batch_idx % self.log_interval == 0:
+                logging.info('Train: batch-{}\tLoss: {:.6f} Learning Rate: {}'.format(batch_idx, loss.item(),lr))
         # clip gradients
-        self.clip_gradients(opt, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+        self.clip_gradients(opt, gradient_clip_val=0.1, gradient_clip_algorithm="norm")
         opt.step()
         
     def n_head_targets(self, head) -> int:

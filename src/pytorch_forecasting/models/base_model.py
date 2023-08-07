@@ -1393,6 +1393,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     factor=1.0 / self.hparams.reduce_on_plateau_reduction,
                     patience=self.hparams.reduce_on_plateau_patience,
                     cooldown=self.hparams.reduce_on_plateau_patience,
+                    threshold=1e-3,
                     min_lr=self.hparams.reduce_on_plateau_min_lr,
                 ),
                 "monitor": "val_loss",  # Default: val_loss
@@ -1400,7 +1401,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 "frequency": 1,
                 "strict": False,
             }
-
+        logging.info(f"optimizer:{optimizer}, scheduler:{scheduler_config}")
         return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
 
     @classmethod

@@ -190,9 +190,10 @@ def get_patch_tst_model(config, data_module):
         loss=loss,
         attn_dropout=0.1,  # between 0.1 and 0.3 are good values
         # hidden_continuous_size=8,  # set to <= hidden_size
-        optimizer="Ranger"
+        optimizer="Ranger",
         # reduce learning rate if no improvement in validation loss after x epochs
         # reduce_on_plateau_patience=1000,
+        reduce_on_plateau_patience=4,
     )
     return net
 
@@ -230,7 +231,7 @@ def get_patch_tst_tft_model(config, data_module):
         #optimizer="Ranger"
         optimizer="sgd",
         # reduce learning rate if no improvement in validation loss after x epochs
-        # reduce_on_plateau_patience=1000,
+        #reduce_on_plateau_patience=4,
     )
     return net
 
@@ -304,13 +305,18 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         lstm_layers=config.model.lstm_layers,
         # number of attention heads. Set to up to 4 for large datasets
         n_heads=config.model.attn_heads,
+        dropout=config.model.dropout,
         attn_dropout=config.model.attn_dropout,  # between 0.1 and 0.3 are good values
         # hidden_continuous_size=8,  # set to <= hidden_size
         # loss=QuantileLoss(),
-        optimizer="Ranger",
+        #optimizer="Ranger",
+        optimizer="adamw",
         output_size=output_size_dict,
         # reduce learning rate if no improvement in validation loss after x epochs
-        # reduce_on_plateau_patience=1000,
+        reduce_on_plateau_patience=1,
+        reduce_on_plateau_reduction=10.0,
+        reduce_on_plateau_min_lr=0.00001,
+        weight_decay=0.2
     )
     return net
 
