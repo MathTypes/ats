@@ -3,6 +3,7 @@ from functools import cached_property
 import logging
 import numpy as np
 import pandas as pd
+#import modin.pandas as pd
 import os
 import ray
 import time
@@ -136,9 +137,9 @@ class MarketDataMgr(object):
         eval_time_idx = eval_data["time_idx"]    
         test_time_idx = test_data["time_idx"]    
         logging.info(f"full data after filtering: {full_data.iloc[-3:]}")
-        logging.info(f"train data after filtering: {train_data.iloc[-3:]}")
-        logging.info(f"eval data after filtering: {eval_data.iloc[-3:]}")
-        logging.info(f"test data after filtering: {test_data.iloc[-3:]}")
+        logging.info(f"train data after filtering: {train_data.iloc[-30:][['time_idx','ticker','time']]}")
+        logging.info(f"eval data after filtering: {eval_data.iloc[-30:][['time_idx','ticker','time']]}")
+        logging.info(f"test data after filtering: {test_data.iloc[-30:][['time_idx','ticker','time']]}")
         logging.info(f"full_data:{len(full_data)}, train:{len(train_time_idx)}, eval:{len(eval_time_idx)}, test:{len(test_time_idx)}")
         logging.info(f"full_data:{full_data.describe()}")
         full_data = full_data.sort_values(["ticker", "time"])
