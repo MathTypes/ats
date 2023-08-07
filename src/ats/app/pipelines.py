@@ -3,6 +3,7 @@ import gc
 import logging
 from typing import List
 
+#import fiftyone as fo
 import pandas as pd
 import pandas_market_calendars as mcal
 import numpy as np
@@ -350,23 +351,17 @@ class PatchTftSupervisedPipeline(Pipeline):
         search_builder.build_embedding_cache_if_not_exists()
 
     def search_example(self):
+        from vss.metrics.core import BestChoiceImagesDataset, MetricClient
         logging.info(f"device:{self.device}")
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         trainer_kwargs = {"logger": wandb_logger}
         logging.info(f"rows:{len(self.data_module.eval_data)}")
-        data_artifact = wandb.Artifact(f"run_{wandb.run.id}_search", type="evaluation")
+        #dataset = fo.Dataset()
+        full_data = self.data_module.full_data
+        full_data = full_data[full_data.ticker.isin(["ES"])]
         
-        metrics = SMAPE(reduction="none").to(self.device)
-        data_table = viz_utils.create_example_viz_table(
-            self.model.to(self.device),
-            self.data_module.val_dataloader(),
-            self.data_module.eval_data,
-            metrics,
-            self.config.job.eval_top_k,
-        )
-        data_artifact.add(data_table, "eval_data")
-
-        # Calling `use_artifact` uploads the data to W&B.
-        assert wandb.run is not None
-        wandb.run.use_artifact(data_artifact)
-        data_artifact.wait()
+        example_df = pd.read_csv(self.config.job.example_key_file, header=None, columns=["ticker","timestamp","time"])
+        metric_client = MetricClient(cfg=self.cfg)
+        for idx, row in example_df.iterrows():
+            results = client.search_by_ticker_time_idx(row["ticker"], float(row["timestamp"]), "futures")
+            logging.error(f"results:{results}")
