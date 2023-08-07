@@ -332,7 +332,10 @@ def test_group_features():
         "timestamp": [1325689200, 1325691000, 1349357400],
     }
     raw_data = pd.DataFrame(data=raw_data)
-    raw_data = data_util.add_group_features(raw_data, 30)
+    full_ds = ray.data.from_pandas(raw_data)
+    add_group_features = partial(data_util.add_group_features, 30)
+    full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+    raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     # base price 500 is used as denominator

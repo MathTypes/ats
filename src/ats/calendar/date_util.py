@@ -37,7 +37,6 @@ def get_week_of_month(date):
 def monthlist(begin, end):
     result = []
     begin = begin.replace(year=begin.year, month=begin.month, day=1)
-    logging.error(f"begin:{begin}")
     while True:
         if begin.month == 12:
             next_month = begin.replace(year=begin.year + 1, month=1, day=1)
