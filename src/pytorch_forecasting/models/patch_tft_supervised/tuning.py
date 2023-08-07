@@ -130,7 +130,7 @@ def optimize_hyperparameters(
 
         learning_rate_callback = LearningRateMonitor()
         #logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
-        gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
+        #gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         default_trainer_kwargs = dict(
             accelerator="auto",
@@ -153,8 +153,8 @@ def optimize_hyperparameters(
         prediction_length = train_dataloaders.dataset.max_prediction_length
         context_length = train_dataloaders.dataset.max_encoder_length
         stride = trial.suggest_int("stride", *stride_range)
-        n_layers = trial.suggest_int("n_layers", *n_layers_range)
-        lstm_layers = trial.suggest_int("lstm_layers", *lstm_layers_range)
+        n_layers = trial.suggest_int("n_layers", *n_layer_range)
+        lstm_layers = trial.suggest_int("lstm_layers", *lstm_layer_range)
         patch_len = 2 * stride
         d_model = trial.suggest_int("d_model", *d_model_range)
         num_patch = (max(context_length, patch_len) - patch_len) // stride + 1
