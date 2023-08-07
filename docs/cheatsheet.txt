@@ -6,6 +6,13 @@ To run a job with snapshot generation
   - poetry run python3 src/ats/app/main.py --config-name=single_asset_mini_futures_train --config-path=/home/ubuntu/ats/conf  dataset.write_snapshot=True
 
 To run visual search app
+  - generate train examples:
+      - poetry run python3 src/ats/app/main.py --config-path=/home/ubuntu/ats/conf --config-name=build_search
+      - ls -ltr data/image/20230805-225051/ |awk '{print $9}'|grep -v market > image.txt
+      - poetry run python3 src/vss/metrics/generate_meta.py --input=image.txt --output=image_meta.txt
+      - cp image_meta.txt data/qdrant_storage/meta_futures.csv
+      - cp data/image/20230806-022746/1* data/metric_datasets/futures/
+  - train model: poetry run python3 src/vss/metrics/train.py --config-path=/home/ubuntu/ats/conf --config-name=build_search
   - poetry run streamlit run src/vss/interactive/search_app.py --server.port=$INTERACTIVE_PORT --server.address=0.0.0.0
 
 
