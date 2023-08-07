@@ -1,0 +1,7 @@
+defaults:
+ - dataset: mini_futures
+ - optimizer: adam
+ - model: patch_tft_supervised_v3.1
+ - job: train
+
+ 
