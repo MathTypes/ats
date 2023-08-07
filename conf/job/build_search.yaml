@@ -1,8 +1,8 @@
 device: cuda
 mode: build_search
 
-eval_start_date: 2008-01-01
-eval_end_date: 2023-05-01
+eval_start_date: 2008-06-01
+eval_end_date: 2023-07-28
 eval_batches: 200
 eval_batch_start_idx: -1
 eval_batch_end_idx: -1
@@ -11,14 +11,14 @@ workers: 8
 log_mode: All
 log_example_eval_every_n_epochs: 5
 tag: ${model.name}
-checkpoint: ${hydra:runtime.cwd}/model/single_asset_mini_futures.ckpt
+checkpoint: ${hydra:runtime.cwd}/model/20230805-201749/epoch=2-step=3471.ckpt
 eval_top_k: 1000
 market: CME_Equity
 embedding_cache_path: ${hydra:runtime.cwd}/data/embedding/mini_futures.pkl
 image_root_path: ${hydra:runtime.cwd}/data/image
-max_lag: 365
+max_lag: 7
 max_lead: 7
-example_bootstrap: akolotech/ATS/run_woaxoza1_pred_viz:v2
+example_bootstrap:
 
 epochs: 20
 # input_size is not really used as it only affects resnet input transformation
