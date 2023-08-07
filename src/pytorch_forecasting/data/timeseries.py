@@ -532,7 +532,6 @@ class TimeSeriesDataSet(Dataset):
         self.add_lag_variables(data)
 
         # filter data
-        logging.error(f"self.min_prediction_idx:{self.min_prediction_idx}")
         if self.min_prediction_idx is not None:
             # filtering for min_prediction_idx will be done on subsequence level ensuring
             # minimal decoder index is always >= min_prediction_idx
@@ -549,10 +548,10 @@ class TimeSeriesDataSet(Dataset):
         for target in self.target_names:
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
         #logging.error(f"before dropna head: {data[:3]}")
-        logging.error(f"before dropna tail: {data[-3:]}")
+        logging.info(f"data before dropna:{data.describe()}")
         data = data.dropna()
         #logging.error(f"after dropna head: {data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
-        logging.error(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
+        logging.info(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
         self.transformed_data = data
         # create index
         #logging.info(f"before construct_index:{data[-4:]}")
@@ -1620,6 +1619,7 @@ class TimeSeriesDataSet(Dataset):
         # raise error if filter removes all entries
         if len(filtered_index) == 0:
             raise ValueError("After applying filter no sub-sequences left in dataset")
+            #logging.warn("After applying filter no sub-sequences left in dataset")
         if copy:
             #logging.info(f"filter_index:{filtered_index}")
             dataset = _copy(self)
@@ -1962,8 +1962,8 @@ class TimeSeriesDataSet(Dataset):
     @profile_util.profile
     def add_new_data(self, new_data: pd.DataFrame, interval_minutes, cal, mdr):
         #self.raw_data = pd.concat([self.raw_data, new_data])
-        logging.error(f"adding new_data head:{new_data.iloc[:5][['time','timestamp','close_back']]}")
-        logging.error(f"adding new_data tail:{new_data.iloc[-5:][['time','timestamp','close_back']]}")
+        #logging.error(f"adding new_data head:{new_data.iloc[:5][['time','timestamp','close_back']]}")
+        #logging.error(f"adding new_data tail:{new_data.iloc[-5:][['time','timestamp','close_back']]}")
         #logging.info(f"self.add_relative_time_idx:{self.add_relative_time_idx}")
         if self.add_relative_time_idx:
             assert (
@@ -2005,24 +2005,24 @@ class TimeSeriesDataSet(Dataset):
             lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
         raw_data = raw_data.set_index("new_idx")
-        logging.error(f"raw_data_head_before_group:{raw_data.iloc[:5]}")
-        logging.error(f"raw_data_tail_before_group:{raw_data.iloc[-5:]}")
+        #logging.error(f"raw_data_head_before_group:{raw_data.iloc[:5]}")
+        #logging.error(f"raw_data_tail_before_group:{raw_data.iloc[-5:]}")
         #logging.error(f"new_full_data_before_add_group_features:{raw_data.iloc[-5:]}")
         raw_data = data_util.add_group_features(raw_data, interval_minutes)
-        logging.error(f"raw_data:{raw_data.describe()}")
+        #logging.error(f"raw_data:{raw_data.describe()}")
         # This assumes we only have single ticker per timeseries dataset.
-        logging.error(f"new_data_time_idx:{new_data.time_idx}")
-        logging.error(f"raw_data_after_group:{raw_data.iloc[-6:]}")
+        #logging.error(f"new_data_time_idx:{new_data.time_idx}")
+        #logging.error(f"raw_data_after_group:{raw_data.iloc[-6:]}")
         min_new_data_idx = new_data.time_idx.min()
         #logging.info(f"new_data_idx:{new_data_idx[-10:]}")
         new_data_idx = raw_data.time_idx>=min_new_data_idx
         new_raw_data = raw_data[raw_data.time_idx>min_new_data_idx-46*250]
         #logging.error(f"new_raw_data:{new_raw_data[:10][['time','timestamp','close_back']]}")
         new_raw_data = data_util.add_example_level_features(new_raw_data, cal, mdr.macro_data_builder)
-        logging.error(f"new_data_idx:{new_data_idx.iloc[-3:]}")
-        logging.error(f"new_raw_data after adding example level features:{new_raw_data[-3:]}")
+        #logging.error(f"new_data_idx:{new_data_idx.iloc[-3:]}")
+        #logging.error(f"new_raw_data after adding example level features:{new_raw_data[-3:]}")
         raw_data[new_data_idx] = new_raw_data[new_data_idx]
-        logging.error(f"new_full_data_before_ffill:{raw_data.iloc[-10:]}")
+        #logging.error(f"new_full_data_before_ffill:{raw_data.iloc[-10:]}")
         # Only selected columns can be ffilled
         #raw_data = raw_data.ffill()
         #if not old_raw_data.empty:
@@ -2045,7 +2045,7 @@ class TimeSeriesDataSet(Dataset):
         #logging.error(f"new_full_data:{self.raw_data.iloc[-10:][['time','time_idx','close_back','close_back_cumsum']]}")
         data = self.preprocess_data(raw_data)
         self.raw_data = data
-        logging.error(f"raw_data head:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
+        #logging.error(f"raw_data head:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
         logging.error(f"raw_data tail:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
         self.transform_data(data)
         logging.info(f"transformed_data:{data.iloc[-3:]}")
@@ -2474,6 +2474,7 @@ class TimeSeriesDataSet(Dataset):
                 sampler = WeightedRandomSampler(probabilities, len(probabilities))
                 dataset.to_dataloader(train=True, sampler=sampler, shuffle=False)
         """
+        logging.error(f"creating time series data loader")
         default_kwargs = dict(
             shuffle=train,
             drop_last=train and len(self) > batch_size,
