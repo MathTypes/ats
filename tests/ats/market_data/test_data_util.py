@@ -1,10 +1,12 @@
 import datetime
 import logging
 import math
+from functools import cached_property, partial
 
 from hydra import initialize, compose
 import numpy as np
 import pandas as pd
+import ray
 
 from ats.app.env_mgr import EnvMgr
 from ats.event.macro_indicator import MacroDataBuilder
@@ -59,7 +61,10 @@ def test_add_highs_trending_no_high():
         "timestamp": timestamps
     }
     raw_data = pd.DataFrame(data=raw_data)
-    raw_data = data_util.add_group_features(raw_data, 30)
+    full_ds = ray.data.from_pandas(raw_data)
+    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+    raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3
@@ -92,7 +97,10 @@ def test_with_high():
     raw_data = pd.DataFrame(data=raw_data)
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
-    raw_data = data_util.add_group_features(raw_data, 30*23*2)
+    full_ds = ray.data.from_pandas(raw_data)
+    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+    raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[5]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3
@@ -142,7 +150,10 @@ def test_with_negative_price():
     raw_data = pd.DataFrame(data=raw_data)
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
-    raw_data = data_util.add_group_features(raw_data, 30*23*2)
+    full_ds = ray.data.from_pandas(raw_data)
+    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+    raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "CL"
     assert row_two["close"] == -3
@@ -176,7 +187,10 @@ def test_with_low():
     raw_data = pd.DataFrame(data=raw_data)
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
-    raw_data = data_util.add_group_features(raw_data, 30*23*2)
+    full_ds = ray.data.from_pandas(raw_data)
+    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+    raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[5]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3
@@ -225,7 +239,10 @@ def test_group_features():
         "timestamp": [1325689200, 1325691000, 1349357400],
     }
     raw_data = pd.DataFrame(data=raw_data)
-    raw_data = data_util.add_group_features(raw_data, 30)
+    full_ds = ray.data.from_pandas(raw_data)
+    add_group_features = partial(data_util.add_group_features, 30)
+    full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+    raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     # base price 500 is used as denominator
@@ -261,8 +278,13 @@ def test_add_example_features():
         raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
-        raw_data = data_util.add_group_features(raw_data, 30*23*2)
-        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        full_ds = ray.data.from_pandas(raw_data)
+        add_group_features = partial(data_util.add_group_features, 30*23*2)
+        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+        add_example_features = partial(
+            data_util.add_example_level_features, market_cal, macro_data_builder)
+        full_ds = full_ds.map_batches(add_example_features)
+        raw_data = full_ds.to_pandas()
         row_two = raw_data.iloc[2]
         assert row_two["ticker"] == "ES"
         assert row_two["close_back"] ==  0.0006482982398861026
@@ -347,8 +369,13 @@ def test_add_example_features_vwap_before_new_york_open():
         raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
-        raw_data = data_util.add_group_features(raw_data, 30*23*2)
-        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        full_ds = ray.data.from_pandas(raw_data)
+        add_group_features = partial(data_util.add_group_features, 30*23*2)
+        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+        add_example_features = partial(
+            data_util.add_example_level_features, market_cal, macro_data_builder)
+        full_ds = full_ds.map_batches(add_example_features)
+        raw_data = full_ds.to_pandas()
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_new_york_open"],
@@ -386,8 +413,13 @@ def test_add_example_features_vwap_around_new_york_open_no_event():
         raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
-        raw_data = data_util.add_group_features(raw_data, 30*23*2)
-        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        full_ds = ray.data.from_pandas(raw_data)
+        add_group_features = partial(data_util.add_group_features, 30*23*2)
+        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+        add_example_features = partial(
+            data_util.add_example_level_features, market_cal, macro_data_builder)
+        full_ds = full_ds.map_batches(add_example_features)
+        raw_data = full_ds.to_pandas()
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_new_york_open"],
@@ -434,8 +466,14 @@ def test_add_example_features_vwap_around_new_york_open():
         raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
-        raw_data = data_util.add_group_features(raw_data, 30*23*2)
-        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        full_ds = ray.data.from_pandas(raw_data)
+        add_group_features = partial(data_util.add_group_features, 30*23*2)
+        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+        add_example_features = partial(
+            data_util.add_example_level_features, market_cal, macro_data_builder)
+        full_ds = full_ds.map_batches(add_example_features)
+        raw_data = full_ds.to_pandas()
+
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_new_york_open"],
@@ -492,8 +530,13 @@ def test_add_example_features_vwap_around_london_open():
         raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
-        raw_data = data_util.add_group_features(raw_data, 30*23*2)
-        raw_data = data_util.add_example_level_features(raw_data, market_cal, macro_data_builder)
+        full_ds = ray.data.from_pandas(raw_data)
+        add_group_features = partial(data_util.add_group_features, 30*23*2)
+        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+        add_example_features = partial(
+            data_util.add_example_level_features, market_cal, macro_data_builder)
+        full_ds = full_ds.map_batches(add_example_features)
+        raw_data = full_ds.to_pandas()
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_london_open"],
             [np.nan, np.nan, 0.00000, 0.00000, 0.12962, -0.10082, -0.07606, -0.06078, 0.00004, -0.06053],

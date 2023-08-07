@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 import os
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -322,8 +323,9 @@ def fill_cum_volume(row, time_col, before_mins=15*60+1, after_mins=15*60+1):
         else:
             return np.nan
 
-@profile_util.profile
-def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
+#@profile_util.profile
+def add_group_features(interval_minutes, raw_data : Dict[str, np.ndarray]):
+    raw_data = pd.DataFrame(raw_data)
     for column in [
         "close_back",
         "volume_back",
@@ -380,11 +382,10 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
     ]:
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
-    #logging.info(f"raw_data:{raw_data.describe()}")
-    new_features = raw_data.groupby(["ticker"], group_keys=False)[[
-        "volume", "dv", "close", "timestamp"]].apply(ticker_transform, interval_minutes=interval_minutes)
-    new_features = new_features.drop(columns=["volume", "dv", "close", "timestamp"])
-    raw_data = raw_data.join(new_features)
+    #new_features =
+    ticker_transform(raw_data, interval_minutes=interval_minutes)
+    #new_features = new_features.drop(columns=["volume", "dv", "close", "timestamp"])
+    #raw_data = raw_data.join(new_features)
 
     raw_data["daily_returns"] = calc_returns(raw_data["close"])
     raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
@@ -402,7 +403,8 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
 
 
 @profile_util.profile
-def add_example_level_features(raw_data: pd.DataFrame, cal, macro_data_builder, add_vwap=False):
+def add_example_level_features(cal, macro_data_builder, raw_data):
+    raw_data = pd.DataFrame(raw_data)
     new_york_cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x: x.isocalendar()[1])

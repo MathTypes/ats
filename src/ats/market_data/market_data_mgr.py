@@ -1,5 +1,5 @@
 import datetime
-from functools import cached_property
+from functools import cached_property, partial
 import logging
 import numpy as np
 import pandas as pd
@@ -236,13 +236,22 @@ class MarketDataMgr(object):
         full_data = full_data.sort_index()
         full_data["time_idx"] = range(0, len(full_data))
 
-        full_data = data_util.add_group_features(
-            full_data, self.config.job.time_interval_minutes
-        )
-        full_data = data_util.add_example_level_features(full_data, self.market_cal,
-                                                         self.macro_data_builder)
+        full_ds = ray.data.from_pandas(full_data)
+        add_group_features = partial(
+            data_util.add_group_features, self.config.job.time_interval_minutes)
+        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+        add_example_features = partial(
+            data_util.add_example_level_features, self.market_cal,
+            self.macro_data_builder)
+        full_ds = full_ds.map_batches(add_example_features)
+        #full_data = data_util.add_group_features(
+        #    full_data, self.config.job.time_interval_minutes
+        #)
+        #full_data = data_util.add_example_level_features(full_data, self.market_cal,
+        #                                                 self.macro_data_builder)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
-            ds = ray.data.from_pandas(full_data)
+            ds = ray.data.from_pandas(full_ds)
             os.makedirs(snapshot_dir, exist_ok=True)
             ds.write_parquet(snapshot_dir)
+        full_data = full_ds.to_pandas()
         return full_data
