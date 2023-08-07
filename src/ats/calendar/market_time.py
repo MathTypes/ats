@@ -24,21 +24,39 @@ def get_next_macro_event_time(cal, x_time, mdb):
         if et>=x_time:
             return et
     return None
-    
 
-@functools.lru_cache(maxsize=128000)
+_OPEN_TIME_DICT = {}
+_CLOSE_TIME_DICT = {}
+
 def get_open_time(cal, x_date):
+    if not cal in _OPEN_TIME_DICT.keys():
+        _OPEN_TIME_DICT[cal] = {}
+    open_time_dict = _OPEN_TIME_DICT[cal]
+    if x_date in open_time_dict.keys():
+        return open_time_dict[x_date]    
+    
     schedule = cal.schedule(
-        start_date=x_date, end_date=x_date + datetime.timedelta(days=5)
+        start_date=x_date, end_date=x_date + datetime.timedelta(days=365)
     )
+    for idx in range(len(schedule.market_open)):
+        x_date_idx = x_date + datetime.timedelta(days=idx)
+        open_time_dict[x_date_idx] = schedule.market_open[0].timestamp()
     return schedule.market_open[0].timestamp()
 
 
-@functools.lru_cache(maxsize=128000)
 def get_close_time(cal, x_date):
+    if not cal in _CLOSE_TIME_DICT.keys():
+        _CLOSE_TIME_DICT[cal] = {}
+    close_time_dict = _CLOSE_TIME_DICT[cal]
+    if x_date in close_time_dict.keys():
+        return close_time_dict[x_date]    
+    
     schedule = cal.schedule(
-        start_date=x_date, end_date=x_date + datetime.timedelta(days=5)
+        start_date=x_date, end_date=x_date + datetime.timedelta(days=365)
     )
+    for idx in range(len(schedule.market_close)):
+        x_date_idx = x_date + datetime.timedelta(days=idx)
+        close_time_dict[x_date_idx] = schedule.market_close[0].timestamp()
     return schedule.market_close[0].timestamp()
 
 
