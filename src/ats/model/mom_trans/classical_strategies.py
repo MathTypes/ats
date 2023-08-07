@@ -167,7 +167,7 @@ def calc_trend_intermediate_strategy(
 
 
 class MACDStrategy:
-    def __init__(self, trend_combinations: List[Tuple[float, float]] = None):
+    def __init__(self, trend_combinations: List[Tuple[float, float]] = None, interval_per_day=46):
         """Used to calculated the combined MACD signal for a multiple short/signal combinations,
         as described in https://arxiv.org/pdf/1904.04912.pdf
 
@@ -175,12 +175,14 @@ class MACDStrategy:
             trend_combinations (List[Tuple[float, float]], optional): short/long trend combinations. Defaults to None.
         """
         if trend_combinations is None:
-            self.trend_combinations = [(8, 24), (16, 48), (32, 96)]
+            self.trend_combinations = [(8*interval_per_day, 24*interval_per_day),
+                                       (16*interval_per_day, 48*interval_per_day),
+                                       (32*interval_per_day, 96*interval_per_day)]
         else:
             self.trend_combinations = trend_combinations
 
     @staticmethod
-    def calc_signal(srs: pd.Series, short_timescale: int, long_timescale: int) -> float:
+    def calc_signal(srs: pd.Series, short_timescale: int, long_timescale: int, interval_per_day=1) -> float:
         """Calculate MACD signal for a signal short/long timescale combination
 
         Args:
@@ -196,11 +198,11 @@ class MACDStrategy:
             return np.log(0.5) / np.log(1 - 1 / timescale)
 
         macd = (
-            srs.ewm(halflife=_calc_halflife(short_timescale)).mean()
-            - srs.ewm(halflife=_calc_halflife(long_timescale)).mean()
+            srs.ewm(halflife=_calc_halflife(short_timescale*interval_per_day)).mean()
+            - srs.ewm(halflife=_calc_halflife(long_timescale*interval_per_day)).mean()
         )
-        q = macd / srs.rolling(63).std().fillna(method="bfill")
-        return q / q.rolling(252).std().fillna(method="bfill")
+        q = macd / srs.rolling(63*interval_per_day).std().fillna(method="bfill")
+        return q / q.rolling(252*interval_per_day).std().fillna(method="bfill")
 
     @staticmethod
     def scale_signal(y):

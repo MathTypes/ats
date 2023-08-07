@@ -219,10 +219,7 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["time_low_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_21_ff"), axis=1)
     raw_data["time_low_21_ff"]  = raw_data["time_low_21_ff"].ffill()
 
-    logging.error(f"51*interval_per_day:{51*interval_per_day}")
-    logging.error(f"raw_data.close_back_cumsum:{raw_data.close_back_cumsum.describe()}")
     raw_data['close_rolling_51d_max'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).max()
-    logging.error(f"raw_data.close_rolling_51d_max:{raw_data.close_rolling_51d_max.describe()}")
     raw_data["close_high_51_ff"] = raw_data["close_rolling_51d_max"].ffill()
     raw_data["close_high_51_bf"] = raw_data["close_rolling_51d_max"].bfill()
     raw_data["time_high_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_51_ff"), axis=1)
@@ -264,12 +261,12 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
 
     # Compute Moving Averages
     raw_data["sma_50"] = ta.trend.SMAIndicator(
-        close=raw_data["close"], window=50
+        close=raw_data["close"], window=50*interval_per_day
     ).sma_indicator()
     raw_data["sma_200"] = ta.trend.SMAIndicator(
-        close=raw_data["close"], window=200
+        close=raw_data["close"], window=200*interval_per_day
     ).sma_indicator()
-    logging.error(f"raw_data:{raw_data.iloc[-10:]}")
+    logging.info(f"raw_data:{raw_data.iloc[-10:]}")
     return raw_data
 
 def time_diff(row, base_col, diff_col):
@@ -384,9 +381,8 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
     #logging.info(f"raw_data:{raw_data.describe()}")
-    new_features = raw_data.groupby(["ticker"], group_keys=False)[
-        ["volume", "dv", "close", "timestamp"]
-    ].apply(ticker_transform, interval_minutes=interval_minutes)
+    new_features = raw_data.groupby(["ticker"], group_keys=False)[[
+        "volume", "dv", "close", "timestamp"]].apply(ticker_transform, interval_minutes=interval_minutes)
     new_features = new_features.drop(columns=["volume", "dv", "close", "timestamp"])
     raw_data = raw_data.join(new_features)
 
@@ -396,6 +392,10 @@ def add_group_features(raw_data: pd.DataFrame, interval_minutes, resort=True):
     for short_window, long_window in trend_combinations:
         raw_data[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
             raw_data["close"], short_window, long_window
+        )
+    for short_window, long_window in trend_combinations:
+        raw_data[f"macd_{short_window}_{long_window}_day"] = MACDStrategy.calc_signal(
+            raw_data["close"], short_window, long_window, 46
         )
 
     return raw_data
