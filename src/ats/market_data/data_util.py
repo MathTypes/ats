@@ -267,7 +267,6 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["sma_200"] = ta.trend.SMAIndicator(
         close=raw_data["close"], window=200*interval_per_day
     ).sma_indicator()
-    logging.info(f"raw_data:{raw_data.iloc[-10:]}")
     return raw_data
 
 def time_diff(row, base_col, diff_col):
@@ -421,50 +420,13 @@ def add_example_level_features(cal, macro_data_builder, raw_data):
         market_time.compute_option_expiration_time, cal=cal
     )
 
-    def vwap_around(ser, cum_dv_col, cum_volume_col):
-        data = raw_data.loc[ser.index]
-        cum_volume = data[cum_volume_col].iloc[-1]-data[cum_volume_col].iloc[0]
-        cum_dv = data[cum_dv_col].iloc[-1]-data[cum_dv_col].iloc[0]
-        if cum_volume>0:
-            return cum_dv/cum_volume
-        else:
-            return data.close[-1]
-        return 0
-
     if macro_data_builder.add_macro_event:
         raw_data["last_macro_event_time"] = raw_data.timestamp.apply(
             market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder
         )
-        raw_data["last_macro_event_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="last_macro_event_time", axis=1)
-        raw_data["last_macro_event_cum_volume"] = raw_data.apply(fill_cum_volume,
-                                                                 time_col="last_macro_event_time", axis=1)
-        raw_data["last_macro_event_cum_dv"] = raw_data.last_macro_event_cum_dv.ffill()
-        raw_data["last_macro_event_cum_volume"] = raw_data.last_macro_event_cum_volume.ffill()
-        raw_data["vwap_since_last_macro_event"] = raw_data.apply(
-            compute_vwap, dv_col="last_macro_event_cum_dv",
-            volume_col="last_macro_event_cum_volume", axis=1)
-
-        raw_data["around_macro_event_cum_dv"] = raw_data.apply(
-            fill_cum_dv, time_col="last_macro_event_time", before_mins=30*60+1,
-            after_mins=30*60+1, axis=1)
-        raw_data["around_macro_event_cum_volume"] = raw_data.apply(
-            fill_cum_volume, time_col="last_macro_event_time",
-            before_mins=30*60+1, after_mins=30*60+1, axis=1)
-        rol = raw_data.around_macro_event_cum_dv.rolling(window=2)
-
-        raw_data["vwap_around_macro_event"] = rol.apply(
-            vwap_around,
-            args=("around_macro_event_cum_dv","around_macro_event_cum_volume"), raw=False)
-        raw_data["vwap_around_macro_event"] = raw_data.vwap_around_macro_event.ffill()
-        raw_data["ret_from_vwap_around_macro_event"] = raw_data.apply(
-            compute_ret, base_col="vwap_around_macro_event", axis=1)
-
         raw_data["next_macro_event_time"] = raw_data.timestamp.apply(
             market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder
         )
-        raw_data = raw_data.drop(columns=["around_macro_event_cum_dv", "around_macro_event_cum_volume",
-                                          "last_macro_event_cum_dv", "last_macro_event_cum_volume",
-                                          "around_macro_event_cum_dv", "around_macro_event_cum_volume"])
 
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(
         market_time.compute_open_time, cal=new_york_cal
@@ -472,28 +434,6 @@ def add_example_level_features(cal, macro_data_builder, raw_data):
     raw_data["new_york_last_open_time"] = raw_data.timestamp.apply(
         market_time.compute_last_open_time, cal=new_york_cal
     )
-    raw_data["new_york_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="new_york_last_open_time", axis=1)
-    raw_data["new_york_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="new_york_last_open_time", axis=1)
-    raw_data["new_york_open_cum_dv"] = raw_data.new_york_open_cum_dv.ffill()
-    raw_data["new_york_open_cum_volume"] = raw_data.new_york_open_cum_volume.ffill()
-    raw_data["vwap_since_new_york_open"] = raw_data.apply(compute_vwap, dv_col="new_york_open_cum_dv",
-                                                          volume_col="new_york_open_cum_volume", axis=1)
-
-    raw_data["around_new_york_open_cum_dv"] = raw_data.apply(
-        fill_cum_dv, time_col="new_york_last_open_time", before_mins=30*60+1,
-        after_mins=30*60+1, axis=1)
-    raw_data["around_new_york_open_cum_volume"] = raw_data.apply(
-        fill_cum_volume, time_col="new_york_last_open_time",
-        before_mins=30*60+1, after_mins=30*60+1, axis=1)
-    rol = raw_data.around_new_york_open_cum_dv.rolling(window=2)
-    raw_data["vwap_around_new_york_open"] = rol.apply(
-        vwap_around,
-        args=("around_new_york_open_cum_dv","around_new_york_open_cum_volume"), raw=False)
-    raw_data["vwap_around_new_york_open"] = raw_data.vwap_around_new_york_open.ffill()
-    raw_data["ret_from_vwap_around_new_york_open"] = raw_data.apply(
-        compute_ret, base_col="vwap_around_new_york_open", axis=1)
-    raw_data = raw_data.drop(columns=[
-        "around_new_york_open_cum_dv", "around_new_york_open_cum_volume"])
 
     raw_data["new_york_close_time"] = raw_data.timestamp.apply(
         market_time.compute_close_time, cal=new_york_cal
@@ -504,29 +444,6 @@ def add_example_level_features(cal, macro_data_builder, raw_data):
     raw_data["london_last_open_time"] = raw_data.timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal
     )
-    raw_data["london_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="london_last_open_time", axis=1)
-    raw_data["london_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="london_last_open_time", axis=1)
-    raw_data["london_open_cum_dv"] = raw_data.london_open_cum_dv.ffill()
-    raw_data["london_open_cum_volume"] = raw_data.london_open_cum_volume.ffill()
-    raw_data["vwap_since_london_open"] = raw_data.apply(compute_vwap, dv_col="london_open_cum_dv",
-                                                        volume_col="london_open_cum_volume", axis=1)    
-    raw_data["around_london_open_cum_dv"] = raw_data.apply(
-        fill_cum_dv, time_col="london_last_open_time", before_mins=30*60+1,
-        after_mins=30*60+1, axis=1)
-    raw_data["around_london_open_cum_volume"] = raw_data.apply(
-        fill_cum_volume, time_col="london_last_open_time",
-        before_mins=30*60+1, after_mins=30*60+1, axis=1)
-    rol = raw_data.around_london_open_cum_dv.rolling(window=2)
-    raw_data["vwap_around_london_open"] = rol.apply(
-        vwap_around,
-        args=("around_london_open_cum_dv","around_london_open_cum_volume"), raw=False)
-    raw_data["vwap_around_london_open"] = raw_data.vwap_around_london_open.ffill()
-    raw_data["ret_from_vwap_around_london_open"] = raw_data.apply(
-        compute_ret, base_col="vwap_around_london_open", axis=1)
-    raw_data = raw_data.drop(columns=[
-        "around_london_open_cum_dv", "around_london_open_cum_volume"])
-
-    logging.info(f"raw_data:{raw_data.describe()}")
     raw_data["london_close_time"] = raw_data.timestamp.apply(
         market_time.compute_close_time, cal=lse_cal
     )
@@ -603,6 +520,98 @@ def add_example_level_features(cal, macro_data_builder, raw_data):
     )
     return raw_data
 
+
+@profile_util.profile
+def add_example_group_features(cal, macro_data_builder, raw_data):
+    new_york_cal = mcal.get_calendar("NYSE")
+    lse_cal = mcal.get_calendar("LSE")
+    lse_cal = mcal.get_calendar("LSE")
+
+    def vwap_around(ser, cum_dv_col, cum_volume_col):
+        data = raw_data.loc[ser.index]
+        cum_volume = data[cum_volume_col].iloc[-1]-data[cum_volume_col].iloc[0]
+        cum_dv = data[cum_dv_col].iloc[-1]-data[cum_dv_col].iloc[0]
+        if cum_volume>0:
+            return cum_dv/cum_volume
+        else:
+            return data["close"].iloc[-1]
+        return 0
+
+    if macro_data_builder.add_macro_event:
+        raw_data["last_macro_event_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="last_macro_event_time", axis=1)
+        raw_data["last_macro_event_cum_volume"] = raw_data.apply(fill_cum_volume,
+                                                                 time_col="last_macro_event_time", axis=1)
+        raw_data["last_macro_event_cum_dv"] = raw_data.last_macro_event_cum_dv.ffill()
+        raw_data["last_macro_event_cum_volume"] = raw_data.last_macro_event_cum_volume.ffill()
+        raw_data["vwap_since_last_macro_event"] = raw_data.apply(
+            compute_vwap, dv_col="last_macro_event_cum_dv",
+            volume_col="last_macro_event_cum_volume", axis=1)
+
+        raw_data["around_macro_event_cum_dv"] = raw_data.apply(
+            fill_cum_dv, time_col="last_macro_event_time", before_mins=30*60+1,
+            after_mins=30*60+1, axis=1)
+        raw_data["around_macro_event_cum_volume"] = raw_data.apply(
+            fill_cum_volume, time_col="last_macro_event_time",
+            before_mins=30*60+1, after_mins=30*60+1, axis=1)
+        rol = raw_data.around_macro_event_cum_dv.rolling(window=2)
+        raw_data["vwap_around_macro_event"] = rol.apply(
+            vwap_around,
+            args=("around_macro_event_cum_dv","around_macro_event_cum_volume"), raw=False)
+        raw_data["vwap_around_macro_event"] = raw_data.vwap_around_macro_event.ffill()
+        raw_data["ret_from_vwap_around_macro_event"] = raw_data.apply(
+            compute_ret, base_col="vwap_around_macro_event", axis=1)
+
+        raw_data = raw_data.drop(columns=["around_macro_event_cum_dv", "around_macro_event_cum_volume",
+                                          "last_macro_event_cum_dv", "last_macro_event_cum_volume",
+                                          "around_macro_event_cum_dv", "around_macro_event_cum_volume"])
+
+    raw_data["new_york_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="new_york_last_open_time", axis=1)
+    raw_data["new_york_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="new_york_last_open_time", axis=1)
+    raw_data["new_york_open_cum_dv"] = raw_data.new_york_open_cum_dv.ffill()
+    raw_data["new_york_open_cum_volume"] = raw_data.new_york_open_cum_volume.ffill()
+    raw_data["vwap_since_new_york_open"] = raw_data.apply(compute_vwap, dv_col="new_york_open_cum_dv",
+                                                          volume_col="new_york_open_cum_volume", axis=1)
+
+    raw_data["around_new_york_open_cum_dv"] = raw_data.apply(
+        fill_cum_dv, time_col="new_york_last_open_time", before_mins=30*60+1,
+        after_mins=30*60+1, axis=1)
+    raw_data["around_new_york_open_cum_volume"] = raw_data.apply(
+        fill_cum_volume, time_col="new_york_last_open_time",
+        before_mins=30*60+1, after_mins=30*60+1, axis=1)
+    rol = raw_data.around_new_york_open_cum_dv.rolling(window=2)
+
+    raw_data["vwap_around_new_york_open"] = rol.apply(
+        vwap_around,
+        args=("around_new_york_open_cum_dv","around_new_york_open_cum_volume"), raw=False)
+    raw_data["vwap_around_new_york_open"] = raw_data.vwap_around_new_york_open.ffill()
+    raw_data["ret_from_vwap_around_new_york_open"] = raw_data.apply(
+        compute_ret, base_col="vwap_around_new_york_open", axis=1)
+    raw_data = raw_data.drop(columns=[
+        "around_new_york_open_cum_dv", "around_new_york_open_cum_volume"])
+
+    raw_data["london_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="london_last_open_time", axis=1)
+    raw_data["london_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="london_last_open_time", axis=1)
+    raw_data["london_open_cum_dv"] = raw_data.london_open_cum_dv.ffill()
+    raw_data["london_open_cum_volume"] = raw_data.london_open_cum_volume.ffill()
+    raw_data["vwap_since_london_open"] = raw_data.apply(compute_vwap, dv_col="london_open_cum_dv",
+                                                        volume_col="london_open_cum_volume", axis=1)    
+    raw_data["around_london_open_cum_dv"] = raw_data.apply(
+        fill_cum_dv, time_col="london_last_open_time", before_mins=30*60+1,
+        after_mins=30*60+1, axis=1)
+    raw_data["around_london_open_cum_volume"] = raw_data.apply(
+        fill_cum_volume, time_col="london_last_open_time",
+        before_mins=30*60+1, after_mins=30*60+1, axis=1)
+    rol = raw_data.around_london_open_cum_dv.rolling(window=2)
+    raw_data["vwap_around_london_open"] = rol.apply(
+        vwap_around,
+        args=("around_london_open_cum_dv","around_london_open_cum_volume"), raw=False)
+    raw_data["vwap_around_london_open"] = raw_data.vwap_around_london_open.ffill()
+    raw_data["ret_from_vwap_around_london_open"] = raw_data.apply(
+        compute_ret, base_col="vwap_around_london_open", axis=1)
+    raw_data = raw_data.drop(columns=[
+        "around_london_open_cum_dv", "around_london_open_cum_volume"])
+
+    return raw_data
 
 class Preprocessor:
     def __init__(self, ticker, since, until):

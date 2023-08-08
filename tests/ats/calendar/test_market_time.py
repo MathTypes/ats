@@ -10,9 +10,16 @@ from ats.util import logging_utils
 def test_compute_last_open_time_nyse_on_good_friday():
     market_cal = mcal.get_calendar("NYSE")
     open_time = market_time.compute_last_open_time(datetime.datetime(2009, 4, 10, 12, 0, 0).timestamp(), market_cal)
-    assert open_time == 1690983000
+    assert open_time == 1239283800
     open_time = market_time.compute_last_open_time(datetime.datetime(2009, 4, 10, 14, 0, 0).timestamp(), market_cal)
-    assert open_time == 1691069400
+    assert open_time == 1239283800
+
+def test_compute_open_time_nyse_on_good_friday():
+    market_cal = mcal.get_calendar("NYSE")
+    open_time = market_time.compute_open_time(datetime.datetime(2009, 4, 10, 12, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239629400
+    open_time = market_time.compute_open_time(datetime.datetime(2009, 4, 10, 14, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239629400
 
 # Test that caches are working properly
 def test_compute_last_open_time_nyse_consecutive_call():

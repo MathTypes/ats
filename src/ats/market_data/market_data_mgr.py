@@ -62,7 +62,7 @@ def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_inte
 
 
 def read_snapshot(input_dirs) -> pd.DataFrame:
-    ds = ray.data.read_parquet(input_dirs, parallelism=10)
+    ds = ray.data.read_parquet(input_dirs, parallelism=10).sort("time_idx")
     ds = ds.to_pandas(10000000)
     #ds = pd.read_parquet(input_dirs)
     ds = ds.sort_index()
@@ -241,9 +241,15 @@ class MarketDataMgr(object):
             data_util.add_group_features, self.config.job.time_interval_minutes)
         full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
         add_example_features = partial(
-            data_util.add_example_level_features, self.market_cal,
-            self.macro_data_builder)
+            data_util.add_example_level_features, self.market_cal, self.macro_data_builder)
         full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
+
+        raw_data = full_ds.to_pandas(limit=10000000)
+        logging.error(f"raw_data_before_example_group:{raw_data.iloc[-4:]}")
+        raw_data = data_util.add_example_group_features(self.market_cal, self.macro_data_builder, raw_data)
+        full_ds = ray.data.from_pandas(raw_data)
+        #full_ds = full_ds.groupby("ticker").map_groups(add_example_group_features)
+        
         #full_data = data_util.add_group_features(
         #    full_data, self.config.job.time_interval_minutes
         #)

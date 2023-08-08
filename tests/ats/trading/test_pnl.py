@@ -1,11 +1,12 @@
 import datetime
+from functools import partial
 import logging
 import math
 
 from hydra import initialize, compose
 import numpy as np
 import pandas as pd
-
+import ray
 
 from empyrical import (
     sharpe_ratio,
@@ -43,7 +44,10 @@ def test_add_highs_trending_no_high():
         "timestamp": timestamps
     }
     raw_data = pd.DataFrame(data=raw_data)
-    raw_data = data_util.add_group_features(raw_data, 30)
+    full_ds = ray.data.from_pandas(raw_data)
+    add_group_features = partial(data_util.add_group_features, 30)
+    full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
+    raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
     assert row_two["ticker"] == "ES"
     assert row_two["close"] == 3

@@ -379,6 +379,7 @@ def test_add_example_features_vwap_before_new_york_open():
             data_util.add_example_level_features, market_cal, macro_data_builder)
         full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_new_york_open"],
@@ -423,6 +424,7 @@ def test_add_example_features_vwap_around_new_york_open_no_event():
             data_util.add_example_level_features, market_cal, macro_data_builder)
         full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_new_york_open"],
@@ -476,6 +478,7 @@ def test_add_example_features_vwap_around_new_york_open():
             data_util.add_example_level_features, market_cal, macro_data_builder)
         full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
 
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
@@ -540,6 +543,7 @@ def test_add_example_features_vwap_around_london_open():
             data_util.add_example_level_features, market_cal, macro_data_builder)
         full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_london_open"],
             [np.nan, np.nan, 0.00000, 0.00000, 0.12962, -0.10082, -0.07606, -0.06078, 0.00004, -0.06053],
