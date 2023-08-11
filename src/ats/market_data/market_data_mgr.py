@@ -173,8 +173,7 @@ class MarketDataMgr(object):
                 logging.info(f"reading snapshot from {snapshot_dir}")
                 full_data = read_snapshot(snapshot_dir)
                 snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_full"
-                self.transformed_full = read_snapshot(snapshot_dir)
-                
+                self.transformed_full = read_snapshot(snapshot_dir)        
         except Exception as e:
             logging.error(f"can not read snapshot:{e}")
             # Will try regenerating when reading fails
@@ -235,30 +234,19 @@ class MarketDataMgr(object):
         full_data = full_data.set_index("new_idx")
         full_data = full_data.sort_index()
         full_data["time_idx"] = range(0, len(full_data))
-
+        full_data = data_util.add_group_features(self.config.job.time_interval_minutes, full_data)
         full_ds = ray.data.from_pandas(full_data)
-        add_group_features = partial(
-            data_util.add_group_features, self.config.job.time_interval_minutes)
-        full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
         add_example_features = partial(
             data_util.add_example_level_features, self.market_cal, self.macro_data_builder)
         full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
+        full_data = full_ds.to_pandas(limit=10000000).sort_index()
+        #full_data = data_util.add_example_level_features(self.market_cal, self.macro_data_builder, full_data)
+        full_data = data_util.add_example_group_features(self.market_cal, self.macro_data_builder, full_data)
 
-        raw_data = full_ds.to_pandas(limit=10000000)
-        logging.error(f"raw_data_before_example_group:{raw_data.iloc[-4:]}")
-        raw_data = data_util.add_example_group_features(self.market_cal, self.macro_data_builder, raw_data)
-        full_ds = ray.data.from_pandas(raw_data)
-        #full_ds = full_ds.groupby("ticker").map_groups(add_example_group_features)
-        
-        #full_data = data_util.add_group_features(
-        #    full_data, self.config.job.time_interval_minutes
-        #)
-        #full_data = data_util.add_example_level_features(full_data, self.market_cal,
-        #                                                 self.macro_data_builder)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
-            #ds = ray.data.from_pandas(full_ds)
-            ds = full_ds
+            ds = ray.data.from_pandas(full_data)
+            snapshot_dir = f"{self.config.dataset.snapshot}/{env_mgr.run_id}/{data_start_date_str}_{data_end_date_str}"
+            logging.error(f"writing snapshot to {snapshot_dir}")
             os.makedirs(snapshot_dir, exist_ok=True)
             ds.write_parquet(snapshot_dir)
-        full_data = full_ds.to_pandas(limit=10000000)
         return full_data

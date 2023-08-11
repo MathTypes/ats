@@ -35,11 +35,11 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             train_time_idx = eval_time_idx
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
-        # target_normalizer = None
         target_normalizer = "auto"
-        # target_normalizer=GroupNormalizer(
+        #target_normalizer=GroupNormalizer(
         #    groups=["ticker"], transformation="softplus"
-        # ),  # use softplus and normalize by group
+            #)
+        # use softplus and normalize by group
         # if isinstance(target, (typing.Set, typing.List)):
         #    normalizer_list = [
         #        EncoderNormalizer(transformation="relu") for i in range(len(target))
@@ -76,6 +76,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             },
             # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
             add_relative_time_idx=config.model.features.add_relative_time_idx,
+            add_target_scales=False,
             transformed_data=transformed_full
         )
         # create dataloaders for model
