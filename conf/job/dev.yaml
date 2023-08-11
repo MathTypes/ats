@@ -1,6 +1,6 @@
 device: cuda
-mode: test
-retrain_model_before_test_start: False
+mode: train
+retrain_model_before_test_start: True
 data_start_date: 2009-06-01
 train_start_date: 2009-06-01
 eval_start_date: 2020-06-01
@@ -10,13 +10,13 @@ test_end_date: 2023-07-28
 time_interval_minutes: 30
 max_lags: 1
 workers: 8
-max_epochs: 3
+max_epochs: 500
 log_mode: All
-eval_batches: 5
+eval_batches: 6
 log_example_eval_every_n_epochs: 1
 log_viz_every_n: 1
-tag: default
 checkpoint:
 market: CME_Equity
 tune_learning_rate: False
-num_tune_iter: 20
+num_tune_iter: 1000
+tag: train-dev
