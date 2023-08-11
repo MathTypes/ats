@@ -13,7 +13,7 @@ workers: 8
 num_tune_iter: 20
 max_epochs: 50
 log_mode: All
-eval_batches: 2
+eval_batches: 6
 tune_learning_rate: False
 log_example_eval_every_n_epochs: 1
 tag: ${job.mode}
