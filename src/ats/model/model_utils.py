@@ -310,13 +310,14 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         # hidden_continuous_size=8,  # set to <= hidden_size
         # loss=QuantileLoss(),
         #optimizer="Ranger",
-        optimizer="adamw",
+        #optimizer="sgd",
+        optimizer="adam",
         output_size=output_size_dict,
         # reduce learning rate if no improvement in validation loss after x epochs
-        reduce_on_plateau_patience=1,
-        reduce_on_plateau_reduction=10.0,
-        reduce_on_plateau_min_lr=0.00001,
-        weight_decay=0.2
+        reduce_on_plateau_patience=10,
+        reduce_on_plateau_reduction=5.0,
+        reduce_on_plateau_min_lr=0.0001,
+        #weight_decay=0.2
     )
     return net
 

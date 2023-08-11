@@ -10,6 +10,7 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import (
     ModelCheckpoint,
     LearningRateMonitor,
+    StochasticWeightAveraging
 )
 from lightning.pytorch.loggers import WandbLogger
 import matplotlib.pyplot as plt
@@ -140,11 +141,13 @@ class Pipeline:
                 lr_monitor,
                 # log_predictions_callback,
                 prediction_logger,
+                StochasticWeightAveraging(swa_lrs=1e-2)
                 # WandbModelCheckpoint("models"),
                 # WandbMetricsLogger(),
                 # StochasticWeightAveraging(swa_lrs=1e-2)
             ],
             devices=devices,
+            #accumulate_grad_batches=7,
             accelerator="gpu",
             # accumulate_grad_batches=8,
             # stochastic_weight_avg=True,
