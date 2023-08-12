@@ -691,6 +691,11 @@ class PatchTftSupervised(BaseModelWithCovariates):
             self.manual_backward(loss2)
         else:
             log, loss = self.compute_loss(outputs.prediction, y, x, **kwargs)
+            #logging.info(f"y:{y}")
+            #logging.info(f"x:{x}")
+            #logging.info(f"predictions:{outputs.prediction}")
+            #logging.info(f"loss:{loss}")
+            #logging.info(f"log:{log}")
             self.manual_backward(loss)
 
             lr = opt.param_groups[0]["lr"]
@@ -1002,7 +1007,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else:
                 min_max_output = torch.squeeze(min_max_output, dim=-1)
             output = [output, min_max_output]
-        
+
         return self.to_network_output(
             prediction=self.transform_output(output, target_scale=x["target_scale"]),
             anomaly_returns_output=anomaly_returns_output,

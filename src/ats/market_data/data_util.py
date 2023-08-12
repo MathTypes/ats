@@ -401,26 +401,27 @@ def add_group_features(interval_minutes, raw_data):
         "time_high_201_ff",
         "close_low_201_ff",
         "time_low_201_ff",
-        "close_high_5_day_ff",
-        "time_high_5_day_ff",
-        "close_low_5_day_ff",
-        "time_low_5_day_ff",
-        "close_high_11_day_ff",
-        "time_high_11_day_ff",
-        "close_low_11_day_ff",
-        "time_low_11_day_ff",
-        "close_high_21_day_ff",
-        "time_high_21_day_ff",
-        "close_low_21_day_ff",
-        "time_low_21_day_ff",
-        "close_high_51_day_ff",
-        "time_high_51_day_ff",
-        "close_low_51_day_ff",
-        "time_low_51_day_ff",
-        "close_high_201_day_ff",
-        "time_high_201_day_ff",
-        "close_low_201_day_ff",
-        "time_low_201_day_ff",
+        "close_high_5d_ff",
+        "time_high_5d_ff",
+        "close_low_5d_ff",
+        "time_low_5d_ff",
+        "close_high_11d_ff",
+        "time_high_11d_ff",
+        "close_low_11d_ff",
+        "time_low_11d_ff",
+        "close_high_21d_ff",
+        "time_high_21d_ff",
+        "close_low_21d_ff",
+        "time_low_21d_ff",
+        "close_high_51d_ff",
+        "time_high_51d_ff",
+        "close_low_51d_ff",
+        "time_low_51d_ff",
+        "close_high_201d_ff",
+        "time_high_201d_ff",
+        "close_low_201d_ff",
+        "time_low_201d_ff",
+        'close_rolling_5d_max', 'close_rolling_201_min', 'sma_50d', 'sma_200d',
         "rsi",
         "macd",
         "macd_signal",
@@ -464,6 +465,10 @@ def add_group_features(interval_minutes, raw_data):
 @profile_util.profile
 def add_example_level_features(cal, macro_data_builder, raw_data):
     raw_data = pd.DataFrame(raw_data)
+    return add_example_level_features_df(cal, macro_data_builder, raw_data)
+
+@profile_util.profile
+def add_example_level_features_df(cal, macro_data_builder, raw_data):
     new_york_cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
     raw_data["week_of_year"] = raw_data["time"].apply(lambda x: x.isocalendar()[1])

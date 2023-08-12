@@ -250,7 +250,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             self.config,
             self.market_cal,
         )
-        for idx in range(len(test_dates)-1):
+        for idx in range(len(test_dates)-2):
             test_date = test_dates[idx]
             schedule = self.market_cal.schedule(
                 start_date=test_date, end_date=test_date

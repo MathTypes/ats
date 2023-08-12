@@ -549,11 +549,11 @@ class TimeSeriesDataSet(Dataset):
         #logging.info(f"preprocessed_data_tail:{data.iloc[-3:][['time','time_idx','close_back','close_back_cumsum']]}")
         for target in self.target_names:
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
-        logging.error(f"before dropna tail: {data.iloc[-10:]}")
-        logging.info(f"data before dropna:{data.describe()}")
+        #logging.error(f"before dropna tail: {data.iloc[-10:]}")
+        #logging.info(f"data before dropna:{data.describe()}")
         data = data.dropna()
         #logging.error(f"after dropna head: {data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
-        logging.info(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
+        #logging.info(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
         self.transformed_data = data
         # create index
         #logging.info(f"before construct_index:{data[-4:]}")
@@ -1969,8 +1969,8 @@ class TimeSeriesDataSet(Dataset):
             ), "relative_time_idx is a protected column and must not be present in data"
             new_data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
         raw_data = self.raw_data
-        logging.error(f"raw_data:{raw_data.iloc[-2:]}")
-        logging.error(f"new_data:{new_data.iloc[-6:]}")
+        #logging.error(f"raw_data:{raw_data.iloc[-2:]}")
+        #logging.error(f"new_data:{new_data.iloc[-6:]}")
         start_timestamp = new_data.iloc[0]["timestamp"]
         # start_timestamp is the close time at time of prediction. prediction should be for
         # next timestamp.
@@ -1980,7 +1980,7 @@ class TimeSeriesDataSet(Dataset):
         old_raw_data = raw_data[(raw_data.timestamp<old_timestamp) & (raw_data.ticker=="ES")]
         raw_data = raw_data[(raw_data.timestamp>=old_timestamp) & (raw_data.ticker=="ES")]
         raw_data = raw_data[(raw_data.timestamp<start_timestamp) & (raw_data.ticker=="ES")]
-        logging.error(f"raw_data before adding:{raw_data.iloc[-6:]}")
+        #logging.error(f"raw_data before adding:{raw_data.iloc[-6:]}")
         for index, row in new_data.iterrows():
             idx = raw_data[(raw_data.time_idx==row["time_idx"])].index
             if not idx.empty:
@@ -1994,37 +1994,40 @@ class TimeSeriesDataSet(Dataset):
                                   row["time_idx"], row["relative_time_idx"]]
             else:
                 raw_data.loc[raw_data.shape[0]] = row
-        logging.error(f"raw_data after adding:{raw_data.iloc[-6:]}")
+        #logging.error(f"raw_data after adding:{raw_data.iloc[-6:]}")
 
         raw_data["new_idx"] = raw_data.apply(
             lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
-        raw_data = raw_data.set_index("new_idx")
-        full_ds = ray.data.from_pandas(raw_data)
-        add_group_features = partial(data_util.add_group_features, interval_minutes)
-        full_ds = full_ds.groupby("ticker").map_groups(add_group_features).sort("time_idx")
-        raw_data = full_ds.to_pandas(limit=10000000).set_index("time_idx")
+        raw_data = raw_data.set_index("time_idx")
+        #full_ds = ray.data.from_pandas(raw_data)
+        raw_data = data_util.add_group_features(interval_minutes, raw_data)
+        #add_group_features = partial(data_util.add_group_features, interval_minutes)
+        #full_ds = full_ds.groupby("ticker").map_groups(add_group_features).sort("time_idx")
+        #raw_data = full_ds.to_pandas(limit=10000000).set_index("time_idx")
         raw_data["time_idx"] = raw_data.index
-        logging.error(f"raw_data after adding group features:{raw_data.iloc[-6:]}")
+        #logging.error(f"raw_data after adding group features:{raw_data.iloc[-6:]}")
 
         min_new_data_idx = new_data.time_idx.min()
+        #logging.error(f"raw_data index:{raw_data.index[-6:]}, min_new_data_idx:{min_new_data_idx}")
         new_data_idx = raw_data.index>=min_new_data_idx
         new_raw_data = raw_data[raw_data.index>min_new_data_idx-46*250]
         new_raw_data["time_idx"] = new_raw_data.index
-        logging.error(f"new_data_idx:{new_data_idx[-10:]}")
-        new_full_ds = ray.data.from_pandas(new_raw_data)
-        add_example_features = partial(data_util.add_example_level_features, cal, mdr.macro_data_builder)
-        new_full_ds = new_full_ds.repartition(100).map_batches(add_example_features, batch_size=4096).sort("time_idx")
-        new_raw_data = new_full_ds.to_pandas(limit=10000000).set_index("time_idx")
+        #logging.error(f"new_data_idx:{new_data_idx[-10:]}")
+        new_raw_data = data_util.add_example_level_features_df(cal, mdr.macro_data_builder, new_raw_data)
+        #new_full_ds = ray.data.from_pandas(new_raw_data)
+        #add_example_features = partial(data_util.add_example_level_features, cal, mdr.macro_data_builder)
+        #new_full_ds = new_full_ds.repartition(100).map_batches(add_example_features, batch_size=4096).sort("time_idx")
+        #new_raw_data = new_full_ds.to_pandas(limit=10000000).set_index("time_idx")
         new_raw_data["time_idx"] = new_raw_data.index
-        logging.error(f"raw_data after adding example features:{raw_data.iloc[-6:]}")
+        #logging.error(f"raw_data after adding example features:{raw_data.iloc[-6:]}")
         new_raw_data = data_util.add_example_group_features(cal, mdr.macro_data_builder, new_raw_data)
-        logging.error(f"new_raw_data after adding example group:{new_raw_data.iloc[-10:]}")
+        #logging.error(f"new_raw_data after adding example group:{new_raw_data.iloc[-10:]}")
 
         #raw_data_copy = raw_data.copy()
         raw_data[new_data_idx] = new_raw_data[new_raw_data.time_idx>=min_new_data_idx]
         #raw_data = raw_data_copy
-        logging.error(f"after adding example features raw_data:{raw_data.iloc[-10:]}")
+        #logging.error(f"after adding example features raw_data:{raw_data.iloc[-10:]}")
         # Only selected columns can be ffilled
         #raw_data = raw_data.ffill()
         #if not old_raw_data.empty:
@@ -2040,11 +2043,11 @@ class TimeSeriesDataSet(Dataset):
 
         data = self.preprocess_data(raw_data)
         self.raw_data = data
-        logging.error(f"after preprocess raw_data:{self.raw_data.iloc[-6:]}")
-        logging.error(f"raw_data tail:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
-        logging.info(f"before transformed_data:{data.iloc[-10:]}, data:{len(data)}")
+        #logging.error(f"after preprocess raw_data:{self.raw_data.iloc[-6:]}")
+        #logging.error(f"raw_data tail:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
+        #logging.info(f"before transformed_data:{data.iloc[-10:]}, data:{len(data)}")
         self.transform_data(data)
-        logging.info(f"transformed_data:{data.iloc[-10:]}, data:{len(data)}")
+        #logging.info(f"transformed_data:{data.iloc[-10:]}, data:{len(data)}")
     
     def __getitem__(self, idx: int) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
         """

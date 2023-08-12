@@ -20,6 +20,7 @@ class Optimizer(object):
         pnl_risk_norm=3,
         pnl_risk=10,
         initial_positions=None,
+        opt_intervals=46
     ):
         super().__init__()
         self.initial_positions = initial_positions
@@ -30,13 +31,14 @@ class Optimizer(object):
         self.l_norm = l_norm
         self.pnl_risk_norm = pnl_risk_norm
         self.pnl_risk = pnl_risk
+        self.opt_intervals = opt_intervals
 
     @profile_util.profile
     def optimize(self, returns_fcst, min_neg_fcst, max_pos_fcst):
-        # Only look at next 4 hours prediction
-        returns_fcst = returns_fcst[:,:8]
-        min_neg_fcst = min_neg_fcst[:8]
-        max_pos_fcst = max_pos_fcst[:8]
+        # Only look at next N prediction for optimization
+        returns_fcst = returns_fcst[:,:self.opt_intervals]
+        min_neg_fcst = min_neg_fcst[:self.opt_intervals]
+        max_pos_fcst = max_pos_fcst[:self.opt_intervals]
         w = cp.Variable(self.n)
         logging.info(f"returns_fcst:{returns_fcst}, w:{w}")
         cum_rets = np.sum(returns_fcst, axis=-1)
@@ -44,8 +46,8 @@ class Optimizer(object):
         ret = cp.sum(cum_rets @ w)
         logging.info(f"ret:{ret}, w:{w}")
         # We need a bit power to limit positions.
-        buy_risk = -cp.sum(cp.maximum(w,0) @ cp.minimum(min_neg_fcst, 0))
-        sell_risk = -cp.sum(cp.minimum(w,0) @ cp.maximum(max_pos_fcst, 0))
+        buy_risk = cp.sum_squares(cp.maximum(w,0) @ cp.minimum(min_neg_fcst, 0))
+        sell_risk = cp.sum_squares(cp.minimum(w,0) @ cp.maximum(max_pos_fcst, 0))
         risk = buy_risk + sell_risk
         objective = cp.Minimize(self.sigma * risk-ret)
         logging.info(f"ret:{ret}, risk:{risk}, objective:{objective}, sigma:{self.sigma}")

@@ -1,4 +1,4 @@
-sigma: 5 # risk aversion against vol
-gamma: 2 # limit position size
-max_loss: 20 # limit max dollar loss
+sigma: 100 # risk aversion against vol
+gamma: 5 # limit position size
+max_loss: 100 # limit max dollar loss
 log_viz_every_n: 1

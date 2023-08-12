@@ -1,6 +1,6 @@
 # import pytorch_lightning as pl
 import logging
-
+import typing
 import lightning.pytorch as pl
 import numpy as np
 import torch
@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader
 from omegaconf import OmegaConf
 from pytorch_forecasting.data.encoders import (
     NaNLabelEncoder,
+    EncoderNormalizer,
+    MultiNormalizer
 )
 from pytorch_forecasting import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
@@ -36,15 +38,17 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
         target_normalizer = "auto"
-        #target_normalizer=GroupNormalizer(
-        #    groups=["ticker"], transformation="softplus"
-            #)
+        if OmegaConf.is_list(target):
+            target = OmegaConf.to_object(target)
+            normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
+            target_normalizer=MultiNormalizer(normalizer_list)
         # use softplus and normalize by group
-        # if isinstance(target, (typing.Set, typing.List)):
-        #    normalizer_list = [
-        #        EncoderNormalizer(transformation="relu") for i in range(len(target))
-        #    ]
-        #    target_normalizer = MultiNormalizer(normalizer_list)
+        logging.info(f"target:{type(target)}")
+        if isinstance(target, (typing.Set, typing.List)):
+            normalizer_list = [
+                EncoderNormalizer(transformation="auto") for i in range(len(target))
+            ]
+            target_normalizer = MultiNormalizer(normalizer_list)
         time_varying_known_reals = config.model.features.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)

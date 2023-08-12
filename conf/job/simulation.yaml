@@ -15,9 +15,9 @@ max_epochs: 50
 log_mode: All
 eval_batches: 10
 log_example_eval_every_n_epochs: 1
-tag: default
+tag: sim
 market: CME_Equity
 tune_learning_rate: False
 num_tune_iter: 20
 max_stale_minutes: 30
-checkpoint: ${hydra:runtime.cwd}/model/20230805-201749/epoch=3-step=4628.ckpt
+checkpoint: ${hydra:runtime.cwd}/model/20230811-214117/epoch=10-step=23771.ckpt

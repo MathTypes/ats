@@ -8,7 +8,7 @@ stride: 3
 d_model: 15
 train_batch_size: 512
 eval_batch_size: 128
-learning_rate: 0.01
+learning_rate: 0.05
 attn_heads : 4
 dropout: 0.20
 attn_dropout: 0.1
