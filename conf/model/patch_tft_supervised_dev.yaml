@@ -8,7 +8,7 @@ stride: 3
 d_model: 15
 train_batch_size: 512
 eval_batch_size: 128
-learning_rate: 0.05
+learning_rate: 0.01
 attn_heads : 4
 dropout: 0.20
 attn_dropout: 0.1
@@ -20,7 +20,8 @@ heads:
 returns_prediction:
   #loss_name: MQF2DistributionLoss
   loss_name: SMAPE
-  target: ["close_back", "daily_vol", "volume_back"]
+  #target: ["close_back", "daily_vol", "volume_back"]
+  target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 anomaly_returns:
   loss_name: SMAPE
