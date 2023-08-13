@@ -358,7 +358,10 @@ def get_heads_and_targets(config):
         # Need sorted to have consistent target orders. This affects prediction
         # output position from model.
         targets = list(sorted(targets))
-    # logging.info(f"head_dict:{head_dict}, targets:{targets}")
+    logging.info(f"head_dict:{head_dict}, targets:{targets}")
+    if OmegaConf.is_list(targets):
+        targets = OmegaConf.to_object(targets)
+        logging.info(f"targets:{targets}")
     return head_dict, targets
 
 

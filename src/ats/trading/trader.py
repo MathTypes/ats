@@ -87,6 +87,9 @@ class Trader(object):
 
     @profile_util.profile
     def on_interval(self, utc_time):
+        if self.last_data_time is not None and utc_time<self.last_data_time + datetime.timedelta(minutes=self.config.job.time_interval_minutes):
+            return None
+        
         max_prediction_length = self.config.model.prediction_length
         # prediction is at current time, so we need max_prediction_length + 1.
         trading_times = market_time.get_next_trading_times(
@@ -146,14 +149,14 @@ class Trader(object):
         new_data["time_idx"] = range(
             self.last_time_idx, self.last_time_idx + len(new_data)
         )
-        logging.info(f"running step {predict_nyc_time}")
+        logging.info(f"running step {predict_nyc_time}, new_data:{new_data.iloc[:3][['time_idx','close','time']]}")
         self.train_dataset.add_new_data(
             new_data,
             self.config.job.time_interval_minutes,
             self.market_cal,
             self.market_data_mgr,
         )
-        predict_time_idx_end = new_data.time_idx.max()
+        predict_time_idx_end = self.last_time_idx + max_prediction_length
         # logging.error(f"new_train_dataset:{train_dataset.raw_data[-3:]}")
         logging.error(
             f"last_time_idex={self.last_time_idx}, predict_time_idx_end:{predict_time_idx_end}"
@@ -162,36 +165,36 @@ class Trader(object):
             lambda x: (x.time_idx_last == predict_time_idx_end)
         )
         x, y = next(iter(filtered_dataset.to_dataloader(train=False, batch_size=1)))
-        logging.info(f"x:{x}")
-        logging.info(f"y:{y}")
+        #logging.info(f"x:{x}")
+        #logging.info(f"y:{y}")
         # new_prediction_data is the last encoder_data, we need to add decoder_data based on
         # known features or lagged unknown features
         # logging.info(f"new_prediction_data:{new_prediction_data}")
         y_hats, y_quantiles, out, x = prediction_utils.predict(
             self.model, filtered_dataset, self.wandb_logger, batch_size=1
         )
-        logging.info(f"y_hats:{y_hats}")
-        logging.info(f"y_quantiles:{y_quantiles}")
-        logging.info(f"out:{out}")
+        #logging.info(f"y_hats:{y_hats}")
+        #logging.info(f"y_quantiles:{y_quantiles}")
+        #logging.info(f"out:{out}")
         if isinstance(y_hats, list):
             y_hats = y_hats[0]
         returns_fcst = y_hats.cpu().numpy()
         min_y_quantiles = y_quantiles[:, :, 0]
         max_y_quantiles = y_quantiles[:, :, -1]
-        # logging.info(f"min_y_quantiles:{min_y_quantiles}, max_y_quantiles:{max_y_quantiles}")
+        logging.info(f"min_y_quantiles:{min_y_quantiles}, max_y_quantiles:{max_y_quantiles}")
         cum_min_y_quantiles = torch.cumsum(min_y_quantiles, 1)
         cum_max_y_quantiles = torch.cumsum(max_y_quantiles, 1)
-        # logging.info(f"cum_min_y_quantiles:{cum_min_y_quantiles}, cum_max_y_quantiles:{cum_max_y_quantiles}")
+        logging.info(f"cum_min_y_quantiles:{cum_min_y_quantiles}, cum_max_y_quantiles:{cum_max_y_quantiles}")
         min_fcst = torch.min(cum_min_y_quantiles)
         max_fcst = torch.max(cum_max_y_quantiles)
-        # logging.info(f"min_fcst:{min_fcst}, max_fcst:{max_fcst}")
+        logging.info(f"min_fcst:{min_fcst}, max_fcst:{max_fcst}")
         min_neg_fcst = (
             torch.minimum(min_fcst, torch.tensor(0)).unsqueeze(0).detach().cpu().numpy()
         )
         max_pos_fcst = (
             torch.maximum(max_fcst, torch.tensor(0)).unsqueeze(0).detach().cpu().numpy()
         )
-        # logging.info(f"returns_fcst:{returns_fcst}, min_neg_fcst:{min_neg_fcst}, max_pos_fcst:{max_pos_fcst}")
+        logging.info(f"returns_fcst:{returns_fcst}, min_neg_fcst:{min_neg_fcst}, max_pos_fcst:{max_pos_fcst}")
         new_positions, ret, val = self.optimizer.optimize(
             returns_fcst, min_neg_fcst, max_pos_fcst
         )
@@ -200,6 +203,7 @@ class Trader(object):
         y_close = y[0]
         y_close_cum_sum = torch.cumsum(y_close, dim=-1)
         # logging.info(f"x:{x}")
+        # self.last_time_idx is current interval (as of close is known). indices would be self.last_time_idx + 1
         indices = self.train_dataset.x_to_index(x)
         matched_data = self.train_dataset.raw_data
         #logging.error(f"indices:{indices}")
@@ -212,6 +216,7 @@ class Trader(object):
         )
         # logging.info(f"interp_output:{interp_output}")
         log_viz = self.cnt % self.config.trading.log_viz_every_n == 0
+        # We always predict at t+1. So row would be at t+1.
         row = viz_utils.create_viz_row(
             0,
             y_hats,
@@ -231,8 +236,9 @@ class Trader(object):
             filter_small=False,
             show_viz=log_viz,
         )
-        logging.info(f"return from viz_row:{row}")
+        # new_data is close price of current row. 
         new_data_row = new_data.iloc[0]
+        logging.info(f"return from viz_row:{row}, new_data:{new_data_row}")
         ticker = new_data_row.ticker
         px = new_data_row.close
         last_position = self.last_position_map[ticker]

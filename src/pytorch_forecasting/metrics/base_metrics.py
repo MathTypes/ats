@@ -342,7 +342,9 @@ class MultiLoss(LightningMetric):
             torch.Tensor: metric value on which backpropagation can be applied
         """
         results = []
-        traceback.print_stack()
+        #traceback.print_stack()
+        #logging.info(f"y_pred:{y_pred}")
+        #logging.info(f"y_actual:{y_actual}")
         for idx, metric in enumerate(self.metrics):
             try:
                 #logger.info(f"id:{idx}, y_pred:{y_pred[idx].shape}")

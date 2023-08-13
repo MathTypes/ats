@@ -432,7 +432,7 @@ def create_viz_row(
             ax=fig,
             row=2,
             col=1,
-            draw_mode="pred_pos",
+            draw_mode="pred_vol",
             x_time=x_time,
         )
         interpretation = {}

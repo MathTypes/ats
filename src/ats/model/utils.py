@@ -128,7 +128,7 @@ class Pipeline:
         devices = 1
         logging.info(f"device:{self.device}")
         wandb_logger = WandbLogger(project="ATS", log_model=True)
-        logging.info(f"data_module:{self.data_module}")
+        logging.info(f"data_module:{self.data_module}, targets:{self.targets}, type:{type(self.targets)}")
         prediction_logger = WandbClfEvalCallback(
             self.data_module, self.targets, self.config
         )

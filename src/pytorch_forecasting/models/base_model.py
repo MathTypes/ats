@@ -1152,7 +1152,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         ):
             # TODO: fix this hack where we plot each target in different
             # figure so that they have different scale.
-            if draw_mode == "pred_pos":
+            if draw_mode == "pred_vol":
                 if index == 0:
                     index += 1
                     continue
@@ -1173,6 +1173,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     y_all[max_encoder_length : (max_encoder_length + x["decoder_lengths"][idx])],
                 ),
             )
+            if index == 1 and draw_mode == "pred_vol":
+                logging.info(f"y:{y}")
             #logging.info(f"y.shape:{y.shape}")
             # move predictions to cpu
             y_hat = y_hat.detach().cpu()[idx, : x["decoder_lengths"][idx]]

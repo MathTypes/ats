@@ -37,18 +37,14 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             train_time_idx = eval_time_idx
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
-        target_normalizer = "auto"
-        if OmegaConf.is_list(target):
-            target = OmegaConf.to_object(target)
-            normalizer_list = [EncoderNormalizer(transformation="relu") for i in range(len(target))]
+        target_normalizer = None
+        #if OmegaConf.is_list(target):
+        if isinstance(target, (typing.List)):
+            #target = OmegaConf.to_object(target)
+            normalizer_list = [EncoderNormalizer(transformation=None) for i in range(len(target))]
             target_normalizer=MultiNormalizer(normalizer_list)
         # use softplus and normalize by group
         logging.info(f"target:{type(target)}")
-        if isinstance(target, (typing.Set, typing.List)):
-            normalizer_list = [
-                EncoderNormalizer(transformation="auto") for i in range(len(target))
-            ]
-            target_normalizer = MultiNormalizer(normalizer_list)
         time_varying_known_reals = config.model.features.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)

@@ -203,25 +203,26 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 for val in orig_y
             ]
             kwargs = {"nolog": True}
-            # logging.info(f"x:{x.device}")
-            # logging.info(f"y:{y.device}")
+            #logging.info(f"x:{x}")
+            #logging.info(f"y:{y}")
             # logging.info(f"self.pl_module:{self.pl_module.device}")
             log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
             logs = detach(log)
-            # logging.info(f"out:{out}")
+            #logging.info(f"out:{out}")
             prediction_kwargs = {"reduction": None}
             result = self.pl_module.compute_metrics(
                 x, y, out, prediction_kwargs=prediction_kwargs
             )
             result = {k:detach(v) for k, v in result.items()}
+            #logging.info(f"result:{result}")
             if "train_RMSE" in result:
                 rmse = result["train_RMSE"].cpu().detach().numpy()
             else:
-                rmse = result["close_back_cumsum train_RMSE"].cpu().detach().numpy()
+                rmse = result["close_back train_RMSE"].cpu().detach().numpy()
             if "train_MAE" in result:
                 mae = result["train_MAE"].cpu().detach().numpy()
             else:
-                mae = result["close_back_cumsum train_MAE"].cpu().detach().numpy()
+                mae = result["close_back train_MAE"].cpu().detach().numpy()
             y_raws = to_list(out["prediction"])[
                 0
             ]  # raw predictions - used for calculating loss
