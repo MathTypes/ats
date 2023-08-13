@@ -20,7 +20,7 @@ heads:
 returns_prediction:
   #loss_name: MQF2DistributionLoss
   loss_name: SMAPE
-  target: ["close_back", "daily_vol"]
+  target: ["close_back", "daily_vol", "volume_back"]
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 anomaly_returns:
   loss_name: SMAPE

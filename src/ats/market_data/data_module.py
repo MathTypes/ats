@@ -41,7 +41,14 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         #if OmegaConf.is_list(target):
         if isinstance(target, (typing.List)):
             #target = OmegaConf.to_object(target)
-            normalizer_list = [EncoderNormalizer(transformation=None) for i in range(len(target))]
+            normalizer_list = []
+            for i in range(len(target)):
+                if "volume_back" in target[i]:
+                    normalizer_list.append(EncoderNormalizer(transformation=None))
+                elif "daily_vol" in target[i]:
+                    normalizer_list.append(EncoderNormalizer(transformation="relu"))
+                else:
+                    normalizer_list.append(EncoderNormalizer(transformation=None))
             target_normalizer=MultiNormalizer(normalizer_list)
         # use softplus and normalize by group
         logging.info(f"target:{type(target)}")
