@@ -77,6 +77,8 @@ class EnvMgr(object):
         elif self.config.job.mode == "test":
             data_start_date = self.train_start_date
             data_end_date = self.test_end_date
+            if data_end_date < self.eval_end_date:
+                data_end_date = self.eval_end_date
         elif self.config.job.mode == "eval":
             data_start_date = self.eval_start_date
             data_end_date = self.eval_end_date
