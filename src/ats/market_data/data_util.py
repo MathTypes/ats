@@ -18,6 +18,8 @@ from ats.model.mom_trans.classical_strategies import (
     MACDStrategy,
     calc_returns,
     calc_daily_vol,
+    calc_skew,
+    calc_kurt
 )
 from ats.util import time_util
 from ats.util import profile_util
@@ -121,38 +123,6 @@ def get_processed_data(
     return ds
 
 
-@profile_util.profile
-def add_highs(df_cumsum, df_time, width):
-    df_z_scaled = df_cumsum
-    df_z_scaled = (df_z_scaled - df_z_scaled.mean()) / df_z_scaled.std()  
-    high_idx, _ = find_peaks(df_z_scaled, prominence=width)
-    high = df_cumsum.iloc[high_idx].to_frame(name="close_cumsum_high")
-    high_time = df_time.iloc[high_idx].to_frame(name="time_high")
-    df_high = df_cumsum.to_frame(name="close_cumsum").join(high).join(high_time)
-    df_high["close_cumsum_high_ff"] = df_high["close_cumsum_high"].ffill()
-    df_high["close_cumsum_high_bf"] = df_high["close_cumsum_high"].bfill()
-    df_high["time_high_ff"] = df_high["time_high"].ffill()
-    del high
-    del high_time
-    del high_idx
-    return df_high
-
-
-@profile_util.profile
-def add_lows(df_cumsum, df_time, width):
-    df_z_scaled = df_cumsum.fillna(0)
-    df_z_scaled = -(df_z_scaled - df_z_scaled.mean()) / df_z_scaled.std() * 20
-    low_idx, _ = find_peaks(df_z_scaled, prominence=width)
-    low = df_cumsum.iloc[low_idx].to_frame(name="close_cumsum_low")
-    low_time = df_time.iloc[low_idx].to_frame(name="time_low")
-    df_low = df_cumsum.to_frame(name="close_cumsum").join(low).join(low_time)
-    df_low["close_cumsum_low_ff"] = df_low["close_cumsum_low"].ffill()
-    df_low["close_cumsum_low_bf"] = df_low["close_cumsum_low"].bfill()
-    df_low["time_low_ff"] = df_low["time_low"].ffill()
-    del low_idx
-    del low
-    del low_time
-    return df_low
 
 def get_time(x, close_col):
     if x[close_col] == x["close_back_cumsum"]:
@@ -171,7 +141,11 @@ def ticker_transform(raw_data, interval_minutes, base_price=500):
     raw_data["cum_volume"] = raw_data.volume.cumsum()
     raw_data["cum_dv"] = raw_data.dv.cumsum()
     squash_factor = 4
-    raw_data['close_back'] = squash_factor * np.tanh((np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price))/squash_factor)
+    #raw_data['close_back'] = squash_factor * np.tanh((np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price))/squash_factor)
+    raw_data['close_back'] = np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price)
+    raw_data['high_back'] = squash_factor * np.tanh((np.log(raw_data.high+base_price) - np.log(raw_data.high.shift(1)+base_price))/squash_factor)
+    raw_data['open_back'] = squash_factor * np.tanh((np.log(raw_data.open+base_price) - np.log(raw_data.open.shift(1)+base_price))/squash_factor)
+    raw_data['low_back'] = squash_factor * np.tanh((np.log(raw_data.low+base_price) - np.log(raw_data.low.shift(1)+base_price))/squash_factor)
     # Avoid inf
     raw_data['volume_back'] = np.log(raw_data.volume+2) - np.log(raw_data.volume.shift(1)+2)
     raw_data['dv_back'] = np.log(raw_data.dv) - np.log(raw_data.dv.shift(1))
@@ -321,6 +295,11 @@ def time_diff(row, base_col, diff_col):
     else:
         return (row[diff_col] - row[base_col])
 
+def ret_diff(row, base_col, diff_col):
+    if pd.isna(row[base_col]):
+        return np.nan
+    return (row[diff_col] - row[base_col])
+
 def compute_ret(row, base_col, base_price=500):
     if pd.isna(row[base_col]):
         return np.nan
@@ -372,6 +351,7 @@ def fill_cum_volume(row, time_col, before_mins=15*60+1, after_mins=15*60+1):
 def add_group_features(interval_minutes, raw_data):
     for column in [
         "close_back",
+            "high_back", "low_back", "open_back",
         "volume_back",
         "dv_back",
         #"close_fwd",
@@ -443,12 +423,16 @@ def add_group_features(interval_minutes, raw_data):
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
     new_features = raw_data.groupby(["ticker"], group_keys=False)[[
-        "volume", "dv", "close", "timestamp"]].apply(ticker_transform, interval_minutes=interval_minutes)
-    new_features = new_features.drop(columns=["volume", "dv", "close", "timestamp"])
+        "volume", "dv", "close", "high", "low", "open", "timestamp"]].apply(ticker_transform, interval_minutes=interval_minutes)
+    new_features = new_features.drop(columns=["volume", "dv", "close", "high", "low", "open", "timestamp"])
     raw_data = raw_data.join(new_features)
+    raw_data.reset_index(drop=True, inplace=True)
+    del new_features
 
     raw_data["daily_returns"] = calc_returns(raw_data["close"])
     raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
+    raw_data["daily_skew"] = calc_skew(raw_data["close"])
+    raw_data["daily_kurt"] = calc_kurt(raw_data["close"])
     trend_combinations = [(8, 24), (16, 48), (32, 96)]
     for short_window, long_window in trend_combinations:
         raw_data[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
@@ -633,6 +617,67 @@ def add_example_group_features(cal, macro_data_builder, raw_data):
             return data["close"].iloc[-1]
         return 0
 
+    raw_data["ret_from_high_5d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_5d_ff"
+    )
+    raw_data["ret_from_high_11d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_11d_ff"
+    )
+    raw_data["ret_from_high_21d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_21d_ff"
+    )
+    raw_data["ret_from_high_51d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_51d_ff"
+    )
+    raw_data["ret_from_high_201d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_201d_ff"
+    )
+    raw_data["ret_from_low_5d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_5d_ff"
+    )
+    raw_data["ret_from_low_11d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_11d_ff"
+    )
+    raw_data["ret_from_low_21d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_21d_ff"
+    )
+    raw_data["ret_from_low_51d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_51d_ff"
+    )
+    raw_data["ret_from_low_201d"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_201d_ff"
+    )
+
+    raw_data["ret_from_high_5"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_5_ff"
+    )
+    raw_data["ret_from_high_11"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_11_ff"
+    )
+    raw_data["ret_from_high_21"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_21_ff"
+    )
+    raw_data["ret_from_high_51"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_51_ff"
+    )
+    raw_data["ret_from_high_201"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_201_ff"
+    )
+    raw_data["ret_from_low_5"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_5_ff"
+    )
+    raw_data["ret_from_low_11"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_11_ff"
+    )
+    raw_data["ret_from_low_21"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_21_ff"
+    )
+    raw_data["ret_from_low_51"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_51_ff"
+    )
+    raw_data["ret_from_low_201"] = raw_data.apply(
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_201_ff"
+    )
     if macro_data_builder.add_macro_event:
         raw_data["last_macro_event_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="last_macro_event_time", axis=1)
         raw_data["last_macro_event_cum_volume"] = raw_data.apply(fill_cum_volume,

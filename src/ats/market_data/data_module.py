@@ -9,7 +9,8 @@ from omegaconf import OmegaConf
 from pytorch_forecasting.data.encoders import (
     NaNLabelEncoder,
     EncoderNormalizer,
-    MultiNormalizer
+    MultiNormalizer,
+    TorchNormalizer
 )
 from pytorch_forecasting import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
@@ -49,7 +50,11 @@ class TimeSeriesDataModule(pl.LightningDataModule):
                     normalizer_list.append(EncoderNormalizer(transformation="relu"))
                 else:
                     normalizer_list.append(EncoderNormalizer(transformation=None))
+                    #normalizer_list.append(TorchNormalizer(method="robust"))
             target_normalizer=MultiNormalizer(normalizer_list)
+        else:
+            #target_normalizer=TorchNormalizer(method="robust")
+            target_normalizer=EncoderNormalizer(transformation=None)
         # use softplus and normalize by group
         logging.info(f"target:{type(target)}")
         time_varying_known_reals = config.model.features.time_varying_known_reals
