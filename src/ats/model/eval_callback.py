@@ -48,12 +48,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 "price_img",
                 "act_close_pct_max",
                 "act_close_pct_min",
+                "act_close_pct",
                 "close_back_cumsum",
                 "close_back",
                 "time_str",
                 "pred_time_idx",
                 "pred_close_pct_max",
                 "pred_close_pct_min",
+                "pred_close_pct",
                 "img",
                 "error_max",
                 "error_min",
@@ -160,12 +162,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             "price_img",
             "act_close_pct_max",
             "act_close_pct_min",
+            "act_close_pct",
             "close_back_cumsum",
             "close_back",
             "time_str",
             "pred_time_idx",
             "pred_close_pct_max",
             "pred_close_pct_min",
+            "pred_close_pct",
             "img",
             "error_max",
             "error_min",
@@ -204,7 +208,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             ]
             kwargs = {"nolog": True}
             #logging.info(f"x:{x}")
-            #logging.info(f"y:{y}")
+            #logging.info(f"y_close:{y_close.shape}")
             # logging.info(f"self.pl_module:{self.pl_module.device}")
             log, out = self.pl_module.step(x=x, y=y, batch_idx=0, **kwargs)
             logs = detach(log)
@@ -277,12 +281,14 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                         row["image"],  # 8 image
                         row["y_close_cum_max"],  # 9 max
                         row["y_close_cum_min"],  # 10 min
+                        row["y_close_cum"],
                         row["close_back_cumsum"],  # 11 close_back_cusum
                         row["close_back"],
                         row["dm_str"],  # 12
                         row["decoder_time_idx"],
                         row["y_hat_cum_max"],
                         row["y_hat_cum_min"],
+                        row["y_hat_cum"],
                         row["pred_img"],
                         row["error_cum_max"],
                         row["error_cum_min"],
@@ -309,7 +315,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         # Calling `use_artifact` uploads the data to W&B.
         assert wandb.run is not None
         wandb.run.use_artifact(data_artifact)
-        del data_table
+        #del data_table
         # data_artifact.wait()
 
         return []
