@@ -81,7 +81,7 @@ def predict(model, new_prediction_data, wandb_logger, batch_size=1):
     x = new_raw_predictions.x
     output = new_raw_predictions.output
     output = {
-        key: [v.to(device) if v else v for v in val] if isinstance(val, list) else val.to(device)
+        key: [v.to(device) if v is not None else v for v in val] if isinstance(val, list) else val.to(device)
         for key, val in output.items()
     }
     y_hats = model.to_prediction(output, **prediction_kwargs)

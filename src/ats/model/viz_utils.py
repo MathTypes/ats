@@ -108,8 +108,8 @@ def create_example_viz_table(model, data_loader, eval_data, metrics, top_k):
         )
         fig.update_layout(
             autosize=False,
-            width=1500,
-            height=800,
+            width=1200,
+            height=600,
         )
         fig.update_xaxes(
             rangebreaks=[
@@ -312,10 +312,12 @@ def create_viz_row(
     y_hat_cum = y_hats_cum[idx]
     y_hat_cum_max = torch.max(y_hat_cum)
     y_hat_cum_min = torch.min(y_hat_cum)
+    y_hat_cum = y_hat_cum[-1]
     index = indices.iloc[idx]
     # logging.info(f"index:{index}")
-    train_data_row = matched_eval_data[
-        matched_eval_data.time_idx == index.time_idx
+    train_data = matched_eval_data.copy()
+    train_data_row = train_data[
+        train_data.time_idx == index.time_idx
     ].iloc[0]
     #logging.info(f"train_data_row:{train_data_row}")
     dm = train_data_row["time"]
@@ -323,6 +325,7 @@ def create_viz_row(
     y_close_cum_sum_row = y_close_cum_sum[idx]
     y_close_cum_max = torch.max(y_close_cum_sum_row)
     y_close_cum_min = torch.min(y_close_cum_sum_row)
+    y_close_cum = y_close_cum_sum_row[-1]
     if filter_small and not (
         abs(y_hat_cum_max) > 0.005
         or abs(y_hat_cum_min) > 0.005
@@ -330,9 +333,9 @@ def create_viz_row(
         or abs(y_close_cum_min) > 0.005
     ):
         return {}
-    train_data_rows = matched_eval_data[
-        (matched_eval_data.time_idx >= index.time_idx - config.model.context_length)
-        & (matched_eval_data.time_idx < index.time_idx + config.model.prediction_length)
+    train_data_rows = train_data[
+        (train_data.time_idx >= index.time_idx - config.model.context_length)
+        & (train_data.time_idx < index.time_idx + config.model.prediction_length)
     ]
     # logging.info(f"train_data:rows:{train_data_rows}")
     if target_size > 1:
@@ -341,9 +344,9 @@ def create_viz_row(
         context_length = len(x["encoder_target"][idx])
     prediction_length = len(x["decoder_time_idx"][idx])
     decoder_time_idx = x["decoder_time_idx"][idx][0].cpu().detach().numpy()
-    x_time = matched_eval_data[
-        (matched_eval_data.time_idx >= decoder_time_idx - context_length)
-        & (matched_eval_data.time_idx < decoder_time_idx + prediction_length)
+    x_time = train_data[
+        (train_data.time_idx >= decoder_time_idx - context_length)
+        & (train_data.time_idx < decoder_time_idx + prediction_length)
     ]["time"]
     prediction_date_time = (
         train_data_row["ticker"]
@@ -399,8 +402,8 @@ def create_viz_row(
         )
         fig.update_layout(
             autosize=False,
-            width=1500,
-            height=800,
+            width=1200,
+            height=600,
             yaxis=dict(
                 side="right",
             ),
@@ -467,16 +470,21 @@ def create_viz_row(
         "image": wandb.Image(raw_im),  # 8 image
         "y_close_cum_max": y_close_cum_max.item(),  # 9 max
         "y_close_cum_min": y_close_cum_min.item(),  # 10 min
+        "y_close_cum": y_close_cum.item(),
         "close_back_cumsum": 0,  # 11 close_back_cusum
         "close_back": train_data_row["close_back"],
         "dm_str": dm_str,  # 12
         "decoder_time_idx": decoder_time_idx.item(),
         "y_hat_cum_max": y_hat_cum_max.item(),
         "y_hat_cum_min": y_hat_cum_min.item(),
+        "y_hat_cum": y_hat_cum.item(),
         "pred_img": img,
         "error_cum_max": y_hat_cum_max - y_close_cum_max,
         "error_cum_min": y_hat_cum_min - y_close_cum_min,
         "rmse": rmse[idx],
         "mae": mae[idx],
     }
+    del train_data
+    del train_data_row
+    del train_data_rows
     return row
