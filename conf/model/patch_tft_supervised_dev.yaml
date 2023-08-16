@@ -5,11 +5,11 @@ prediction_length: 46
 context_length: 460
 patch_len: 6
 stride: 3
-d_model: 15
-train_batch_size: 512
-eval_batch_size: 128
-learning_rate: 0.01
-attn_heads : 4
+d_model: 64
+train_batch_size: 1024
+eval_batch_size: 256
+learning_rate: 0.002
+attn_heads : 8
 dropout: 0.20
 attn_dropout: 0.1
 n_layers: 5
@@ -17,11 +17,17 @@ lstm_layers: 7
 multitask: True
 heads:
   - returns_prediction
+  #- vol_prediction
 returns_prediction:
   #loss_name: MQF2DistributionLoss
   loss_name: SMAPE
-  #target: ["close_back", "daily_vol", "volume_back"]
-  target: "close_back"
+  target: ["close_back","open_back","high_back","low_back"]
+  #target: "close_back"
+  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+vol_prediction:
+  #loss_name: MQF2DistributionLoss
+  loss_name: SMAPE
+  target: "daily_vol"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 anomaly_returns:
   loss_name: SMAPE
@@ -35,7 +41,7 @@ checkpoint_output_dir: ${hydra:runtime.cwd}/model
 features:
   static_categoricals: ["ticker"]
   time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month","time_to_new_york_open", "time_to_new_york_close", "time_to_london_open","time_to_london_close","time_to_last_macro_event","time_to_next_macro_event","time_to_weekly_close","time_to_monthly_close","time_to_option_expiration","time_to_new_york_last_open","time_to_london_last_open"]
-  time_varying_unknown_reals: ["close_back", "volume_back", "close", "high", "low", "open", "close_back_cumsum", "close_high_5_ff", "close_low_5_ff", "close_high_11_ff", "close_low_11_ff","close_high_21_ff", "close_low_21_ff", "close_high_51_ff", "close_low_51_ff", "close_low_201_ff", "close_high_201_ff", "close_high_5d_ff", "close_low_5d_ff", "close_high_11d_ff", "close_low_11d_ff","close_high_21d_ff", "close_low_21d_ff", "close_high_51d_ff", "close_low_51d_ff", "close_low_201d_ff", "close_high_201d_ff", "macd_8_24", "macd_16_48", "macd_32_96", "macd", "macd_signal", "bb_high", "bb_low", "sma_50", "sma_200", "sma_50d", "sma_200d", "time_to_high_5_ff", "time_to_low_5_ff", "time_to_high_11_ff", "time_to_low_11_ff", "time_to_high_21_ff", "time_to_low_21_ff", "time_to_high_51_ff", "time_to_low_51_ff", "time_to_high_201_ff", "time_to_low_201_ff","time_to_high_5d_ff", "time_to_low_5d_ff", "time_to_high_11d_ff", "time_to_low_11d_ff", "time_to_high_21d_ff", "time_to_low_21d_ff", "time_to_high_51d_ff", "time_to_low_51d_ff", "time_to_high_201d_ff", "time_to_low_201d_ff", "vwap_since_london_open","vwap_since_new_york_open","vwap_since_last_macro_event","ret_from_vwap_around_macro_event","vwap_around_new_york_open","vwap_around_london_open","ret_from_vwap_around_new_york_open","ret_from_vwap_around_london_open","macd_8_24_day", "macd_16_48_day", "macd_32_96_day", "daily_vol", "daily_returns"]
+  time_varying_unknown_reals: ["close_back", "volume_back", "close", "high_back", "low_back", "open_back", "close_back_cumsum", "ret_from_high_5", "ret_from_low_5", "ret_from_high_11", "ret_from_low_11","ret_from_high_21", "ret_from_low_21", "ret_from_high_51", "ret_from_low_51", "ret_from_low_201", "ret_from_high_201", "ret_from_high_5d", "ret_from_low_5d", "ret_from_high_11d", "ret_from_low_11d","ret_from_high_21d", "ret_from_low_21d", "ret_from_high_51d", "ret_from_low_51d", "ret_from_low_201d", "ret_from_high_201d", "macd_8_24", "macd_16_48", "macd_32_96", "macd", "macd_signal", "bb_high", "bb_low", "sma_50", "sma_200", "sma_50d", "sma_200d", "time_to_high_5_ff", "time_to_low_5_ff", "time_to_high_11_ff", "time_to_low_11_ff", "time_to_high_21_ff", "time_to_low_21_ff", "time_to_high_51_ff", "time_to_low_51_ff", "time_to_high_201_ff", "time_to_low_201_ff","time_to_high_5d_ff", "time_to_low_5d_ff", "time_to_high_11d_ff", "time_to_low_11d_ff", "time_to_high_21d_ff", "time_to_low_21d_ff", "time_to_high_51d_ff", "time_to_low_51d_ff", "time_to_high_201d_ff", "time_to_low_201d_ff", "vwap_since_london_open","vwap_since_new_york_open","vwap_since_last_macro_event","ret_from_vwap_around_macro_event","vwap_around_new_york_open","vwap_around_london_open","ret_from_vwap_around_new_york_open","ret_from_vwap_around_london_open","macd_8_24_day", "macd_16_48_day", "macd_32_96_day", "daily_vol", "daily_returns","daily_skew","daily_kurt"]
   lags: {}
   add_relative_time_idx: True
   add_macro_event: True
