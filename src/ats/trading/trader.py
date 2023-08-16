@@ -200,7 +200,9 @@ class Trader(object):
         )
         #logging.info(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
         y_hats_cum = torch.cumsum(y_hats, dim=-1)
-        y_close = y[0]
+        logging.info(f"y:{y}")
+        # y is open/high/low/close
+        y_close = y[0][0]
         y_close_cum_sum = torch.cumsum(y_close, dim=-1)
         # logging.info(f"x:{x}")
         # self.last_time_idx is current interval (as of close is known). indices would be self.last_time_idx + 1
@@ -275,4 +277,6 @@ class Trader(object):
             stats = self.compute_stats(self.pnl_df.pnl/500)
             logging.info(f"stats:{stats}")
             #logging.info(f"pnl_df:{self.pnl_df}")
+        del filtered_dataset
+        del y_hats, y_quantiles, out, x
         return row
