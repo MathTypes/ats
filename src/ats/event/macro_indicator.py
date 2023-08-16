@@ -38,7 +38,7 @@ class MacroDataBuilder:
         self.observations = self.observations.set_index(["date"])
         self.observations = self.observations.sort_index()
         #logging.error(f"self.observations:{self.observations.iloc[-3:]}")
-        self.observations = self.observations[(self.observations.currency=="USD") & (self.observations.importance>2)]
+        self.observations = self.observations[(self.observations.currency=="USD") & (self.observations.importance>=2)]
         #logging.error(f"after self.observations:{self.observations.iloc[-3:]}")
 
     def load_events(self):
