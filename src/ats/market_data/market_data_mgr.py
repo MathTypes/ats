@@ -208,6 +208,7 @@ class MarketDataMgr(object):
             ticker_train_data = ticker_train_data.set_index("new_idx")
             train_data_vec.append(ticker_train_data)
         full_data = pd.concat(train_data_vec)
+        logging.info(f"full_data:{full_data.iloc[:2]}")
         # TODO: the original time comes from aggregated time is UTC, but actually
         # has New York time in it.
         full_data["time"] = full_data.time.apply(
@@ -235,24 +236,29 @@ class MarketDataMgr(object):
         full_data = full_data.set_index("new_idx")
         full_data = full_data.sort_index()
         full_data["time_idx"] = range(0, len(full_data))
-        full_data = data_util.add_group_features(self.config.job.time_interval_minutes, full_data)
+        full_data = data_util.add_group_features(self.config.job.time_interval_minutes, full_data,
+                                                 add_daily_rolling_features=self.config.model.features.add_daily_rolling_features)
+        logging.info(f"full_data after add_group:{full_data.iloc[:2]}")
         full_ds = ray.data.from_pandas(full_data)
         add_example_features = partial(
-            data_util.add_example_level_features, self.market_cal, self.macro_data_builder)
+            data_util.add_example_level_features, self.market_cal, self.macro_data_builder,
+            add_daily_rolling_features=self.config.model.features.add_daily_rolling_features)
         full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
         full_data = full_ds.to_pandas(limit=10000000).sort_index()
+        logging.info(f"full_data after add_example:{full_data.iloc[:2]}")
         #full_data = data_util.add_example_level_features(self.market_cal, self.macro_data_builder, full_data)
-        full_data = data_util.add_example_group_features(self.market_cal, self.macro_data_builder, full_data)
+        full_data = data_util.add_example_group_features(self.market_cal, self.macro_data_builder, full_data,
+                                                         add_daily_rolling_features=self.config.model.features.add_daily_rolling_features,
+                                                         interval_mins=self.config.dataset.interval_mins)
+        logging.info(f"full_data after add_example_group:{full_data.iloc[:2]}")
         logging.info(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
-        logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
+        #logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
         full_data = full_data[(full_data.ret_from_vwap_around_new_york_open<0.15) &
                               (full_data.ret_from_vwap_around_new_york_open>-0.15)]
         full_data = full_data[(full_data.ret_from_vwap_around_london_open<0.15) &
                               (full_data.ret_from_vwap_around_london_open>-0.15)]
         full_data = full_data[(full_data.ret_from_high_201<0.15) &
                               (full_data.ret_from_high_201>-0.15)]
-        full_data = full_data[(full_data.ret_from_high_21d<0.15) &
-                              (full_data.ret_from_high_21d>-0.15)]
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(full_data)
             snapshot_dir = f"{self.config.dataset.snapshot}/{env_mgr.run_id}/{data_start_date_str}_{data_end_date_str}"

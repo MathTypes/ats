@@ -109,13 +109,31 @@ def get_loss(config, prediction_length=None, hidden_size=None):
     return loss
 
 
-def get_nhits_model(config, data_module, loss):
-    config.job.device
+def get_nhits_model(config, data_module, heads):
+    device = config.job.device
     training = data_module.training
-    config.model.prediction_length
+    prediction_length = config.model.prediction_length
     # configure network and trainer
     # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     pl.seed_everything(42)
+    loss = None
+    logging_metrics = []
+    output_size_dict = {}
+    if config.model.multitask:
+        loss_per_head = create_loss_per_head(heads, device, prediction_length)
+        losses = []
+        for name, l in loss_per_head.items():
+            losses.append(l["loss"])
+            logging_metrics.append(l["logging_metrics"])
+            # logging.info(f"loss name: {name}, l:{l}")
+            output_size_dict[name] = get_output_size(l["loss"])
+        if len(losses) > 1:
+            loss = MultiLossWithUncertaintyWeight(losses)
+        else:
+            loss = losses[0]
+    else:
+        # TODO implement single task loss
+        pass
     net = NHiTS.from_dataset(
         training,
         weight_decay=1e-2,
@@ -306,6 +324,7 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         # number of attention heads. Set to up to 4 for large datasets
         n_heads=config.model.attn_heads,
         dropout=config.model.dropout,
+        gradient_clip_val=config.model.gradient_clip_val,
         attn_dropout=config.model.attn_dropout,  # between 0.1 and 0.3 are good values
         # hidden_continuous_size=8,  # set to <= hidden_size
         # loss=QuantileLoss(),
@@ -314,9 +333,9 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         optimizer="adam",
         output_size=output_size_dict,
         # reduce learning rate if no improvement in validation loss after x epochs
-        reduce_on_plateau_patience=10,
-        reduce_on_plateau_reduction=5.0,
-        reduce_on_plateau_min_lr=0.0001,
+        #reduce_on_plateau_patience=10,
+        #reduce_on_plateau_reduction=5.0,
+        #reduce_on_plateau_min_lr=0.0001,
         #weight_decay=0.2
     )
     return net

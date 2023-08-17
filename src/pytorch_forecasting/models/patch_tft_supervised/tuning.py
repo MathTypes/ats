@@ -42,16 +42,16 @@ def optimize_hyperparameters(
     max_epochs: int = 20,
     n_trials: int = 100,
     timeout: float = 3600 * 8.0,  # 8 hours
-    gradient_clip_val_range: Tuple[float, float] = (0.01, 100.0),
-    hidden_size_range: Tuple[int, int] = (16, 265),
-    hidden_continuous_size_range: Tuple[int, int] = (8, 64),
-    attention_head_size_range: Tuple[int, int] = (1, 4),
-    n_layer_range: Tuple[int, int] = (2, 8),
-    lstm_layer_range: Tuple[int, int] = (2, 8),
-    d_model_range: Tuple[int, int] = (4, 16),
-    stride_range: Tuple[int, int] = (1, 4),
-    dropout_range: Tuple[float, float] = (0.1, 0.3),
-    learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
+    gradient_clip_val_range: Tuple[float, float] = (0.1, 10.0),
+    hidden_size_range: Tuple[int, int] = (16, 16),
+    hidden_continuous_size_range: Tuple[int, int] = (8, 8),
+    attention_head_size_range: Tuple[int, int] = (4, 4),
+    n_layer_range: Tuple[int, int] = (8, 8),
+    lstm_layer_range: Tuple[int, int] = (4, 4),
+    d_model_range: Tuple[int, int] = (16, 16),
+    stride_range: Tuple[int, int] = (2, 2),
+    dropout_range: Tuple[float, float] = (0.1, 0.1),
+    learning_rate_range: Tuple[float, float] = (1e-5, 0.01),
     use_learning_rate_finder: bool = True,
     trainer_kwargs: Dict[str, Any] = {},
     log_dir: str = "lightning_logs",
@@ -130,7 +130,7 @@ def optimize_hyperparameters(
 
         learning_rate_callback = LearningRateMonitor()
         #logger = TensorBoardLogger(log_dir, name="optuna", version=trial.number)
-        #gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
+        gradient_clip_val = trial.suggest_loguniform("gradient_clip_val", *gradient_clip_val_range)
         wandb_logger = WandbLogger(project="ATS", log_model=True)
         default_trainer_kwargs = dict(
             accelerator="auto",
@@ -193,6 +193,7 @@ def optimize_hyperparameters(
             hidden_size=hidden_size,
             # number of attention heads. Set to up to 4 for large dataset
             n_heads=attn_heads,
+            gradient_clip_val=gradient_clip_val,
             attn_dropout=attn_dropout,  # between 0.1 and 0.3 are good values
             optimizer="Ranger",
             output_size=output_size_dict,

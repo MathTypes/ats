@@ -66,7 +66,8 @@ class Preprocessor:
         self.freq = freq
 
     def __call__(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.info(f"df:{df}")
+        logging.error(f"df:{df}")
+        df = pd.DataFrame(df)
         df = df.set_index("Time")
         logging.info(f"since:{self.since}, until:{self.until}")
         df = df[self.since : self.until]

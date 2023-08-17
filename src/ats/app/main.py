@@ -17,6 +17,7 @@ from ats.app.pipelines import (
     PatchTstTransformerPipeline,
     PatchTstTftPipeline,
     PatchTftSupervisedPipeline,
+    TimeSeriesPipeline,
 )
 from ats.model.utils import count_parameters
 from ats.util import logging_utils
@@ -35,6 +36,7 @@ def my_app(cfg: DictConfig) -> None:
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     pipelines = {
+        "nhits": TimeSeriesPipeline,
         "patch_tst": PatchTstTransformerPipeline,
         "patch_tst_tft": PatchTstTftPipeline,
         "patch_tft_supervised": PatchTftSupervisedPipeline,

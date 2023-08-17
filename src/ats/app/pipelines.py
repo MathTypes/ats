@@ -365,3 +365,40 @@ class PatchTftSupervisedPipeline(Pipeline):
         for idx, row in example_df.iterrows():
             results = client.search_by_ticker_time_idx(row["ticker"], float(row["timestamp"]), "futures")
             logging.error(f"results:{results}")
+
+
+class TimeSeriesPipeline(Pipeline):
+    def __init__(self, dataset="fut", device=None, config=None, run_id=None):
+        super().__init__(config)
+        self.dataset = dataset
+        self.config = config
+        self.run_id = run_id
+        self.env_mgr = EnvMgr(config, run_id)
+        self.market_cal = self.env_mgr.market_cal
+        self.heads = self.env_mgr.heads
+        self.targets = self.env_mgr.targets
+        self.md_mgr = market_data_mgr.MarketDataMgr(self.env_mgr)
+        self.data_module = self.md_mgr.data_module()
+        self.run_id = run_id
+
+    def create_model(self, checkpoint):
+        self.model = model_utils.get_nhits_model(
+            self.config, self.data_module, self.heads)
+        if checkpoint:
+            self.model = self.model.load_from_checkpoint(checkpoint)
+        self.model = self.model.to(self.device, non_blocking=True)
+
+    def tune_model(self, study_name):
+        # self.data_module = nhits.get_data_module(self.config)
+        # self.model = nhits.get_model(self.config, self.data_module)
+        # self.trainer = nhits.get_trainer(self.config, self.data_module)
+        # self.model = self.model.to(self.device, non_blocking=True)
+        nhits.run_tune(self.config, study_name)
+
+    def test_model(self):
+        # self.data_module = nhits.get_data_module(self.config)
+        # self.model = nhits.get_model(self.config, self.data_module)
+        # self.trainer = nhits.get_trainer(self.config, self.data_module)
+        # self.model = self.model.to(self.device, non_blocking=True)
+        # nhits.run_tune(config, study_name)
+        pass

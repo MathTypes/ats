@@ -233,6 +233,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             x_reals: List[str] = [],
             x_categoricals: List[str] = [],
             hidden_size: int = 8,
+            gradient_clip_val: float = 0.5,
             hidden_continuous_size: int = 8,
             hidden_continuous_sizes: Dict[str, int] = {},
             embedding_sizes: Dict[str, Tuple[int, int]] = {},
@@ -325,6 +326,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             logging_metrics = nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE()])
         if loss is None:
             loss = QuantileLoss()
+        self.gradient_clip_val = gradient_clip_val
         self.loss_per_head = loss_per_head
         self.save_hyperparameters()
         #logging.info(f"hparams:{self.hparams}")
@@ -729,7 +731,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             if batch_idx % self.log_interval == 0:
                 logging.info('Train: batch-{}\tLoss: {:.6f} Learning Rate: {}'.format(batch_idx, loss.item(),lr))
         # clip gradients
-        self.clip_gradients(opt, gradient_clip_val=5, gradient_clip_algorithm="norm")
+        self.clip_gradients(opt, gradient_clip_val=self.gradient_clip_val, gradient_clip_algorithm="norm")
         opt.step()
         
     def n_head_targets(self, head) -> int:

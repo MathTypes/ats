@@ -445,13 +445,12 @@ class NHiTS(BaseModelWithCovariates):
           pass
         return log, out
 
-    def plot_interpretation(
+    def interpret_output(
         self,
-        x: Dict[str, torch.Tensor],
         output: Dict[str, torch.Tensor],
-        idx: int,
-        ax=None,
-    ) -> plt.Figure:
+        reduction: str = "none",
+        attention_prediction_horizon: int = 0,
+    ) -> Dict[str, torch.Tensor]:
         """
         Plot interpretation.
 
@@ -468,6 +467,32 @@ class NHiTS(BaseModelWithCovariates):
         Returns:
             plt.Figure: matplotlib figure
         """
+        interpretation = dict()
+        return interpretation
+
+    
+    def plot_interpretation(self, interpretation: Dict[str, torch.Tensor], ax=None,
+                            cells = None,
+                            **kwargs) -> Dict[str, plt.Figure]:
+
+        """
+        Plot interpretation.
+
+        Plot two pannels: prediction and backcast vs actuals and
+        decomposition of prediction into different block predictions which capture different frequencies.
+
+        Args:
+            x (Dict[str, torch.Tensor]): network input
+            output (Dict[str, torch.Tensor]): network output
+            idx (int): index of sample for which to plot the interpretation.
+            ax (List[matplotlib axes], optional): list of two matplotlib axes onto which to plot the interpretation.
+                Defaults to None.
+
+        Returns:
+            plt.Figure: matplotlib figure
+        """
+        figs = {}
+        return figs
         if not isinstance(self.loss, MultiLoss):  # not multi-target
             prediction = self.to_prediction(dict(prediction=output["prediction"][[idx]].detach()))[0].cpu()
             block_forecasts = [
