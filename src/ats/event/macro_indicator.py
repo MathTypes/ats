@@ -37,8 +37,11 @@ class MacroDataBuilder:
         self.observations = pd.concat(df_vec)
         self.observations = self.observations.set_index(["date"])
         self.observations = self.observations.sort_index()
+        self.observation_map = {}
         #logging.error(f"self.observations:{self.observations.iloc[-3:]}")
-        self.observations = self.observations[(self.observations.currency=="USD") & (self.observations.importance>=2)]
+        self.observation_map[3] = self.observations[(self.observations.currency=="USD") & (self.observations.importance>2)]
+        self.observation_map[2] = self.observations[(self.observations.currency=="USD") & (self.observations.importance==2)]
+        self.observation_map[1] = self.observations[(self.observations.currency=="USD") & (self.observations.importance==1)]
         #logging.error(f"after self.observations:{self.observations.iloc[-3:]}")
 
     def load_events(self):
@@ -61,21 +64,22 @@ class MacroDataBuilder:
         observations = pd.concat(df_vec)
         self.observations = observations[["date", "value", "series_id", "event_time"]]
 
-    def get_last_events(self, dt):
-        df = self.observations[
-            (self.observations.event_time <= dt)
-            & (self.observations.event_time > dt - 2 * 86400000)
+    def get_last_events(self, dt, imp):
+        observations = self.observation_map[imp]
+        df = observations[
+            (observations.event_time <= dt)
+            & (observations.event_time > dt - 31 * 86400000)
         ]
         return df
 
-    def get_next_events(self, dt):
-        df = self.observations[
-            (self.observations.event_time < dt+2*86400000)
-            & (self.observations.event_time >= dt)
-        ]
+    def get_next_events(self, dt, imp):
+        observations = self.observation_map[imp]
+        df = observations[(observations.event_time < dt+31*86400000)
+                          & (observations.event_time >= dt)]
         return df
 
-    def has_event(self, dt):
+    def has_event(self, dt, imp):
+        observations = self.observation_map[imp]
         df = self.observations[
             (self.observations.event_time < dt.timestamp())
             & (self.observations.event_time > dt.timestamp() - 86400000)
