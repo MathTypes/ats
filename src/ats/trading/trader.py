@@ -97,6 +97,9 @@ class Trader(object):
             utc_time, max_prediction_length + 1
         )
         predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
+        # Do not trade other than between 10 and 16 NYC time.
+        if predict_nyc_time.hour < 10 or predict_nyc_time.hour>=16:
+            return None
         #logging.error(f"trading_times:{trading_times}")
         new_data = self.future_data[
             (self.future_data.timestamp >= trading_times[0])

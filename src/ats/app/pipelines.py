@@ -291,8 +291,8 @@ class PatchTftSupervisedPipeline(Pipeline):
                         row["pnl_delta"],
                     )
                 # logging.info(f"new_position:{position}, prediction:{prediction}")
+                gc.collect()
             logging.info(f"eod {test_date}")
-            gc.collect()
         data_artifact.add(data_table, "trading_data")
         # Calling `use_artifact` uploads the data to W&B.
         assert wandb.run is not None

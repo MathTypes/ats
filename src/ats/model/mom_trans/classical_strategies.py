@@ -127,6 +127,15 @@ def calc_daily_vol(daily_returns): # TODO calc_daily_vol
         .fillna(method="bfill")
     )
 
+def calc_skew(daily_returns): # TODO calc_daily_vol
+    return (daily_returns.expanding(VOL_LOOKBACK)
+            .skew().ewm(span=VOL_LOOKBACK, min_periods=VOL_LOOKBACK).mean().fillna(method="bfill")
+    )
+
+def calc_kurt(daily_returns): # TODO calc_daily_vol
+    return (daily_returns.expanding(VOL_LOOKBACK)
+            .kurt().ewm(span=VOL_LOOKBACK, min_periods=VOL_LOOKBACK).mean().fillna(method="bfill")
+    )
 
 def calc_vol_scaled_returns(daily_returns, daily_vol=pd.Series(None)): # TODO calc_vol_scaled_returns
     """calculates volatility scaled returns for annualised VOL_TARGET of 15%

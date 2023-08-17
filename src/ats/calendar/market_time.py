@@ -10,16 +10,16 @@ from ats.util import time_util
 from ats.util import profile_util
 
 @functools.lru_cache(maxsize=128000)
-def get_last_macro_event_time(cal, x_time, mdb):
-    events = mdb.get_last_events(x_time)
+def get_last_macro_event_time(cal, x_time, mdb, imp):
+    events = mdb.get_last_events(x_time, imp)
     for ix, val in events.event_time.iloc[::-1].items():
         if val<=x_time:
             return val
     return None
     
 @functools.lru_cache(maxsize=128000)
-def get_next_macro_event_time(cal, x_time, mdb):
-    events = mdb.get_next_events(x_time)
+def get_next_macro_event_time(cal, x_time, mdb, imp):
+    events = mdb.get_next_events(x_time, imp)
     for	et in events.event_time:
         if et>=x_time:
             return et
@@ -131,9 +131,9 @@ def compute_monthly_close_time(x, cal):
         logging.error(f"can not compute monthly close for {x}, {e}")
         return None
 
-def compute_last_macro_event_time(x, cal, mdb):
+def compute_last_macro_event_time(x, cal, mdb, imp):
     try:
-        event_time = get_last_macro_event_time(cal, x, mdb)
+        event_time = get_last_macro_event_time(cal, x, mdb, imp)
         if event_time is None:
             return None
         last_macro_event = int(event_time)
@@ -142,9 +142,9 @@ def compute_last_macro_event_time(x, cal, mdb):
         logging.error(f"can not compute macro event for {x}, {e}")
         return None
 
-def compute_next_macro_event_time(x, cal, mdb):
+def compute_next_macro_event_time(x, cal, mdb, imp):
     try:
-        event_time = get_next_macro_event_time(cal, x, mdb)
+        event_time = get_next_macro_event_time(cal, x, mdb, imp)
         if event_time is None:
             return None
         next_macro_event = int(event_time)

@@ -4,6 +4,7 @@ import math
 import os
 from typing import Dict
 
+from numba import njit
 import numpy as np
 import pandas as pd
 from pyarrow import csv
@@ -131,6 +132,7 @@ def get_time(x, close_col):
         return None
     
 @profile_util.profile
+#@njit(parallel=True)
 def ticker_transform(raw_data, interval_minutes, base_price=500):
     ewm = raw_data["close"].ewm(halflife=HALFLIFE_WINSORISE)
     means = ewm.mean()
@@ -348,6 +350,7 @@ def fill_cum_volume(row, time_col, before_mins=15*60+1, after_mins=15*60+1):
             return np.nan
 
 #@profile_util.profile
+#@njit(parallel=True)
 def add_group_features(interval_minutes, raw_data):
     for column in [
         "close_back",
@@ -427,7 +430,7 @@ def add_group_features(interval_minutes, raw_data):
     new_features = new_features.drop(columns=["volume", "dv", "close", "high", "low", "open", "timestamp"])
     raw_data = raw_data.join(new_features)
     raw_data.reset_index(drop=True, inplace=True)
-    del new_features
+    #del new_features
 
     raw_data["daily_returns"] = calc_returns(raw_data["close"])
     raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
@@ -452,6 +455,7 @@ def add_example_level_features(cal, macro_data_builder, raw_data):
     return add_example_level_features_df(cal, macro_data_builder, raw_data)
 
 @profile_util.profile
+#@njit(parallel=True)
 def add_example_level_features_df(cal, macro_data_builder, raw_data):
     new_york_cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
@@ -470,11 +474,23 @@ def add_example_level_features_df(cal, macro_data_builder, raw_data):
     )
 
     if macro_data_builder.add_macro_event:
-        raw_data["last_macro_event_time"] = raw_data.timestamp.apply(
-            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder
+        raw_data["last_macro_event_time_imp1"] = raw_data.timestamp.apply(
+            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder, imp=1
         )
-        raw_data["next_macro_event_time"] = raw_data.timestamp.apply(
-            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder
+        raw_data["next_macro_event_time_imp1"] = raw_data.timestamp.apply(
+            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder, imp=1
+        )
+        raw_data["last_macro_event_time_imp2"] = raw_data.timestamp.apply(
+            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder, imp=2
+        )
+        raw_data["next_macro_event_time_imp2"] = raw_data.timestamp.apply(
+            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder, imp=1
+        )
+        raw_data["last_macro_event_time_imp3"] = raw_data.timestamp.apply(
+            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder, imp=3
+        )
+        raw_data["next_macro_event_time_imp3"] = raw_data.timestamp.apply(
+            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder, imp=3
         )
 
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(
@@ -531,11 +547,23 @@ def add_example_level_features_df(cal, macro_data_builder, raw_data):
         time_diff, axis=1, base_col="timestamp", diff_col="option_expiration_time"
     )
     if macro_data_builder.add_macro_event:
-        raw_data["time_to_last_macro_event"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time"
+        raw_data["time_to_last_macro_event_imp1"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time_imp1"
         )
-        raw_data["time_to_next_macro_event"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time"
+        raw_data["time_to_next_macro_event_imp1"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time_imp1"
+        )
+        raw_data["time_to_last_macro_event_imp2"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time_imp2"
+        )
+        raw_data["time_to_next_macro_event_imp2"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time_imp2"
+        )
+        raw_data["time_to_last_macro_event_imp3"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time_imp3"
+        )
+        raw_data["time_to_next_macro_event_imp3"] = raw_data.apply(
+            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time_imp3"
         )
     raw_data["time_to_high_5_ff"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="time_high_5_ff"
@@ -679,32 +707,89 @@ def add_example_group_features(cal, macro_data_builder, raw_data):
         time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_201_ff"
     )
     if macro_data_builder.add_macro_event:
-        raw_data["last_macro_event_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="last_macro_event_time", axis=1)
-        raw_data["last_macro_event_cum_volume"] = raw_data.apply(fill_cum_volume,
-                                                                 time_col="last_macro_event_time", axis=1)
-        raw_data["last_macro_event_cum_dv"] = raw_data.last_macro_event_cum_dv.ffill()
-        raw_data["last_macro_event_cum_volume"] = raw_data.last_macro_event_cum_volume.ffill()
-        raw_data["vwap_since_last_macro_event"] = raw_data.apply(
-            compute_vwap, dv_col="last_macro_event_cum_dv",
-            volume_col="last_macro_event_cum_volume", axis=1)
+        raw_data["last_macro_event_cum_dv_imp1"] = raw_data.apply(
+            fill_cum_dv, time_col="last_macro_event_time_imp1", axis=1)
+        raw_data["last_macro_event_cum_volume_imp1"] = raw_data.apply(
+            fill_cum_volume, time_col="last_macro_event_time_imp1", axis=1)
+        raw_data["last_macro_event_cum_dv_imp1"] = raw_data.last_macro_event_cum_dv_imp1.ffill()
+        raw_data["last_macro_event_cum_volume_imp1"] = raw_data.last_macro_event_cum_volume_imp1.ffill()
+        raw_data["vwap_since_last_macro_event_imp1"] = raw_data.apply(
+            compute_vwap, dv_col="last_macro_event_cum_dv_imp1",
+            volume_col="last_macro_event_cum_volume_imp1", axis=1)
 
-        raw_data["around_macro_event_cum_dv"] = raw_data.apply(
-            fill_cum_dv, time_col="last_macro_event_time", before_mins=30*60+1,
+        raw_data["around_macro_event_cum_dv_imp1"] = raw_data.apply(
+            fill_cum_dv, time_col="last_macro_event_time_imp1", before_mins=30*60+1,
             after_mins=30*60+1, axis=1)
-        raw_data["around_macro_event_cum_volume"] = raw_data.apply(
-            fill_cum_volume, time_col="last_macro_event_time",
+        raw_data["around_macro_event_cum_volume_imp1"] = raw_data.apply(
+            fill_cum_volume, time_col="last_macro_event_time_imp1",
             before_mins=30*60+1, after_mins=30*60+1, axis=1)
-        rol = raw_data.around_macro_event_cum_dv.rolling(window=2)
-        raw_data["vwap_around_macro_event"] = rol.apply(
+        rol = raw_data.around_macro_event_cum_dv_imp1.rolling(window=2)
+        raw_data["vwap_around_macro_event_imp1"] = rol.apply(
             vwap_around,
-            args=("around_macro_event_cum_dv","around_macro_event_cum_volume"), raw=False)
-        raw_data["vwap_around_macro_event"] = raw_data.vwap_around_macro_event.ffill()
-        raw_data["ret_from_vwap_around_macro_event"] = raw_data.apply(
-            compute_ret, base_col="vwap_around_macro_event", axis=1)
+            args=("around_macro_event_cum_dv_imp1","around_macro_event_cum_volume_imp1"), raw=False)
+        raw_data["vwap_around_macro_event_imp1"] = raw_data.vwap_around_macro_event_imp1.ffill()
+        raw_data["ret_from_vwap_around_macro_event_imp1"] = raw_data.apply(
+            compute_ret, base_col="vwap_around_macro_event_imp1", axis=1)
 
-        raw_data = raw_data.drop(columns=["around_macro_event_cum_dv", "around_macro_event_cum_volume",
-                                          "last_macro_event_cum_dv", "last_macro_event_cum_volume",
-                                          "around_macro_event_cum_dv", "around_macro_event_cum_volume"])
+        raw_data = raw_data.drop(columns=["around_macro_event_cum_dv_imp1", "around_macro_event_cum_volume_imp1",
+                                          "last_macro_event_cum_dv_imp1", "last_macro_event_cum_volume_imp1",
+                                          "around_macro_event_cum_dv_imp1", "around_macro_event_cum_volume_imp1"])
+
+        raw_data["last_macro_event_cum_dv_imp2"] = raw_data.apply(
+            fill_cum_dv, time_col="last_macro_event_time_imp2", axis=1)
+        raw_data["last_macro_event_cum_volume_imp2"] = raw_data.apply(
+            fill_cum_volume, time_col="last_macro_event_time_imp2", axis=1)
+        raw_data["last_macro_event_cum_dv_imp2"] = raw_data.last_macro_event_cum_dv_imp2.ffill()
+        raw_data["last_macro_event_cum_volume_imp2"] = raw_data.last_macro_event_cum_volume_imp2.ffill()
+        raw_data["vwap_since_last_macro_event_imp2"] = raw_data.apply(
+            compute_vwap, dv_col="last_macro_event_cum_dv_imp2",
+            volume_col="last_macro_event_cum_volume_imp2", axis=1)
+
+        raw_data["around_macro_event_cum_dv_imp2"] = raw_data.apply(
+            fill_cum_dv, time_col="last_macro_event_time_imp2", before_mins=30*60+1,
+            after_mins=30*60+1, axis=1)
+        raw_data["around_macro_event_cum_volume_imp2"] = raw_data.apply(
+            fill_cum_volume, time_col="last_macro_event_time_imp2",
+            before_mins=30*60+1, after_mins=30*60+1, axis=1)
+        rol = raw_data.around_macro_event_cum_dv_imp2.rolling(window=2)
+        raw_data["vwap_around_macro_event_imp2"] = rol.apply(
+            vwap_around,
+            args=("around_macro_event_cum_dv_imp2","around_macro_event_cum_volume_imp2"), raw=False)
+        raw_data["vwap_around_macro_event_imp2"] = raw_data.vwap_around_macro_event_imp2.ffill()
+        raw_data["ret_from_vwap_around_macro_event_imp2"] = raw_data.apply(
+            compute_ret, base_col="vwap_around_macro_event_imp2", axis=1)
+
+        raw_data = raw_data.drop(columns=["around_macro_event_cum_dv_imp2", "around_macro_event_cum_volume_imp2",
+                                          "last_macro_event_cum_dv_imp2", "last_macro_event_cum_volume_imp2",
+                                          "around_macro_event_cum_dv_imp2", "around_macro_event_cum_volume_imp2"])
+
+        raw_data["last_macro_event_cum_dv_imp3"] = raw_data.apply(
+            fill_cum_dv, time_col="last_macro_event_time_imp3", axis=1)
+        raw_data["last_macro_event_cum_volume_imp3"] = raw_data.apply(
+            fill_cum_volume, time_col="last_macro_event_time_imp3", axis=1)
+        raw_data["last_macro_event_cum_dv_imp3"] = raw_data.last_macro_event_cum_dv_imp3.ffill()
+        raw_data["last_macro_event_cum_volume_imp3"] = raw_data.last_macro_event_cum_volume_imp3.ffill()
+        raw_data["vwap_since_last_macro_event_imp3"] = raw_data.apply(
+            compute_vwap, dv_col="last_macro_event_cum_dv_imp3",
+            volume_col="last_macro_event_cum_volume_imp3", axis=1)
+
+        raw_data["around_macro_event_cum_dv_imp3"] = raw_data.apply(
+            fill_cum_dv, time_col="last_macro_event_time_imp3", before_mins=30*60+1,
+            after_mins=30*60+1, axis=1)
+        raw_data["around_macro_event_cum_volume_imp3"] = raw_data.apply(
+            fill_cum_volume, time_col="last_macro_event_time_imp3",
+            before_mins=30*60+1, after_mins=30*60+1, axis=1)
+        rol = raw_data.around_macro_event_cum_dv_imp3.rolling(window=2)
+        raw_data["vwap_around_macro_event_imp3"] = rol.apply(
+            vwap_around,
+            args=("around_macro_event_cum_dv_imp3","around_macro_event_cum_volume_imp3"), raw=False)
+        raw_data["vwap_around_macro_event_imp3"] = raw_data.vwap_around_macro_event_imp3.ffill()
+        raw_data["ret_from_vwap_around_macro_event_imp3"] = raw_data.apply(
+            compute_ret, base_col="vwap_around_macro_event_imp3", axis=1)
+
+        raw_data = raw_data.drop(columns=["around_macro_event_cum_dv_imp3", "around_macro_event_cum_volume_imp3",
+                                          "last_macro_event_cum_dv_imp3", "last_macro_event_cum_volume_imp3",
+                                          "around_macro_event_cum_dv_imp3", "around_macro_event_cum_volume_imp3"])
 
     raw_data["new_york_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="new_york_last_open_time", axis=1)
     raw_data["new_york_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="new_york_last_open_time", axis=1)

@@ -1173,13 +1173,14 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     y_all[max_encoder_length : (max_encoder_length + x["decoder_lengths"][idx])],
                 ),
             )
-            if index == 1 and draw_mode == "pred_vol":
-                logging.info(f"y:{y}")
             #logging.info(f"y.shape:{y.shape}")
             # move predictions to cpu
             y_hat = y_hat.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             n_pred = y_hat.shape[0]
             base = y[-n_pred-1].detach().cpu()
+            #if draw_mode == "pred_vol":
+                #logging.info(f"y:{y}")
+                #logging.info(f"y_hat:{y_hat}")
             #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             if draw_mode == "pred_cum":

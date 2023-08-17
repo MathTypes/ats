@@ -31,7 +31,7 @@ from pytorch_forecasting.utils import create_mask, detach, integer_histogram, ma
 from .layers.PatchTST_layers import *
 from .layers.RevIN import RevIN
 
-
+from ats.model.utils import _easy_mlp
 from ats.util import profile_util
 
 class PredictionHead(nn.Module):
@@ -333,7 +333,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"kwargs:{kwargs}")
         super().__init__(loss=loss, logging_metrics=logging_metrics, **kwargs)
 
-        self.automatic_optimization = False
+        #self.automatic_optimization = False
         self.generate_anomaly = generate_anomaly
         self.MSE = nn.MSELoss(reduction='none')
         self.KL = nn.KLDivLoss(reduction='none')
@@ -599,10 +599,13 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 
         output_size = self.hparams.output_size
         returns_output_size = None
+        vol_output_size = None
         min_max_output_size = None
         anomaly_returns_output_size = None
         if isinstance(output_size, Dict):
             returns_output_size = output_size["returns_prediction"]
+            if "vol_prediction" in output_size:
+                vol_output_size = output_size["vol_prediction"]
             if "min_max" in output_size:
                 min_max_output_size = output_size["min_max"]
             if "anomaly_returns" in output_size:
@@ -614,8 +617,32 @@ class PatchTftSupervised(BaseModelWithCovariates):
             self.output_layer = nn.ModuleList(
                 [nn.Linear(d_model, output_size) for output_size in returns_output_size]
             )
+            #self.output_layer = nn.ModuleList(
+            #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+            #                num_layers=n_layers,
+            #                activation=nn.ReLU)
+            #      for output_size in returns_output_size
+            #    ])
         else:
+            #self.output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
+            #                              num_layers=n_layers,
+            #                              activation=nn.ReLU)
             self.output_layer = nn.Linear(d_model, returns_output_size)
+        self.vol_output_layer = None
+        if vol_output_size:
+            if self.n_head_targets(head="vol_prediction") > 1:  # if to run with multiple targets
+                self.vol_output_layer = nn.ModuleList(
+                    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in vol_output_size])
+                #self.vol_output_layer = nn.ModuleList(
+                #    [nn.Linear(d_model, output_size) for output_size in vol_output_size]
+                #)
+            else:
+                #self.vol_output_layer = nn.Linear(d_model, vol_output_size)
+                self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=vol_output_size,
+                                                  num_layers=n_layers,
+                                                  activation=nn.ReLU)
         self.anomaly_returns_output_layer = None
         if anomaly_returns_output_size:
             if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
@@ -663,7 +690,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         rec_loss = torch.mean(torch.mean(self.MSE(output[0], y[0][0]), dim=-1))
         return series_loss, prior_loss, rec_loss
 
-    def training_step(self, batch, batch_idx, **kwargs):
+    def _training_step(self, batch, batch_idx, **kwargs):
         x, y = batch
         opt = self.optimizers()
         opt.zero_grad()
@@ -702,7 +729,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             if batch_idx % self.log_interval == 0:
                 logging.info('Train: batch-{}\tLoss: {:.6f} Learning Rate: {}'.format(batch_idx, loss.item(),lr))
         # clip gradients
-        self.clip_gradients(opt, gradient_clip_val=0.01, gradient_clip_algorithm="norm")
+        self.clip_gradients(opt, gradient_clip_val=5, gradient_clip_algorithm="norm")
         opt.step()
         
     def n_head_targets(self, head) -> int:
@@ -977,6 +1004,13 @@ class PatchTftSupervised(BaseModelWithCovariates):
             output = [output_layer(embedding) for output_layer in self.output_layer]
         else:
             output = self.output_layer(embedding)
+        vol_output = None
+        if self.vol_output_layer:
+            if self.n_head_targets(head="vol_prediction") > 1:  # if to run with multiple targets
+                vol_output = [output_layer(embedding) for output_layer in self.vol_output_layer]
+            else:
+                vol_output = self.vol_output_layer(embedding)
+        #logging.info(f"vol_output:{vol_output}")
         anomaly_returns_output = None
         min_max_output = None
         if self.anomaly_returns_output_layer:
@@ -1011,6 +1045,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         return self.to_network_output(
             prediction=self.transform_output(output, target_scale=x["target_scale"]),
             anomaly_returns_output=anomaly_returns_output,
+            vol_output=vol_output,
             min_max_output=min_max_output,
             encoder_attention=attn_output_weights[..., :new_encoder_length],
             decoder_attention=attn_output_weights[..., new_encoder_length:],

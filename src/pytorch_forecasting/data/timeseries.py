@@ -4,6 +4,7 @@ Timeseries datasets.
 Timeseries data is special and has to be processed and fed to algorithms in a special way. This module
 defines a class that is able to handle a wide variety of timeseries data problems.
 """
+import ctypes
 from copy import copy as _copy, deepcopy
 from functools import lru_cache, partial
 import inspect
@@ -16,8 +17,13 @@ import traceback
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numba import njit
 import pandas as pd
 import ray
+import pandas as pd
+
+# Load the malloc_trim function from the C standard library
+malloc_trim = ctypes.CDLL("libc.so.6").malloc_trim
 
 from pytorch_forecasting.data.encoders import (
     EncoderNormalizer,
@@ -360,6 +366,8 @@ class TimeSeriesDataSet(Dataset):
         assert isinstance(self.min_prediction_length, int), "min prediction length must be integer"
         assert data[time_idx].dtype.kind == "i", "Timeseries index should be of type integer"
         self.target = target
+        self.data = None
+        self.transformed_data = None
         self.weight = weight
         self.time_idx = time_idx
         self.group_ids = [] + group_ids
@@ -406,13 +414,14 @@ class TimeSeriesDataSet(Dataset):
         ), f"add_encoder_length should be boolean or 'auto' but found {add_encoder_length}"
         self.add_encoder_length = add_encoder_length
 
+        logging.info(f"summary:{data.describe()}")
         # target normalizer
         # JJ: disable target normalizer
         self._set_target_normalizer(data)
 
         data = data.sort_values(self.group_ids + [self.time_idx])
         #traceback.print_stack()
-        data = self.preprocess_data(data)
+        self.preprocess_data(data)
         self.raw_data = data
         # add time index relative to prediction position
         if self.add_relative_time_idx or self.add_encoder_length:
@@ -446,7 +455,11 @@ class TimeSeriesDataSet(Dataset):
             self.y = None
             #logging.error(f"data:{data.describe()}")
             # convert to torch tensor for high performance data loading later
-            self.data = self._data_to_tensors(data)                
+            if self.data is not None:
+                del self.data
+                torch.cuda.empty_cache()
+            self.data = self._data_to_tensors(data)
+            del data
 
     @profile_util.profile
     def preprocess_data(self, data : pd.DataFrame):
@@ -454,13 +467,13 @@ class TimeSeriesDataSet(Dataset):
         # reduce return to bring down loss
         #logging.error(f"data:{data.iloc[-10:][['time','timestamp','close_back']]}")
         #logging.info(f"data:{data.describe()}")
-        data_dup = data[data.index.duplicated()]
-        if not data_dup.empty:
-            logging.error(f"data_dup:{data_dup}")
-            exit(0)
-        data_bad = data[data['close_back']<-0.2]
-        if not data_bad.empty:
-            logging.info(f"data with large negative return:{data_bad.head()}")
+        #data_dup = data[data.index.duplicated()]
+        #if not data_dup.empty:
+        #    logging.error(f"data_dup:{data_dup}")
+        #    exit(0)
+        #data_bad = data[data['close_back']<-0.2]
+        #if not data_bad.empty:
+        #    logging.info(f"data with large negative return:{data_bad.head()}")
         #if "ticker" in data.columns:
         #  data['close_back_cumsum'] = data.groupby(['ticker'])['close_back'].cumsum()
         #  data['volume_back_cumsum'] = data.groupby(['ticker'])['volume_back'].cumsum()
@@ -537,11 +550,14 @@ class TimeSeriesDataSet(Dataset):
         if self.min_prediction_idx is not None:
             # filtering for min_prediction_idx will be done on subsequence level ensuring
             # minimal decoder index is always >= min_prediction_idx
-            data = data[lambda x: x[self.time_idx] >= self.min_prediction_idx - self.max_encoder_length - self.max_lag]
+            new_data = data.copy()
+            del data
+            data = new_data[lambda x: x[self.time_idx] >= self.min_prediction_idx - self.max_encoder_length - self.max_lag]
+            data.reset_index(drop=True, inplace=True)
         #data = data.sort_values(self.group_ids + [self.time_idx])
         #logging.error(f"before process:{data.describe()}")
         # preprocess data
-        data = self._preprocess_data(data)
+        self._preprocess_data(data)
         # Keep raw data for processing new data
         #self.raw_data = data
         #logging.error(f"after process:{data.describe()}")
@@ -551,10 +567,14 @@ class TimeSeriesDataSet(Dataset):
             assert target not in self.scalers, "Target normalizer is separate and not in scalers."
         #logging.error(f"before dropna tail: {data.iloc[-10:]}")
         #logging.info(f"data before dropna:{data.describe()}")
-        data = data.dropna()
+        #data.dropna(inplace=True)
+        data.fillna(value=-1, inplace=True)
+        data.reset_index(drop=True, inplace=True)
         #logging.error(f"after dropna head: {data[['time','time_idx','close_back','close_back_cumsum']][:3]}")
         #logging.info(f"after dropna tail: {data[['time','time_idx','close_back','close_back_cumsum']][-3:]}")
-        self.transformed_data = data
+        if self.transformed_data is not None:
+            del self.transformed_data
+        self.transformed_data = data.copy()
         # create index
         #logging.info(f"before construct_index:{data[-4:]}")
         self.index = self._construct_index(data, predict_mode=self.predict_mode)
@@ -566,6 +586,9 @@ class TimeSeriesDataSet(Dataset):
         #logging.error(f"data:{data.iloc[-4:]}")
         # convert to torch tensor for high performance data loading later
         #logging.error(f"transformed_data:{data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
+        if self.data is not None:
+            del self.data
+            torch.cuda.empty_cache()            
         self.data = self._data_to_tensors(data)
         #logging.error(f"transformed_self.data:{self.data['time'][-10:]}")
 
@@ -860,7 +883,7 @@ class TimeSeriesDataSet(Dataset):
             # negative tail implementation as .groupby().tail(-self.max_lag) is not implemented in pandas
             g = data.groupby(self._group_ids, observed=True)
             data = g._selected_obj[g.cumcount() >= self.max_lag]
-        return data
+
 
     def _create_encoder(self, data: pd.DataFrame) -> None:
         """
@@ -1968,7 +1991,9 @@ class TimeSeriesDataSet(Dataset):
                 "relative_time_idx" not in new_data.columns
             ), "relative_time_idx is a protected column and must not be present in data"
             new_data.loc[:, "relative_time_idx"] = 0.0  # dummy - real value will be set dynamiclly in __getitem__()
-        raw_data = self.raw_data
+        raw_data = self.raw_data.copy()
+        # Print the memory usage of the DataFrame
+        logging.info(f"Memory usage before deleting reference:{raw_data.memory_usage().sum()} bytes")
         #logging.error(f"raw_data:{raw_data.iloc[-2:]}")
         #logging.error(f"new_data:{new_data.iloc[-6:]}")
         start_timestamp = new_data.iloc[0]["timestamp"]
@@ -1977,7 +2002,7 @@ class TimeSeriesDataSet(Dataset):
         #logging.error(f"removing from {start_timestamp}, {new_data.iloc[0]['time']}")
         old_timestamp = start_timestamp - 365*24*60*60*3
         #logging.error(f"start_timestamp:{start_timestamp}, old_timestamp:{old_timestamp}")
-        old_raw_data = raw_data[(raw_data.timestamp<old_timestamp) & (raw_data.ticker=="ES")]
+        #old_raw_data = raw_data[(raw_data.timestamp<old_timestamp) & (raw_data.ticker=="ES")]
         raw_data = raw_data[(raw_data.timestamp>=old_timestamp) & (raw_data.ticker=="ES")]
         raw_data = raw_data[(raw_data.timestamp<start_timestamp) & (raw_data.ticker=="ES")]
         #logging.error(f"raw_data before adding:{raw_data.iloc[-6:]}")
@@ -1999,9 +2024,10 @@ class TimeSeriesDataSet(Dataset):
         raw_data["new_idx"] = raw_data.apply(
             lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
-        raw_data = raw_data.set_index("time_idx")
         #full_ds = ray.data.from_pandas(raw_data)
         raw_data = data_util.add_group_features(interval_minutes, raw_data)
+        if raw_data is not None:
+            raw_data.set_index("time_idx", inplace=True)
         #add_group_features = partial(data_util.add_group_features, interval_minutes)
         #full_ds = full_ds.groupby("ticker").map_groups(add_group_features).sort("time_idx")
         #raw_data = full_ds.to_pandas(limit=10000000).set_index("time_idx")
@@ -2011,7 +2037,8 @@ class TimeSeriesDataSet(Dataset):
         min_new_data_idx = new_data.time_idx.min()
         #logging.error(f"raw_data index:{raw_data.index[-6:]}, min_new_data_idx:{min_new_data_idx}")
         new_data_idx = raw_data.index>=min_new_data_idx
-        new_raw_data = raw_data[raw_data.index>min_new_data_idx-46*250]
+        new_raw_data = raw_data.copy()
+        new_raw_data = new_raw_data[raw_data.index>min_new_data_idx-46*250]
         new_raw_data["time_idx"] = new_raw_data.index
         #logging.error(f"new_data_idx:{new_data_idx[-10:]}")
         new_raw_data = data_util.add_example_level_features_df(cal, mdr.macro_data_builder, new_raw_data)
@@ -2026,6 +2053,7 @@ class TimeSeriesDataSet(Dataset):
 
         #raw_data_copy = raw_data.copy()
         raw_data[new_data_idx] = new_raw_data[new_raw_data.time_idx>=min_new_data_idx]
+        del new_raw_data
         #raw_data = raw_data_copy
         #logging.error(f"after adding example features raw_data:{raw_data.iloc[-10:]}")
         # Only selected columns can be ffilled
@@ -2041,13 +2069,21 @@ class TimeSeriesDataSet(Dataset):
             new_raw_data["volume_back_cumsum"] = new_raw_data["volume_back_cumsum"] + last_volume_back_cumsum
             raw_data = pd.concat([old_raw_data, raw_data])
 
-        data = self.preprocess_data(raw_data)
-        self.raw_data = data
+        self.preprocess_data(raw_data)
         #logging.error(f"after preprocess raw_data:{self.raw_data.iloc[-6:]}")
         #logging.error(f"raw_data tail:{self.raw_data[['time','time_idx','close_back','close_back_cumsum']][-10:]}")
         #logging.info(f"before transformed_data:{data.iloc[-10:]}, data:{len(data)}")
-        self.transform_data(data)
+        self.transform_data(raw_data)
+
+        del self.raw_data
+        self.raw_data = raw_data
         #logging.info(f"transformed_data:{data.iloc[-10:]}, data:{len(data)}")
+
+        # Call the malloc_trim function with a zero argument
+        malloc_trim(0)
+        # Print the memory usage again to see if it has been released
+        # (This will raise a NameError because df is no longer defined)
+        logging.info(f"Memory usage after calling malloc_trim:{self.raw_data.memory_usage().sum()} bytes")
     
     def __getitem__(self, idx: int) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
         """

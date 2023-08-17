@@ -9,6 +9,8 @@ import ray
 import time
 import traceback
 
+from numba import njit
+
 from ats.calendar import market_time
 from ats.event.macro_indicator import MacroDataBuilder
 from ats.market_data import data_util
@@ -174,8 +176,7 @@ class MarketDataMgr(object):
                 full_data = read_snapshot(snapshot_dir)
                 snapshot_dir = f"{self.config.dataset.snapshot}/{data_start_date_str}_{data_end_date_str}_transformed_full"
                 self.transformed_full = read_snapshot(snapshot_dir)        
-        except Exception as e:
-            logging.error(f"can not read snapshot:{e}")
+        except Exception:
             # Will try regenerating when reading fails
             pass
 
@@ -242,8 +243,8 @@ class MarketDataMgr(object):
         full_data = full_ds.to_pandas(limit=10000000).sort_index()
         #full_data = data_util.add_example_level_features(self.market_cal, self.macro_data_builder, full_data)
         full_data = data_util.add_example_group_features(self.market_cal, self.macro_data_builder, full_data)
-        logging.info(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.full_data.ret_from_vwap_around_london_open>0.15]}")
-        logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15]}")
+        logging.info(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
+        logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
         full_data = full_data[(full_data.ret_from_vwap_around_new_york_open<0.15) &
                               (full_data.ret_from_vwap_around_new_york_open>-0.15)]
         full_data = full_data[(full_data.ret_from_vwap_around_london_open<0.15) &
