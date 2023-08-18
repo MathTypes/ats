@@ -29,7 +29,7 @@ class MacroDataBuilder:
             )
             observations.date = observations.date.apply(
                 market_time.utc_to_nyse_time,
-                interval_minutes=self.config.job.time_interval_minutes,
+                interval_minutes=self.config.dataset.interval_mins,
             )
             observations["event_time"] = observations.date.apply(lambda x:x.timestamp())
             observations["importance"] = observations.importance.apply(lambda x:int(x))

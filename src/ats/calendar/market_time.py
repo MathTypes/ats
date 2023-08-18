@@ -33,16 +33,20 @@ def get_open_time(cal, x_date):
         _OPEN_TIME_DICT[cal] = {}
     open_time_dict = _OPEN_TIME_DICT[cal]
     if x_date in open_time_dict.keys():
+        #logging.error(f"returning {x_date}, {open_time_dict[x_date]}")
         return open_time_dict[x_date]    
-    
+    #logging.error(f"x_date:{x_date}")
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=30)
     )
+    #logging.error(f"schedule:{schedule}")
     for idx in range(len(schedule.market_open)):
-        x_date_idx = x_date + datetime.timedelta(days=idx)
+        # Use close in case we do not use prior date when open starts in prior
+        # date for global futures
+        x_date_idx = schedule.market_close[idx].date()
+        #logging.error(f"adding {x_date_idx} with {schedule.market_open[idx].timestamp()}, idx:{idx}")
         open_time_dict[x_date_idx] = schedule.market_open[idx].timestamp()
-    return schedule.market_open[0].timestamp()
-
+    return open_time_dict[x_date]
 
 def get_close_time(cal, x_date):
     if not cal in _CLOSE_TIME_DICT.keys():
@@ -55,9 +59,9 @@ def get_close_time(cal, x_date):
         start_date=x_date, end_date=x_date + datetime.timedelta(days=365)
     )
     for idx in range(len(schedule.market_close)):
-        x_date_idx = x_date + datetime.timedelta(days=idx)
-        close_time_dict[x_date_idx] = schedule.market_close[0].timestamp()
-    return schedule.market_close[0].timestamp()
+        x_date_idx = schedule.market_close[idx].date()
+        close_time_dict[x_date_idx] = schedule.market_close[idx].timestamp()
+    return close_time_dict[x_date]
 
 
 @functools.lru_cache(maxsize=128000)
@@ -166,7 +170,7 @@ def compute_last_open_time(x, cal):
         x_time = datetime.datetime.fromtimestamp(x)
         x_date = x_time.date()
         open_time = compute_open_time(x, cal)
-        while open_time > x:
+        while open_time is None or open_time > x:
             x_time = x_time + datetime.timedelta(days=-1)
             open_time = compute_open_time(x_time.timestamp(), cal)
         return open_time
@@ -176,8 +180,9 @@ def compute_last_open_time(x, cal):
 
 def compute_open_time(x, cal):
     try:
-        x = datetime.datetime.fromtimestamp(x)
-        return int(get_open_time(cal, x.date()))
+        x_time = datetime.datetime.fromtimestamp(x)
+        #logging.error(f"x:{x}, x_time:{x_time}, date:{x_time.date()}")
+        return int(get_open_time(cal, x_time.date()))
     except Exception as e:
         logging.error(f"can not compute open for {x}, {e}")
         return None

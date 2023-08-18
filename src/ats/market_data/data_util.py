@@ -164,103 +164,103 @@ def ticker_transform(raw_data, interval_minutes, base_price=500, add_daily_rolli
         # in case of high among 5 days, the high needs to be higher than 4 points around
         # it, 2 to the left and 2 to the right.
         raw_data['close_rolling_5d_max'] = raw_data.close_back_cumsum.rolling(5*interval_per_day).max()
-        raw_data["close_high_5d_ff"] = raw_data["close_rolling_5d_max"].ffill()
-        raw_data["time_high_5d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_5d_ff"), axis=1)
+        raw_data["close_back_cumsum_high_5d_ff"] = raw_data["close_rolling_5d_max"].ffill()
+        raw_data["time_high_5d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_5d_ff"), axis=1)
         raw_data["time_high_5d_ff"]  = raw_data["time_high_5d_ff"].ffill()
 
         raw_data['close_rolling_5d_min'] = raw_data.close_back_cumsum.rolling(5*interval_per_day).min()
-        raw_data["close_low_5d_ff"] = raw_data["close_rolling_5d_min"].ffill()
-        raw_data["time_low_5d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_5d_ff"), axis=1)
+        raw_data["close_back_cumsum_low_5d_ff"] = raw_data["close_rolling_5d_min"].ffill()
+        raw_data["time_low_5d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_5d_ff"), axis=1)
         raw_data["time_low_5d_ff"]  = raw_data["time_low_5d_ff"].ffill()
 
         raw_data['close_rolling_11d_max'] = raw_data.close_back_cumsum.rolling(11*interval_per_day).max()
-        raw_data["close_high_11d_ff"] = raw_data["close_rolling_11d_max"].ffill()
-        raw_data["time_high_11d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_11d_ff"), axis=1)
+        raw_data["close_back_cumsum_high_11d_ff"] = raw_data["close_rolling_11d_max"].ffill()
+        raw_data["time_high_11d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_11d_ff"), axis=1)
         raw_data["time_high_11d_ff"]  = raw_data["time_high_11d_ff"].ffill()
 
         raw_data['close_rolling_11d_min'] = raw_data.close_back_cumsum.rolling(11*interval_per_day).min()
-        raw_data["close_low_11d_ff"] = raw_data["close_rolling_11d_min"].ffill()
-        raw_data["time_low_11d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_11d_ff"), axis=1)
+        raw_data["close_back_cumsum_low_11d_ff"] = raw_data["close_rolling_11d_min"].ffill()
+        raw_data["time_low_11d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_11d_ff"), axis=1)
         raw_data["time_low_11d_ff"]  = raw_data["time_low_11d_ff"].ffill()
  
         raw_data['close_rolling_21d_max'] = raw_data.close_back_cumsum.rolling(21*interval_per_day).max()
-        raw_data["close_high_21d_ff"] = raw_data["close_rolling_21d_max"].ffill()
-        raw_data["time_high_21d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_21d_ff"), axis=1)
+        raw_data["close_back_cumsum_high_21d_ff"] = raw_data["close_rolling_21d_max"].ffill()
+        raw_data["time_high_21d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_21d_ff"), axis=1)
         raw_data["time_high_21d_ff"]  = raw_data["time_high_21d_ff"].ffill()
 
         raw_data['close_rolling_21d_min'] = raw_data.close_back_cumsum.rolling(21*interval_per_day).min()
-        raw_data["close_low_21d_ff"] = raw_data["close_rolling_21d_min"].ffill()
-        raw_data["time_low_21d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_21d_ff"), axis=1)
+        raw_data["close_back_cumsum_low_21d_ff"] = raw_data["close_rolling_21d_min"].ffill()
+        raw_data["time_low_21d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_21d_ff"), axis=1)
         raw_data["time_low_21d_ff"]  = raw_data["time_low_21d_ff"].ffill()
 
         raw_data['close_rolling_51d_max'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).max()
-        raw_data["close_high_51d_ff"] = raw_data["close_rolling_51d_max"].ffill()
-        raw_data["time_high_51d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_51d_ff"), axis=1)
+        raw_data["close_back_cumsum_high_51d_ff"] = raw_data["close_rolling_51d_max"].ffill()
+        raw_data["time_high_51d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_51d_ff"), axis=1)
         raw_data["time_high_51d_ff"]  = raw_data["time_high_51d_ff"].ffill()
 
         raw_data['close_rolling_51d_min'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).min()
-        raw_data["close_low_51d_ff"] = raw_data["close_rolling_51d_min"].ffill()
-        raw_data["time_low_51d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_51d_ff"), axis=1)
+        raw_data["close_back_cumsum_low_51d_ff"] = raw_data["close_rolling_51d_min"].ffill()
+        raw_data["time_low_51d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_51d_ff"), axis=1)
         raw_data["time_low_51d_ff"]  = raw_data["time_low_51d_ff"].ffill()
 
         raw_data['close_rolling_201d_max'] = raw_data.close_back_cumsum.rolling(201*interval_per_day).max()
-        raw_data["close_high_201d_ff"] = raw_data["close_rolling_201d_max"].ffill()
-        raw_data["time_high_201d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_201d_ff"), axis=1)
+        raw_data["close_back_cumsum_high_201d_ff"] = raw_data["close_rolling_201d_max"].ffill()
+        raw_data["time_high_201d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_201d_ff"), axis=1)
         raw_data["time_high_201d_ff"]  = raw_data["time_high_201d_ff"].ffill()
 
-        raw_data['close_rolling_201d_min'] = raw_data.close_back_cumsum.rolling(51*interval_per_day).min()
-        raw_data["close_low_201d_ff"] = raw_data["close_rolling_201d_min"].ffill()
-        raw_data["time_low_201d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_201d_ff"), axis=1)
+        raw_data['close_rolling_201d_min'] = raw_data.close_back_cumsum.rolling(201*interval_per_day).min()
+        raw_data["close_back_cumsum_low_201d_ff"] = raw_data["close_rolling_201d_min"].ffill()
+        raw_data["time_low_201d_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_201d_ff"), axis=1)
         raw_data["time_low_201d_ff"]  = raw_data["time_low_201d_ff"].ffill()
 
     raw_data['close_rolling_5_max'] = raw_data.close_back_cumsum.rolling(5).max()
-    raw_data["close_high_5_ff"] = raw_data["close_rolling_5_max"].ffill()
-    raw_data["time_high_5_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_5_ff"), axis=1)
+    raw_data["close_back_cumsum_high_5_ff"] = raw_data["close_rolling_5_max"].ffill()
+    raw_data["time_high_5_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_5_ff"), axis=1)
     raw_data["time_high_5_ff"]  = raw_data["time_high_5_ff"].ffill()
 
     raw_data['close_rolling_5_min'] = raw_data.close_back_cumsum.rolling(5).min()
-    raw_data["close_low_5_ff"] = raw_data["close_rolling_5_min"].ffill()
-    raw_data["time_low_5_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_5_ff"), axis=1)
+    raw_data["close_back_cumsum_low_5_ff"] = raw_data["close_rolling_5_min"].ffill()
+    raw_data["time_low_5_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_5_ff"), axis=1)
     raw_data["time_low_5_ff"]  = raw_data["time_low_5_ff"].ffill()
 
     raw_data['close_rolling_11_max'] = raw_data.close_back_cumsum.rolling(11).max()
-    raw_data["close_high_11_ff"] = raw_data["close_rolling_11_max"].ffill()
-    raw_data["time_high_11_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_11_ff"), axis=1)
+    raw_data["close_back_cumsum_high_11_ff"] = raw_data["close_rolling_11_max"].ffill()
+    raw_data["time_high_11_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_11_ff"), axis=1)
     raw_data["time_high_11_ff"]  = raw_data["time_high_11_ff"].ffill()
 
     raw_data['close_rolling_11_min'] = raw_data.close_back_cumsum.rolling(11).min()
-    raw_data["close_low_11_ff"] = raw_data["close_rolling_11_min"].ffill()
-    raw_data["time_low_11_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_11_ff"), axis=1)
+    raw_data["close_back_cumsum_low_11_ff"] = raw_data["close_rolling_11_min"].ffill()
+    raw_data["time_low_11_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_11_ff"), axis=1)
     raw_data["time_low_11_ff"]  = raw_data["time_low_11_ff"].ffill()
  
     raw_data['close_rolling_21_max'] = raw_data.close_back_cumsum.rolling(21).max()
-    raw_data["close_high_21_ff"] = raw_data["close_rolling_21_max"].ffill()
-    raw_data["time_high_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_21_ff"), axis=1)
+    raw_data["close_back_cumsum_high_21_ff"] = raw_data["close_rolling_21_max"].ffill()
+    raw_data["time_high_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_21_ff"), axis=1)
     raw_data["time_high_21_ff"]  = raw_data["time_high_21_ff"].ffill()
 
     raw_data['close_rolling_21_min'] = raw_data.close_back_cumsum.rolling(21).min()
-    raw_data["close_low_21_ff"] = raw_data["close_rolling_21_min"].ffill()
-    raw_data["time_low_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_21_ff"), axis=1)
+    raw_data["close_back_cumsum_low_21_ff"] = raw_data["close_rolling_21_min"].ffill()
+    raw_data["time_low_21_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_21_ff"), axis=1)
     raw_data["time_low_21_ff"]  = raw_data["time_low_21_ff"].ffill()
 
     raw_data['close_rolling_51_max'] = raw_data.close_back_cumsum.rolling(51).max()
-    raw_data["close_high_51_ff"] = raw_data["close_rolling_51_max"].ffill()
-    raw_data["time_high_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_51_ff"), axis=1)
+    raw_data["close_back_cumsum_high_51_ff"] = raw_data["close_rolling_51_max"].ffill()
+    raw_data["time_high_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_51_ff"), axis=1)
     raw_data["time_high_51_ff"]  = raw_data["time_high_51_ff"].ffill()
 
     raw_data['close_rolling_51_min'] = raw_data.close_back_cumsum.rolling(51).min()
-    raw_data["close_low_51_ff"] = raw_data["close_rolling_51_min"].ffill()
-    raw_data["time_low_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_51_ff"), axis=1)
+    raw_data["close_back_cumsum_low_51_ff"] = raw_data["close_rolling_51_min"].ffill()
+    raw_data["time_low_51_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_51_ff"), axis=1)
     raw_data["time_low_51_ff"]  = raw_data["time_low_51_ff"].ffill()
 
     raw_data['close_rolling_201_max'] = raw_data.close_back_cumsum.rolling(201).max()
-    raw_data["close_high_201_ff"] = raw_data["close_rolling_201_max"].ffill()
-    raw_data["time_high_201_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_high_201_ff"), axis=1)
+    raw_data["close_back_cumsum_high_201_ff"] = raw_data["close_rolling_201_max"].ffill()
+    raw_data["time_high_201_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_high_201_ff"), axis=1)
     raw_data["time_high_201_ff"]  = raw_data["time_high_201_ff"].ffill()
 
-    raw_data['close_rolling_201_min'] = raw_data.close_back_cumsum.rolling(51).min()
-    raw_data["close_low_201_ff"] = raw_data["close_rolling_201_min"].ffill()
-    raw_data["time_low_201_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_low_201_ff"), axis=1)
+    raw_data['close_rolling_201_min'] = raw_data.close_back_cumsum.rolling(201).min()
+    raw_data["close_back_cumsum_low_201_ff"] = raw_data["close_rolling_201_min"].ffill()
+    raw_data["time_low_201_ff"] = raw_data.apply(lambda x: get_time(x, close_col="close_back_cumsum_low_201_ff"), axis=1)
     raw_data["time_low_201_ff"]  = raw_data["time_low_201_ff"].ffill()
     del close_back_cumsum
 
@@ -378,45 +378,45 @@ def add_group_features(interval_minutes, raw_data, add_daily_rolling_features=Tr
         "cum_dv",
         "close_back_cumsum",
         "volume_back_cumsum",
-        "close_high_5_ff",
+        "close_back_cumsum_high_5_ff",
         "time_high_5_ff",
-        "close_low_5_ff",
+        "close_back_cumsum_low_5_ff",
         "time_low_5_ff",
-        "close_high_11_ff",
+        "close_back_cumsum_high_11_ff",
         "time_high_11_ff",
-        "close_low_11_ff",
+        "close_back_cumsum_low_11_ff",
         "time_low_11_ff",
-        "close_high_21_ff",
+        "close_back_cumsum_high_21_ff",
         "time_high_21_ff",
-        "close_low_21_ff",
+        "close_back_cumsum_low_21_ff",
         "time_low_21_ff",
-        "close_high_51_ff",
+        "close_back_cumsum_high_51_ff",
         "time_high_51_ff",
-        "close_low_51_ff",
+        "close_back_cumsum_low_51_ff",
         "time_low_51_ff",
-        "close_high_201_ff",
+        "close_back_cumsum_high_201_ff",
         "time_high_201_ff",
-        "close_low_201_ff",
+        "close_back_cumsum_low_201_ff",
         "time_low_201_ff",
-        "close_high_5d_ff",
+        "close_back_cumsum_high_5d_ff",
         "time_high_5d_ff",
-        "close_low_5d_ff",
+        "close_back_cumsum_low_5d_ff",
         "time_low_5d_ff",
-        "close_high_11d_ff",
+        "close_back_cumsum_high_11d_ff",
         "time_high_11d_ff",
-        "close_low_11d_ff",
+        "close_back_cumsum_low_11d_ff",
         "time_low_11d_ff",
-        "close_high_21d_ff",
+        "close_back_cumsum_high_21d_ff",
         "time_high_21d_ff",
-        "close_low_21d_ff",
+        "close_back_cumsum_low_21d_ff",
         "time_low_21d_ff",
-        "close_high_51d_ff",
+        "close_back_cumsum_high_51d_ff",
         "time_high_51d_ff",
-        "close_low_51d_ff",
+        "close_back_cumsum_low_51d_ff",
         "time_low_51d_ff",
-        "close_high_201d_ff",
+        "close_back_cumsum_high_201d_ff",
         "time_high_201d_ff",
-        "close_low_201d_ff",
+        "close_back_cumsum_low_201d_ff",
         "time_low_201d_ff",
         'close_rolling_5d_max', 'close_rolling_201_min', 'sma_50d', 'sma_200d',
         "rsi",
@@ -668,65 +668,65 @@ def add_example_group_features(cal, macro_data_builder, raw_data,
 
     if add_daily_rolling_features:
         raw_data["ret_from_high_5d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_5d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_5d_ff"
         )
         raw_data["ret_from_high_11d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_11d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_11d_ff"
         )
         raw_data["ret_from_high_21d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_21d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_21d_ff"
         )
         raw_data["ret_from_high_51d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_51d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_51d_ff"
         )
         raw_data["ret_from_high_201d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_201d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_201d_ff"
         )
         raw_data["ret_from_low_5d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_5d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_5d_ff"
         )
         raw_data["ret_from_low_11d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_11d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_11d_ff"
         )
         raw_data["ret_from_low_21d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_21d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_21d_ff"
         )
         raw_data["ret_from_low_51d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_51d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_51d_ff"
         )
         raw_data["ret_from_low_201d"] = raw_data.apply(
-            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_201d_ff"
+            time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_201d_ff"
         )
 
     raw_data["ret_from_high_5"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_5_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_5_ff"
     )
     raw_data["ret_from_high_11"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_11_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_11_ff"
     )
     raw_data["ret_from_high_21"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_21_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_21_ff"
     )
     raw_data["ret_from_high_51"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_51_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_51_ff"
     )
     raw_data["ret_from_high_201"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_high_201_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_high_201_ff"
     )
     raw_data["ret_from_low_5"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_5_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_5_ff"
     )
     raw_data["ret_from_low_11"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_11_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_11_ff"
     )
     raw_data["ret_from_low_21"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_21_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_21_ff"
     )
     raw_data["ret_from_low_51"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_51_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_51_ff"
     )
     raw_data["ret_from_low_201"] = raw_data.apply(
-        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_low_201_ff"
+        time_diff, axis=1, base_col="close_back_cumsum", diff_col="close_back_cumsum_low_201_ff"
     )
     
     if macro_data_builder.add_macro_event:

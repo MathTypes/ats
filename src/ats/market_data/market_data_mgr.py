@@ -213,7 +213,7 @@ class MarketDataMgr(object):
         # has New York time in it.
         full_data["time"] = full_data.time.apply(
             market_time.utc_to_nyse_time,
-            interval_minutes=self.config.job.time_interval_minutes,
+            interval_minutes=self.config.dataset.interval_mins,
         )
         full_data["timestamp"] = full_data.time.apply(lambda x: int(x.timestamp()))
         # Do not use what are in serialized files as we need to recompute across different months.
@@ -236,7 +236,7 @@ class MarketDataMgr(object):
         full_data = full_data.set_index("new_idx")
         full_data = full_data.sort_index()
         full_data["time_idx"] = range(0, len(full_data))
-        full_data = data_util.add_group_features(self.config.job.time_interval_minutes, full_data,
+        full_data = data_util.add_group_features(self.config.dataset.interval_mins, full_data,
                                                  add_daily_rolling_features=self.config.model.features.add_daily_rolling_features)
         logging.info(f"full_data after add_group:{full_data.iloc[:2]}")
         full_ds = ray.data.from_pandas(full_data)
@@ -253,6 +253,7 @@ class MarketDataMgr(object):
         logging.info(f"full_data after add_example_group:{full_data.describe()}")
         logging.info(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
         #logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
+        logging.info(f"time_to_new_york:{full_data[full_data.time_to_new_york_open>633600.000000].iloc[-10:]}") 
         full_data = full_data[(full_data.ret_from_vwap_around_new_york_open<0.15) &
                               (full_data.ret_from_vwap_around_new_york_open>-0.15)]
         full_data = full_data[(full_data.ret_from_vwap_around_london_open<0.15) &
