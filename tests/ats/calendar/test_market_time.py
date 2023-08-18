@@ -30,6 +30,10 @@ def test_compute_open_time_cme():
 def test_compute_last_open_time_nyse_on_good_friday():
     market_cal = mcal.get_calendar("NYSE")
     open_time = market_time.compute_last_open_time(datetime.datetime(2009, 4, 9, 12, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239197400
+    open_time = market_time.compute_last_open_time(datetime.datetime(2009, 4, 9, 14, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239283800
+    open_time = market_time.compute_last_open_time(datetime.datetime(2009, 4, 9, 15, 0, 0).timestamp(), market_cal)
     assert open_time == 1239283800
     open_time = market_time.compute_last_open_time(datetime.datetime(2009, 4, 10, 12, 0, 0).timestamp(), market_cal)
     assert open_time == 1239283800
