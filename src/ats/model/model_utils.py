@@ -143,7 +143,7 @@ def get_nhits_model(config, data_module, heads):
         prediction_length=config.model.prediction_length,
         context_length=config.model.context_length,
         learning_rate=config.model.learning_rate,
-        optimizer="AdamW",
+        optimizer="Adam",
         log_interval=0.25,
         # n_blocks=[1,1,1],
         # downsample_frequencies=[1,23,46],

@@ -32,15 +32,15 @@ class PyTorchLightningPruningCallbackAdjusted(
 
 def optimize_hyperparameters(
     study_name: str,
-    config: Dict[str, Any] = {},
+    config,
     timeout: float = 3600 * 8.0,  # 8 hours
     gradient_clip_val_range: Tuple[float, float] = (0.01, 100.0),
-    context_length_ratio_range: Tuple[int, int] = (1, 30),
-    prediction_length_range: Tuple[int, int] = (4, 48 * 3),
+    context_length_ratio_range: Tuple[int, int] = (3, 3),
+    prediction_length_range: Tuple[int, int] = (36, 36),
     static_hidden_size_range: Tuple[int, int] = (8, 64),
     hidden_size_range: Tuple[int, int] = (4, 64),
-    dropout_range: Tuple[float, float] = (0.1, 0.3),
-    learning_rate_range: Tuple[float, float] = (1e-5, 1.0),
+    dropout_range: Tuple[float, float] = (0.1, 0.5),
+    learning_rate_range: Tuple[float, float] = (1e-5, 0.1),
     use_learning_rate_finder: bool = True,
     trainer_kwargs: Dict[str, Any] = {},
     log_dir: str = "lightning_logs",
@@ -93,9 +93,9 @@ def optimize_hyperparameters(
     Returns:
         optuna.Study: optuna study results
     """
-    model_path = config["model_path"]
-    config["max_epochs"]
-    n_trials = config["n_trials"]
+    model_path = config.model.checkpoint_output_dir
+    max_epochs = config.job.max_epochs
+    n_trials = config.job.num_tune_iter
     logging_level = {
         None: optuna.logging.get_verbosity(),
         0: optuna.logging.WARNING,
@@ -122,7 +122,6 @@ def optimize_hyperparameters(
         kwargs["loss"] = copy.deepcopy(loss)
         trial_config = config
         trial_config.update(dict(trial.params))
-        trial_config["learning_rate"] = 0.02
         trial_config["trial.number"] = trial.number
         # trial_config["dropout"]=trial.suggest_uniform("dropout", *dropout_range)
         # trial_config["hidden_size"] = trial.suggest_int("hidden_size", *hidden_size_range, log=False)
