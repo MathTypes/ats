@@ -245,12 +245,12 @@ class MarketDataMgr(object):
             add_daily_rolling_features=self.config.model.features.add_daily_rolling_features)
         full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
         full_data = full_ds.to_pandas(limit=10000000).sort_index()
-        logging.info(f"full_data after add_example:{full_data.iloc[:2]}")
+        logging.info(f"full_data after add_example:{full_data.iloc[:10]}")
         #full_data = data_util.add_example_level_features(self.market_cal, self.macro_data_builder, full_data)
         full_data = data_util.add_example_group_features(self.market_cal, self.macro_data_builder, full_data,
                                                          add_daily_rolling_features=self.config.model.features.add_daily_rolling_features,
                                                          interval_mins=self.config.dataset.interval_mins)
-        logging.info(f"full_data after add_example_group:{full_data.iloc[:2]}")
+        logging.info(f"full_data after add_example_group:{full_data.describe()}")
         logging.info(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
         #logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
         full_data = full_data[(full_data.ret_from_vwap_around_new_york_open<0.15) &
