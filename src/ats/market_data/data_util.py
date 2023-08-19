@@ -512,23 +512,23 @@ def add_example_level_features_df(cal, macro_data_builder, raw_data,
         )
 
     raw_data["new_york_open_time"] = raw_data.timestamp.apply(
-        market_time.compute_open_time, cal=new_york_cal
+        market_time.compute_next_open_time, cal=new_york_cal
     )
     raw_data["new_york_last_open_time"] = raw_data.timestamp.apply(
         market_time.compute_last_open_time, cal=new_york_cal
     )
 
     raw_data["new_york_close_time"] = raw_data.timestamp.apply(
-        market_time.compute_close_time, cal=new_york_cal
+        market_time.compute_next_close_time, cal=new_york_cal
     )
     raw_data["london_open_time"] = raw_data.timestamp.apply(
-        market_time.compute_open_time, cal=lse_cal
+        market_time.compute_next_open_time, cal=lse_cal
     )
     raw_data["london_last_open_time"] = raw_data.timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal
     )
     raw_data["london_close_time"] = raw_data.timestamp.apply(
-        market_time.compute_close_time, cal=lse_cal
+        market_time.compute_next_close_time, cal=lse_cal
     )
     raw_data["time_to_new_york_open"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="new_york_open_time"
