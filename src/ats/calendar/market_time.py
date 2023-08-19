@@ -56,7 +56,8 @@ def get_close_time(cal, x_date):
         return close_time_dict[x_date]
     
     schedule = cal.schedule(
-        start_date=x_date, end_date=x_date + datetime.timedelta(days=30)
+        start_date=x_date-datetime.timedelta(days=4),
+        end_date=x_date + datetime.timedelta(days=30)
     )
     for idx in range(len(schedule.market_close)):
         x_date_idx = schedule.market_close[idx].date()
@@ -196,7 +197,9 @@ def compute_close_time(x, cal):
     # logging.info(f"x:{x}, {type(x)}")
     try:
         x = datetime.datetime.fromtimestamp(x)
-        return int(get_close_time(cal, x.date()))
+        close_time = get_close_time(cal, x.date())
+        logging.error(f"close_time:{close_time}")
+        return int(close_time)
     except Exception as e:
         logging.error(f"can not compute open for {x}, {e}")
         return None
@@ -205,7 +208,9 @@ def compute_next_open_time(x, cal):
     try:
         x = datetime.datetime.fromtimestamp(x)
         x_date = x.date() + datetime.timedelta(days=1)
-        return int(get_close_time(cal, x_date))
+        close_time = get_close_time(cal, x_date)
+        #logging.error(f"close_time:{close_time}")
+        return int(close_time)
     except Exception as e:
         logging.error(f"can not compute open for {x}, {e}")
         return None
@@ -215,6 +220,7 @@ def compute_last_open_time(x, cal):
         x_time = datetime.datetime.fromtimestamp(x)
         x_date = x_time.date()
         open_time = compute_open_time(x, cal)
+        #logging.error(f"open_time:{open_time}, x:{x}")
         while open_time is None or open_time > x:
             x_time = x_time + datetime.timedelta(days=-1)
             open_time = compute_open_time(x_time.timestamp(), cal)
@@ -228,12 +234,14 @@ def compute_next_close_time(x, cal):
         x_time = datetime.datetime.fromtimestamp(x)
         x_date = x_time.date()
         close_time = compute_close_time(x, cal)
-        while close_time is None or close_time > x:
+        #logging.error(f"close_time:{close_time}, x:{x}")
+        while close_time is None or close_time < x:
             x_time = x_time + datetime.timedelta(days=1)
             close_time = compute_close_time(x_time.timestamp(), cal)
         return close_time
     except Exception as e:
         logging.error(f"can not compute close for {x}, {e}")
+        exit(0)
         return None
 
 def compute_open_time(x, cal):
@@ -248,8 +256,8 @@ def compute_open_time(x, cal):
 def compute_close_time(x, cal):
     # logging.info(f"x:{x}, {type(x)}")
     try:
-        x = datetime.datetime.fromtimestamp(x)
-        return int(get_close_time(cal, x.date()))
+        x_time = datetime.datetime.fromtimestamp(x)
+        return int(get_close_time(cal, x_time.date()))
     except Exception as e:
         logging.error(f"can not compute open for {x}, {e}")
         return None

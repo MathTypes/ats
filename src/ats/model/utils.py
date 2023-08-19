@@ -19,6 +19,15 @@ import torch
 import torch.nn as nn
 
 from ats.model.eval_callback import WandbClfEvalCallback
+import wandb
+
+from ats.app.env_mgr import EnvMgr
+from ats.market_data import market_data_mgr
+from ats.model import model_utils
+from ats.model import nhits_tuner 
+from ats.model import viz_utils
+from ats.search import faiss_builder
+from ats.trading.trader import Trader
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -165,6 +174,108 @@ class Pipeline:
 
     def tune_model(self):
         pass
+
+
+    def eval_model(self):
+        wandb_logger = WandbLogger(project="ATS", log_model=True)
+        trainer_kwargs = {"logger": wandb_logger}
+        logging.info(f"rows:{len(self.data_module.eval_data)}")
+        device = self.model.device
+        data_iter = iter(self.data_module.val_dataloader())
+
+        self.num_samples = self.config.job.eval_batches
+        self.eval_batch_size = self.config.model.eval_batch_size
+        self.matched_eval_data = self.data_module.eval_data
+
+        examle_df = pd.DataFrame(
+            columns=["ticker", "time", "px", "y_hat_cum_max", "y_hat_cum_min", "y_hat_cum", "y_close_cum_max", "y_close_cum_min",
+                     "y_close_cum", "market_image", "predict_image"]
+        )
+        for batch in range(self.num_samples):
+            #logging.info(f"batch:{batch}")
+            val_x, val_y = next(data_iter)
+            if self.config.job.eval_batch_start_idx>-1 and batch<self.config.job.eval_batch_start_idx:
+                continue
+            if self.config.job.eval_batch_end_idx>-1 and batch>self.config.job.eval_batch_end_idx:
+                break
+            y_close = val_y[0]
+            logging.info(f"y_close:{y_close.shape}")
+            y_close_cum_sum = torch.cumsum(y_close, dim=-1)
+            # indices are based on decoder time idx (first prediction point)
+            indices = self.data_module.validation.x_to_index(val_x)
+            decoder_time_idx = indices.time_idx
+            #logging.info(f"decoder_time_idx:{decoder_time_idx}")
+            filtered_dataset = self.validation.filter(
+                lambda x: x.time_idx_first_prediction.isin(decoder_time_idx)
+            )
+            y_hats, y_quantiles, output, ret_x = prediction_utils.predict(
+                self.model,
+                filtered_dataset,
+                self.wandb_logger,
+                batch_size=self.eval_batch_size,
+            )
+            interp_output = self.model.interpret_output(
+                detach(output),
+                reduction="none",
+                attention_prediction_horizon=0,  # attention only for first prediction horizon
+            )
+            logging.info(f"y_hats:{len(y_hats)}")
+            y_hats_cum = torch.cumsum(y_hats, dim=-1)
+            
+            for idx in range(y_hats.size(0)):
+                index = indices.iloc[idx]
+                pred_input = prediction_data.PredictionInput(
+                    x=ret_x,
+                    idx=idx
+                )
+                prediction_utils.add_pred_context(self.env_mgr, self.matched_eval_data, idx, index, pred_input)
+                pred_output = prediction_data.PredictionOutput(
+                    out=output,
+                    idx=idx,
+                    y_close_cum_sum=y_close_cum_sum,
+                    y_hats=y_hats,
+                    y_quantiles=y_quantiles,
+                    interp_output=interp_output,
+                    embedding=output["embedding"],
+                )
+                image = pred_viz_utils.create_image(pred_input, pred_output)
+                market_image = pred_viz_utils.create_market_image(pred_input, pred_output)
+                y_hat_cum = y_hats_cum[idx]
+                y_hat_cum_max = torch.max(y_hat_cum)
+                y_hat_cum_min = torch.min(y_hat_cum)
+                y_hat_cum = y_hat_cum[-1]
+                index = indices.iloc[idx]
+                # logging.info(f"index:{index}")
+                train_data = matched_eval_data.copy()
+                train_data_row = train_data[
+                    train_data.time_idx == index.time_idx
+                ].iloc[0]
+                #logging.info(f"train_data_row:{train_data_row}")
+                dm = train_data_row["time"]
+                dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
+                y_close_cum_sum_row = y_close_cum_sum[idx]
+                y_close_cum_max = torch.max(y_close_cum_sum_row)
+                y_close_cum_min = torch.min(y_close_cum_sum_row)
+                y_close_cum = y_close_cum_sum_row[-1]
+                new_data_row = {
+                    "px": px,
+                    "y_hat_cum_max":y_hat_cum_max,
+                    "y_hat_cum_min":y_hat_cum_min,
+                    "time": train_data_row.time,
+                    "y_close_cum_max":y_close_cum_max,
+                    "y_close_cum_min":y_close_cum_min,
+                    "ticker": ticker,
+                    "market_image" : market_image,
+                    "predict_image": _image
+                }
+                logging.info(f"adding {new_data_row}")
+                example_df.loc[len(example_df)] = new_data_row
+    
+        snapshot_dir = f"{self.config.dataset.snapshot}/eval/{env_mgr.run_id}/{data_start_date_str}_{data_end_date_str}"
+        logging.info(f"checking snapshot:{snapshot_dir}")
+        os.makedirs(snapshot_dir, exist_ok=True)
+        ds = ray.data.from_pandas(example_df)
+        ds.write_parquet(snapshot_dir)
 
     def train_model(self):
         logging.info(f"MODELS_DIR:{MODELS_DIR}")

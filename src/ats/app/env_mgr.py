@@ -29,38 +29,38 @@ class EnvMgr(object):
             self.train_start_date = datetime.datetime.strptime(
                 self.config.job.train_start_date, "%Y-%m-%d"
             ).replace(tzinfo=datetime.timezone.utc)
-            self.train_start_timestamp = market_time.get_open_time(
-                self.market_cal, self.train_start_date
+            self.train_start_timestamp = market_time.compute_last_open_time(
+                self.train_start_date.timestamp(), self.market_cal
             )
         if has_eval_stage:
             self.eval_start_date = datetime.datetime.strptime(
                 self.config.job.eval_start_date, "%Y-%m-%d"
             ).replace(tzinfo=datetime.timezone.utc)
-            self.eval_start_timestamp = market_time.get_open_time(
-                self.market_cal, self.eval_start_date
+            self.eval_start_timestamp = market_time.compute_last_open_time(
+                self.eval_start_date.timestamp(), self.market_cal
             )
             self.eval_end_date = datetime.datetime.strptime(
                 self.config.job.eval_end_date, "%Y-%m-%d"
             ).replace(tzinfo=datetime.timezone.utc)
-            self.eval_end_timestamp = market_time.get_close_time(
-                self.market_cal, self.eval_end_date
+            self.eval_end_timestamp = market_time.compute_next_close_time(
+                self.eval_end_date.timestamp(), self.market_cal
             )
 
         if has_test_stage:
             self.test_start_date = datetime.datetime.strptime(
                 self.config.job.test_start_date, "%Y-%m-%d"
             ).replace(tzinfo=datetime.timezone.utc)
-            self.eval_end_timestamp = market_time.get_close_time(
-                self.market_cal, self.eval_end_date
+            self.eval_end_timestamp = market_time.compute_next_close_time(
+                self.eval_end_date.timestamp(), self.market_cal
 	    )
             self.test_end_date = datetime.datetime.strptime(
                 self.config.job.test_end_date, "%Y-%m-%d"
             ).replace(tzinfo=datetime.timezone.utc)
-            self.test_start_timestamp = market_time.get_open_time(
-                self.market_cal, self.test_start_date
+            self.test_start_timestamp = market_time.compute_last_open_time(
+                self.test_start_date.timestamp(), self.market_cal
             )
-            self.test_end_timestamp = market_time.get_close_time(
-                self.market_cal, self.test_end_date
+            self.test_end_timestamp = market_time.compute_next_close_time(
+                self.test_end_date.timestamp(), self.market_cal
             )
             self.data_start_date = self.test_start_date - datetime.timedelta(
                 days=self.max_lags

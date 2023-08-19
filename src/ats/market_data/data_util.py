@@ -736,7 +736,7 @@ def add_example_group_features(cal, macro_data_builder, raw_data,
             fill_cum_volume, time_col="last_macro_event_time_imp1", interval_mins=interval_mins, axis=1)
         raw_data["last_macro_event_cum_dv_imp1"] = raw_data.last_macro_event_cum_dv_imp1.ffill()
         raw_data["last_macro_event_cum_volume_imp1"] = raw_data.last_macro_event_cum_volume_imp1.ffill()
-        raw_data["vwap_since_last_macro_event_imp1"] = raw_data.apply(
+        raw_data["ret_from_vwap_since_last_macro_event_imp1"] = raw_data.apply(
             compute_vwap, dv_col="last_macro_event_cum_dv_imp1",
             volume_col="last_macro_event_cum_volume_imp1", axis=1)
         logging.error(f"raw_data:{raw_data.iloc[-3:]}")
@@ -766,7 +766,7 @@ def add_example_group_features(cal, macro_data_builder, raw_data,
             fill_cum_volume, time_col="last_macro_event_time_imp2", axis=1)
         raw_data["last_macro_event_cum_dv_imp2"] = raw_data.last_macro_event_cum_dv_imp2.ffill()
         raw_data["last_macro_event_cum_volume_imp2"] = raw_data.last_macro_event_cum_volume_imp2.ffill()
-        raw_data["vwap_since_last_macro_event_imp2"] = raw_data.apply(
+        raw_data["ret_from_vwap_since_last_macro_event_imp2"] = raw_data.apply(
             compute_vwap, dv_col="last_macro_event_cum_dv_imp2",
             volume_col="last_macro_event_cum_volume_imp2", axis=1)
 
@@ -795,7 +795,7 @@ def add_example_group_features(cal, macro_data_builder, raw_data,
             fill_cum_volume, time_col="last_macro_event_time_imp3", axis=1)
         raw_data["last_macro_event_cum_dv_imp3"] = raw_data.last_macro_event_cum_dv_imp3.ffill()
         raw_data["last_macro_event_cum_volume_imp3"] = raw_data.last_macro_event_cum_volume_imp3.ffill()
-        raw_data["vwap_since_last_macro_event_imp3"] = raw_data.apply(
+        raw_data["ret_from_vwap_since_last_macro_event_imp3"] = raw_data.apply(
             compute_vwap, dv_col="last_macro_event_cum_dv_imp3",
             volume_col="last_macro_event_cum_volume_imp3", axis=1)
 
@@ -824,14 +824,14 @@ def add_example_group_features(cal, macro_data_builder, raw_data,
                                                           interval_mins=interval_mins, axis=1)
     raw_data["new_york_open_cum_dv"] = raw_data.new_york_open_cum_dv.ffill()
     raw_data["new_york_open_cum_volume"] = raw_data.new_york_open_cum_volume.ffill()
-    raw_data["vwap_since_new_york_open"] = raw_data.apply(compute_vwap, dv_col="new_york_open_cum_dv",
+    raw_data["ret_from_vwap_since_new_york_open"] = raw_data.apply(compute_vwap, dv_col="new_york_open_cum_dv",
                                                           volume_col="new_york_open_cum_volume", axis=1)
 
     raw_data["london_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="london_last_open_time", interval_mins=interval_mins, axis=1)
     raw_data["london_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="london_last_open_time", interval_mins=interval_mins, axis=1)
     raw_data["london_open_cum_dv"] = raw_data.london_open_cum_dv.ffill()
     raw_data["london_open_cum_volume"] = raw_data.london_open_cum_volume.ffill()
-    raw_data["vwap_since_london_open"] = raw_data.apply(compute_vwap, dv_col="london_open_cum_dv", volume_col="london_open_cum_volume", axis=1)    
+    raw_data["ret_from_vwap_since_london_open"] = raw_data.apply(compute_vwap, dv_col="london_open_cum_dv", volume_col="london_open_cum_volume", axis=1)    
 
     raw_data["around_new_york_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="new_york_last_open_time", interval_mins=interval_mins*2, axis=1)
     raw_data["around_new_york_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="new_york_last_open_time", interval_mins=interval_mins*2, axis=1)
@@ -847,7 +847,7 @@ def add_example_group_features(cal, macro_data_builder, raw_data,
     rol = raw_data.around_london_open_cum_dv.rolling(window=2)
     raw_data["vwap_around_london_open"] = rol.apply(vwap_around, args=("around_london_open_cum_dv","around_london_open_cum_volume"), raw=False)
     raw_data["vwap_around_london_open"] = raw_data.vwap_around_london_open.ffill()
-    raw_data["ret_from_vwap_around_london_open"] = raw_data.apply( compute_ret, base_col="vwap_around_london_open", axis=1)
+    raw_data["ret_from_vwap_around_london_open"] = raw_data.apply(compute_ret, base_col="vwap_around_london_open", axis=1)
     raw_data = raw_data.drop(columns=["around_london_open_cum_dv", "around_london_open_cum_volume"])
 
     return raw_data

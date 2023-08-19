@@ -36,6 +36,7 @@ from ats.app.env_mgr import EnvMgr
 from ats.market_data import market_data_mgr
 from ats.model import model_utils
 from ats.model.utils import Pipeline
+from ats.model import nhits_tuner 
 from ats.model import viz_utils
 from ats.search import faiss_builder
 from ats.trading.trader import Trader
@@ -319,28 +320,6 @@ class PatchTftSupervisedPipeline(Pipeline):
             / np.mean(np.abs(srs[srs < 0.0])),
         }
 
-    def eval_model(self):
-        # self.data_module = nhits.get_data_module(self.config)
-        # calcualte metric by which to display
-        logging.info(f"device:{self.device}")
-        wandb_logger = WandbLogger(project="ATS", log_model=True)
-        trainer_kwargs = {"logger": wandb_logger}
-        logging.info(f"rows:{len(self.data_module.eval_data)}")
-        data_artifact = wandb.Artifact(f"run_{wandb.run.id}_pred", type="evaluation")
-        metrics = SMAPE(reduction="none").to(self.device)
-        data_table = viz_utils.create_example_viz_table(
-            self.model.to(self.device),
-            self.data_module.val_dataloader(),
-            self.data_module.eval_data,
-            metrics,
-            self.config.job.eval_top_k,
-        )
-        data_artifact.add(data_table, "eval_data")
-
-        # Calling `use_artifact` uploads the data to W&B.
-        assert wandb.run is not None
-        wandb.run.use_artifact(data_artifact)
-        data_artifact.wait()
 
     def build_search(self):
         logging.info(f"device:{self.device}")
@@ -393,7 +372,13 @@ class TimeSeriesPipeline(Pipeline):
         # self.model = nhits.get_model(self.config, self.data_module)
         # self.trainer = nhits.get_trainer(self.config, self.data_module)
         # self.model = self.model.to(self.device, non_blocking=True)
-        nhits.run_tune(self.config, study_name)
+        study = nhits_tuner.optimize_hyperparameters(
+            study_name,
+            self.config
+        )
+        
+        logging.info(f"study:{study}")
+
 
     def test_model(self):
         # self.data_module = nhits.get_data_module(self.config)
