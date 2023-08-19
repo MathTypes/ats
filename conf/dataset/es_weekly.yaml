@@ -1,9 +1,9 @@
 base_dir: ${hydra:runtime.cwd}/data
-time_interval: "1d"
+time_interval: "1w"
 model_tickers: ['ES']
 trading_tickers: ['ES']
 max_stale_minutes: 30
-interval_mins: 1440
-snapshot: ${hydra:runtime.cwd}/data/snapshot/es/1d/tft
+interval_mins: 10080
+snapshot: ${hydra:runtime.cwd}/data/snapshot/es/1w
 write_snapshot: False
 read_snapshot: True
