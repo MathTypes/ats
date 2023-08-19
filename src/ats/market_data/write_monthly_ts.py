@@ -44,9 +44,9 @@ def pull_futures_sample_data(
         file_path = os.path.join(
             f"{raw_dir}/{asset_type}", f"{ticker}_*full_1min_*.txt"
         )
-    logging.info(f"glob {file_path}")
+    logging.error(f"glob {file_path}")
     files = glob.glob(file_path)
-    logging.info(f"read from {files}")
+    logging.error(f"read from {files}")
     read_options = csv.ReadOptions(column_names=names, skip_rows=1)
     parse_options = csv.ParseOptions(delimiter=",")
     ds = ray.data.read_csv(
@@ -64,13 +64,20 @@ class Preprocessor:
         self.until = until
         self.ticker = ticker
         self.freq = freq
+        pd.set_option("display.max_columns", None)
+        pd.set_option("display.max_rows", None)
 
     def __call__(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.error(f"df:{df}")
         df = pd.DataFrame(df)
         df = df.set_index("Time")
-        logging.info(f"since:{self.since}, until:{self.until}")
-        df = df[self.since : self.until]
+        df["time"] = df.index
+        df["timestamp"] = df.time.apply(lambda x: int(x.timestamp()))
+        start_timestamp = datetime.datetime.combine(self.since, datetime.datetime.min.time()).timestamp()
+        end_timestamp = datetime.datetime.combine(self.until, datetime.datetime.min.time()).timestamp()
+        logging.error(f"since:{self.since}, until:{self.until}")
+        df = df[(df.timestamp>start_timestamp) & (df.timestamp<end_timestamp)]
+        logging.error(f"df:{df.iloc[:3]}")
+        logging.error(f"df:{df.describe()}")
         df = df.rename(
             columns={
                 "Volume": "volume",
@@ -101,8 +108,9 @@ class Preprocessor:
         # we do not have open/high/low/close for Sat, but volume is 0.
         # If we do not drop them, they would cause Sun late trading to
         # have nan volume pct change and causes Sun to be dropped.
+        logging.error(f"df before dropna:{df.describe()}")
         df = df.dropna()
-        logging.info(f"df:{df.head()}")
+        logging.error(f"df:{df.describe()}")
         df_pct_back = df[["close", "volume", "dv"]].pct_change(periods=1)
         df_pct_forward = df[["close", "volume", "dv"]].pct_change(periods=-1)
         df = df.join(df_pct_back, rsuffix="_back").join(df_pct_forward, rsuffix="_fwd")
@@ -114,8 +122,8 @@ class Preprocessor:
         df["day_of_week"] = df.time.apply(lambda x: x.dayofweek)
         df["day_of_month"] = df.time.apply(lambda x: x.day)
         df["time_idx"] = df.index
-        logging.info(f"df:{df.head()}")
-        logging.info(f"df:{df.describe()}")
+        #logging.info(f"df:{df.head()}")
+        logging.error(f"df:{df.describe()}")
         # df = df.dropna()
         df["series_idx"] = df.index
         return df
