@@ -31,7 +31,7 @@ from pytorch_forecasting.utils import create_mask, detach, integer_histogram, ma
 from .layers.PatchTST_layers import *
 from .layers.RevIN import RevIN
 
-from ats.model.utils import _easy_mlp
+#from ats.model.utils import _easy_mlp
 from ats.util import profile_util
 
 class PredictionHead(nn.Module):
