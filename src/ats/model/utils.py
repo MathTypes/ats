@@ -280,6 +280,7 @@ class Pipeline:
     def train_model(self):
         logging.info(f"MODELS_DIR:{MODELS_DIR}")
         with torch.cuda.amp.autocast(enabled=False):
+            logging.error(f"model:{self.model}")
             self.history = self.trainer.fit(self.model, self.data_module)
         # evaluate the model on a test set
         # self.trainer.test(datamodule=self.data_module, ckpt_path='best')  # uses last-saved model
