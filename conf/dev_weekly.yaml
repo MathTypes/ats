@@ -1,0 +1,6 @@
+defaults:
+ - dataset: es_weekly
+ - optimizer: adam
+ - model: nhits
+ - job: dev
+ - trading: dev

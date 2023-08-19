@@ -1,5 +1,5 @@
 defaults:
- - dataset: future
+ - dataset: es
  - optimizer: adam
- - model: patch_tft_supervised_single_asset_full_futures
- - job: eval
+ - model: patch_tft_supervised_v4.2
+ - job: eval_dev

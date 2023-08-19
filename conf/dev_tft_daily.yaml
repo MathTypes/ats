@@ -1,0 +1,6 @@
+defaults:
+ - dataset: es_daily
+ - optimizer: adam
+ - model: patch_tft_supervised_dev_daily
+ - job: dev
+ - trading: dev

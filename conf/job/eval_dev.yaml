@@ -9,7 +9,9 @@ workers: 8
 log_mode: All
 log_example_eval_every_n_epochs: 5
 tag: ${model.name}
+
 checkpoint: ${hydra:runtime.cwd}/model/hourly/20230818-055305.ckpt
+
 eval_top_k: 1000
 market: CME_Equity
 max_lag: 365

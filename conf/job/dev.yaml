@@ -14,7 +14,7 @@ max_epochs: 500
 log_mode: All
 eval_batches: 1
 log_example_eval_every_n_epochs: 1
-log_viz_every_n: 1
+log_viz_every_n: 2
 checkpoint:
 market: CME_Equity
 tune_learning_rate: False

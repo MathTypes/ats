@@ -22,7 +22,9 @@ To run main app
 To run test
   - poetry run pytest -s   tests/ats/trading/test_trader.py -k test_on_interval
   - poetry run pytest -s --disable-warnings   tests/ats/trading/test_trader.py -k test_on_interval
-  
+
+To profile
+  - poetry run python3 -m memray run -o output.bin  src/ats/app/main.py --config-name=single_asset_simulation --config-path=/home/ubuntu/ats/conf
 
 Env
  - pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html

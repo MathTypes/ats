@@ -1,0 +1,6 @@
+defaults:
+ - dataset: es_daily
+ - optimizer: adam
+ - model: nhits
+ - job: dev
+ - trading: dev

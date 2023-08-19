@@ -1,26 +1,20 @@
 hidden_size: 4
-prediction_length: 32
-context_length: 320
-train_batch_size: 1024
-eval_batch_size: 128
-learning_rate : 0.02
-loss_name: "SMAPE"
+prediction_length: 4
+context_length: 32
+train_batch_size: 64
+eval_batch_size: 32
+learning_rate : 0.01
 name: nhits
 accumulate_grad_batches: 256
 dropout: 0.3
 gradient_clip_val: 0.4
-multitask: True
+multitask: False
 heads:
   - returns_prediction
-#  - position_optimization
 returns_prediction:
   loss_name: MQF2DistributionLoss
   target: "close_back"
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
-position_optimization:
-  loss_name: SharpeLoss
-  target: "close_back"
-  logging_metrics: []
 
 
 checkpoint:
@@ -28,8 +22,8 @@ checkpoint_output_dir: ${hydra:runtime.cwd}/model
 
 features:
   static_categoricals: ["ticker"]
-  time_varying_known_reals: ["hour_of_day", "day_of_week", "day_of_month","time_to_new_york_open", "time_to_new_york_close", "time_to_london_open","time_to_london_close","time_to_last_macro_event_imp1","time_to_next_macro_event_imp1","time_to_last_macro_event_imp2","time_to_next_macro_event_imp2","time_to_last_macro_event_imp3","time_to_next_macro_event_imp3","time_to_weekly_close","time_to_monthly_close","time_to_option_expiration","time_to_new_york_last_open","time_to_london_last_open"]
-  time_varying_unknown_reals: ["close_back", "volume_back", "close", "high_back", "low_back", "open_back", "close_back_cumsum", "ret_from_high_5", "ret_from_low_5", "ret_from_high_11", "ret_from_low_11","ret_from_high_21", "ret_from_low_21", "ret_from_high_51", "ret_from_low_51", "ret_from_low_201", "ret_from_high_201", "macd_8_24", "macd_16_48", "macd_32_96", "macd", "macd_signal", "bb_high", "bb_low", "sma_50", "sma_200", "time_to_high_5_ff", "time_to_low_5_ff", "time_to_high_11_ff", "time_to_low_11_ff", "time_to_high_21_ff", "time_to_low_21_ff", "time_to_high_51_ff", "time_to_low_51_ff", "time_to_high_201_ff", "time_to_low_201_ff", "vwap_since_london_open","vwap_since_new_york_open","vwap_since_last_macro_event_imp1","ret_from_vwap_around_macro_event_imp1","vwap_since_last_macro_event_imp2","ret_from_vwap_around_macro_event_imp2","vwap_since_last_macro_event_imp3","ret_from_vwap_around_macro_event_imp3","vwap_around_new_york_open","vwap_around_london_open","ret_from_vwap_around_new_york_open","ret_from_vwap_around_london_open", "daily_vol", "daily_returns","daily_skew","daily_kurt"]
+  time_varying_known_reals: ["day_of_week", "day_of_month","time_to_last_macro_event_imp1","time_to_next_macro_event_imp1","time_to_last_macro_event_imp2","time_to_next_macro_event_imp2","time_to_last_macro_event_imp3","time_to_next_macro_event_imp3","time_to_weekly_close","time_to_monthly_close","time_to_option_expiration"]
+  time_varying_unknown_reals: ["close_back", "volume_back", "close", "high_back", "low_back", "open_back", "close_back_cumsum", "ret_from_high_5", "ret_from_low_5", "ret_from_high_11", "ret_from_low_11","ret_from_high_21", "ret_from_low_21", "ret_from_high_51", "ret_from_low_51", "ret_from_low_201", "ret_from_high_201","macd_8_24", "macd_16_48", "macd_32_96", "macd", "macd_signal", "bb_high", "bb_low", "time_to_high_5_ff", "time_to_low_5_ff", "time_to_high_11_ff", "time_to_low_11_ff", "time_to_high_21_ff", "time_to_low_21_ff", "time_to_high_51_ff", "time_to_low_51_ff", "time_to_high_201_ff", "time_to_low_201_ff","ret_from_vwap_since_london_open","ret_from_vwap_since_new_york_open","ret_from_vwap_since_last_macro_event_imp1","ret_from_vwap_around_macro_event_imp1","ret_from_vwap_since_last_macro_event_imp2","ret_from_vwap_around_macro_event_imp2","ret_from_vwap_since_last_macro_event_imp3","ret_from_vwap_around_macro_event_imp3","ret_from_vwap_around_new_york_open","ret_from_vwap_around_london_open","ret_from_vwap_around_new_york_open","ret_from_vwap_around_london_open","daily_vol", "daily_returns","daily_skew","daily_kurt"]
   lags: {}
   add_relative_time_idx: True
   add_macro_event: True

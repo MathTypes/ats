@@ -2,3 +2,6 @@ sigma: 100 # risk aversion against vol
 gamma: 5 # limit position size
 max_loss: 100 # limit max dollar loss
 log_viz_every_n: 5
+
+daily_model: ${hydra:runtime.cwd}/model/20230818-002845/epoch=1-step=2.ckpt
+hourly_model: ${hydra:runtime.cwd}/model/20230817-135453/epoch=2-step=3.ckpt
