@@ -130,7 +130,7 @@ def get_time(x, close_col):
         return x["timestamp"]
     else:
         return None
-    
+
 @profile_util.profile
 #@njit(parallel=True)
 def ticker_transform(raw_data, config, base_price=500):
@@ -148,11 +148,20 @@ def ticker_transform(raw_data, config, base_price=500):
     squash_factor = 4
     
     #raw_data['close_back'] = squash_factor * np.tanh((np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price))/squash_factor)
-    raw_data['close_back'] = np.minimum(np.maximum(np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price), ret_std*6), -ret_std*6)
-    raw_data['high_back'] = np.minimum(np.maximum(np.log(raw_data.high+base_price) - np.log(raw_data.high.shift(1)+base_price), ret_std*6), -ret_std*6)
-    raw_data['open_back'] = np.minimum(np.maximum(np.log(raw_data.open+base_price) - np.log(raw_data.open.shift(1)+base_price), ret_std*6), -ret_std*6)
-    raw_data['low_back'] = np.minimum(np.maximum(np.log(raw_data.low+base_price) - np.log(raw_data.low.shift(1)+base_price), ret_std*6), -ret_std*6)
+    raw_data['close_back'] = np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price)
+    raw_data['high_back'] = np.log(raw_data.high+base_price) - np.log(raw_data.high.shift(1)+base_price)
+    raw_data['open_back'] = np.log(raw_data.open+base_price) - np.log(raw_data.open.shift(1)+base_price)
+    raw_data['low_back'] = np.log(raw_data.low+base_price) - np.log(raw_data.low.shift(1)+base_price)
 
+    raw_data['close_back'] = np.minimum(raw_data["close_back"], VOL_THRESHOLD * ret_std)
+    raw_data['close_back'] = np.maximum(raw_data["close_back"], -VOL_THRESHOLD * ret_std)
+    raw_data['high_back'] = np.minimum(raw_data["high_back"], VOL_THRESHOLD * ret_std)
+    raw_data['high_back'] = np.maximum(raw_data["high_back"], -VOL_THRESHOLD * ret_std)
+    raw_data['open_back'] = np.minimum(raw_data["open_back"], VOL_THRESHOLD * ret_std)
+    raw_data['open_back'] = np.maximum(raw_data["open_back"], -VOL_THRESHOLD * ret_std)
+    raw_data['low_back'] = np.minimum(raw_data["low_back"], VOL_THRESHOLD * ret_std)
+    raw_data['low_back'] = np.maximum(raw_data["low_back"], -VOL_THRESHOLD * ret_std)
+    
     raw_data['close_back'] = squash_factor * np.tanh(raw_data['close_back']/squash_factor)
     raw_data['high_back'] = squash_factor * np.tanh(raw_data['high_back']/squash_factor)
     raw_data['open_back'] = squash_factor * np.tanh(raw_data['open_back']/squash_factor)
