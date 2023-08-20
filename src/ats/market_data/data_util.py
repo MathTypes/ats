@@ -127,7 +127,7 @@ def get_processed_data(
 
 def get_time(x, close_col):
     if x[close_col] == x["close_back_cumsum"]:
-        return x["timestamp"]
+        return int(x["timestamp"])
     else:
         return None
 
@@ -285,7 +285,9 @@ def ticker_transform(raw_data, config, base_price=500):
 
     
     # Compute RSI
-    raw_data["rsi"] = ta.momentum.RSIIndicator(close=raw_data["close"]).rsi()
+    raw_data["rsi_14"] = ta.momentum.RSIIndicator(close=raw_data["close"], window=14).rsi()
+    raw_data["rsi_28"] = ta.momentum.RSIIndicator(close=raw_data["close"], window=28).rsi()
+    raw_data["rsi_42"] = ta.momentum.RSIIndicator(close=raw_data["close"], window=42).rsi()
 
     # Compute MACD
     macd = ta.trend.MACD(close=raw_data["close"])
@@ -340,6 +342,10 @@ def ticker_transform(raw_data, config, base_price=500):
     # Compute Moving Averages
     if add_daily_rolling_features:
         interval_per_day = int(23 * 60 / interval_minutes)
+        raw_data["rsi_14d"] = ta.momentum.RSIIndicator(close=raw_data["close"], window=14*interval_per_day).rsi()
+        raw_data["rsi_28d"] = ta.momentum.RSIIndicator(close=raw_data["close"], window=28*interval_per_day).rsi()
+        raw_data["rsi_42d"] = ta.momentum.RSIIndicator(close=raw_data["close"], window=42*interval_per_day).rsi()
+
         raw_data["sma_5d"] = ta.trend.SMAIndicator(
             close=raw_data["close"], window=5*interval_per_day
         ).sma_indicator()
@@ -359,6 +365,50 @@ def ticker_transform(raw_data, config, base_price=500):
             close=raw_data["close"], window=200*interval_per_day
         ).sma_indicator()
 
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=5*interval_per_day, window_dev=2)
+        raw_data["bb_high_5d_2"] = bollinger.bollinger_hband()
+        raw_data["bb_low_5d_2"] = bollinger.bollinger_lband()
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=5*interval_per_day, window_dev=3)
+        raw_data["bb_high_5d_3"] = bollinger.bollinger_hband()
+        raw_data["bb_low_5d_3"] = bollinger.bollinger_lband()
+
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=10*interval_per_day, window_dev=2)
+        raw_data["bb_high_10d_2"] = bollinger.bollinger_hband()
+        raw_data["bb_low_10d_2"] = bollinger.bollinger_lband()
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=10*interval_per_day, window_dev=3)
+        raw_data["bb_high_10d_3"] = bollinger.bollinger_hband()
+        raw_data["bb_low_10d_3"] = bollinger.bollinger_lband()
+
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=20*interval_per_day, window_dev=2)
+        raw_data["bb_high_20d_2"] = bollinger.bollinger_hband()
+        raw_data["bb_low_20d_2"] = bollinger.bollinger_lband()
+
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=20*interval_per_day, window_dev=3)
+        raw_data["bb_high_20d_3"] = bollinger.bollinger_hband()
+        raw_data["bb_low_20d_3"] = bollinger.bollinger_lband()
+
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=50*interval_per_day, window_dev=2)
+        raw_data["bb_high_50d_2"] = bollinger.bollinger_hband()
+        raw_data["bb_low_50d_2"] = bollinger.bollinger_lband()
+
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=50*interval_per_day, window_dev=3)
+        raw_data["bb_high_50d_3"] = bollinger.bollinger_hband()
+        raw_data["bb_low_50d_3"] = bollinger.bollinger_lband()
+
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=100*interval_per_day, window_dev=2)
+        raw_data["bb_high_100d_2"] = bollinger.bollinger_hband()
+        raw_data["bb_low_100d_2"] = bollinger.bollinger_lband()
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=100*interval_per_day, window_dev=3)
+        raw_data["bb_high_100d_3"] = bollinger.bollinger_hband()
+        raw_data["bb_low_100d_3"] = bollinger.bollinger_lband()
+
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=200*interval_per_day, window_dev=2)
+        raw_data["bb_high_200d_2"] = bollinger.bollinger_hband()
+        raw_data["bb_low_200d_2"] = bollinger.bollinger_lband()
+        bollinger = ta.volatility.BollingerBands(close=raw_data["close"], window=200*interval_per_day, window_dev=3)
+        raw_data["bb_high_200d_3"] = bollinger.bollinger_hband()
+        raw_data["bb_low_200d_3"] = bollinger.bollinger_lband()
+
     raw_data["sma_5"] = ta.trend.SMAIndicator(
         close=raw_data["close"], window=5
     ).sma_indicator()
@@ -377,13 +427,59 @@ def ticker_transform(raw_data, config, base_price=500):
     raw_data["sma_200"] = ta.trend.SMAIndicator(
         close=raw_data["close"], window=200
     ).sma_indicator()
+
+    raw_data["daily_returns"] = calc_returns(raw_data["close"], day_offset=1, base_price=base_price)
+    raw_data["daily_returns_5"] = calc_returns(raw_data["close"], day_offset=5, base_price=base_price)
+    raw_data["daily_returns_10"] = calc_returns(raw_data["close"], day_offset=10, base_price=base_price)
+    raw_data["daily_returns_20"] = calc_returns(raw_data["close"], day_offset=20, base_price=base_price)
+    raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
+    raw_data["daily_vol_5"] = calc_daily_vol(raw_data["daily_returns_5"])
+    raw_data["daily_vol_10"] = calc_daily_vol(raw_data["daily_returns_10"])
+    raw_data["daily_vol_20"] = calc_daily_vol(raw_data["daily_returns_20"])
+    raw_data["daily_skew"] = calc_skew(raw_data["daily_returns"])
+    raw_data["daily_skew_5"] = calc_skew(raw_data["daily_returns_5"])
+    raw_data["daily_skew_10"] = calc_skew(raw_data["daily_returns_10"])
+    raw_data["daily_skew_20"] = calc_skew(raw_data["daily_returns_20"])
+    raw_data["daily_kurt"] = calc_kurt(raw_data["daily_returns"])
+    raw_data["daily_kurt_5"] = calc_kurt(raw_data["daily_returns_5"])
+    raw_data["daily_kurt_10"] = calc_kurt(raw_data["daily_returns_10"])
+    raw_data["daily_kurt_20"] = calc_kurt(raw_data["daily_returns_20"])
+
+    trend_combinations = [(8, 24), (16, 48), (32, 96)]
+    for short_window, long_window in trend_combinations:
+        raw_data[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
+            raw_data["close"], short_window, long_window, interval_per_day=1
+        )
+    if add_daily_rolling_features:
+        interval_per_day = int(23 * 60 / interval_minutes)        
+        for short_window, long_window in trend_combinations:
+            raw_data[f"macd_{short_window}_{long_window}_day"] = MACDStrategy.calc_signal(
+                raw_data["close"], short_window*interval_per_day, long_window*interval_per_day, interval_per_day=46
+            )
+            raw_data["daily_returns_1d"] = calc_returns(raw_data["close"], day_offset=1*interval_per_day, base_price=base_price)
+            raw_data["daily_returns_5d"] = calc_returns(raw_data["close"], day_offset=5*interval_per_day, base_price=base_price)
+            raw_data["daily_returns_10d"] = calc_returns(raw_data["close"], day_offset=10*interval_per_day, base_price=base_price)
+            raw_data["daily_returns_20d"] = calc_returns(raw_data["close"], day_offset=20*interval_per_day, base_price=base_price)
+            raw_data["daily_vol_1d"] = calc_daily_vol(raw_data["daily_returns_1d"])
+            raw_data["daily_vol_5d"] = calc_daily_vol(raw_data["daily_returns_5d"])
+            raw_data["daily_vol_10d"] = calc_daily_vol(raw_data["daily_returns_10d"])
+            raw_data["daily_vol_20d"] = calc_daily_vol(raw_data["daily_returns_20d"])
+            raw_data["daily_skew_1d"] = calc_skew(raw_data["daily_returns_1d"])
+            raw_data["daily_skew_5d"] = calc_skew(raw_data["daily_returns_5d"])
+            raw_data["daily_skew_10d"] = calc_skew(raw_data["daily_returns_10d"])
+            raw_data["daily_skew_20d"] = calc_skew(raw_data["daily_returns_20d"])
+            raw_data["daily_kurt_1d"] = calc_kurt(raw_data["daily_returns_1d"])
+            raw_data["daily_kurt_5d"] = calc_kurt(raw_data["daily_returns_5d"])
+            raw_data["daily_kurt_10d"] = calc_kurt(raw_data["daily_returns_10d"])
+            raw_data["daily_kurt_20d"] = calc_kurt(raw_data["daily_returns_20d"])
+
     return raw_data
 
 def time_diff(row, base_col, diff_col):
     if pd.isna(row[diff_col]):
         return np.nan
     else:
-        return (row[diff_col] - row[base_col])
+        return int(row[diff_col] - row[base_col])
 
 def ret_diff(row, base_col, diff_col):
     if pd.isna(row[base_col]):
@@ -558,33 +654,6 @@ def add_group_features(raw_data, config):
     raw_data = raw_data.join(new_features)
     raw_data.reset_index(drop=True, inplace=True)
     #del new_features
-
-    raw_data["daily_returns"] = calc_returns(raw_data["close"], day_offset=1, base_price=base_price)
-    raw_data["daily_returns_5"] = calc_returns(raw_data["close"], day_offset=5, base_price=base_price)
-    raw_data["daily_returns_10"] = calc_returns(raw_data["close"], day_offset=10, base_price=base_price)
-    raw_data["daily_returns_20"] = calc_returns(raw_data["close"], day_offset=20, base_price=base_price)
-    raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
-    raw_data["daily_vol_5"] = calc_daily_vol(raw_data["daily_returns_5"])
-    raw_data["daily_vol_10"] = calc_daily_vol(raw_data["daily_returns_10"])
-    raw_data["daily_vol_20"] = calc_daily_vol(raw_data["daily_returns_20"])
-    raw_data["daily_skew"] = calc_skew(raw_data["daily_returns"])
-    raw_data["daily_skew_5"] = calc_skew(raw_data["daily_returns_5"])
-    raw_data["daily_skew_10"] = calc_skew(raw_data["daily_returns_10"])
-    raw_data["daily_skew_20"] = calc_skew(raw_data["daily_returns_20"])
-    raw_data["daily_kurt"] = calc_kurt(raw_data["daily_returns"])
-    raw_data["daily_kurt_5"] = calc_kurt(raw_data["daily_returns_5"])
-    raw_data["daily_kurt_10"] = calc_kurt(raw_data["daily_returns_10"])
-    raw_data["daily_kurt_20"] = calc_kurt(raw_data["daily_returns_20"])
-    trend_combinations = [(8, 24), (16, 48), (32, 96)]
-    for short_window, long_window in trend_combinations:
-        raw_data[f"macd_{short_window}_{long_window}"] = MACDStrategy.calc_signal(
-            raw_data["close"], short_window, long_window
-        )
-    if add_daily_rolling_features:
-        for short_window, long_window in trend_combinations:
-            raw_data[f"macd_{short_window}_{long_window}_day"] = MACDStrategy.calc_signal(
-                raw_data["close"], short_window, long_window, 46
-            )
 
     return raw_data
 
@@ -962,7 +1031,6 @@ def add_example_group_features(cal, macro_data_builder, raw_data, config):
     raw_data["vwap_around_new_york_open"] = rol.apply(vwap_around, args=("around_new_york_open_cum_dv","around_new_york_open_cum_volume"), raw=False)
     raw_data["vwap_around_new_york_open"] = raw_data.vwap_around_new_york_open.ffill()
     raw_data["ret_from_vwap_around_new_york_open"] = raw_data.apply(compute_ret, base_col="vwap_around_new_york_open", axis=1)
-    logging.error(f"raw_data:{raw_data.iloc[-50:]}")
     raw_data = raw_data.drop(columns=["around_new_york_open_cum_dv", "around_new_york_open_cum_volume"])
 
     raw_data["around_london_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="london_last_open_time", interval_mins=interval_mins*2, axis=1)
@@ -1007,6 +1075,32 @@ def add_example_group_features(cal, macro_data_builder, raw_data, config):
     raw_data["ret_from_sma_200"] = raw_data.apply(compute_ret, base_col="sma_200", axis=1)
 
     if add_daily_rolling_features:
+        raw_data["ret_from_bb_high_5d_2"] = raw_data.apply(compute_ret, base_col="bb_high_5d_2", axis=1)
+        raw_data["ret_from_bb_high_5d_3"] = raw_data.apply(compute_ret, base_col="bb_high_5d_3", axis=1)
+        raw_data["ret_from_bb_high_10d_2"] = raw_data.apply(compute_ret, base_col="bb_high_10d_2", axis=1)
+        raw_data["ret_from_bb_high_10d_3"] = raw_data.apply(compute_ret, base_col="bb_high_10d_3", axis=1)
+        raw_data["ret_from_bb_high_20d_2"] = raw_data.apply(compute_ret, base_col="bb_high_20d_2", axis=1)
+        raw_data["ret_from_bb_high_20d_3"] = raw_data.apply(compute_ret, base_col="bb_high_20d_3", axis=1)
+        raw_data["ret_from_bb_high_50d_2"] = raw_data.apply(compute_ret, base_col="bb_high_50d_2", axis=1)
+        raw_data["ret_from_bb_high_50d_3"] = raw_data.apply(compute_ret, base_col="bb_high_50d_3", axis=1)
+        raw_data["ret_from_bb_high_100d_2"] = raw_data.apply(compute_ret, base_col="bb_high_100d_2", axis=1)
+        raw_data["ret_from_bb_high_100d_3"] = raw_data.apply(compute_ret, base_col="bb_high_100d_3", axis=1)
+        raw_data["ret_from_bb_high_200d_2"] = raw_data.apply(compute_ret, base_col="bb_high_200d_2", axis=1)
+        raw_data["ret_from_bb_high_200d_3"] = raw_data.apply(compute_ret, base_col="bb_high_200d_3", axis=1)
+
+        raw_data["ret_from_bb_low_5d_2"] = raw_data.apply(compute_ret, base_col="bb_low_5d_2", axis=1)
+        raw_data["ret_from_bb_low_5d_3"] = raw_data.apply(compute_ret, base_col="bb_low_5d_3", axis=1)
+        raw_data["ret_from_bb_low_10d_2"] = raw_data.apply(compute_ret, base_col="bb_low_10d_2", axis=1)
+        raw_data["ret_from_bb_low_10d_3"] = raw_data.apply(compute_ret, base_col="bb_low_10d_3", axis=1)
+        raw_data["ret_from_bb_low_20d_2"] = raw_data.apply(compute_ret, base_col="bb_low_20d_2", axis=1)
+        raw_data["ret_from_bb_low_20d_3"] = raw_data.apply(compute_ret, base_col="bb_low_20d_3", axis=1)
+        raw_data["ret_from_bb_low_50d_2"] = raw_data.apply(compute_ret, base_col="bb_low_50d_2", axis=1)
+        raw_data["ret_from_bb_low_50d_3"] = raw_data.apply(compute_ret, base_col="bb_low_50d_3", axis=1)
+        raw_data["ret_from_bb_low_100d_2"] = raw_data.apply(compute_ret, base_col="bb_low_100d_2", axis=1)
+        raw_data["ret_from_bb_low_100d_3"] = raw_data.apply(compute_ret, base_col="bb_low_100d_3", axis=1)
+        raw_data["ret_from_bb_low_200d_2"] = raw_data.apply(compute_ret, base_col="bb_low_200d_2", axis=1)
+        raw_data["ret_from_bb_low_200d_3"] = raw_data.apply(compute_ret, base_col="bb_low_200d_3", axis=1)
+
         raw_data["ret_from_sma_5d"] = raw_data.apply(compute_ret, base_col="sma_5d", axis=1)
         raw_data["ret_from_sma_10d"] = raw_data.apply(compute_ret, base_col="sma_10d", axis=1)
         raw_data["ret_from_sma_20d"] = raw_data.apply(compute_ret, base_col="sma_20d", axis=1)

@@ -20,9 +20,9 @@ def get_last_macro_event_time(cal, x_time, mdb, imp):
 @functools.lru_cache(maxsize=128000)
 def get_next_macro_event_time(cal, x_time, mdb, imp):
     events = mdb.get_next_events(x_time, imp)
-    for	et in events.event_time:
-        if et>=x_time:
-            return et
+    for	ix, val in events.event_time.items():
+        if val>=x_time:
+            return val
     return None
 
 _OPEN_TIME_DICT = {}
@@ -148,7 +148,7 @@ def compute_last_macro_event_time(x, cal, mdb, imp):
         if event_time is None:
             return None
         last_macro_event = int(event_time)
-        return last_macro_event
+        return int(last_macro_event)
     except Exception as e:
         logging.error(f"can not compute macro event for {x}, {e}")
         return None
@@ -159,7 +159,7 @@ def compute_next_macro_event_time(x, cal, mdb, imp):
         if event_time is None:
             return None
         next_macro_event = int(event_time)
-        return next_macro_event
+        return int(next_macro_event)
     except Exception as e:
         logging.error(f"can not compute macro event for {x}, {e}")
         return None
@@ -180,7 +180,7 @@ def compute_last_open_time(x, cal):
         while open_time is None or open_time > x:
             x_time = x_time + datetime.timedelta(days=-1)
             open_time = get_open_time(cal, x_time.date())
-        return open_time
+        return int(open_time)
     except Exception as e:
         logging.error(f"can not compute_last_open for {x}, {e}")
         return None
@@ -192,7 +192,7 @@ def compute_last_close_time(x, cal):
         while close_time is None or close_time > x:
             x_time = x_time + datetime.timedelta(days=-1)
             close_time = get_close_time(cal, x_time.date())
-        return close_time
+        return int(close_time)
     except Exception as e:
         logging.error(f"can not compute_last_close for {x}, {e}")
         return None
@@ -205,7 +205,7 @@ def compute_next_open_time(x, cal):
         while open_time is None or open_time < x:
             x_time = x_time + datetime.timedelta(days=1)
             open_time = get_open_time(cal, x_time.date())
-        return open_time
+        return int(open_time)
     except Exception as e:
         logging.error(f"can not compute_next_open for {x}, {e}")
         return None
@@ -218,7 +218,7 @@ def compute_next_close_time(x, cal):
         while close_time is None or close_time < x:
             x_time = x_time + datetime.timedelta(days=1)
             close_time = get_close_time(cal, x_time.date())
-        return close_time
+        return int(close_time)
     except Exception as e:
         logging.error(f"can not compute_next_close for {x}, {e}")
         return None

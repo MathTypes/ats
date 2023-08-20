@@ -144,9 +144,9 @@ class MarketDataMgr(object):
         eval_time_idx = eval_data["time_idx"]    
         test_time_idx = test_data["time_idx"]    
         logging.info(f"full data after filtering: {full_data.iloc[-3:]}")
-        logging.info(f"train data after filtering: {train_data.iloc[-30:][['time_idx','ticker','time']]}")
-        logging.info(f"eval data after filtering: {eval_data.iloc[-30:][['time_idx','ticker','time']]}")
-        logging.info(f"test data after filtering: {test_data.iloc[-30:][['time_idx','ticker','time']]}")
+        #logging.info(f"train data after filtering: {train_data.iloc[-30:][['time_idx','ticker','time']]}")
+        #logging.info(f"eval data after filtering: {eval_data.iloc[-30:][['time_idx','ticker','time']]}")
+        #logging.info(f"test data after filtering: {test_data.iloc[-30:][['time_idx','ticker','time']]}")
         logging.info(f"full_data:{len(full_data)}, train:{len(train_time_idx)}, eval:{len(eval_time_idx)}, test:{len(test_time_idx)}")
         logging.info(f"full_data:{full_data.describe()}")
         full_data = full_data.sort_values(["ticker", "time"])
@@ -249,14 +249,16 @@ class MarketDataMgr(object):
             macro_data_builder=self.macro_data_builder, config=self.config)
         full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
         full_data = full_ds.to_pandas(limit=10000000).sort_index()
-        logging.info(f"full_data after add_example:{full_data.iloc[:10]}")
+        #logging.info(f"full_data after add_example:{full_data.iloc[:10]}")
         #full_data = data_util.add_example_level_features(self.market_cal, self.macro_data_builder, full_data)
         full_data = data_util.add_example_group_features(cal=self.market_cal, macro_data_builder=self.macro_data_builder,
                                                          raw_data=full_data, config=self.config)
-        logging.info(f"full_data before filtering:{full_data.describe()}")
-        logging.info(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
+        logging.error(f"full_data before filtering:{full_data.describe()}")
+        logging.error(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
         #logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
-        logging.info(f"time_to_new_york:{full_data[full_data.time_to_new_york_open>633600.000000].iloc[-10:]}") 
+        logging.error(f"ret_from_vwap_around_macro_event_imp2>0.25:{full_data[full_data.ret_from_vwap_around_macro_event_imp2>0.12].iloc[-10:]}") 
+        logging.error(f"ret_from_vwap_around_macro_event_imp2<-0.25:{full_data[full_data.ret_from_vwap_around_macro_event_imp2<-0.12].iloc[-10:]}")
+        #exit(0)
         #full_data = full_data[(full_data.ret_from_vwap_around_new_york_open<0.15) &
         #                      (full_data.ret_from_vwap_around_new_york_open>-0.15)]
         #full_data = full_data[(full_data.ret_from_vwap_around_london_open<0.15) &

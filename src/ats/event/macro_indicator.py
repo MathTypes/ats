@@ -31,7 +31,7 @@ class MacroDataBuilder:
                 market_time.utc_to_nyse_time,
                 interval_minutes=self.config.dataset.interval_mins,
             )
-            observations["event_time"] = observations.date.apply(lambda x:x.timestamp())
+            observations["event_time"] = observations.date.apply(lambda x:int(x.timestamp()))
             observations["importance"] = observations.importance.apply(lambda x:int(x))
             df_vec.append(observations)
         self.observations = pd.concat(df_vec)
@@ -57,9 +57,9 @@ class MacroDataBuilder:
                 lambda x: datetime.datetime.strptime(x, "%Y-%m-%d")
             )
             observations["event_time"] = observations.date.apply(
-                lambda x: datetime.datetime.combine(
+                lambda x: int(datetime.datetime.combine(
                     x, datetime.datetime.min.time()
-                ).timestamp()
+                ).timestamp())
             )
         observations = pd.concat(df_vec)
         self.observations = observations[["date", "value", "series_id", "event_time"]]
