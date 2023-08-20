@@ -5,8 +5,12 @@ root_dir=$base_dir/../../..
 echo $root_dir
 tickers=$(cat "$base_dir/firstratedata_fut.txt")
 export RAY_DATA_STRICT_MODE=0
+input_dir=$1
+start_date=$2
+end_date=$3
 for ticker in $tickers
 do
-    poetry run python3 src/ats/market_data/write_monthly_ts.py --ticker=$ticker --asset_type=FUT --start_date=$1 \
-	   --input_dir=$2 --output_dir=$root_dir/data --freq=30min
+    poetry run python3 src/ats/market_data/write_monthly_ts.py --ticker=$ticker \
+	   --asset_type=FUT --start_date=$start_date --end_date=$end_date \
+	   --input_dir=$input_dir --output_dir=$root_dir/data --freq=1mon
 done
