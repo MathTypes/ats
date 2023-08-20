@@ -104,7 +104,7 @@ def calc_sharpe_by_year(data: pd.DataFrame, suffix: str = None) -> dict:
     return sharpes.to_dict()
 
 
-def calc_returns(srs: pd.Series, day_offset: int = 1) -> pd.Series:
+def calc_returns(srs: pd.Series, day_offset: int = 1, base_price: float = 500) -> pd.Series:
     """for each element of a pandas time-series srs,
     calculates the returns over the past number of days
     specified by offset
@@ -116,7 +116,7 @@ def calc_returns(srs: pd.Series, day_offset: int = 1) -> pd.Series:
     Returns:
         pd.Series: series of returns
     """
-    returns = srs / srs.shift(day_offset) - 1.0
+    returns = (srs+base_price) / (srs.shift(day_offset)+base_price) - 1.0
     return returns
 
 
