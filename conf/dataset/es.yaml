@@ -7,3 +7,5 @@ interval_mins: 30
 snapshot: ${hydra:runtime.cwd}/data/snapshot/es/20230819-010518
 write_snapshot: False
 read_snapshot: True
+ret_std: 0.001
+base_price: 500

@@ -1,6 +1,6 @@
 defaults:
  - dataset: futures_daily
  - optimizer: adam
- - model: nhits
+ - model: patch_tft_supervised_dev_daily
  - job: dev
  - trading: dev
