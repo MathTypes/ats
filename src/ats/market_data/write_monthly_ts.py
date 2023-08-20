@@ -5,6 +5,7 @@ import datetime
 import glob
 import logging
 import os
+import shutil
 
 #import modin.pandas as pd
 import pandas as pd
@@ -38,7 +39,7 @@ def pull_futures_sample_data(
     names = ["Time", "Open", "High", "Low", "Close", "Volume"]
     if asset_type == "FUT":
         file_path = os.path.join(
-            f"{raw_dir}/{asset_type}", f"{ticker}_*1min_continuous_*.txt"
+            f"{raw_dir}/{asset_type}", f"{ticker}_*min_continuous_*.txt"
         )
     elif asset_type == "ETF":
         file_path = os.path.join(
@@ -161,6 +162,10 @@ def process_month(ds, cur_date, freq, force):
         if not force:
             logging.error(f"Directory {file_path} already exists, exiting!")
             return
+        else:
+            shutil.rmtree(file_path)
+            os.makedirs(file_path)
+
     ds.write_parquet(file_path)
 
 

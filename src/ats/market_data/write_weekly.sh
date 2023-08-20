@@ -12,5 +12,5 @@ for ticker in $tickers
 do
     poetry run python3 src/ats/market_data/write_monthly_ts.py \
 	   --ticker=$ticker --asset_type=FUT --start_date=$start_date --end_date=$end_date \
-	   --freq=1w --input_dir=$1 --output_dir=$root_dir/data --force=True
+	   --freq=1w --input_dir=$input_dir --output_dir=$root_dir/data --force=True
 done
