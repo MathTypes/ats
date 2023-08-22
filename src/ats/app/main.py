@@ -26,7 +26,7 @@ RESULTS_PATH = Path("results")
 
 
 @hydra.main(config_path="conf", config_name="config")
-def my_app(cfg: DictConfig) -> None:
+def my_app(cfg: DictConfig) -> None:    
     logging.info(f"Current working directory : {os.getcwd()}")
     logging.info(f"Orig working directory    : {get_original_cwd()}")
     run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -35,6 +35,7 @@ def my_app(cfg: DictConfig) -> None:
     )
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
+    pd.options.display.float_format = "{:,.4f}".format
     pipelines = {
         "nhits": TimeSeriesPipeline,
         "patch_tst": PatchTstTransformerPipeline,

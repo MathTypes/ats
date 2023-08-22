@@ -213,7 +213,7 @@ class MarketDataMgr(object):
             ticker_train_data = ticker_train_data.set_index("new_idx")
             train_data_vec.append(ticker_train_data)
         full_data = pd.concat(train_data_vec)
-        logging.info(f"full_data:{full_data.iloc[:2]}")
+        #logging.info(f"full_data:{full_data.iloc[:2]}")
         # TODO: the original time comes from aggregated time is UTC, but actually
         # has New York time in it.
         full_data["time"] = full_data.time.apply(
@@ -242,23 +242,41 @@ class MarketDataMgr(object):
         full_data = full_data.sort_index()
         full_data["time_idx"] = range(0, len(full_data))
         full_data = data_util.add_group_features(full_data, config=self.config)
-        logging.info(f"full_data after add_group:{full_data.iloc[:2]}")
+        #logging.error(f"full_data:{full_data[['time_idx', 'timestamp']]}")
+        #logging.info(f"full_data after add_group:{full_data.iloc[:2]}")
         full_ds = ray.data.from_pandas(full_data)
         add_example_features = partial(
             data_util.add_example_level_features, cal=self.market_cal,
             macro_data_builder=self.macro_data_builder, config=self.config)
         full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
-        full_data = full_ds.to_pandas(limit=10000000).sort_index()
+        full_data = full_ds.to_pandas(limit=10000000)
+        full_data["new_idx"] = full_data.apply(
+            lambda x: x.ticker + "_" + str(x.timestamp), axis=1
+        )
+        full_data = full_data.set_index("new_idx")
+        full_data = full_data.sort_index()
         #logging.info(f"full_data after add_example:{full_data.iloc[:10]}")
         #full_data = data_util.add_example_level_features(self.market_cal, self.macro_data_builder, full_data)
+        #logging.error(f"before example full_data:{full_data[['time_idx','timestamp']]}")
         full_data = data_util.add_example_group_features(cal=self.market_cal, macro_data_builder=self.macro_data_builder,
                                                          raw_data=full_data, config=self.config)
         logging.error(f"full_data before filtering:{full_data.describe()}")
-        logging.error(f"full_data.ret_from_vwap_around_london_open:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
+        logging.error(f"full_data.ret_from_vwap_around_london_open>0.15:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
         #logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
-        logging.error(f"ret_from_vwap_around_macro_event_imp2>0.25:{full_data[full_data.ret_from_vwap_around_macro_event_imp2>0.12].iloc[-10:]}") 
-        logging.error(f"ret_from_vwap_around_macro_event_imp2<-0.25:{full_data[full_data.ret_from_vwap_around_macro_event_imp2<-0.12].iloc[-10:]}")
-        #exit(0)
+        logging.error(f"full_data.ret_from_close_cumsum_low_51d<-0.24:{full_data[full_data.ret_from_close_cumsum_low_51d<-0.24].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_close_cumsum_low_201d<-0.3:{full_data[full_data.ret_from_close_cumsum_low_201d<-0.3].iloc[-10:]}")
+        logging.error(f"full_data.ret_from_close_cumsum_high_201d>0.3:{full_data[full_data.ret_from_close_cumsum_high_201d>0.3].iloc[-10:]}")
+        logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp1>0.2:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp1>0.2].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp2<0:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp2<-0.15].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp2>0.2:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp2>0.2].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_vwap_around_london_open>0.2:{full_data[full_data.ret_from_vwap_around_london_open>0.2].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_vwap_around_london_close>0.3:{full_data[full_data.ret_from_vwap_around_london_close>0.3].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_vwap_around_new_york_close>0.3:{full_data[full_data.ret_from_vwap_around_new_york_close>0.3].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_vwap_around_new_york_open>0.3:{full_data[full_data.ret_from_vwap_around_new_york_open>0.3].iloc[-10:]}")
+        logging.error(f"full_data.ret_from_vwap_since_london_open>0.3:{full_data[full_data.ret_from_vwap_since_london_open>0.3].iloc[-10:]}")
+        logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp3<0:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp3<-0.15].iloc[-10:]}") 
+        logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp3>0.2:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp3>0.2].iloc[-10:]}") 
+
         #full_data = full_data[(full_data.ret_from_vwap_around_new_york_open<0.15) &
         #                      (full_data.ret_from_vwap_around_new_york_open>-0.15)]
         #full_data = full_data[(full_data.ret_from_vwap_around_london_open<0.15) &
@@ -268,6 +286,7 @@ class MarketDataMgr(object):
         #full_data = full_data[(full_data.daily_kurt<0.5) &
         #                      (full_data.daily_kurt>-0.5)]
         logging.info(f"full_data:{full_data.describe()}")
+        exit(0)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(full_data)
             snapshot_dir = f"{self.config.dataset.snapshot}/{env_mgr.run_id}/{data_start_date_str}_{data_end_date_str}"
