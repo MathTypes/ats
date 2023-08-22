@@ -42,7 +42,7 @@ def optimize_hyperparameters(
     max_epochs: int = 20,
     n_trials: int = 100,
     timeout: float = 3600 * 8.0,  # 8 hours
-    gradient_clip_val_range: Tuple[float, float] = (0.1, 10.0),
+    gradient_clip_val_range: Tuple[float, float] = (0.1, 2.0),
     hidden_size_range: Tuple[int, int] = (16, 16),
     hidden_continuous_size_range: Tuple[int, int] = (8, 8),
     attention_head_size_range: Tuple[int, int] = (4, 4),
@@ -51,7 +51,7 @@ def optimize_hyperparameters(
     d_model_range: Tuple[int, int] = (16, 16),
     stride_range: Tuple[int, int] = (2, 2),
     dropout_range: Tuple[float, float] = (0.1, 0.1),
-    learning_rate_range: Tuple[float, float] = (1e-5, 0.01),
+    learning_rate_range: Tuple[float, float] = (1e-4, 0.5),
     use_learning_rate_finder: bool = True,
     trainer_kwargs: Dict[str, Any] = {},
     log_dir: str = "lightning_logs",
