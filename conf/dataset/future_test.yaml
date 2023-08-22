@@ -7,3 +7,6 @@ max_stale_minutes: 30
 snapshot: ${hydra.runtime.cwd}/data/snapshot/test
 write_snapshot: False
 read_snapshot: True
+interval_mins: 30
+ret_std: 0.001
+base_price: 500
