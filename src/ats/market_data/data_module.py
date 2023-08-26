@@ -27,7 +27,7 @@ eval_batch_size = 10
 class TimeSeriesDataModule(pl.LightningDataModule):
     def __init__(
             self, config, full_data, training_time_idx, validation_time_idx, test_time_idx,
-            target, transformed_full = None
+            target_dict, transformed_full = None
     ):
         super().__init__()
         if training_time_idx.empty and config.job.mode in ["eval", "build_search"]:
@@ -38,10 +38,8 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             train_time_idx = eval_time_idx
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
-        target_normalizer = None
-        #if OmegaConf.is_list(target):
-        if isinstance(target, (typing.List)):
-            #target = OmegaConf.to_object(target)
+        target_normalizer = {}
+        for name, target in target_dict.items():
             normalizer_list = []
             for i in range(len(target)):
                 if "volume_back" in target[i]:
@@ -50,13 +48,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
                     normalizer_list.append(EncoderNormalizer(transformation="relu"))
                 else:
                     normalizer_list.append(EncoderNormalizer(transformation=None))
-                    #normalizer_list.append(TorchNormalizer(method="robust"))
-            target_normalizer=MultiNormalizer(normalizer_list)
-        else:
-            #target_normalizer=TorchNormalizer(method="robust")
-            target_normalizer=EncoderNormalizer(transformation=None)
+            target_normalizer[name] = MultiNormalizer(normalizer_list)
         # use softplus and normalize by group
-        logging.info(f"target:{type(target)}")
+        logging.info(f"target:{type(target)}, target_normalizer={target_normalizer}")
         time_varying_known_reals = config.model.features.time_varying_known_reals
         if OmegaConf.is_list(time_varying_known_reals):
             time_varying_known_reals = OmegaConf.to_object(time_varying_known_reals)
@@ -71,7 +65,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         self.full = TimeSeriesDataSet(
             self.full_data,
             time_idx="time_idx",
-            target=target,
+            target=target_dict,
             group_ids=["ticker"],
             min_encoder_length=context_length,  # keep encoder length long (as it is in the validation set)
             max_encoder_length=context_length,

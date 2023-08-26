@@ -2,6 +2,7 @@
 Encoders for encoding categorical variables and scaling continuous data.
 """
 
+import traceback
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
 import warnings
@@ -594,12 +595,16 @@ class TorchNormalizer(InitialParameterRepresenterMixIn, BaseEstimator, Transform
             torch.Tensor: de-scaled data
         """
         # ensure output dtype matches input dtype
+        #logging.info(f"data:{data}")
         dtype = data["prediction"].dtype
 
         # inverse transformation with tensors
         norm = data["target_scale"]
 
         # use correct shape for norm
+        #traceback.print_stack()
+        #logging.info(f"data['prediction']: {type(data['prediction'])}, {data['prediction'].shape}")
+        #logging.info(f"norm:{norm.shape}")
         if data["prediction"].ndim > norm.ndim:
             norm = norm.unsqueeze(-1)
 
@@ -607,7 +612,7 @@ class TorchNormalizer(InitialParameterRepresenterMixIn, BaseEstimator, Transform
         y = data["prediction"] * norm[:, 1, None] + norm[:, 0, None]
 
         y = self.inverse_preprocess(y)
-
+        #logging.info(f"y:{y.shape}")
         # return correct shape
         if data["prediction"].ndim == 1 and y.ndim > 1:
             y = y.squeeze(0)

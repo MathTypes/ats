@@ -24,7 +24,6 @@ from ats.util import logging_utils
 
 RESULTS_PATH = Path("results")
 
-
 @hydra.main(config_path="conf", config_name="config")
 def my_app(cfg: DictConfig) -> None:    
     logging.info(f"Current working directory : {os.getcwd()}")

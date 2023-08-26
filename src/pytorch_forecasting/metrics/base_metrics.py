@@ -78,6 +78,8 @@ class Metric(LightningMetric):
         Returns:
             torch.Tensor: parameters in real/not normalized space
         """
+        #traceback.print_stack()
+        #logging.info(f"parameters:{parameters.shape}, target_scale:{target_scale.shape}, encoder:{encoder}")
         return encoder(dict(prediction=parameters, target_scale=target_scale))
 
     def to_prediction(self, y_pred: torch.Tensor) -> torch.Tensor:
@@ -769,7 +771,7 @@ class MultiHorizonMetric(Metric):
         """
         raise NotImplementedError()
 
-    def update(self, y_pred, target):
+    def update(self, y_pred, target, encoder_target=None, encoder_lengths=None,):
         """
         Update method of metric that handles masking of values.
 
@@ -783,12 +785,14 @@ class MultiHorizonMetric(Metric):
             torch.Tensor: loss as a single number for backpropagation
         """
         # unpack weight
+        #traceback.print_stack()
         if isinstance(target, (list, tuple)) and not isinstance(target, rnn.PackedSequence):
             target, weight = target
         else:
             weight = None
 
         # unpack target
+        #logging.info(f"target:{target}, type:{type(target)}, target_shape:{target.shape}")
         if isinstance(target, rnn.PackedSequence):
             target, lengths = unpack_sequence(target)
         else:

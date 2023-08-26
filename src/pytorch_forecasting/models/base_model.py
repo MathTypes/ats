@@ -263,7 +263,7 @@ class PredictCallback(BasePredictionWriter):
             elif out.dtype == torch.float:  # only floats can be filled with nans
                 out = out.masked_fill(nan_mask, torch.tensor(float("nan")))
         elif self.mode == "quantiles":
-            out = pl_module.to_quantiles(out, **self.mode_kwargs)
+            out = pl_module.to_quantiles(out, head="prediction", **self.mode_kwargs)
             # mask non-predictions
             if isinstance(out, (list, tuple)):
                 out = [
@@ -443,6 +443,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         learning_rate: Union[float, List[float]] = 1e-3,
         log_gradient_flow: bool = False,
         loss: Metric = SMAPE(),
+        head_loss_dict: Dict[str, Any] = {},
+        n_targets_dict: Dict[str, Any] = {},
+        targets_dict: Dict[str, Any] = {},
         logging_metrics: nn.ModuleList = nn.ModuleList([]),
         reduce_on_plateau_patience: int = 1000,
         reduce_on_plateau_reduction: float = 2.0,
@@ -503,10 +506,16 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 self.loss = MultiLoss(metrics=[convert_torchmetric_to_pytorch_forecasting_metric(l) for l in loss])
             else:
                 self.loss = convert_torchmetric_to_pytorch_forecasting_metric(loss)
+        self.head_loss_dict = head_loss_dict
+        self.n_targets_dict = n_targets_dict
+        self.targets_dict = targets_dict
         if not hasattr(self, "logging_metrics"):
             self.logging_metrics = nn.ModuleList(
                 [convert_torchmetric_to_pytorch_forecasting_metric(l) for l in logging_metrics]
             )
+        logging.info(f"model_loss:{self.loss}")
+        logging.info(f"self.n_targets_dict:{self.n_targets_dict}")
+        logging.error(f"output_transformer:{output_transformer}")
         if not hasattr(self, "output_transformer"):
             self.output_transformer = output_transformer
         if not hasattr(self, "optimizer"):  # callables are removed from hyperparameters, so better to save them
@@ -573,6 +582,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         prediction: Union[torch.Tensor, List[torch.Tensor]],
         target_scale: Union[torch.Tensor, List[torch.Tensor]],
         loss: Optional[Metric] = None,
+        head = None
     ) -> torch.Tensor:
         """
         Extract prediction from network output and rescale it to real space / de-normalize it.
@@ -586,15 +596,21 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             torch.Tensor: rescaled prediction
         """
         if loss is None:
-            loss = self.loss
-        if isinstance(loss, MultiLoss):
-            out = loss.rescale_parameters(
-                prediction,
-                target_scale=target_scale,
-                encoder=self.output_transformer.normalizers,  # need to use normalizer per encoder
-            )
-        else:
-            out = loss.rescale_parameters(prediction, target_scale=target_scale, encoder=self.output_transformer)
+            loss = self.head_loss_dict[head]
+        #logging.info(f"self.output_transformer.normalizers:{self.output_transformer}, loss:{loss}")
+        #if isinstance(loss, MultiLoss):
+        #    out = loss.rescale_parameters(
+        #        prediction,
+        #        target_scale=target_scale,
+        #        encoder=self.output_transformer.normalizers,  # need to use normalizer per encoder
+        #    )
+        #else:
+        #logging.info(f"prediction:{prediction}")
+        #logging.info(f"loss:{loss}")
+        #logging.info(f"target_scale_head:{target_scale[head]}")
+        #out = loss.rescale_parameters(prediction, target_scale=target_scale[head], encoder=self.output_transformer[head].normalizers[0])
+        out = loss.rescale_parameters(prediction, target_scale=target_scale[head], encoder=self.output_transformer[head].normalizers)
+        #logging.info(f"out: len:{len(out)}, shape(0):{out[0].shape}")
         return out
 
     @staticmethod
@@ -633,24 +649,33 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
 
         # handle multiple targets
         new_kwargs = {}
-        n_targets = len(dataset.target_names)
+        n_targets_dict = {key:len(val) for key,val in dataset.target.items()}
+        logging.info(f"n_targets_dict:{n_targets_dict}")
         if default_loss is None:
             default_loss = MAE()
         loss = kwargs.get("loss", default_loss)
-        if n_targets > 1:  # try to infer number of ouput sizes
+        loss_per_head = kwargs.get("loss_per_head", None)
+        logging.info(f"loss:{loss}")
+        logging.info(f"loss_per_head:{loss_per_head}")
+        #if n_targets > 1:  # try to infer number of ouput sizes
+        logging.info(f"kwargs:{kwargs}")
+        output_size_dict = {}
+        for key, val in loss_per_head.items():
+            loss = val["loss"]
+            logging.info(f"key:{key}, loss:{loss}, val:{val}")
+            n_targets = n_targets_dict[key]
+            # Following assumes that we always use MultiNormalizer
+            normalizer = dataset.target_normalizer[key].normalizers[0]
+            logging.info(f"normalizer:{normalizer}")
+            output_size_dict[key] = [get_output_size(normalizer, loss)]*n_targets_dict[key]
             if not isinstance(loss, MultiLoss):
                 loss = MultiLoss([deepcopy(loss)] * n_targets)
-                new_kwargs["loss"] = loss
                 #logging.info(f"not multiloss:{new_kwargs}")
-            if isinstance(loss, MultiLoss) and "output_size" not in kwargs:
-                new_kwargs["output_size"] = [
-                    get_output_size(normalizer, l)
-                    for normalizer, l in zip(dataset.target_normalizer.normalizers, loss.metrics)
-                ]
-                #logging.info(f"multiloss:{new_kwargs}")
-        elif "output_size" not in kwargs:
-            new_kwargs["output_size"] = get_output_size(dataset.target_normalizer, loss)
-        #logging.info(f"new_kwatgs:{new_kwargs}")
+        #if "output_size" not in kwargs:
+        #    new_kwargs["output_size"] = output_size_dict
+        #new_kwargs["loss"] = loss
+        #logging.info(f"output_size_dict:{output_size_dict}")
+        #logging.info(f"new_kwargs:{new_kwargs}")
         #logging.info(f"loss:{loss}")
         #exit(0)
         return new_kwargs
@@ -695,6 +720,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         x, y = batch
         log, out = self.step(x, y, batch_idx)
         #logging.info(f"validation_step, x:{x}, y:{y}, out:{out}")
+        # out has multi-head prediction output
         log.update(self.create_log(x, y, out, batch_idx))
         self.validation_step_outputs.append(log)
         return log
@@ -722,6 +748,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         y: Tuple[torch.Tensor, torch.Tensor],
         out: Dict[str, torch.Tensor],
         batch_idx: int,
+        head: str,
         prediction_kwargs: Dict[str, Any] = {},
         quantiles_kwargs: Dict[str, Any] = {},
     ) -> Dict[str, Any]:
@@ -750,7 +777,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             quantiles_kwargs.setdefault("n_samples", 20)
             quantiles_kwargs.setdefault("use_metric", True)
 
-        self.log_metrics(x, y, out, prediction_kwargs=prediction_kwargs)
+        self.log_metrics(x, y, out, prediction_kwargs=prediction_kwargs, head=head)
         #logging.info(f"self.log_interval:{self.log_interval}")
         if self.log_interval > 0:
             #self.log_prediction(
@@ -780,6 +807,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # pack y sequence if different encoder lengths exist
         #traceback.print_stack()
         #logger.info(f"step kwargs:{kwargs}, batch_idx:{batch_idx}")
+        #logging.info(f"x:{x}")
         #logger.info(f"y:{y}")
         if (x["decoder_lengths"] < x["decoder_lengths"].max()).any():
             if isinstance(y[0], (list, tuple)):
@@ -870,7 +898,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #if isinstance(self.loss, (MASE, MultiLoss)):
                 # TODO: figure out how we can pass encoder_target to losses under
                 # MultiLoss.
+                # prediction has output for all heads
                 if isinstance(self.loss, (MASE, MultiLossWithUncertaintyWeight)):
+                    #logging.info(f"prediction:{prediction}")
+                    #logging.info(f"y:{y}")
                     mase_kwargs = dict(encoder_target=x["encoder_target"], encoder_lengths=x["encoder_lengths"])
                     loss = self.loss(prediction, y, **mase_kwargs)
                 else:
@@ -894,6 +925,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         x: Dict[str, torch.Tensor],
         y: torch.Tensor,
         out: Dict[str, torch.Tensor],
+        head: str = None,
         prediction_kwargs: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """
@@ -906,9 +938,13 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             prediction_kwargs (Dict[str, Any]): parameters for ``to_prediction()`` of the loss metric.
         """
         # logging losses - for each target
+        #traceback.print_stack()
         if prediction_kwargs is None:
             prediction_kwargs = {}
-        y_hat_point = self.to_prediction(out, **prediction_kwargs)
+        y_hat_point = self.to_prediction(out, head=head, **prediction_kwargs)
+        #logging.info(f"out:{out}")
+        logging.info(f"y:{y}")
+        logging.info(f"y_hat_point:{y_hat_point[0].shape}")
         if isinstance(self.loss, MultiLoss):
             y_hat_point_detached = [p.detach() for p in y_hat_point]
         else:
@@ -918,11 +954,12 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             for idx, y_point, y_part, encoder_target in zip(
                 list(range(len(y_hat_point_detached))),
                 y_hat_point_detached,
-                to_list(y[0]),
+                to_list(y[0][head]),
                 to_list(x["encoder_target"]),
             ):
                 y_true = (y_part, y[1])
-                #logging.info(f"y_part:{y_part.shape}, y_point:{y_point.shape}, metrics:{metric}")
+                logging.info(f"y_true:{y_true}")
+                logging.info(f"y_part:{y_part.shape}, y_point:{y_point.shape}, metrics:{metric}")
                 if "reduction" in prediction_kwargs:
                     if isinstance(metric, MASE):
                         lengths = torch.full((y_part.size(0),), fill_value=y_part.size(1), dtype=torch.long, device=y_part.device)
@@ -940,7 +977,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                         loss_value = metric(y_point, y_true)
                 #logging.info(f"loss_value:{loss_value}, metrics:{metric}, y_true:{y_true}, idx:{idx}")
                 if len(y_hat_point_detached) > 1:
-                    target_tag = self.target_names[idx] + " "
+                    target_tag = self.targets_dict[head][idx] + " "
                 else:
                     target_tag = ""
                 result[f"{target_tag}{self.current_stage}_{metric.name}"] = loss_value
@@ -952,6 +989,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         y: torch.Tensor,
         out: Dict[str, torch.Tensor],
         prediction_kwargs: Dict[str, Any] = None,
+        head: str = "prediction"
     ) -> None:
         """
         Log metrics every training/validation step.
@@ -963,7 +1001,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             prediction_kwargs (Dict[str, Any]): parameters for ``to_prediction()`` of the loss metric.
         """
         # logging losses - for each target
-        result = self.compute_metrics(x, y, out, prediction_kwargs)
+        result = self.compute_metrics(x, y, out=out, head=head, prediction_kwargs=prediction_kwargs)
         for name, loss_value in result.items():
             self.log(
                 name,
@@ -1138,8 +1176,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         #if isinstance(out, Tuple):
             # skip loss
         #    out = out[1]
-        y_hats = to_list(self.to_prediction(out, **prediction_kwargs))
-        y_quantiles = to_list(self.to_quantiles(out, **quantiles_kwargs))
+        y_hats = to_list(self.to_prediction(out, head=head, **prediction_kwargs))
+        y_quantiles = to_list(self.to_quantiles(out, head="prediction", **quantiles_kwargs))
         #logging.info(f"draw_mode:{draw_mode}, y_hats:{y_hats}, row={row}, col={col}")
         fig = ax
         if fig == None:
@@ -1425,7 +1463,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         #logging.info(f"creating net with {kwargs}")
         net = cls(**kwargs)
         net.dataset_parameters = dataset.get_parameters()
-        if dataset.multi_target:
+        #if dataset.multi_target:
+        if True:
             assert isinstance(
                 net.loss, MultiLoss
             ), f"multiple targets require loss to be MultiLoss but found {net.loss}"
@@ -1453,10 +1492,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         Returns:
             List[str]: list of target names
         """
-        if hasattr(self, "dataset_parameters") and self.dataset_parameters is not None:
-            return to_list(self.dataset_parameters["target"])
-        else:
-            return [f"Target {idx + 1}" for idx in range(self.n_targets)]
+        return self.dataset_parameters["target"]
+        #if hasattr(self, "dataset_parameters") and self.dataset_parameters is not None:
+        #    return to_list(self.dataset_parameters["target"])
+        #else:
+        #    return [f"Target {idx + 1}" for idx in range(self.n_targets)]
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         self.dataset_parameters = checkpoint.get("dataset_parameters", None)
@@ -1464,7 +1504,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         for k, v in checkpoint[self.CHECKPOINT_HYPER_PARAMS_SPECIAL_KEY].items():
             setattr(self, k, v)
 
-    def to_prediction(self, out: Dict[str, Any], use_metric: bool = True, **kwargs):
+    def to_prediction(self, out: Dict[str, Any], use_metric: bool = True, head: str = "prediction", **kwargs):
         """
         Convert output to prediction using the loss metric.
 
@@ -1479,16 +1519,18 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             torch.Tensor: predictions of shape batch_size x timesteps
         """
         #traceback.print_stack()
+        loss = self.head_loss_dict[head]
+        logging.info(f"loss:{loss}")
         if not use_metric:
             # if samples were already drawn directly take mean
             # todo: support classification
-            if isinstance(self.loss, MultiLoss):
-                out = [Metric.to_prediction(loss, out["prediction"][idx]) for idx, loss in enumerate(self.loss)]
+            if isinstance(loss, MultiLoss):
+                out = [Metric.to_prediction(loss, out[head][idx]) for idx, loss in enumerate(loss)]
             else:
-                #logging.info(f"not use metrics:{out['prediction']}, loss:{self.loss}")
-                out = Metric.to_prediction(self.loss, out["prediction"])
+                out = Metric.to_prediction(loss, out[head])
+            logging.info(f"out:{out}")
         else:
-            #logging.info(f"before prediction:{out}, {type(out)}")
+            logging.info(f"before prediction:{out}, {type(out)}")
             # Added to address the issue where loss is first element
             if isinstance(out, (tuple)):
                 #logging.info(f"{type(out[0])}")
@@ -1498,13 +1540,13 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 #traceback.print_stack()
                 #logging.info(f"use metrics:{out['prediction']}")
                 #logging.info(f"loss:{self.loss}")
-                out = self.loss.to_prediction(out["prediction"], **kwargs)
+                out = loss.to_prediction(out[head], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
                 #logging.info(f"to_prediction_out:{out}")
-                out = self.loss.to_prediction(out["prediction"])
+                out = loss.to_prediction(out[head])
         return out
 
-    def to_quantiles(self, out: Dict[str, Any], use_metric: bool = True, **kwargs):
+    def to_quantiles(self, out: Dict[str, Any], use_metric: bool = True, head:str = "prediction", **kwargs):
         """
         Convert output to quantiles using the loss metric.
 
@@ -1521,24 +1563,25 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # if samples are output directly take quantiles
         if not use_metric:
             # todo: support classification
-            if isinstance(self.loss, MultiLoss):
+            loss = self.head_loss_dict[head]
+            if isinstance(loss, MultiLoss):
                 out = [
-                    Metric.to_quantiles(loss, out["prediction"][idx], quantiles=kwargs.get("quantiles", loss.quantiles))
-                    for idx, loss in enumerate(self.loss)
+                    Metric.to_quantiles(loss, out[head][idx], quantiles=kwargs.get("quantiles", loss.quantiles))
+                    for idx, loss in enumerate(loss)
                 ]
             else:
                 #logging.info(f"quantiles:{kwargs.get('quantiles', self.loss.quantiles)}")
                 #logging.info(f"prediction:{prediction}")
                 out = Metric.to_quantiles(
-                    self.loss, out["prediction"], quantiles=kwargs.get("quantiles", self.loss.quantiles)
+                    loss, out[head], quantiles=kwargs.get("quantiles", loss.quantiles)
                 )
                 #logging.info(f"out:{out}")
         else:
             try:
-                out = self.loss.to_quantiles(out["prediction"], **kwargs)
+                out = loss.to_quantiles(out[head], **kwargs)
             except TypeError:  # in case passed kwargs do not exist
                 #logging.info(f"to_quantile:{out}")
-                out = self.loss.to_quantiles(out["prediction"])
+                out = loss.to_quantiles(out[head])
         return out
 
     def predict(
@@ -2197,10 +2240,10 @@ class AutoRegressiveBaseModel(BaseModel):
         """
         kwargs.setdefault("target", dataset.target)
         # check that lags for targets are the same
-        lags = {name: lag for name, lag in dataset.lags.items() if name in dataset.target_names}  # filter for targets
-        target0 = dataset.target_names[0]
+        lags = {name: lag for name, lag in dataset.lags.items() if name in dataset.all_target_names}  # filter for targets
+        target0 = dataset.all_target_names[0]
         lag = set(lags.get(target0, []))
-        for target in dataset.target_names:
+        for target in dataset.all_target_names:
             assert lag == set(lags.get(target, [])), f"all target lags in dataset must be the same but found {lags}"
 
         kwargs.setdefault("target_lags", {name: dataset._get_lagged_names(name) for name in lags})

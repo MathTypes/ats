@@ -302,7 +302,6 @@ def create_viz_row(
     config,
     pl_module,
     out,
-    target_size,
     interp_output,
     rmse,
     mae,
@@ -338,10 +337,10 @@ def create_viz_row(
         & (train_data.time_idx < index.time_idx + config.model.prediction_length)
     ]
     # logging.info(f"train_data:rows:{train_data_rows}")
-    if target_size > 1:
-        context_length = len(x["encoder_target"][0][idx])
-    else:
-        context_length = len(x["encoder_target"][idx])
+    #if target_size > 1:
+    context_length = len(x["encoder_target"][0][idx])
+    #else:
+    #    context_length = len(x["encoder_target"][idx])
     prediction_length = len(x["decoder_time_idx"][idx])
     decoder_time_idx = x["decoder_time_idx"][idx][0].cpu().detach().numpy()
     x_time = train_data[

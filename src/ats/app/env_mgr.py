@@ -103,7 +103,10 @@ class EnvMgr(object):
         self.data_end_date = data_end_date + datetime.timedelta(days=self.config.model.max_lead)
         self.dataset_base_dir = self.config.dataset.base_dir
         self.model_tickers = self.config.dataset.model_tickers
-        self.heads, self.targets = model_utils.get_heads_and_targets(self.config)
+        self.heads, self.all_targets, self.targets = model_utils.get_heads_and_targets(self.config)
+        logging.info(f"heads:{self.heads}")
+        logging.info(f"targets:{self.targets}")
+        logging.info(f"all_targets:{self.all_targets}")
         self.time_interval = self.config.dataset.time_interval
         self.target_size = len(self.targets) if isinstance(self.targets, List) else 1
         self.context_length = self.config.model.context_length

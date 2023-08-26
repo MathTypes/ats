@@ -67,7 +67,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
         self.val_y_batch = []
         self.indices_batch = []
         self.config = config
-        self.target_size = len(target) if isinstance(target, List) else 1
         self.num_samples = config.job.eval_batches
         self.every_n_epochs = config.job.log_example_eval_every_n_epochs
         logging.info(f"num_samples:{self.num_samples}")
@@ -87,9 +86,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
 
         self.validation = data_module.validation
         self.matched_eval_data = data_module.full_data
-        self.returns_target_name = self.validation.target_names[0]
-        transformer = self.validation.get_transformer(self.returns_target_name)
-        logging.info(f"transformer:{transformer}")
 
     def on_train_end(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
@@ -263,7 +259,6 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                     self.config,
                     self.pl_module,
                     out,
-                    self.target_size,
                     interp_output,
                     rmse,
                     mae,

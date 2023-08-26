@@ -601,21 +601,25 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 
         output_size = self.hparams.output_size
         returns_output_size = None
+        returns_daily_output_size = None
         vol_output_size = None
         min_max_output_size = None
         anomaly_returns_output_size = None
         if isinstance(output_size, Dict):
-            returns_output_size = output_size["returns_prediction"]
+            returns_output_size = output_size["prediction"]
+            if "returns_daily_prediction" in output_size:
+                returns_daily_output_size = output_size["returns_daily_prediction"]
             if "vol_prediction" in output_size:
                 vol_output_size = output_size["vol_prediction"]
             if "min_max" in output_size:
                 min_max_output_size = output_size["min_max"]
             if "anomaly_returns" in output_size:
                 anomaly_returns_output_size = output_size["anomaly_returns"]
-        logging.error(f"anomaly_returns_output_size:{anomaly_returns_output_size}")
+        #logging.error(f"anomaly_returns_output_size:{anomaly_returns_output_size}")
         #anomaly_returns_output_size = 1
         #logging.info(f"returns_output_size:{returns_output_size}")
-        if self.n_head_targets(head="returns_prediction") > 1:  # if to run with multiple targets
+        if self.n_head_targets(head="prediction") > 1:  # if to run with multiple targets
+            #logging.info(f"create multiple returns output")
             self.output_layer = nn.ModuleList(
                 [nn.Linear(d_model, output_size) for output_size in returns_output_size]
             )
@@ -630,38 +634,56 @@ class PatchTftSupervised(BaseModelWithCovariates):
             #                              num_layers=n_layers,
             #                              activation=nn.ReLU)
             self.output_layer = nn.Linear(d_model, returns_output_size)
+        #logging.info(f"self.output_layer:{self.output_layer}")
+        #exit(0)
         self.vol_output_layer = None
         if vol_output_size:
             if self.n_head_targets(head="vol_prediction") > 1:  # if to run with multiple targets
-                self.vol_output_layer = nn.ModuleList(
-                    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in vol_output_size])
                 #self.vol_output_layer = nn.ModuleList(
-                #    [nn.Linear(d_model, output_size) for output_size in vol_output_size]
-                #)
+                #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in vol_output_size])
+                self.vol_output_layer = nn.ModuleList(
+                    [nn.Linear(d_model, output_size) for output_size in vol_output_size]
+                )
             else:
                 #self.vol_output_layer = nn.Linear(d_model, vol_output_size)
-                self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=vol_output_size,
+                self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
                                                   num_layers=n_layers,
                                                   activation=nn.ReLU)
-        self.anomaly_returns_output_layer = None
-        if anomaly_returns_output_size:
-            if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
-                self.anomaly_returns_output_layer = nn.ModuleList(
-                    [nn.Linear(d_model, output_size) for output_size in anomaly_returns_output_size]
+        self.returns_daily_output_layer = None
+        if returns_daily_output_size:
+            if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
+                #self.returns_daily_output_layer = nn.ModuleList(
+                #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in returns_daily_output_size])
+                self.returns_daily_output_layer = nn.ModuleList(
+                    [nn.Linear(d_model, output_size) for output_size in returns_daily_output_size]
                 )
             else:
-                self.anomaly_returns_output_layer = nn.Linear(d_model, anomaly_returns_output_size)
-            self.generate_anomaly = True
-        self.min_max_output_layer = None
-        if min_max_output_size:
-            if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
-                self.min_max_output_layer = nn.ModuleList(
-                    [nn.Linear(d_model, output_size) for output_size in min_max_output_size]
-                )
-            else:
-                self.min_max_output_layer = nn.Linear(d_model, min_max_output_size)
+                self.returns_daily_output_layer = nn.Linear(d_model, returns_daily_output_size)
+                #self.returns_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=vol_output_size,
+                #                                            num_layers=n_layers,
+                #                                            activation=nn.ReLU)
+            #logging.info(f"returns_daily_output_size:{returns_daily_output_size}")
+        #self.anomaly_returns_output_layer = None
+        #if anomaly_returns_output_size:
+        #    if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
+        #        self.anomaly_returns_output_layer = nn.ModuleList(
+        #            [nn.Linear(d_model, output_size) for output_size in anomaly_returns_output_size]
+        #        )
+        #    else:
+        #        self.anomaly_returns_output_layer = nn.Linear(d_model, anomaly_returns_output_size)
+        #    self.generate_anomaly = True
+        #self.min_max_output_layer = None
+        #if min_max_output_size:
+        #    if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
+        #        self.min_max_output_layer = nn.ModuleList(
+        #            [nn.Linear(d_model, output_size) for output_size in min_max_output_size]
+        #        )
+        #    else:
+        #        self.min_max_output_layer = nn.Linear(d_model, min_max_output_size)
         #logging.info(f"output_layer:{self.output_layer}")
 
     def _get_AssociationDiscrepancy(self, series, prior):
@@ -694,6 +716,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
 
     def _training_step(self, batch, batch_idx, **kwargs):
         x, y = batch
+        #logging.info(f"x:{x}")
+        #logging.info(f"y:{y}")
         opt = self.optimizers()
         opt.zero_grad()
         ## self(x) is the same as calling self.forward(x)
@@ -743,7 +767,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
         Returns:
             int: number of targets
         """
-        loss = self.loss_per_head[head]
+        loss = self.head_loss_dict[head]
+        #logging.info(f"loss_n_head, head:{head}, loss:{loss}")
         if isinstance(loss, MultiLoss):
             return len(loss.metrics)
         else:
@@ -774,6 +799,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         new_kwargs["target_dim"] = dataset.max_prediction_length
         new_kwargs["x_reals"] = dataset.reals
         new_kwargs["max_encoder_length"]=dataset.max_encoder_length
+        #logging.info(f"kwargs:{kwargs}")
         new_kwargs.update(cls.deduce_default_output_parameters(dataset, kwargs, QuantileLoss()))
 
         # create class and return
@@ -1002,10 +1028,17 @@ class PatchTftSupervised(BaseModelWithCovariates):
         # z: [bs x nvars x target_dim]
         #logging.info(f"output_shape after flatten:{output.shape}")
         #logging.info(f"output_layer:{self.output_layer}")
-        if self.n_head_targets(head="returns_prediction") > 1:  # if to run with multiple targets
+        if self.n_head_targets(head="prediction") > 1:  # if to run with multiple targets
             output = [output_layer(embedding) for output_layer in self.output_layer]
         else:
             output = self.output_layer(embedding)
+        #logging.info(f"output len:len{output}, tensor.shape:{output[0].shape}")
+        returns_daily_output = None
+        if self.returns_daily_output_layer:
+            if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
+                returns_daily_output = [output_layer(embedding) for output_layer in self.returns_daily_output_layer]
+            else:
+                returns_daily_output = self.returns_daily_output_layer(embedding)
         vol_output = None
         if self.vol_output_layer:
             if self.n_head_targets(head="vol_prediction") > 1:  # if to run with multiple targets
@@ -1013,42 +1046,54 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else:
                 vol_output = self.vol_output_layer(embedding)
         #logging.info(f"vol_output:{vol_output}")
-        anomaly_returns_output = None
-        min_max_output = None
-        if self.anomaly_returns_output_layer:
-            if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
-                anomaly_returns_output = [output_layer(embedding) for output_layer in self.anomaly_returns_output_layer]
-            else:
-                anomaly_returns_output = self.anomaly_returns_output_layer(embedding)
-        if self.min_max_output_layer:
-            if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
-                min_max_output = [output_layer(embedding) for output_layer in self.min_max_output_layer]
-            else:
-                min_max_output = self.min_max_output_layer(embedding)
+        #anomaly_returns_output = None
+        #min_max_output = None
+        #if self.anomaly_returns_output_layer:
+        #    if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
+        #        anomaly_returns_output = [output_layer(embedding) for output_layer in self.anomaly_returns_output_layer]
+        #    else:
+        #        anomaly_returns_output = self.anomaly_returns_output_layer(embedding)
+        #if self.min_max_output_layer:
+        #    if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
+        #        min_max_output = [output_layer(embedding) for output_layer in self.min_max_output_layer]
+        #    else:
+        #        min_max_output = self.min_max_output_layer(embedding)
         # Remove last dimension if it is 1
         #logging.info(f"output before squeeze:{output[0].shape}, {output[1].shape}")
         if isinstance(output, List):
           output = [ torch.squeeze(val, dim=-1) for val in output]
         else:
           output = torch.squeeze(output, dim=-1)
-        if anomaly_returns_output is not None:
-            if isinstance(anomaly_returns_output, List):
-                anomaly_returns_output = [ torch.squeeze(val, dim=-1) for val in anomaly_returns_output]
-            else:
-                anomaly_returns_output = torch.squeeze(anomaly_returns_output, dim=-1)
-            output = [output, anomaly_returns_output]
-        if min_max_output is not None:
-            if isinstance(min_max_output, List):
-                min_max_output = [ torch.squeeze(val, dim=-1) for val in min_max_output]
-            else:
-                min_max_output = torch.squeeze(min_max_output, dim=-1)
-            output = [output, min_max_output]
+        if isinstance(returns_daily_output, List):
+          returns_daily_output = [ torch.squeeze(val, dim=-1) for val in returns_daily_output]
+        else:
+          returns_daily_output = torch.squeeze(returns_daily_output, dim=-1)
+        #logging.info(f"output: len{output}, shape(0):{output[0].shape}")
+        #logging.info(f"returns_daily_output: len{returns_daily_output}, shape(0):{returns_daily_output[0].shape}")
+        prediction=self.transform_output(output, target_scale=x["target_scale"], head="prediction")
+        returns_daily_output=self.transform_output(returns_daily_output, target_scale=x["target_scale"], head="returns_daily_prediction")
+        #logging.info(f"prediction:{prediction}")
+        #logging.info(f"returns_daily_output:{returns_daily_output}")
+        #exit(0)
+        #if anomaly_returns_output is not None:
+        #    if isinstance(anomaly_returns_output, List):
+        #        anomaly_returns_output = [ torch.squeeze(val, dim=-1) for val in anomaly_returns_output]
+        #    else:
+        #        anomaly_returns_output = torch.squeeze(anomaly_returns_output, dim=-1)
+        #    output = [output, anomaly_returns_output]
+        #if min_max_output is not None:
+        #    if isinstance(min_max_output, List):
+        #        min_max_output = [ torch.squeeze(val, dim=-1) for val in min_max_output]
+        #    else:
+        #        min_max_output = torch.squeeze(min_max_output, dim=-1)
+        #    output = [output, min_max_output]
 
         return self.to_network_output(
-            prediction=self.transform_output(output, target_scale=x["target_scale"]),
-            anomaly_returns_output=anomaly_returns_output,
-            vol_output=vol_output,
-            min_max_output=min_max_output,
+            prediction=prediction,
+            returns_daily_output=returns_daily_output,
+            #anomaly_returns_output=anomaly_returns_output,
+            #vol_output=vol_output,
+            #min_max_output=min_max_output,
             encoder_attention=attn_output_weights[..., :new_encoder_length],
             decoder_attention=attn_output_weights[..., new_encoder_length:],
             static_variables=static_variable_selection,
@@ -1067,7 +1112,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
             self.log_embeddings()
 
     def create_log(self, x, y, out, batch_idx, **kwargs):
-        log = super().create_log(x, y, out, batch_idx, **kwargs)
+        # y[0] is dict of ground truth, y[1] is weight
+        log = super().create_log(x, (y[0],y[1]), out, batch_idx, head="prediction", **kwargs)
         if self.log_interval > 0:
             log["interpretation"] = self._log_interpretation(out)
         return log

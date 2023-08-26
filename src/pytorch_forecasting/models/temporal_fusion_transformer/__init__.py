@@ -324,6 +324,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         # output processing -> no dropout at this late stage
         self.pre_output_gate_norm = GateAddNorm(self.hparams.hidden_size, dropout=None, trainable_add=False)
 
+        logging.error(f"self.n_targets:{self.n_targets}")
         if self.n_targets > 1:  # if to run with multiple targets
             self.output_layer = nn.ModuleList(
                 [nn.Linear(self.hparams.hidden_size, output_size) for output_size in self.hparams.output_size]

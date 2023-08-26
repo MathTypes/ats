@@ -286,7 +286,6 @@ class MarketDataMgr(object):
         #full_data = full_data[(full_data.daily_kurt<0.5) &
         #                      (full_data.daily_kurt>-0.5)]
         logging.info(f"full_data:{full_data.describe()}")
-        exit(0)
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(full_data)
             snapshot_dir = f"{self.config.dataset.snapshot}/{env_mgr.run_id}/{data_start_date_str}_{data_end_date_str}"

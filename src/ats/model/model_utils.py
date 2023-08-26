@@ -1,4 +1,5 @@
 # Usage
+from copy import deepcopy
 import logging
 from math import ceil
 import os
@@ -9,7 +10,7 @@ import warnings
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 import lightning.pytorch as pl
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig, ListConfig
 from pytorch_forecasting import (
     TemporalFusionTransformer,
     PatchTstTransformer,
@@ -86,174 +87,6 @@ def create_loss_per_head(heads, device, prediction_length):
     return loss_per_head
 
 
-def get_loss(config, prediction_length=None, hidden_size=None):
-    target_size = 1
-    if not prediction_length:
-        prediction_length = config.model.prediction_length
-    # logging.info(f"prediction_length:{prediction_length}")
-    if OmegaConf.is_list(config.model.target):
-        target = OmegaConf.to_object(config.model.target)
-        logging.info(f"target:{target}")
-        target_size = len(target)
-        loss_name = OmegaConf.to_object(config.model.loss_name)
-        losses = []
-        for i in range(target_size):
-            losses.append(
-                create_loss(loss_name[i], config.job.device, prediction_length)
-            )
-        loss = MultiLoss(losses)
-    else:
-        loss_name = config.model.loss_name
-        loss = create_loss(loss_name, config.job.device, prediction_length)
-    logging.info(f"created loss:{loss}")
-    return loss
-
-
-def get_nhits_model(config, data_module, heads):
-    device = config.job.device
-    training = data_module.training
-    prediction_length = config.model.prediction_length
-    # configure network and trainer
-    # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    pl.seed_everything(42)
-    loss = None
-    logging_metrics = []
-    output_size_dict = {}
-    if config.model.multitask:
-        loss_per_head = create_loss_per_head(heads, device, prediction_length)
-        losses = []
-        for name, l in loss_per_head.items():
-            losses.append(l["loss"])
-            logging_metrics.append(l["logging_metrics"])
-            # logging.info(f"loss name: {name}, l:{l}")
-            output_size_dict[name] = get_output_size(l["loss"])
-        if len(losses) > 1:
-            loss = MultiLossWithUncertaintyWeight(losses)
-        else:
-            loss = losses[0]
-    else:
-        # TODO implement single task loss
-        pass
-    net = NHiTS.from_dataset(
-        training,
-        weight_decay=1e-2,
-        loss=loss,
-        backcast_loss_ratio=0.0,
-        hidden_size=config.model.hidden_size,
-        prediction_length=config.model.prediction_length,
-        context_length=config.model.context_length,
-        learning_rate=config.model.learning_rate,
-        optimizer="Adam",
-        log_interval=0.25,
-        # n_blocks=[1,1,1],
-        # downsample_frequencies=[1,23,46],
-        # n_layers=2,
-        # log_val_interval=10000
-    )
-    return net
-
-
-def get_tft_model(config, data_module):
-    config.job.device
-    training = data_module.training
-    config.model.prediction_length
-    # configure network and trainer
-    pl.seed_everything(42)
-    loss = get_loss(config)
-    net = TemporalFusionTransformer.from_dataset(
-        training,
-        weight_decay=1e-2,
-        # not meaningful for finding the learning rate but otherwise very important
-        learning_rate=0.03,
-        hidden_size=8,  # most important hyperparameter apart from learning rate
-        # number of attention heads. Set to up to 4 for large datasets
-        attention_head_size=1,
-        dropout=0.1,  # between 0.1 and 0.3 are good values
-        hidden_continuous_size=8,  # set to <= hidden_size
-        loss=loss,
-        optimizer="Ranger",
-        log_interval=0.25,
-        # reduce learning rate if no improvement in validation loss after x epochs
-        reduce_on_plateau_patience=10,
-    )
-    return net
-
-
-def get_patch_tst_model(config, data_module):
-    config.job.device
-    training = data_module.training
-    config.model.prediction_length
-    context_length = config.model.context_length
-    patch_len = config.model.patch_len
-    stride = config.model.stride
-    # configure network and trainer
-    # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    pl.seed_everything(42)
-    loss = get_loss(config)
-    num_patch = (max(context_length, patch_len) - patch_len) // stride + 1
-    logging.getLogger().info(
-        f"context_length:{context_length}, patch_len:{patch_len}, stride:{stride}, num_patch:{num_patch}"
-    )
-    net = PatchTstTransformer.from_dataset(
-        training,
-        patch_len=config.model.patch_len,
-        stride=stride,
-        num_patch=num_patch,
-        # not meaningful for finding the learning rate but otherwise very important
-        learning_rate=0.03,
-        d_model=8,  # most important hyperparameter apart from learning rate
-        hidden_size=8,
-        # number of attention heads. Set to up to 4 for large datasets
-        n_heads=1,
-        loss=loss,
-        attn_dropout=0.1,  # between 0.1 and 0.3 are good values
-        # hidden_continuous_size=8,  # set to <= hidden_size
-        optimizer="Ranger",
-        # reduce learning rate if no improvement in validation loss after x epochs
-        # reduce_on_plateau_patience=1000,
-        reduce_on_plateau_patience=4,
-    )
-    return net
-
-
-def get_patch_tst_tft_model(config, data_module):
-    config.job.device
-    training = data_module().training
-    prediction_length = config.model.prediction_length
-    context_length = config.model.context_length
-    patch_len = config.model.patch_len
-    stride = config.model.stride
-    pl.seed_everything(42)
-    d_model = config.model.d_model
-    logging.info(f"prediction_length:{prediction_length}, patch_len:{patch_len}")
-    loss = get_loss(config, hidden_size=d_model)
-    num_patch = (max(context_length, patch_len) - patch_len) // stride + 1
-    logging.info(
-        f"patch_len:{patch_len}, num_patch:{num_patch}, context_length:{context_length}, stride:{stride}"
-    )
-    net = PatchTstTftTransformer.from_dataset(
-        training,
-        patch_len=patch_len,
-        stride=stride,
-        num_patch=num_patch,
-        loss=loss,
-        # not meaningful for finding the learning rate but otherwise very important
-        learning_rate=0.03,
-        d_model=d_model,  # most important hyperparameter apart from learning rate
-        hidden_size=8,
-        # number of attention heads. Set to up to 4 for large datasets
-        n_heads=1,
-        attn_dropout=0.1,  # between 0.1 and 0.3 are good values
-        # hidden_continuous_size=8,  # set to <= hidden_size
-        # loss=QuantileLoss(),
-        #optimizer="Ranger"
-        optimizer="sgd",
-        # reduce learning rate if no improvement in validation loss after x epochs
-        #reduce_on_plateau_patience=4,
-    )
-    return net
-
-
 def get_output_size(loss):
     # logging.error(f"loss:{loss}")
     if isinstance(loss, QuantileLoss):
@@ -286,25 +119,35 @@ def get_patch_tft_supervised_model(config, data_module, heads):
     loss = None
     logging_metrics = []
     output_size_dict = {}
+    loss_per_head = None
+    loss_dict = {}
+    n_targets_dict = {key:len(val) for key,val in training.target.items()}
     if config.model.multitask:
         loss_per_head = create_loss_per_head(heads, device, prediction_length)
         losses = []
+        head_index_map = {}
+        idx = 0
         for name, l in loss_per_head.items():
-            losses.append(l["loss"])
+            loss = l["loss"]
             logging_metrics.append(l["logging_metrics"])
-            # logging.info(f"loss name: {name}, l:{l}")
-            output_size_dict[name] = get_output_size(l["loss"])
-        # logging.info(f"losses:{losses}")
-        # logging.info(f"logging_metrics:{logging_metrics}")
-        # logging.info(f"output_size_dict:{output_size_dict}")
+            n_targets = n_targets_dict[name]
+            output_size_dict[name] = [get_output_size(loss)]*n_targets
+            if not isinstance(loss, MultiLoss):
+                loss = MultiLoss([deepcopy(loss)] * n_targets)
+            losses.append(loss)
+            loss_dict[name] = loss
+            head_index_map[idx] = name
+            idx = idx + 1
         if len(losses) > 1:
-            loss = MultiLossWithUncertaintyWeight(losses)
+            loss = MultiLossWithUncertaintyWeight(losses, head_index_map)
         else:
             loss = losses[0]
     else:
         # TODO implement single task loss
         pass
-
+    logging.info(f"loss:{loss}")
+    logging.info(f"loss_per_head:{loss_per_head}")
+    logging.info(f"output_size_dict:{output_size_dict}")
     net = PatchTftSupervised.from_dataset(
         training,
         patch_len=patch_len,
@@ -312,6 +155,9 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         num_patch=num_patch,
         prediction_num_patch=prediction_num_patch,
         loss=loss,
+        head_loss_dict=loss_dict,
+        n_targets_dict=n_targets_dict,
+        targets_dict=training.target,
         loss_per_head=loss_per_head,
         # logging_metrics=logging_metrics,
         logging_metrics=None,
@@ -363,25 +209,25 @@ def get_heads_and_targets(config):
     heads = config.model.heads
     # logging.info(f"heads:{heads}")
     head_dict = {}
+    target_dict = {}
     targets = set()
     for head in heads:
         head_dict[head] = config.model[head]
-        if isinstance(head_dict[head], List):
-            for target in head_dict[head].target:
-                targets.add(target)
-        else:
-            targets.add(head_dict[head].target)
+        head_targets = OmegaConf.to_object(head_dict[head].target)
+        target_dict[head] = head_targets
+        targets.update(head_targets)
+    logging.info(f"head_dict:{head_dict}, targets:{targets}")
     if len(targets) == 1:
         targets = next(iter(targets))
     else:
         # Need sorted to have consistent target orders. This affects prediction
         # output position from model.
         targets = list(sorted(targets))
-    logging.info(f"head_dict:{head_dict}, targets:{targets}")
+    logging.info(f"deduped targets:{targets}")
     if OmegaConf.is_list(targets):
         targets = OmegaConf.to_object(targets)
         logging.info(f"targets:{targets}")
-    return head_dict, targets
+    return head_dict, targets, target_dict
 
 
 def run_train(config, net, trainer, data_module):
