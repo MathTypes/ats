@@ -4,6 +4,8 @@ model_tickers: ["A6", "AD", "ALI", "B6", "BFX", "BR", "BTC", "BZ", "C", "CB", "C
 trading_tickers: ["ES"]
 max_stale_minutes: 1440
 interval_mins: 1440
-snapshot: ${hydra:runtime.cwd}/data/snapshot/futures/1d
+snapshot: ${hydra:runtime.cwd}/data/snapshot/futures/1d/tft
 write_snapshot: False
 read_snapshot: True
+ret_std: 0.008
+base_price: 500
