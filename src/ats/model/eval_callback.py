@@ -9,6 +9,7 @@ import torch
 import wandb
 from wandb.keras import WandbEvalCallback
 
+from ats.model import tensor_utils
 from ats.model import viz_utils
 
 day_of_week_map = ["Mon", "Tue", "Wen", "Thu", "Fri", "Sat", "Sun"]
@@ -182,26 +183,30 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             logging.info(f"max_allocated before prediction:{torch.cuda.max_memory_allocated()}")
             orig_x = self.val_x_batch[batch_idx]
             orig_y = self.val_y_batch[batch_idx]
+            logging.info(f"orig_x:{orig_x}")
+            logging.info(f"orig_y:{orig_y}")
             indices = self.indices_batch[batch_idx]
             y_close = orig_y[0]
             # TODO: fix following hack to deal with multiple targets
             if isinstance(y_close, list):
                 y_close = y_close[0]
-            y_close_cum_sum = torch.cumsum(y_close, dim=-1)
-            x = {
-                key: [v.to(device) for v in val]
-                if isinstance(val, list)
-                else val.to(device)
-                for key, val in orig_x.items()
-            }
-            y = [
-                [v.to(device) for v in val]
-                if isinstance(val, list)
-                else val.to(device)
-                if val is not None
-                else None
-                for val in orig_y
-            ]
+            y_close_cum_sum = torch.cumsum(y_close["prediction"][0], dim=-1)
+            #x = {
+            #    key: [v.to(device) for v in val]
+            #    if isinstance(val, list)
+            #    else val.to(device)
+            #    for key, val in orig_x.items()
+            #}
+            x = tensor_utils.to_device(x=orig_x, device=device)
+            y = tensor_utils.to_device(x=orig_y, device=device)
+            #y = [
+            #    [v.to(device) for v in val]
+            #    if isinstance(val, list)
+            #    else val.to(device)
+            #    if val is not None
+            #    else None
+            #    for val in orig_y
+            #]
             kwargs = {"nolog": True}
             #logging.info(f"x:{x}")
             #logging.info(f"y_close:{y_close.shape}")
@@ -211,10 +216,10 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             #logging.info(f"out:{out}")
             prediction_kwargs = {"reduction": None}
             result = self.pl_module.compute_metrics(
-                x, y, out, prediction_kwargs=prediction_kwargs
+                x, y, out, head="prediction", prediction_kwargs=prediction_kwargs
             )
             result = {k:detach(v) for k, v in result.items()}
-            #logging.info(f"result:{result}")
+            logging.info(f"result:{result}")
             if "train_RMSE" in result:
                 rmse = result["train_RMSE"].cpu().detach().numpy()
             else:
@@ -228,9 +233,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             ]  # raw predictions - used for calculating loss
             prediction_kwargs = {}
             quantiles_kwargs = {}
-            predictions = self.pl_module.to_prediction(out, **prediction_kwargs)
+            predictions = self.pl_module.to_prediction(out, head="prediction", **prediction_kwargs)
             predictions = detach(predictions)
-            # logging.info(f"predictions:{predictions}")
+            logging.info(f"predictions:{predictions}")
             y_hats = to_list(predictions)[0]
             y_hats_cum = torch.cumsum(y_hats, dim=-1)
             y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[

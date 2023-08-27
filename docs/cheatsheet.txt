@@ -1,3 +1,8 @@
+Generate train data:
+  - sh -x src/ats/market_data/write_30min.sh data/firstratedata/full 2023-05-01 2023-05-31
+  - poetry run python3 src/ats/time_series/read_parquet.py --input= data/FUT/1d/ES/20230501/f2a0b925396a4407a18970af595be56e_000000.parquet
+  - sh -x src/ats/market_data/write_daily.sh 2023-05-01 2023-05-31
+  - sh -x src/ats/market_data/write_30min.sh tmp 2023-07-01 2023-07-31
 
 To train model
   - poetry run python3 src/ats/app/main.py --config-name=single_asset_mini_futures_train --config-path=/home/ubuntu/ats/conf
@@ -22,9 +27,11 @@ To run main app
 To run test
   - poetry run pytest -s   tests/ats/trading/test_trader.py -k test_on_interval
   - poetry run pytest -s --disable-warnings   tests/ats/trading/test_trader.py -k test_on_interval
+  - quick test: poetry run python3 src/ats/app/main.py --config-name=dev --config-path=/home/ubuntu/ats/conf job.eval_start_date=2011-01-01
 
 To profile
   - poetry run python3 -m memray run -o output.bin  src/ats/app/main.py --config-name=single_asset_simulation --config-path=/home/ubuntu/ats/conf
+  - poetry run python3 -m memray flamegraph output.bin
 
 Env
  - pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html

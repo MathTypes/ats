@@ -650,23 +650,23 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         # handle multiple targets
         new_kwargs = {}
         n_targets_dict = {key:len(val) for key,val in dataset.target.items()}
-        logging.info(f"n_targets_dict:{n_targets_dict}")
+        #logging.info(f"n_targets_dict:{n_targets_dict}")
         if default_loss is None:
             default_loss = MAE()
         loss = kwargs.get("loss", default_loss)
         loss_per_head = kwargs.get("loss_per_head", None)
-        logging.info(f"loss:{loss}")
-        logging.info(f"loss_per_head:{loss_per_head}")
+        #logging.info(f"loss:{loss}")
+        #logging.info(f"loss_per_head:{loss_per_head}")
         #if n_targets > 1:  # try to infer number of ouput sizes
-        logging.info(f"kwargs:{kwargs}")
+        #logging.info(f"kwargs:{kwargs}")
         output_size_dict = {}
         for key, val in loss_per_head.items():
             loss = val["loss"]
-            logging.info(f"key:{key}, loss:{loss}, val:{val}")
+            #logging.info(f"key:{key}, loss:{loss}, val:{val}")
             n_targets = n_targets_dict[key]
             # Following assumes that we always use MultiNormalizer
             normalizer = dataset.target_normalizer[key].normalizers[0]
-            logging.info(f"normalizer:{normalizer}")
+            #logging.info(f"normalizer:{normalizer}")
             output_size_dict[key] = [get_output_size(normalizer, loss)]*n_targets_dict[key]
             if not isinstance(loss, MultiLoss):
                 loss = MultiLoss([deepcopy(loss)] * n_targets)
@@ -925,7 +925,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         x: Dict[str, torch.Tensor],
         y: torch.Tensor,
         out: Dict[str, torch.Tensor],
-        head: str = None,
+        head: str = "prediction",
         prediction_kwargs: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """
@@ -943,9 +943,10 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             prediction_kwargs = {}
         y_hat_point = self.to_prediction(out, head=head, **prediction_kwargs)
         #logging.info(f"out:{out}")
-        logging.info(f"y:{y}")
-        logging.info(f"y_hat_point:{y_hat_point[0].shape}")
-        if isinstance(self.loss, MultiLoss):
+        #logging.info(f"y:{y}")
+        #logging.info(f"y_hat_point:{y_hat_point[0].shape}")
+        loss = self.head_loss_dict[head]
+        if isinstance(loss, MultiLoss):
             y_hat_point_detached = [p.detach() for p in y_hat_point]
         else:
             y_hat_point_detached = [y_hat_point.detach()]
@@ -958,8 +959,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 to_list(x["encoder_target"]),
             ):
                 y_true = (y_part, y[1])
-                logging.info(f"y_true:{y_true}")
-                logging.info(f"y_part:{y_part.shape}, y_point:{y_point.shape}, metrics:{metric}")
+                #logging.info(f"y_true:{y_true}")
+                #logging.info(f"y_part:{y_part.shape}, y_point:{y_point.shape}, metrics:{metric}")
                 if "reduction" in prediction_kwargs:
                     if isinstance(metric, MASE):
                         lengths = torch.full((y_part.size(0),), fill_value=y_part.size(1), dtype=torch.long, device=y_part.device)
@@ -1149,6 +1150,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         prediction_kwargs: Dict[str, Any] = {},
         row = 1,
         col = 1,
+        head: str = "prediction",
         draw_mode = "pred",
         x_time = None
     ) -> plt.Figure:
@@ -1177,7 +1179,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             # skip loss
         #    out = out[1]
         y_hats = to_list(self.to_prediction(out, head=head, **prediction_kwargs))
-        y_quantiles = to_list(self.to_quantiles(out, head="prediction", **quantiles_kwargs))
+        y_quantiles = to_list(self.to_quantiles(out, head=head, **quantiles_kwargs))
         #logging.info(f"draw_mode:{draw_mode}, y_hats:{y_hats}, row={row}, col={col}")
         fig = ax
         if fig == None:
@@ -1520,7 +1522,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         #traceback.print_stack()
         loss = self.head_loss_dict[head]
-        logging.info(f"loss:{loss}")
+        #logging.info(f"loss:{loss}")
         if not use_metric:
             # if samples were already drawn directly take mean
             # todo: support classification
@@ -1528,9 +1530,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 out = [Metric.to_prediction(loss, out[head][idx]) for idx, loss in enumerate(loss)]
             else:
                 out = Metric.to_prediction(loss, out[head])
-            logging.info(f"out:{out}")
+            #logging.info(f"out:{out}")
         else:
-            logging.info(f"before prediction:{out}, {type(out)}")
+            #logging.info(f"before prediction:{out}, {type(out)}")
             # Added to address the issue where loss is first element
             if isinstance(out, (tuple)):
                 #logging.info(f"{type(out[0])}")
@@ -1561,9 +1563,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             torch.Tensor: quantiles of shape batch_size x timesteps x n_quantiles
         """
         # if samples are output directly take quantiles
+        loss = self.head_loss_dict[head]
         if not use_metric:
             # todo: support classification
-            loss = self.head_loss_dict[head]
             if isinstance(loss, MultiLoss):
                 out = [
                     Metric.to_quantiles(loss, out[head][idx], quantiles=kwargs.get("quantiles", loss.quantiles))
