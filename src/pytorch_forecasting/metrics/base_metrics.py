@@ -358,7 +358,8 @@ class MultiLoss(LightningMetric):
                     y_pred[idx],
                     (y_actual[0][idx], y_actual[1]),
                     **{
-                        name: value[idx] if isinstance(value, (list, tuple)) else value
+                        #name: value[idx] if isinstance(value, (list, tuple)) else value
+                        name: value
                         for name, value in kwargs.items()
                     },
                 )

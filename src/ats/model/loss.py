@@ -30,25 +30,27 @@ class MultiLossWithUncertaintyWeight(MultiLoss):
             torch.Tensor: metric value on which backpropagation can be applied
         """
         results = 0
-        # logging.info(f"kwargs:{kwargs}")
+        #logging.info(f"kwargs:{kwargs}")
         #logging.info(f"y_pred:{y_pred}")
         #logging.info(f"y_actual:{y_actual}")
         for idx, metric in enumerate(self.metrics):
             try:
                 # logging.info(f"metric:{metric}"
                 key = self.head_index_map[idx]
-                #logging.info(f"y_pred[idx]:{y_pred[idx]}")
+                #logging.info(f"y_pred[key]:{y_pred[key]}")
+                #logging.info(f"y_actual[0][key]:{y_actual[0][key]}")
+                #logging.info(f"compute key:{key}, idx:{idx}, metric:{metric}")
                 res = metric(
-                    y_pred[idx],
+                    y_pred[key],
                     (y_actual[0][key], y_actual[1]),
                     **{
-                        name: value[idx] if isinstance(value, (list, tuple)) else value
+                        name: value
                         for name, value in kwargs.items()
                     },
                 )
 
             except TypeError:  # silently update without kwargs if not supported
-                res = metric(y_pred[idx], (y_actual[0][key], y_actual[1]))
+                res = metric(y_pred[key], (y_actual[0][key], y_actual[1]))
             precision = torch.exp(-self.log_vars[idx])
             res = precision * res + self.log_vars[idx]
             results += res

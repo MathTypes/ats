@@ -602,6 +602,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
         output_size = self.hparams.output_size
         returns_output_size = None
         returns_daily_output_size = None
+        time_daily_output_size = None
         vol_output_size = None
         min_max_output_size = None
         anomaly_returns_output_size = None
@@ -609,6 +610,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
             returns_output_size = output_size["prediction"]
             if "returns_daily_prediction" in output_size:
                 returns_daily_output_size = output_size["returns_daily_prediction"]
+            if "time_daily_prediction" in output_size:
+                time_daily_output_size = output_size["time_daily_prediction"]
             if "vol_prediction" in output_size:
                 vol_output_size = output_size["vol_prediction"]
             if "min_max" in output_size:
@@ -654,19 +657,19 @@ class PatchTftSupervised(BaseModelWithCovariates):
         self.returns_daily_output_layer = None
         if returns_daily_output_size:
             if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
-                #self.returns_daily_output_layer = nn.ModuleList(
-                #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                #                num_layers=n_layers, activation=nn.ReLU)
-                #      for output_size in returns_daily_output_size])
                 self.returns_daily_output_layer = nn.ModuleList(
                     [nn.Linear(d_model, output_size) for output_size in returns_daily_output_size]
                 )
             else:
                 self.returns_daily_output_layer = nn.Linear(d_model, returns_daily_output_size)
-                #self.returns_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=vol_output_size,
-                #                                            num_layers=n_layers,
-                #                                            activation=nn.ReLU)
-            #logging.info(f"returns_daily_output_size:{returns_daily_output_size}")
+        self.time_daily_output_layer = None
+        if time_daily_output_size:
+            if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
+                self.time_daily_output_layer = nn.ModuleList(
+                    [nn.Linear(d_model, output_size) for output_size in time_daily_output_size]
+                )
+            else:
+                self.time_daily_output_layer = nn.Linear(d_model, time_daily_output_size)
         #self.anomaly_returns_output_layer = None
         #if anomaly_returns_output_size:
         #    if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
@@ -716,8 +719,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
 
     def _training_step(self, batch, batch_idx, **kwargs):
         x, y = batch
-        #logging.info(f"x:{x}")
-        #logging.info(f"y:{y}")
+        logging.info(f"x:{x}")
+        logging.info(f"y:{y}")
         opt = self.optimizers()
         opt.zero_grad()
         ## self(x) is the same as calling self.forward(x)
@@ -1039,6 +1042,12 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 returns_daily_output = [output_layer(embedding) for output_layer in self.returns_daily_output_layer]
             else:
                 returns_daily_output = self.returns_daily_output_layer(embedding)
+        time_daily_output = None
+        if self.time_daily_output_layer:
+            if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
+                time_daily_output = [output_layer(embedding) for output_layer in self.time_daily_output_layer]
+            else:
+                time_daily_output = self.time_daily_output_layer(embedding)
         vol_output = None
         if self.vol_output_layer:
             if self.n_head_targets(head="vol_prediction") > 1:  # if to run with multiple targets
@@ -1068,10 +1077,15 @@ class PatchTftSupervised(BaseModelWithCovariates):
           returns_daily_output = [ torch.squeeze(val, dim=-1) for val in returns_daily_output]
         else:
           returns_daily_output = torch.squeeze(returns_daily_output, dim=-1)
+        if isinstance(time_daily_output, List):
+          time_daily_output = [ torch.squeeze(val, dim=-1) for val in time_daily_output]
+        else:
+          time_daily_output = torch.squeeze(time_daily_output, dim=-1)
         #logging.info(f"output: len{output}, shape(0):{output[0].shape}")
         #logging.info(f"returns_daily_output: len{returns_daily_output}, shape(0):{returns_daily_output[0].shape}")
         prediction=self.transform_output(output, target_scale=x["target_scale"], head="prediction")
         returns_daily_output=self.transform_output(returns_daily_output, target_scale=x["target_scale"], head="returns_daily_prediction")
+        time_daily_output=self.transform_output(time_daily_output, target_scale=x["target_scale"], head="time_daily_prediction")
         #logging.info(f"prediction:{prediction}")
         #logging.info(f"returns_daily_output:{returns_daily_output}")
         #exit(0)
@@ -1090,7 +1104,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
 
         return self.to_network_output(
             prediction=prediction,
-            returns_daily_output=returns_daily_output,
+            returns_daily_prediction=returns_daily_output,
+            time_daily_prediction=time_daily_output,
             #anomaly_returns_output=anomaly_returns_output,
             #vol_output=vol_output,
             #min_max_output=min_max_output,

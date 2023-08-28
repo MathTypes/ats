@@ -150,7 +150,7 @@ def ticker_transform(raw_data, config, base_price=500):
     raw_data["close"] = np.maximum(raw_data["close"], means - VOL_THRESHOLD * stds)
     raw_data["cum_volume"] = raw_data.volume.cumsum()
     raw_data["cum_dv"] = raw_data.dv.cumsum()
-    squash_factor = 20
+    squash_factor = 6
     
     #raw_data['close_back'] = squash_factor * np.tanh((np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price))/squash_factor)
     raw_data['close_back'] = np.log(raw_data.close+base_price) - np.log(raw_data.close.shift(1)+base_price)
@@ -158,6 +158,7 @@ def ticker_transform(raw_data, config, base_price=500):
     raw_data['open_back'] = np.log(raw_data.open+base_price) - np.log(raw_data.open.shift(1)+base_price)
     raw_data['low_back'] = np.log(raw_data.low+base_price) - np.log(raw_data.low.shift(1)+base_price)
 
+    logging.info(f"raw_data:{raw_data.describe()}")
     raw_data['close_back'] = np.minimum(raw_data["close_back"], VOL_THRESHOLD * ret_std)
     raw_data['close_back'] = np.maximum(raw_data["close_back"], -VOL_THRESHOLD * ret_std)
     raw_data['high_back'] = np.minimum(raw_data["high_back"], VOL_THRESHOLD * ret_std)
@@ -166,11 +167,12 @@ def ticker_transform(raw_data, config, base_price=500):
     raw_data['open_back'] = np.maximum(raw_data["open_back"], -VOL_THRESHOLD * ret_std)
     raw_data['low_back'] = np.minimum(raw_data["low_back"], VOL_THRESHOLD * ret_std)
     raw_data['low_back'] = np.maximum(raw_data["low_back"], -VOL_THRESHOLD * ret_std)
+    logging.info(f"raw_data after min/max:{raw_data.describe()}")
     
-    raw_data['close_back'] = squash_factor * np.tanh(raw_data['close_back']/squash_factor)
-    raw_data['high_back'] = squash_factor * np.tanh(raw_data['high_back']/squash_factor)
-    raw_data['open_back'] = squash_factor * np.tanh(raw_data['open_back']/squash_factor)
-    raw_data['low_back'] = squash_factor * np.tanh(raw_data['low_back']/squash_factor)
+    #raw_data['close_back'] = squash_factor * np.tanh(raw_data['close_back']/squash_factor)
+    #raw_data['high_back'] = squash_factor * np.tanh(raw_data['high_back']/squash_factor)
+    #raw_data['open_back'] = squash_factor * np.tanh(raw_data['open_back']/squash_factor)
+    #raw_data['low_back'] = squash_factor * np.tanh(raw_data['low_back']/squash_factor)
 
     # Avoid inf
     raw_data['volume_back'] = np.log(raw_data.volume+2) - np.log(raw_data.volume.shift(1)+2)

@@ -4,8 +4,8 @@ context_length: 230
 patch_len: 6
 stride: 3
 d_model: 64
-train_batch_size: 512
-eval_batch_size: 128
+train_batch_size: 256
+eval_batch_size: 64
 learning_rate: 0.03
 attn_heads : 8
 dropout: 0.3
@@ -18,13 +18,18 @@ multitask: True
 heads:
   - prediction
   - returns_daily_prediction
+  - time_daily_prediction
 prediction:
   loss_name: SMAPE
   target: ["close_back","low_back","high_back","open_back"]
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 returns_daily_prediction:
   loss_name: SMAPE
-  target: ["ret_from_low_1d_shift_1d", "ret_from_high_1d_shift_1d","time_to_low_1d_ff_shift_1d","time_to_high_1d_ff_shift_1d"]
+  target: ["ret_from_low_1d_shift_1d", "ret_from_high_1d_shift_1d"]
+  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+time_daily_prediction:
+  loss_name: SMAPE
+  target: ["time_to_low_1d_ff_shift_1d","time_to_high_1d_ff_shift_1d"]
   logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
 vol_prediction:
   #loss_name: MQF2DistributionLoss

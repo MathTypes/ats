@@ -423,7 +423,7 @@ class TimeSeriesDataSet(Dataset):
         # traceback.print_stack()
         self.allow_missing_timesteps = allow_missing_timesteps
         self.target_normalizer = target_normalizer
-        logging.info(f"target_normalizer:{self.target_normalizer}")
+        #logging.info(f"target_normalizer:{self.target_normalizer}")
         self.categorical_encoders = (
             {} if len(categorical_encoders) == 0 else categorical_encoders
         )
@@ -444,7 +444,7 @@ class TimeSeriesDataSet(Dataset):
         ), f"add_encoder_length should be boolean or 'auto' but found {add_encoder_length}"
         self.add_encoder_length = add_encoder_length
 
-        # logging.info(f"summary:{data.describe()}")
+        logging.info(f"summary before normalizer:{data.describe()}")
         # target normalizer
         # JJ: disable target normalizer
         self._set_target_normalizer(data)
@@ -474,8 +474,11 @@ class TimeSeriesDataSet(Dataset):
         # logging.error(f"data:{data.iloc[-5:]} simulation_mode:{self.simulation_mode}")
         if transformed_data is None:
             self._create_encoder(data)
+            logging.info(f"after create_encoder data:{data.describe()}")
             self.add_lag_variables(data, transformed=True)
+            logging.info(f"after lag_variable:{data.describe()}")
             self.transform_data(data)
+            logging.info(f"after transform data:{data.describe()}")
         else:
             # logging.info(f"setting tranformed_data")
             data = transformed_data
@@ -585,6 +588,7 @@ class TimeSeriesDataSet(Dataset):
     @profile_util.profile
     def transform_data(self, data: pd.DataFrame):
         # logging.info(f"data:{data.iloc[-30:]}")
+        logging.info(f"data before transform: {data.describe()}")
         for target in self.all_target_names:
             assert (
                 target not in self.time_varying_known_reals
@@ -644,6 +648,7 @@ class TimeSeriesDataSet(Dataset):
         if self.data is not None:
             del self.data
             torch.cuda.empty_cache()
+        logging.info(f"data:{data.describe()}")
         self.data = self._data_to_tensors(data)
         # logging.error(f"transformed_self.data:{self.data['time'][-10:]}")
 
@@ -736,6 +741,7 @@ class TimeSeriesDataSet(Dataset):
     def fit_target_normalizer(self, data, key, target_normalizer):
         target = self.target[key]
         logging.info(f"fitting key:{key}, target:{target}")
+        #logging.info(f"target_normalizer:{target_normalizer}")
         # fit target normalizer
         try:
             check_is_fitted(target_normalizer)
@@ -748,7 +754,8 @@ class TimeSeriesDataSet(Dataset):
                 target_normalizer.fit(data[target], data)
             else:
                 target_normalizer.fit(data[target])
-
+        logging.info(f"after initial fit:{data.describe()}")
+        #logging.info(f"target_normalizer.fit:{target_normalizer.fit}")
         # transform target
         if isinstance(target_normalizer, EncoderNormalizer):
             # we approximate the scales and target transformation by assuming one
@@ -766,39 +773,28 @@ class TimeSeriesDataSet(Dataset):
                 name: getattr(target_normalizer, name) for name in common_init_args
             }
             normalizer = GroupNormalizer(groups=self.group_ids, **copy_kwargs)
-            data[target], scales = normalizer.fit_transform(
+            _, scales = normalizer.fit_transform(
                 data[target], data, return_norm=True
             )
             # logging.info(f"encoder normalizr scales:{scales}")
         elif isinstance(target_normalizer, GroupNormalizer):
-            data[target], scales = target_normalizer.transform(
+            _, scales = target_normalizer.transform(
                 data[target], data, return_norm=True
             )
             # logging.info(f"group normalizr scales:{scales}")
         elif isinstance(target_normalizer, MultiNormalizer):
-            transformed, scales = target_normalizer.transform(
+            _, scales = target_normalizer.transform(
                 data[target], data, return_norm=True
             )
-            # logging.info(f"multi normalizr scales:{scales}")
-
-            for idx, target in enumerate(self.target[key]):
-                data[target] = transformed[idx]
-                if isinstance(target_normalizer[idx], NaNLabelEncoder):
-                    # overwrite target because it requires encoding (continuous targets should not be normalized)
-                    logging.info(f"setting target: {target}")
-                    data[f"__target__{target}"] = data[target]
         elif isinstance(target_normalizer, NaNLabelEncoder):
-            data[target] = target_normalizer.transform(data[target])
-            # logging.info(f"nan label normalizr scales:{scales}")
-            # overwrite target because it requires encoding (continuous targets should not be normalized)
-            data[f"__target__{target}"] = data[target]
             scales = None
         else:
-            data[target], scales = target_normalizer.transform(
+            _, scales = target_normalizer.transform(
                 data[target], return_norm=True
             )
             # logging.info(f"default normalizr scales:{scales}")
 
+        logging.info(f"scales:{scales}")
         # add target scales
         if self.add_target_scales:
             # logging.info(f"does not expect add_target_scales")
@@ -811,7 +807,6 @@ class TimeSeriesDataSet(Dataset):
                         assert (
                             feature_name not in data.columns
                         ), f"{feature_name} is a protected column and must not be present in data"
-                        data[feature_name] = scales[target_idx][:, scale_idx].squeeze()
                         if feature_name not in self.reals:
                             self.static_reals.append(feature_name)
 
@@ -1030,6 +1025,7 @@ class TimeSeriesDataSet(Dataset):
                 group_ids_to_encode = self.group_ids
             else:
                 group_ids_to_encode = []
+        logging.info(f"group_ids_to_encode:{group_ids_to_encode}")
         for name in dict.fromkeys(group_ids_to_encode + self.categoricals):
             if name in self.lagged_variables:
                 continue  # do not encode here but only in transform
@@ -1061,9 +1057,11 @@ class TimeSeriesDataSet(Dataset):
                             name
                         ].fit(data[name])
 
+        logging.info(f"before normalizer:{data.describe()}")
         # train target normalizer
         if self.target_normalizer is not None:
             for key, val in self.target_normalizer.items():
+                logging.info(f"fitting key:{key}, val:{val}")
                 self.fit_target_normalizer(data, key, val)
 
         # rescale continuous variables apart from target
@@ -1291,7 +1289,7 @@ class TimeSeriesDataSet(Dataset):
 
         if name in self.flat_categoricals + self.group_ids + self._group_ids:
             name = self.variable_to_group_mapping.get(name, name)  # map name to encoder
-            logging.info(f"get_transformer.self.target_normalizers:{self.target_normalizers}")
+            #logging.info(f"get_transformer.self.target_normalizers:{self.target_normalizers}")
             for key, val in self.target_normalizers.items():
                 # take target normalizer if required
                 if name in self.target[key]:
@@ -2384,7 +2382,6 @@ class TimeSeriesDataSet(Dataset):
                 for d in self.data[f"target_{key}"]
             ] for key, val in self.target.items()}
         #logging.info(f"target:{target}")
-        #exit(0)
         groups = self.data["groups"][index.index_start].clone()
         if self.data["weight"] is None:
             weight = None
@@ -2408,9 +2405,9 @@ class TimeSeriesDataSet(Dataset):
             # select data
             data_cat = data_cat[indices]
             data_cont = data_cont[indices]
-            logging.info(f"before target:{target}")
+            #logging.info(f"before target:{target}")
             target = [d[indices] for d in target]
-            logging.info(f"target:{target}")
+            #logging.info(f"target:{target}")
             #exit(0)
             #if weight is not None:
             #    weight = weight[indices]
@@ -2571,6 +2568,9 @@ class TimeSeriesDataSet(Dataset):
             logging.info(f"get target from provided y:{self.y}")
             exit(0)
             target = self.y[idx]
+        #logging.info(f"encoder_target:{encoder_target}")
+        #logging.info(f"target_scale:{target_scale}")
+        #logging.info(f"target:{target}")
         tensor_dict = (
             dict(
                 x_cat=data_cat,
@@ -2753,7 +2753,9 @@ class TimeSeriesDataSet(Dataset):
         # logging.info(f"target:{target.shape}, dir(target)")
         # logging.info(f"decoder_cat:{decoder_cat.shape}, {decoder_cat}")
         # logging.info(f"decoder_cont:{decoder_cont.shape}, {decoder_cont}")
-        # logging.info(f"target_scale:{target_scale.shape}, {target_scale}")
+        #logging.info(f"encoder_target:{encoder_target}")
+        #logging.info(f"result:{result}")
+        #logging.info(f"target_scale:{target_scale.shape}, {target_scale}")
         return (
             dict(
                 encoder_cat=encoder_cat,
@@ -2846,7 +2848,7 @@ class TimeSeriesDataSet(Dataset):
                 sampler = WeightedRandomSampler(probabilities, len(probabilities))
                 dataset.to_dataloader(train=True, sampler=sampler, shuffle=False)
         """
-        logging.error(f"creating time series data loader")
+        #logging.error(f"creating time series data loader")
         default_kwargs = dict(
             shuffle=train,
             drop_last=train and len(self) > batch_size,
