@@ -890,7 +890,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         else:
             new_kwargs = {k:v for k,v in kwargs.items() if k not in ["nolog"]} 
             out = self(x, **new_kwargs)
-            logging.info(f"x:{x}, out:{out}")
+            #logging.info(f"x:{x}, out:{out}")
             # calculate loss
             prediction = out["prediction"]
             if not self.predicting:
@@ -900,8 +900,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 # MultiLoss.
                 # prediction has output for all heads
                 if isinstance(self.loss, (MASE, MultiLossWithUncertaintyWeight)):
-                    logging.info(f"prediction:{prediction}")
-                    logging.info(f"y:{y}")
+                    #logging.info(f"prediction:{prediction}")
+                    #logging.info(f"y:{y}")
                     mase_kwargs = dict(encoder_target=x["encoder_target"], encoder_lengths=x["encoder_lengths"])
                     # For multi loss, we need non prediction outout.
                     loss = self.loss(out, y, **mase_kwargs)
@@ -1445,7 +1445,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                 "frequency": 1,
                 "strict": False,
             }
-        logging.info(f"optimizer:{optimizer}, scheduler:{scheduler_config}")
+        #logging.info(f"optimizer:{optimizer}, scheduler:{scheduler_config}")
         return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
 
     @classmethod
