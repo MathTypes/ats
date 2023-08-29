@@ -347,6 +347,7 @@ class MultiLoss(LightningMetric):
         #traceback.print_stack()
         #logging.info(f"y_pred:{y_pred}")
         #logging.info(f"y_actual:{y_actual}")
+        #logging.info(f"self.metrics:{self.metrics}")
         for idx, metric in enumerate(self.metrics):
             try:
                 #logger.info(f"id:{idx}, y_pred:{y_pred[idx].shape}")

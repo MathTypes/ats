@@ -1073,19 +1073,23 @@ class PatchTftSupervised(BaseModelWithCovariates):
           output = [ torch.squeeze(val, dim=-1) for val in output]
         else:
           output = torch.squeeze(output, dim=-1)
-        if isinstance(returns_daily_output, List):
-          returns_daily_output = [ torch.squeeze(val, dim=-1) for val in returns_daily_output]
-        else:
-          returns_daily_output = torch.squeeze(returns_daily_output, dim=-1)
-        if isinstance(time_daily_output, List):
-          time_daily_output = [ torch.squeeze(val, dim=-1) for val in time_daily_output]
-        else:
-          time_daily_output = torch.squeeze(time_daily_output, dim=-1)
+        if returns_daily_output is not None:
+            if isinstance(returns_daily_output, List):
+                returns_daily_output = [ torch.squeeze(val, dim=-1) for val in returns_daily_output]
+            else:
+                returns_daily_output = torch.squeeze(returns_daily_output, dim=-1)
+        if time_daily_output is not None:
+            if isinstance(time_daily_output, List):
+                time_daily_output = [ torch.squeeze(val, dim=-1) for val in time_daily_output]
+            else:
+                time_daily_output = torch.squeeze(time_daily_output, dim=-1)
         #logging.info(f"output: len{output}, shape(0):{output[0].shape}")
         #logging.info(f"returns_daily_output: len{returns_daily_output}, shape(0):{returns_daily_output[0].shape}")
         prediction=self.transform_output(output, target_scale=x["target_scale"], head="prediction")
-        returns_daily_output=self.transform_output(returns_daily_output, target_scale=x["target_scale"], head="returns_daily_prediction")
-        time_daily_output=self.transform_output(time_daily_output, target_scale=x["target_scale"], head="time_daily_prediction")
+        if returns_daily_output is not None:
+            returns_daily_output=self.transform_output(returns_daily_output, target_scale=x["target_scale"], head="returns_daily_prediction")
+        if time_daily_output is not None:
+            time_daily_output=self.transform_output(time_daily_output, target_scale=x["target_scale"], head="time_daily_prediction")
         #logging.info(f"prediction:{prediction}")
         #logging.info(f"returns_daily_output:{returns_daily_output}")
         #exit(0)

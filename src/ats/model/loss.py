@@ -37,9 +37,9 @@ class MultiLossWithUncertaintyWeight(MultiLoss):
             try:
                 # logging.info(f"metric:{metric}"
                 key = self.head_index_map[idx]
-                #logging.info(f"y_pred[key]:{y_pred[key]}")
-                #logging.info(f"y_actual[0][key]:{y_actual[0][key]}")
-                #logging.info(f"compute key:{key}, idx:{idx}, metric:{metric}")
+                logging.info(f"y_pred[key]:{y_pred[key]}")
+                logging.info(f"y_actual[0][key]:{y_actual[0][key]}")
+                logging.info(f"compute key:{key}, idx:{idx}, metric:{metric}")
                 res = metric(
                     y_pred[key],
                     (y_actual[0][key], y_actual[1]),

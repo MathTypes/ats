@@ -906,7 +906,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                     # For multi loss, we need non prediction outout.
                     loss = self.loss(out, y, **mase_kwargs)
                 else:
-                    loss = self.loss(prediction, y)
+                    #logging.info(f"prediction:{prediction}")
+                    #logging.info(f"y:{y}")                    
+                    loss = self.loss(prediction, (y[0]["prediction"],y[1]))
             else:
                 loss = None
         if not "nolog" in kwargs:
