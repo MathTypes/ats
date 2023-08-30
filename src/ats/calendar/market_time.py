@@ -46,6 +46,8 @@ def get_open_time(cal, x_date):
         x_date_idx = schedule.market_close[idx].date()
         #logging.error(f"adding {x_date_idx} with {schedule.market_open[idx].timestamp()}, idx:{idx}")
         open_time_dict[x_date_idx] = schedule.market_open[idx].timestamp()
+    #logging.error(f"{open_time_dict}")
+    #logging.error(f"x_date:{x_date}")
     if x_date in open_time_dict.keys():
         return open_time_dict[x_date]
     else:

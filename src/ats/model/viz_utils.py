@@ -424,6 +424,7 @@ def create_viz_row(
             ax=fig,
             row=1,
             col=1,
+            head="prediction",
             draw_mode="pred_cum",
             x_time=x_time,
         )
@@ -434,7 +435,8 @@ def create_viz_row(
             ax=fig,
             row=2,
             col=1,
-            draw_mode="pred_vol",
+            head="returns_daily_prediction",
+            draw_mode="pred",
             x_time=x_time,
         )
         interpretation = {}

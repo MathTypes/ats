@@ -620,8 +620,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 anomaly_returns_output_size = output_size["anomaly_returns"]
         #logging.error(f"anomaly_returns_output_size:{anomaly_returns_output_size}")
         #anomaly_returns_output_size = 1
-        #logging.info(f"returns_output_size:{returns_output_size}")
-        if self.n_head_targets(head="prediction") > 1:  # if to run with multiple targets
+        logging.info(f"returns_output_size:{returns_output_size}, type:{type(returns_output_size)}")
+        #if self.n_head_targets(head="prediction") > 1:  # if to run with multiple targets
+        self.returns_output_size = returns_output_size
+        if isinstance(returns_output_size, (tuple, list)):
             #logging.info(f"create multiple returns output")
             self.output_layer = nn.ModuleList(
                 [nn.Linear(d_model, output_size) for output_size in returns_output_size]
@@ -1031,7 +1033,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
         # z: [bs x nvars x target_dim]
         #logging.info(f"output_shape after flatten:{output.shape}")
         #logging.info(f"output_layer:{self.output_layer}")
-        if self.n_head_targets(head="prediction") > 1:  # if to run with multiple targets
+        if isinstance(self.returns_output_size, (tuple, list)):
+        #if self.n_head_targets(head="prediction") > 1:  # if to run with multiple targets
             output = [output_layer(embedding) for output_layer in self.output_layer]
         else:
             output = self.output_layer(embedding)

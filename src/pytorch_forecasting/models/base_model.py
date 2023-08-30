@@ -1176,6 +1176,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             matplotlib figure
         """
         # all true values for y of the first sample in batch
+        # only uses prediction head since that is close
+        logging.info(f"encoder_target:{x['encoder_target'][0].shape}")
+        logging.info(f"decoder_target:{x['decoder_target'][0].shape}")
         encoder_targets = to_list(x["encoder_target"])
         decoder_targets = to_list(x["decoder_target"])
         #if isinstance(out, Tuple):
@@ -1195,15 +1198,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         ):
             # TODO: fix this hack where we plot each target in different
             # figure so that they have different scale.
-            if draw_mode == "pred_vol":
-                if index == 0:
-                    index += 1
-                    continue
-            if draw_mode in ["pred", "pred_cum"]:
-                if index > 0:
-                    index += 1
-                    continue
-            index += 1
+            logging.info(f"encoder_target:{encoder_target[idx]}")
+            logging.info(f"decoder_target:{decoder_target[idx]}")
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
             if draw_mode == "pred_cum":
                 #logging.info(f"before cumsum: y_all:{y_all}")
@@ -1224,6 +1220,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #if draw_mode == "pred_vol":
                 #logging.info(f"y:{y}")
                 #logging.info(f"y_hat:{y_hat}")
+            logging.info(f"y_hat:{y_hat}")
             #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             if draw_mode == "pred_cum":
@@ -1303,7 +1300,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                         capsize=1.0,
                         name="bad"
                     ), row=row, col=col)
-
+            break
             #go.set_xlabel("Time index")
             figs.append(fig)
         del y_hats

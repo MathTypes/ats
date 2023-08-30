@@ -215,8 +215,9 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             logs = detach(log)
             #logging.info(f"out:{out}")
             prediction_kwargs = {"reduction": None}
+            head = "prediction"
             result = self.pl_module.compute_metrics(
-                x, y, out, head="prediction", prediction_kwargs=prediction_kwargs
+                x, y, out, head=head, prediction_kwargs=prediction_kwargs
             )
             result = {k:detach(v) for k, v in result.items()}
             logging.info(f"result:{result}")
@@ -233,14 +234,16 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             ]  # raw predictions - used for calculating loss
             prediction_kwargs = {}
             quantiles_kwargs = {}
-            predictions = self.pl_module.to_prediction(out, head="prediction", **prediction_kwargs)
+            predictions = self.pl_module.to_prediction(out, head=head, **prediction_kwargs)
             predictions = detach(predictions)
             logging.info(f"predictions:{predictions}")
             y_hats = to_list(predictions)[0]
             y_hats_cum = torch.cumsum(y_hats, dim=-1)
-            y_quantiles = to_list(self.pl_module.to_quantiles(out, **quantiles_kwargs))[
+            y_quantiles = to_list(self.pl_module.to_quantiles(out, head=head, **quantiles_kwargs))[
                 0
             ]
+            logging.info(f"y_hats:{y_hats}")
+            logging.info(f"y_hats_cum:{y_hats_cum}")
             interp_output = self.pl_module.interpret_output(
                 detach(out),
                 reduction="none",

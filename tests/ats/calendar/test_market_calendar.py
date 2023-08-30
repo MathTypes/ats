@@ -14,11 +14,11 @@ def test_open_time_with_date():
     # 2009-06-01 00:00:00+00:00
     train_start_date = datetime.datetime.strptime("2009-06-01", "%Y-%m-%d").replace(
         tzinfo=datetime.timezone.utc
-    )
+    ).date()
     open_time = market_time.get_open_time(market_cal, train_start_date)
     # Sun May 31 2009 15:00:00
     assert open_time == 1243807200
-    close_time = market_time.get_close_time(market_cal, train_start_date)
+    close_time = market_time.get_close_time(market_cal, train_start_date).date()
     # Mon Jun 01 2009 14:00:00
     assert close_time == 1243890000.0
 

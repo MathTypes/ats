@@ -2555,7 +2555,12 @@ class TimeSeriesDataSet(Dataset):
         # if user defined target as list, output should be list, otherwise tensor
         #if self.multi_target:
         if True:
-            encoder_target = {key:[t[:encoder_length] for t in val] for key, val in target.items()}
+            #encoder_target = {key:[t[:encoder_length] for t in val] for key, val in target.items()}
+            prediction_val = target["prediction"]
+            # This is a special hack. Our targets are different for each head. But since we want to predict
+            # based on original features, not the other heads, we replace encoded_target for all heads (except
+            # prediction) with prediction encoded_target.
+            encoder_target = {key:[t[:encoder_length] for t in val] for key, val in target.items()} 
             target = {key:[t[encoder_length:] for t in val] for key, val in target.items()}
             # logging.info("multi_target")
 
@@ -2709,6 +2714,7 @@ class TimeSeriesDataSet(Dataset):
         # When y is provided, there is need for transformation
         target_dict = {}
         #logging.info(f"type(batches[0][1][0]):{type(batches[0][1][0])}, {batches[0][1][0]}")
+        encoder_target_dict = {}
         for key in batches[0][1][0].keys():
         #if isinstance(batches[0][1][0], (tuple, list)):
             #logging.error(f"does not expect y to be provided")
@@ -2720,14 +2726,16 @@ class TimeSeriesDataSet(Dataset):
                 )
                 for idx in range(target_size)
             ]
-            encoder_target = [
+            head_encoder_target = [
                 rnn.pad_sequence(
                     [batch[0]["encoder_target"][key][idx] for batch in batches],
                     batch_first=True,
                 )
                 for idx in range(target_size)
             ]
+            encoder_target_dict[key] = head_encoder_target
             target_dict[key] = target
+        encoder_target = encoder_target_dict["prediction"]
         result = (target_dict, weight)
         #elif not isinstance(batches[0][1][0], (np.int64)):
         #    logging.info(f"batches:{batches[0][1]}")
@@ -2764,7 +2772,7 @@ class TimeSeriesDataSet(Dataset):
                 encoder_lengths=encoder_lengths,
                 decoder_cat=decoder_cat,
                 decoder_cont=decoder_cont,
-                decoder_target=target,
+                decoder_target=target_dict["prediction"],
                 decoder_lengths=decoder_lengths,
                 decoder_time_idx=decoder_time_idx,
                 groups=groups,
