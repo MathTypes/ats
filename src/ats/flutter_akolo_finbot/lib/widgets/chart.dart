@@ -60,7 +60,9 @@ class _ChartWidgetState extends State<ChartWidget> {
         map.forEach((value) {
           var data = value.data() as Map;
           Utility.logEvent("sentiment:${data}");
-          chartData.add(_ChartData(data["asof"], int(data["sentiment"])));
+          chartData
+              //    .add(_ChartData(data["asof"], data["sentimentClass"]));
+              .add(_ChartData(data["asof"], 1));
         });
       });
       _lastTime = chartData!.last.time;
