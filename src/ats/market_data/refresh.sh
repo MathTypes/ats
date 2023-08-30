@@ -14,6 +14,4 @@ unzip data.zip
 cd $rel_base_dir/../../..
 
 sh -x $base_dir/write_30min.sh $TMPDIR $1 $NOW
-sh -x $base_dir/write_daily.sh $TMPDIR $1 $NOW
-sh -x $base_dir/write_weekly.sh $TMPDIR $1 $NOW
-sh -x $base_dir/write_monthly.sh $TMPDIR $1 $NOW
+
