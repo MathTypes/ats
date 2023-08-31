@@ -2,6 +2,7 @@
 Hyperparameters can be efficiently tuned with `optuna <https://optuna.readthedocs.io/>`_.
 """
 import copy
+from copy import deepcopy
 import logging
 import os
 from typing import Any, Dict, Tuple, Union
@@ -20,7 +21,7 @@ from torch.utils.data import DataLoader
 
 from pytorch_forecasting import PatchTftSupervised
 from pytorch_forecasting.data import TimeSeriesDataSet
-from pytorch_forecasting.metrics import QuantileLoss
+from pytorch_forecasting.metrics import MultiLoss, QuantileLoss
 
 optuna_logger = logging.getLogger("optuna")
 
@@ -161,17 +162,28 @@ def optimize_hyperparameters(
         prediction_num_patch = (max(prediction_length, patch_len) - patch_len) // stride + 1
         hidden_size = trial.suggest_int("hidden_size", *hidden_size_range, log=True)
         loss = None
+        n_targets_dict = {key:len(val) for key,val in train_dataloaders.dataset.target.items()}
         attn_heads = 4
         attn_dropout = 0.1
         output_size_dict = {}
+        loss_dict = {}
         if True:
             loss_per_head = model_utils.create_loss_per_head(heads, device, prediction_length)
             losses = []
+            head_index_map = {}
+            idx = 0
             for name, l in loss_per_head.items():
-                losses.append(l["loss"])
-                output_size_dict[name] = model_utils.get_output_size(l["loss"])
+                loss = l["loss"]
+                n_targets = n_targets_dict[name]
+                output_size_dict[name] = [model_utils.get_output_size(loss)]*n_targets
+                if not isinstance(loss, MultiLoss):
+                    loss = MultiLoss([deepcopy(loss)] * n_targets)
+                losses.append(loss)
+                loss_dict[name] = loss
+                head_index_map[idx] = name
+                idx = idx + 1
             if len(losses) > 1:
-                loss = MultiLossWithUncertaintyWeight(losses)
+                loss = MultiLossWithUncertaintyWeight(losses, head_index_map)
             else:
                 loss = losses[0]
         else:
@@ -184,9 +196,12 @@ def optimize_hyperparameters(
             num_patch=num_patch,
             prediction_num_patch=prediction_num_patch,
             loss=loss,
+            head_loss_dict=loss_dict,
+            n_targets_dict=n_targets_dict,
+            targets_dict=train_dataloaders.dataset.target,
+            loss_per_head=loss_per_head,
             n_layers=n_layers,
             lstm_layers=lstm_layers,
-            loss_per_head=loss_per_head,
             learning_rate=0.03,
             d_model=d_model,
             dropout=trial.suggest_uniform("dropout", *dropout_range),
