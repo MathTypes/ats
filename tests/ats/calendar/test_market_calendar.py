@@ -18,7 +18,11 @@ def test_open_time_with_date():
     open_time = market_time.get_open_time(market_cal, train_start_date)
     # Sun May 31 2009 15:00:00
     assert open_time == 1243807200
-    close_time = market_time.get_close_time(market_cal, train_start_date).date()
+
+    logging.error("\n\n\n\n\nthe type of object is: " + str(type(market_time.get_close_time(market_cal, train_start_date))) + "\n\n\n\n\n")
+    # close_time = market_time.get_close_time(market_cal, train_start_date).date()
+    close_time = market_time.get_close_time(market_cal, train_start_date)
+
     # Mon Jun 01 2009 14:00:00
     assert close_time == 1243890000.0
 
