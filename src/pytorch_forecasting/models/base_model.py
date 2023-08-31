@@ -1215,12 +1215,16 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #logging.info(f"y.shape:{y.shape}")
             # move predictions to cpu
             y_hat = y_hat.detach().cpu()[idx, : x["decoder_lengths"][idx]]
+            y_hat2 = None
+            if head == "returns_daily_prediction":
+                y_hat2 = y_hat.detach().cpu()[idx, : x["decoder_lengths"][idx+1]]
             n_pred = y_hat.shape[0]
             base = y[-n_pred-1].detach().cpu()
             #if draw_mode == "pred_vol":
                 #logging.info(f"y:{y}")
                 #logging.info(f"y_hat:{y_hat}")
             logging.info(f"y_hat:{y_hat}")
+            logging.info(f"y_hat2:{y_hat2}")
             #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             if draw_mode == "pred_cum":
@@ -1271,6 +1275,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                                   name="predicted" if draw_mode=="pred" else None,
                                   line=dict(color=pred_color), showlegend=False), row=row, col=col)
 
+            if y_hat2:
+                fig.add_trace(plotter(x=x_pred, y=y_hat2,
+                                      name="predicted" if draw_mode=="pred" else None,
+                                      line=dict(color=pred_color), showlegend=False), row=row, col=col)
+            
             # plot predicted quantiles
             fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2],
                                   name="quantile mean" if draw_mode=="pred" else None,

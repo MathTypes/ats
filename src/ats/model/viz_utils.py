@@ -436,7 +436,7 @@ def create_viz_row(
             row=2,
             col=1,
             head="returns_daily_prediction",
-            draw_mode="pred",
+            draw_mode="pred_cum",
             x_time=x_time,
         )
         interpretation = {}
