@@ -20,6 +20,8 @@ To run visual search app
   - train model: poetry run python3 src/vss/metrics/train.py --config-path=/home/ubuntu/ats/conf --config-name=build_search
   - poetry run streamlit run src/vss/interactive/search_app.py --server.port=$INTERACTIVE_PORT --server.address=0.0.0.0
 
+To run with latest data:
+  - sh -x src/ats/market_data/refresh.sh
 
 To run main app
   - poetry run streamlit run src/ats/front_end/app.py
