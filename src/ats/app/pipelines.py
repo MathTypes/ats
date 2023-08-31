@@ -177,7 +177,7 @@ class PatchTftSupervisedPipeline(Pipeline):
             self.device,
             model_path="optuna_test",
             n_trials=20,
-            max_epochs=1,
+            max_epochs=5,
             gradient_clip_val_range=(0.01, 1.0),
             hidden_size_range=(8, 128),
             hidden_continuous_size_range=(8, 128),

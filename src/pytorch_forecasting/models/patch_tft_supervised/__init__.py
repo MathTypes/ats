@@ -642,20 +642,21 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"self.output_layer:{self.output_layer}")
         #exit(0)
         self.vol_output_layer = None
-        if vol_output_size:
-            if self.n_head_targets(head="vol_prediction") > 1:  # if to run with multiple targets
-                #self.vol_output_layer = nn.ModuleList(
-                #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                #                num_layers=n_layers, activation=nn.ReLU)
-                #      for output_size in vol_output_size])
-                self.vol_output_layer = nn.ModuleList(
-                    [nn.Linear(d_model, output_size) for output_size in vol_output_size]
-                )
-            else:
-                #self.vol_output_layer = nn.Linear(d_model, vol_output_size)
-                self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
-                                                  num_layers=n_layers,
-                                                  activation=nn.ReLU)
+        self.vol_output_size = vol_output_size
+        logging.info(f"vol_output_size:{vol_output_size}, vol_output_size_type:{type(vol_output_size)}")
+        if isinstance(vol_output_size, (tuple, list)):
+            #self.vol_output_layer = nn.ModuleList(
+            #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+            #                num_layers=n_layers, activation=nn.ReLU)
+            #      for output_size in vol_output_size])
+            self.vol_output_layer = nn.ModuleList(
+                [nn.Linear(d_model, output_size) for output_size in vol_output_size]
+            )
+        else:
+            self.vol_output_layer = nn.Linear(d_model, vol_output_size)
+            #self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
+            #                                  num_layers=n_layers,
+            #                                  activation=nn.ReLU)
         self.returns_daily_output_layer = None
         if returns_daily_output_size:
             if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
@@ -1052,11 +1053,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else:
                 time_daily_output = self.time_daily_output_layer(embedding)
         vol_output = None
-        if self.vol_output_layer:
-            if self.n_head_targets(head="vol_prediction") > 1:  # if to run with multiple targets
-                vol_output = [output_layer(embedding) for output_layer in self.vol_output_layer]
-            else:
-                vol_output = self.vol_output_layer(embedding)
+        if isinstance(self.vol_output_size, (tuple, list)):
+            vol_output = [output_layer(embedding) for output_layer in self.vol_output_layer]
+        else:
+            vol_output = self.vol_output_layer(embedding)
         #logging.info(f"vol_output:{vol_output}")
         #anomaly_returns_output = None
         #min_max_output = None
@@ -1086,6 +1086,11 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 time_daily_output = [ torch.squeeze(val, dim=-1) for val in time_daily_output]
             else:
                 time_daily_output = torch.squeeze(time_daily_output, dim=-1)
+        if vol_output is not None:
+            if isinstance(vol_output, List):
+                vol_output = [ torch.squeeze(val, dim=-1) for val in vol_output]
+            else:
+                vol_output = torch.squeeze(vol_output, dim=-1)
         #logging.info(f"output: len{output}, shape(0):{output[0].shape}")
         #logging.info(f"returns_daily_output: len{returns_daily_output}, shape(0):{returns_daily_output[0].shape}")
         prediction=self.transform_output(output, target_scale=x["target_scale"], head="prediction")
@@ -1113,6 +1118,7 @@ class PatchTftSupervised(BaseModelWithCovariates):
             prediction=prediction,
             returns_daily_prediction=returns_daily_output,
             time_daily_prediction=time_daily_output,
+            vol_prediction=vol_output,
             #anomaly_returns_output=anomaly_returns_output,
             #vol_output=vol_output,
             #min_max_output=min_max_output,

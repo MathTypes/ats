@@ -1184,8 +1184,14 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         #if isinstance(out, Tuple):
             # skip loss
         #    out = out[1]
-        y_hats = to_list(self.to_prediction(out, head=head, **prediction_kwargs))
-        y_quantiles = to_list(self.to_quantiles(out, head=head, **quantiles_kwargs))
+        raw_y_hats = self.to_prediction(out, head=head, **prediction_kwargs)
+        raw_y_quantiles = self.to_quantiles(out, head=head, **quantiles_kwargs)
+        logging.info(f"raw_y_hats:{raw_y_hats}")
+        logging.info(f"raw_y_quantiles:{raw_y_quantiles}")
+        y_hats = to_list(raw_y_hats)
+        y_quantiles = to_list(raw_y_quantiles)
+        logging.info(f"y_hats:{y_hats}")
+        logging.info(f"y_quantiles:{y_quantiles}")
         #logging.info(f"draw_mode:{draw_mode}, y_hats:{y_hats}, row={row}, col={col}")
         fig = ax
         if fig == None:
@@ -1215,30 +1221,18 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #logging.info(f"y.shape:{y.shape}")
             # move predictions to cpu
             y_hat = y_hat.detach().cpu()[idx, : x["decoder_lengths"][idx]]
-            y_hat2 = None
-            if head == "returns_daily_prediction":
-                y_hat2 = y_hat.detach().cpu()[idx, : x["decoder_lengths"][idx+1]]
             n_pred = y_hat.shape[0]
             base = y[-n_pred-1].detach().cpu()
             #if draw_mode == "pred_vol":
                 #logging.info(f"y:{y}")
                 #logging.info(f"y_hat:{y_hat}")
             logging.info(f"y_hat:{y_hat}")
-            logging.info(f"y_hat2:{y_hat2}")
             #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             if draw_mode == "pred_cum":
-                #logging.info(f"y_raw before cumsum:{y_raw}, {y_raw.shape}")
-                #logging.info(f"y_hat before cumsum:{y_hat}, {y_hat.shape}")
-                #logging.info(f"y_quantile before cumsum:{y_quantile}, {y_quantile.shape}")
                 y = torch.subtract(y, base)
                 y_hat = torch.cumsum(y_hat, dim=-1)
-                #y_hat = torch.add(y_hat, base)
-                #y_raw = torch.add(y_raw, base)
                 y_quantile = torch.cumsum(y_quantile, dim=-2)
-                #y_quantile = torch.add(y_quantile, base)
-                #logging.info(f"y_quantile:{y_quantile}, {y_quantile.shape}")
-                #logging.info(f"y_quantile after cumsum:{y_quantile}, {y_quantile.shape}")
             # move to cpu
             y = y.detach().cpu()
             # create figure
@@ -1275,11 +1269,6 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
                                   name="predicted" if draw_mode=="pred" else None,
                                   line=dict(color=pred_color), showlegend=False), row=row, col=col)
 
-            if y_hat2:
-                fig.add_trace(plotter(x=x_pred, y=y_hat2,
-                                      name="predicted" if draw_mode=="pred" else None,
-                                      line=dict(color=pred_color), showlegend=False), row=row, col=col)
-            
             # plot predicted quantiles
             fig.add_trace(plotter(x=x_pred, y=y_quantile[:, y_quantile.shape[1] // 2],
                                   name="quantile mean" if draw_mode=="pred" else None,
