@@ -245,4 +245,4 @@ def get_next_trading_times(cal, interval, now, k):
         results.append(nyc_time.timestamp())
         if len(results) >= k:
             break
-    return results
+    return results 

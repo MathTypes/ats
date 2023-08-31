@@ -7,6 +7,8 @@ import pytz
 from ats.calendar import market_time
 from ats.util import logging_utils
 
+from datetime import timezone
+
 
 def test_open_time_with_date():
     market_cal = mcal.get_calendar("CME_Equity")
@@ -18,7 +20,10 @@ def test_open_time_with_date():
     open_time = market_time.get_open_time(market_cal, train_start_date)
     # Sun May 31 2009 15:00:00
     assert open_time == 1243807200
-    close_time = market_time.get_close_time(market_cal, train_start_date).date()
+
+    # logging.error("\n\n\n\n\nthe type of object is: " + str(type(market_time.get_close_time(market_cal, train_start_date))) + "\n\n\n\n\n")
+    close_time = market_time.get_close_time(market_cal, train_start_date)
+
     # Mon Jun 01 2009 14:00:00
     assert close_time == 1243890000.0
 
@@ -26,13 +31,37 @@ def test_open_time_with_date():
 def test_next_trading_times_intraday_cme_equity_30m():
     market_cal = mcal.get_calendar("CME_Equity")
     # Mon Jul 24 2023 05:30:00 PST
-    utc_time = datetime.datetime(2023, 7, 24, 12, 30).astimezone(
-        pytz.timezone("America/New_York")
-    )
-    logging.info(f"utc_time:{utc_time}")
 
-    trading_times = market_time.get_next_trading_times(market_cal, 30, utc_time, 2)
+    logging.error("hereeee")
+    nyc_time = datetime.datetime(2023, 7, 24, 12, 30, tzinfo=timezone.utc).astimezone(
+        pytz.timezone("America/New_York")
+    ) #ny time from london time
+    
+    logging.error("\n\n\n\nnyc_time is:" + str(nyc_time))
+    logging.info(f"nyc_time:{nyc_time}")
+
+    trading_times = market_time.get_next_trading_times(market_cal, 30, nyc_time, 2)
+    #market_time in src.ats.calendar
     assert trading_times == [1690201800.0, 1690203600.0]
+
+
+def test_next_trading_times_intraday_cme_equity_30m_2hrbefore():
+    market_cal = mcal.get_calendar("CME_Equity")
+    # Mon Jul 24 2023 05:30:00 PST
+
+    logging.error("hereeee")
+    nyc_time = datetime.datetime(2023, 7, 24, 10, 30, tzinfo=timezone.utc).astimezone(
+        pytz.timezone("America/New_York")
+    ) #ny time from london time
+    
+    logging.error("\n\n\n\nnyc_time is:" + str(nyc_time))
+    logging.info(f"nyc_time:{nyc_time}")
+
+    trading_times = market_time.get_next_trading_times(market_cal, 30, nyc_time, 2)
+    #market_time in src.ats.calendar
+    assert trading_times == [1690201800.0, 1690203600.0]
+
+
 
 
 def test_next_trading_times_near_friday_close_cme_equity_30m():
