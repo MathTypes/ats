@@ -124,8 +124,8 @@ def get_result_from_openai_davinci(api_key: str, prompt_str: str):
 
 
 API_KEY_Tushare = ''  # https://www.tushare.pro/user/token
-API_KEY_MarketAUX = ''  # https://www.marketaux.com/account/dashboard
-API_KEY_OpenAI = ''  # https://platform.openai.com/account/api-keys
+API_KEY_MarketAUX = 'yZ2RxhcZYrPtxk9nYoBFSAw7ktNFs3RtxOjLGH5H'  # https://www.marketaux.com/account/dashboard
+API_KEY_OpenAI = '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'  # https://platform.openai.com/account/api-keys
 
 
 def run_news_in_chinese():
@@ -148,5 +148,5 @@ def run_news_in_english():
 
 
 if __name__ == '__main__':
-    run_news_in_chinese()
+    #run_news_in_chinese()
     run_news_in_english()
