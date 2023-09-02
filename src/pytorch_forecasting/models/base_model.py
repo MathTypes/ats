@@ -849,6 +849,7 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #exit(0)
             # handle multiple targets
             prediction_list = to_list(prediction)
+            #logging.info(f"prediction_list:{prediction_list}")
             gradient = 0
             # todo: should monotone constrains be applicable to certain targets?
             for pred in prediction_list:
@@ -1188,10 +1189,11 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         raw_y_quantiles = self.to_quantiles(out, head=head, **quantiles_kwargs)
         logging.info(f"raw_y_hats:{raw_y_hats}")
         logging.info(f"raw_y_quantiles:{raw_y_quantiles}")
+        # Note that to_list only takes first element in case raw_y_hats is a list
         y_hats = to_list(raw_y_hats)
         y_quantiles = to_list(raw_y_quantiles)
-        logging.info(f"y_hats:{y_hats}")
-        logging.info(f"y_quantiles:{y_quantiles}")
+        #logging.info(f"y_hats:{y_hats}, head:{head}")
+        #logging.info(f"y_quantiles:{y_quantiles}")
         #logging.info(f"draw_mode:{draw_mode}, y_hats:{y_hats}, row={row}, col={col}")
         fig = ax
         if fig == None:
@@ -1204,8 +1206,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         ):
             # TODO: fix this hack where we plot each target in different
             # figure so that they have different scale.
-            logging.info(f"encoder_target:{encoder_target[idx]}")
-            logging.info(f"decoder_target:{decoder_target[idx]}")
+            #logging.info(f"encoder_target:{encoder_target[idx]}")
+            #logging.info(f"decoder_target:{decoder_target[idx]}")
             y_all = torch.cat([encoder_target[idx], decoder_target[idx]])
             if draw_mode == "pred_cum":
                 #logging.info(f"before cumsum: y_all:{y_all}")
@@ -1226,13 +1228,14 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             #if draw_mode == "pred_vol":
                 #logging.info(f"y:{y}")
                 #logging.info(f"y_hat:{y_hat}")
-            logging.info(f"y_hat:{y_hat}")
+            #logging.info(f"y_hat:{y_hat}")
             #logging.info(f"base:{base}")
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             if draw_mode == "pred_cum":
                 y = torch.subtract(y, base)
-                y_hat = torch.cumsum(y_hat, dim=-1)
-                y_quantile = torch.cumsum(y_quantile, dim=-2)
+                if head != "returns_daily_prediction":
+                    y_hat = torch.cumsum(y_hat, dim=-1)
+                    y_quantile = torch.cumsum(y_quantile, dim=-2)
             # move to cpu
             y = y.detach().cpu()
             # create figure

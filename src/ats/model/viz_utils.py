@@ -428,17 +428,18 @@ def create_viz_row(
             draw_mode="pred_cum",
             x_time=x_time,
         )
-        pl_module.plot_prediction(
-            x,
-            out,
-            idx=idx,
-            ax=fig,
-            row=2,
-            col=1,
-            head="returns_daily_prediction",
-            draw_mode="pred_cum",
-            x_time=x_time,
-        )
+        if False:
+            pl_module.plot_prediction(
+                x,
+                out,
+                idx=idx,
+                ax=fig,
+                row=2,
+                col=1,
+                head="returns_daily_prediction",
+                draw_mode="pred_cum",
+                x_time=x_time,
+            )
         interpretation = {}
         for name in interp_output.keys():
             if interp_output[name].dim() > 1:

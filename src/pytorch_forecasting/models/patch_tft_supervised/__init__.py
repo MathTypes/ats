@@ -31,7 +31,7 @@ from pytorch_forecasting.utils import create_mask, detach, integer_histogram, ma
 from .layers.PatchTST_layers import *
 from .layers.RevIN import RevIN
 
-#from ats.model.utils import _easy_mlp
+from ats.model.layer_utils import _easy_mlp
 from ats.util import profile_util
 
 class PredictionHead(nn.Module):
@@ -644,19 +644,20 @@ class PatchTftSupervised(BaseModelWithCovariates):
         self.vol_output_layer = None
         self.vol_output_size = vol_output_size
         logging.info(f"vol_output_size:{vol_output_size}, vol_output_size_type:{type(vol_output_size)}")
-        if isinstance(vol_output_size, (tuple, list)):
-            #self.vol_output_layer = nn.ModuleList(
-            #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-            #                num_layers=n_layers, activation=nn.ReLU)
-            #      for output_size in vol_output_size])
-            self.vol_output_layer = nn.ModuleList(
-                [nn.Linear(d_model, output_size) for output_size in vol_output_size]
-            )
-        else:
-            self.vol_output_layer = nn.Linear(d_model, vol_output_size)
-            #self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
-            #                                  num_layers=n_layers,
-            #                                  activation=nn.ReLU)
+        if vol_output_size is not None:
+            if isinstance(vol_output_size, (tuple, list)):
+                #self.vol_output_layer = nn.ModuleList(
+                #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in vol_output_size])
+                self.vol_output_layer = nn.ModuleList(
+                    [nn.Linear(d_model, output_size) for output_size in vol_output_size]
+                )
+            else:
+                self.vol_output_layer = nn.Linear(d_model, vol_output_size)
+                #self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
+                #                                  num_layers=n_layers,
+                #                                  activation=nn.ReLU)
         self.returns_daily_output_layer = None
         if returns_daily_output_size:
             if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
@@ -668,11 +669,19 @@ class PatchTftSupervised(BaseModelWithCovariates):
         self.time_daily_output_layer = None
         if time_daily_output_size:
             if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
+                #self.time_daily_output_layer = nn.ModuleList(
+                #    [nn.Linear(d_model, output_size) for output_size in time_daily_output_size]
+                #)
                 self.time_daily_output_layer = nn.ModuleList(
-                    [nn.Linear(d_model, output_size) for output_size in time_daily_output_size]
-                )
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in time_daily_output_size])
             else:
-                self.time_daily_output_layer = nn.Linear(d_model, time_daily_output_size)
+                #self.time_daily_output_layer = nn.Linear(d_model, time_daily_output_size)
+                self.time_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                         output_dim=time_daily_output_size,
+                                                         num_layers=n_layers,
+                                                         activation=nn.ReLU)
         #self.anomaly_returns_output_layer = None
         #if anomaly_returns_output_size:
         #    if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
@@ -1053,29 +1062,26 @@ class PatchTftSupervised(BaseModelWithCovariates):
             else:
                 time_daily_output = self.time_daily_output_layer(embedding)
         vol_output = None
-        if isinstance(self.vol_output_size, (tuple, list)):
-            vol_output = [output_layer(embedding) for output_layer in self.vol_output_layer]
-        else:
-            vol_output = self.vol_output_layer(embedding)
-        #logging.info(f"vol_output:{vol_output}")
-        #anomaly_returns_output = None
-        #min_max_output = None
-        #if self.anomaly_returns_output_layer:
-        #    if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
-        #        anomaly_returns_output = [output_layer(embedding) for output_layer in self.anomaly_returns_output_layer]
-        #    else:
-        #        anomaly_returns_output = self.anomaly_returns_output_layer(embedding)
-        #if self.min_max_output_layer:
-        #    if self.n_head_targets(head="min_max") > 1:  # if to run with multiple targets
-        #        min_max_output = [output_layer(embedding) for output_layer in self.min_max_output_layer]
-        #    else:
-        #        min_max_output = self.min_max_output_layer(embedding)
-        # Remove last dimension if it is 1
-        #logging.info(f"output before squeeze:{output[0].shape}, {output[1].shape}")
+        if self.vol_output_layer:
+            if isinstance(self.vol_output_size, (tuple, list)):
+                vol_output = [output_layer(embedding) for output_layer in self.vol_output_layer]
+            else:
+                vol_output = self.vol_output_layer(embedding)
+        #logging.info(f"output:{output}")
         if isinstance(output, List):
-          output = [ torch.squeeze(val, dim=-1) for val in output]
+            #ret_output = torch.squeeze(output[0], dim=-1)
+            #vel_output = torch.squeeze(output[1], dim=-1)
+            #logging.info(f"ret_output:{ret_output}, shape:{ret_output.shape}")
+            #logging.info(f"vel_output:{vel_output}, shape:{vel_output.shape}")
+            #new_ret_output = torch.cumsum(vel_output, dim=-1)
+            #logging.info(f"new_ret_output:{new_ret_output}")
+            output = [ torch.squeeze(val, dim=-1) for val in output]
+            #output = [torch.unsqueeze(new_ret_output, dim=-1), output[1]]
+            #logging.info(f"new_output0: {output[0]}, shape:{output[0].shape}")
+            #logging.info(f"new_output1: {output[1]}, shape:{output[1].shape}")
         else:
-          output = torch.squeeze(output, dim=-1)
+            output = torch.squeeze(output, dim=-1)
+        #logging.info(f"new_output:{output}")
         if returns_daily_output is not None:
             if isinstance(returns_daily_output, List):
                 returns_daily_output = [ torch.squeeze(val, dim=-1) for val in returns_daily_output]
