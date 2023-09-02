@@ -3,12 +3,12 @@ prediction_length: 46
 context_length: 460
 patch_len: 6
 stride: 3
-d_model: 64
-train_batch_size: 480
+d_model: 48
+train_batch_size: 256
 eval_batch_size: 64
 learning_rate: 0.03
 #learning_rate: 0.007620123116637185
-attn_heads : 8
+attn_heads : 16
 dropout: 0.3
 #gradient_clip_val: 0.4
 gradient_clip_val: 0.4
@@ -21,8 +21,12 @@ multitask: True
 heads:
   - prediction
   - returns_daily_prediction
+  - returns_weekly_prediction
+  - returns_monthly_prediction
   - time_daily_prediction
-#  - vol_prediction
+  - time_weekly_prediction
+  - time_monthly_prediction
+  - vol_prediction
 prediction:
   loss_name: SMAPE
   #target: ["close_back", "close_velocity_back"]
@@ -32,10 +36,26 @@ returns_daily_prediction:
   loss_name: SMAPE
   target: ["ret_from_low_1d_shift_1d", "ret_from_high_1d_shift_1d"]
   logging_metrics: ["SMAPE"]
+returns_weekly_prediction:
+  loss_name: SMAPE
+  target: ["ret_from_low_5d_shift_5d", "ret_from_high_5d_shift_5d"]
+  logging_metrics: ["SMAPE"]
+returns_monthly_prediction:
+  loss_name: SMAPE
+  target: ["ret_from_low_21d_shift_21d", "ret_from_high_21d_shift_21d"]
+  logging_metrics: ["SMAPE"]
 time_daily_prediction:
   loss_name: SMAPE
   target: ["time_to_low_1d_ff_shift_1d","time_to_high_1d_ff_shift_1d"]
-  logging_metrics: ["SMAPE", "MAE", "RMSE", "MAPE", "MASE"]
+  logging_metrics: ["SMAPE"]
+time_weekly_prediction:
+  loss_name: SMAPE
+  target: ["time_to_low_5d_ff_shift_5d","time_to_high_5d_ff_shift_5d"]
+  logging_metrics: ["SMAPE"]
+time_monthly_prediction:
+  loss_name: SMAPE
+  target: ["time_to_low_21d_ff_shift_21d","time_to_high_21d_ff_shift_21d"]
+  logging_metrics: ["SMAPE"]
 vol_prediction:
   loss_name: SMAPE
   target: ["daily_vol_1d"]

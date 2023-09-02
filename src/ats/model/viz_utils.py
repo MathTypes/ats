@@ -485,6 +485,7 @@ def create_viz_row(
         "error_cum_min": y_hat_cum_min - y_close_cum_min,
         "rmse": rmse[idx],
         "mae": mae[idx],
+        "error": y_hat_cum.item()-y_close_cum.item()
     }
     del train_data
     del train_data_row

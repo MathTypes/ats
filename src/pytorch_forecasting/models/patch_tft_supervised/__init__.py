@@ -602,7 +602,11 @@ class PatchTftSupervised(BaseModelWithCovariates):
         output_size = self.hparams.output_size
         returns_output_size = None
         returns_daily_output_size = None
+        returns_weekly_output_size = None
+        returns_monthly_output_size = None
         time_daily_output_size = None
+        time_weekly_output_size = None
+        time_monthly_output_size = None
         vol_output_size = None
         min_max_output_size = None
         anomaly_returns_output_size = None
@@ -610,78 +614,120 @@ class PatchTftSupervised(BaseModelWithCovariates):
             returns_output_size = output_size["prediction"]
             if "returns_daily_prediction" in output_size:
                 returns_daily_output_size = output_size["returns_daily_prediction"]
+            if "returns_weekly_prediction" in output_size:
+                returns_weekly_output_size = output_size["returns_weekly_prediction"]
+            if "returns_monthly_prediction" in output_size:
+                returns_monthly_output_size = output_size["returns_monthly_prediction"]
             if "time_daily_prediction" in output_size:
                 time_daily_output_size = output_size["time_daily_prediction"]
+            if "time_weekly_prediction" in output_size:
+                time_weekly_output_size = output_size["time_weekly_prediction"]
+            if "time_monthly_prediction" in output_size:
+                time_monthly_output_size = output_size["time_monthly_prediction"]
             if "vol_prediction" in output_size:
                 vol_output_size = output_size["vol_prediction"]
             if "min_max" in output_size:
                 min_max_output_size = output_size["min_max"]
             if "anomaly_returns" in output_size:
                 anomaly_returns_output_size = output_size["anomaly_returns"]
-        #logging.error(f"anomaly_returns_output_size:{anomaly_returns_output_size}")
-        #anomaly_returns_output_size = 1
         logging.info(f"returns_output_size:{returns_output_size}, type:{type(returns_output_size)}")
-        #if self.n_head_targets(head="prediction") > 1:  # if to run with multiple targets
         self.returns_output_size = returns_output_size
         if isinstance(returns_output_size, (tuple, list)):
-            #logging.info(f"create multiple returns output")
             self.output_layer = nn.ModuleList(
-                [nn.Linear(d_model, output_size) for output_size in returns_output_size]
-            )
-            #self.output_layer = nn.ModuleList(
-            #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-            #                num_layers=n_layers,
-            #                activation=nn.ReLU)
-            #      for output_size in returns_output_size
-            #    ])
+                [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                            num_layers=n_layers,
+                            activation=nn.ReLU)
+                  for output_size in returns_output_size
+                ])
         else:
-            #self.output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
-            #                              num_layers=n_layers,
-            #                              activation=nn.ReLU)
-            self.output_layer = nn.Linear(d_model, returns_output_size)
-        #logging.info(f"self.output_layer:{self.output_layer}")
-        #exit(0)
+            self.output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
+                                          num_layers=n_layers,
+                                          activation=nn.ReLU)
         self.vol_output_layer = None
         self.vol_output_size = vol_output_size
         logging.info(f"vol_output_size:{vol_output_size}, vol_output_size_type:{type(vol_output_size)}")
         if vol_output_size is not None:
             if isinstance(vol_output_size, (tuple, list)):
-                #self.vol_output_layer = nn.ModuleList(
-                #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                #                num_layers=n_layers, activation=nn.ReLU)
-                #      for output_size in vol_output_size])
                 self.vol_output_layer = nn.ModuleList(
-                    [nn.Linear(d_model, output_size) for output_size in vol_output_size]
-                )
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in vol_output_size])
             else:
-                self.vol_output_layer = nn.Linear(d_model, vol_output_size)
-                #self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
-                #                                  num_layers=n_layers,
-                #                                  activation=nn.ReLU)
+                self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=vol_output_size,
+                                                  num_layers=n_layers,
+                                                  activation=nn.ReLU)
         self.returns_daily_output_layer = None
         if returns_daily_output_size:
             if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
                 self.returns_daily_output_layer = nn.ModuleList(
-                    [nn.Linear(d_model, output_size) for output_size in returns_daily_output_size]
-                )
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in returns_daily_output_size])
             else:
-                self.returns_daily_output_layer = nn.Linear(d_model, returns_daily_output_size)
+                self.returns_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                            output_dim=returns_daily_output_size,
+                                                            num_layers=n_layers,
+                                                            activation=nn.ReLU)                
+        self.returns_weekly_output_layer = None
+        if returns_weekly_output_size:
+            if self.n_head_targets(head="returns_weekly_prediction") > 1:  # if to run with multiple targets
+                self.returns_weekly_output_layer = nn.ModuleList(
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in returns_weekly_output_size])
+            else:
+                self.returns_weekly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                             output_dim=returns_weekly_output_size,
+                                                             num_layers=n_layers,
+                                                             activation=nn.ReLU)            
+        self.returns_monthly_output_layer = None
+        if returns_monthly_output_size:
+            if self.n_head_targets(head="returns_monthly_prediction") > 1:  # if to run with multiple targets
+                self.returns_monthly_output_layer = nn.ModuleList(
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in returns_monthly_output_size])
+            else:
+                self.returns_monthly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                             output_dim=returns_monthly_output_size,
+                                                             num_layers=n_layers,
+                                                             activation=nn.ReLU)            
         self.time_daily_output_layer = None
         if time_daily_output_size:
             if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
-                #self.time_daily_output_layer = nn.ModuleList(
-                #    [nn.Linear(d_model, output_size) for output_size in time_daily_output_size]
-                #)
                 self.time_daily_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
                       for output_size in time_daily_output_size])
             else:
-                #self.time_daily_output_layer = nn.Linear(d_model, time_daily_output_size)
                 self.time_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
                                                          output_dim=time_daily_output_size,
                                                          num_layers=n_layers,
                                                          activation=nn.ReLU)
+        self.time_weekly_output_layer = None
+        if time_weekly_output_size:
+            if self.n_head_targets(head="time_weekly_prediction") > 1:  # if to run with multiple targets
+                self.time_weekly_output_layer = nn.ModuleList(
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in time_weekly_output_size])
+            else:
+                self.time_weekly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                          output_dim=time_weekly_output_size,
+                                                          num_layers=n_layers,
+                                                          activation=nn.ReLU)
+        self.time_monthly_output_layer = None
+        if time_monthly_output_size:
+            if self.n_head_targets(head="time_monthly_prediction") > 1:  # if to run with multiple targets
+                self.time_monthly_output_layer = nn.ModuleList(
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in time_monthly_output_size])
+            else:
+                self.time_monthly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                           output_dim=time_monthly_output_size,
+                                                           num_layers=n_layers,
+                                                           activation=nn.ReLU)
         #self.anomaly_returns_output_layer = None
         #if anomaly_returns_output_size:
         #    if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
@@ -1055,12 +1101,36 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 returns_daily_output = [output_layer(embedding) for output_layer in self.returns_daily_output_layer]
             else:
                 returns_daily_output = self.returns_daily_output_layer(embedding)
+        returns_weekly_output = None
+        if self.returns_weekly_output_layer:
+            if self.n_head_targets(head="returns_weekly_prediction") > 1:  # if to run with multiple targets
+                returns_weekly_output = [output_layer(embedding) for output_layer in self.returns_weekly_output_layer]
+            else:
+                returns_weekly_output = self.returns_weekly_output_layer(embedding)
+        returns_monthly_output = None
+        if self.returns_monthly_output_layer:
+            if self.n_head_targets(head="returns_monthly_prediction") > 1:  # if to run with multiple targets
+                returns_monthly_output = [output_layer(embedding) for output_layer in self.returns_monthly_output_layer]
+            else:
+                returns_monthly_output = self.returns_monthly_output_layer(embedding)
         time_daily_output = None
         if self.time_daily_output_layer:
             if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
                 time_daily_output = [output_layer(embedding) for output_layer in self.time_daily_output_layer]
             else:
                 time_daily_output = self.time_daily_output_layer(embedding)
+        time_weekly_output = None
+        if self.time_weekly_output_layer:
+            if self.n_head_targets(head="time_weekly_prediction") > 1:  # if to run with multiple targets
+                time_weekly_output = [output_layer(embedding) for output_layer in self.time_weekly_output_layer]
+            else:
+                time_weekly_output = self.time_weekly_output_layer(embedding)
+        time_monthly_output = None
+        if self.time_monthly_output_layer:
+            if self.n_head_targets(head="time_monthly_prediction") > 1:  # if to run with multiple targets
+                time_monthly_output = [output_layer(embedding) for output_layer in self.time_monthly_output_layer]
+            else:
+                time_monthly_output = self.time_monthly_output_layer(embedding)
         vol_output = None
         if self.vol_output_layer:
             if isinstance(self.vol_output_size, (tuple, list)):
@@ -1087,11 +1157,31 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 returns_daily_output = [ torch.squeeze(val, dim=-1) for val in returns_daily_output]
             else:
                 returns_daily_output = torch.squeeze(returns_daily_output, dim=-1)
+        if returns_weekly_output is not None:
+            if isinstance(returns_weekly_output, List):
+                returns_weekly_output = [ torch.squeeze(val, dim=-1) for val in returns_weekly_output]
+            else:
+                returns_weekly_output = torch.squeeze(returns_weekly_output, dim=-1)
+        if returns_monthly_output is not None:
+            if isinstance(returns_monthly_output, List):
+                returns_monthly_output = [ torch.squeeze(val, dim=-1) for val in returns_monthly_output]
+            else:
+                returns_monthly_output = torch.squeeze(returns_monthly_output, dim=-1)
         if time_daily_output is not None:
             if isinstance(time_daily_output, List):
                 time_daily_output = [ torch.squeeze(val, dim=-1) for val in time_daily_output]
             else:
                 time_daily_output = torch.squeeze(time_daily_output, dim=-1)
+        if time_weekly_output is not None:
+            if isinstance(time_weekly_output, List):
+                time_weekly_output = [ torch.squeeze(val, dim=-1) for val in time_weekly_output]
+            else:
+                time_weekly_output = torch.squeeze(time_weekly_output, dim=-1)
+        if time_monthly_output is not None:
+            if isinstance(time_monthly_output, List):
+                time_monthly_output = [ torch.squeeze(val, dim=-1) for val in time_monthly_output]
+            else:
+                time_monthly_output = torch.squeeze(time_monthly_output, dim=-1)
         if vol_output is not None:
             if isinstance(vol_output, List):
                 vol_output = [ torch.squeeze(val, dim=-1) for val in vol_output]
@@ -1102,8 +1192,16 @@ class PatchTftSupervised(BaseModelWithCovariates):
         prediction=self.transform_output(output, target_scale=x["target_scale"], head="prediction")
         if returns_daily_output is not None:
             returns_daily_output=self.transform_output(returns_daily_output, target_scale=x["target_scale"], head="returns_daily_prediction")
+        if returns_weekly_output is not None:
+            returns_weekly_output=self.transform_output(returns_weekly_output, target_scale=x["target_scale"], head="returns_weekly_prediction")
+        if returns_monthly_output is not None:
+            returns_monthly_output=self.transform_output(returns_monthly_output, target_scale=x["target_scale"], head="returns_monthly_prediction")
         if time_daily_output is not None:
             time_daily_output=self.transform_output(time_daily_output, target_scale=x["target_scale"], head="time_daily_prediction")
+        if time_weekly_output is not None:
+            time_weekly_output=self.transform_output(time_weekly_output, target_scale=x["target_scale"], head="time_weekly_prediction")
+        if time_monthly_output is not None:
+            time_monthly_output=self.transform_output(time_monthly_output, target_scale=x["target_scale"], head="time_monthly_prediction")
         #logging.info(f"prediction:{prediction}")
         #logging.info(f"returns_daily_output:{returns_daily_output}")
         #exit(0)
@@ -1123,11 +1221,12 @@ class PatchTftSupervised(BaseModelWithCovariates):
         return self.to_network_output(
             prediction=prediction,
             returns_daily_prediction=returns_daily_output,
+            returns_weekly_prediction=returns_weekly_output,
+            returns_monthly_prediction=returns_monthly_output,
             time_daily_prediction=time_daily_output,
+            time_weekly_prediction=time_weekly_output,
+            time_monthly_prediction=time_monthly_output,
             vol_prediction=vol_output,
-            #anomaly_returns_output=anomaly_returns_output,
-            #vol_output=vol_output,
-            #min_max_output=min_max_output,
             encoder_attention=attn_output_weights[..., :new_encoder_length],
             decoder_attention=attn_output_weights[..., new_encoder_length:],
             static_variables=static_variable_selection,
