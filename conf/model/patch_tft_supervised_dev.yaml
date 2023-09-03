@@ -1,17 +1,18 @@
 hidden_size: 20
 prediction_length: 46
-context_length: 460
+context_length: 320
 patch_len: 6
 stride: 3
 d_model: 48
 train_batch_size: 256
 eval_batch_size: 64
 learning_rate: 0.03
+
 #learning_rate: 0.007620123116637185
 attn_heads : 16
 dropout: 0.3
-#gradient_clip_val: 0.4
-gradient_clip_val: 0.4
+gradient_clip_val: 4
+#gradient_clip_val: 4
 #gradient_clip_val: 0.04743272100693891
 accumulate_grad_batches: 8192
 attn_dropout: 0.3
@@ -26,10 +27,9 @@ heads:
   - time_daily_prediction
   - time_weekly_prediction
   - time_monthly_prediction
-  - vol_prediction
+  #- vol_prediction
 prediction:
   loss_name: SMAPE
-  #target: ["close_back", "close_velocity_back"]
   target: ["close_back"]
   logging_metrics: ["MAE"]
 returns_daily_prediction:

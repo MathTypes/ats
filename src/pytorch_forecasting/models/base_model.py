@@ -1178,8 +1178,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         """
         # all true values for y of the first sample in batch
         # only uses prediction head since that is close
-        logging.info(f"encoder_target:{x['encoder_target'][0].shape}")
-        logging.info(f"decoder_target:{x['decoder_target'][0].shape}")
+        #logging.info(f"encoder_target:{x['encoder_target'][0].shape}")
+        #logging.info(f"decoder_target:{x['decoder_target'][0].shape}")
         encoder_targets = to_list(x["encoder_target"])
         decoder_targets = to_list(x["decoder_target"])
         #if isinstance(out, Tuple):
@@ -1187,8 +1187,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
         #    out = out[1]
         raw_y_hats = self.to_prediction(out, head=head, **prediction_kwargs)
         raw_y_quantiles = self.to_quantiles(out, head=head, **quantiles_kwargs)
-        logging.info(f"raw_y_hats:{raw_y_hats}")
-        logging.info(f"raw_y_quantiles:{raw_y_quantiles}")
+        #logging.info(f"raw_y_hats:{raw_y_hats}")
+        #logging.info(f"raw_y_quantiles:{raw_y_quantiles}")
         # Note that to_list only takes first element in case raw_y_hats is a list
         y_hats = to_list(raw_y_hats)
         y_quantiles = to_list(raw_y_quantiles)

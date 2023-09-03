@@ -62,6 +62,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 "error_min",
                 "rmse",
                 "mae",
+                "error"
             ],
         )
         self.val_x_batch = []
@@ -172,19 +173,20 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             "error_min",
             "rmse",
             "mae",
+            "error"
         ]
         data_table = wandb.Table(columns=column_names, allow_mixed_types=True)
         device = self.pl_module.device
         for batch_idx in range(self.num_samples):
-            logging.info(f"add prediction for batch:{batch_idx}")
+            #logging.info(f"add prediction for batch:{batch_idx}")
             gc.collect()
             torch.cuda.empty_cache()
-            logging.info(f"allocated before prediction:{torch.cuda.memory_allocated()}")
-            logging.info(f"max_allocated before prediction:{torch.cuda.max_memory_allocated()}")
+            #logging.info(f"allocated before prediction:{torch.cuda.memory_allocated()}")
+            #logging.info(f"max_allocated before prediction:{torch.cuda.max_memory_allocated()}")
             orig_x = self.val_x_batch[batch_idx]
             orig_y = self.val_y_batch[batch_idx]
-            logging.info(f"orig_x:{orig_x}")
-            logging.info(f"orig_y:{orig_y}")
+            #logging.info(f"orig_x:{orig_x}")
+            #logging.info(f"orig_y:{orig_y}")
             indices = self.indices_batch[batch_idx]
             y_close = orig_y[0]
             # TODO: fix following hack to deal with multiple targets
@@ -220,7 +222,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                 x, y, out, head=head, prediction_kwargs=prediction_kwargs
             )
             result = {k:detach(v) for k, v in result.items()}
-            logging.info(f"result:{result}")
+            #logging.info(f"result:{result}")
             if "train_RMSE" in result:
                 rmse = result["train_RMSE"].cpu().detach().numpy()
             else:
@@ -236,22 +238,22 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
             quantiles_kwargs = {}
             predictions = self.pl_module.to_prediction(out, head=head, **prediction_kwargs)
             predictions = detach(predictions)
-            logging.info(f"predictions:{predictions}")
+            #logging.info(f"predictions:{predictions}")
             y_hats = to_list(predictions)[0]
             y_hats_cum = torch.cumsum(y_hats, dim=-1)
             y_quantiles = to_list(self.pl_module.to_quantiles(out, head=head, **quantiles_kwargs))[
                 0
             ]
-            logging.info(f"y_hats:{y_hats}")
-            logging.info(f"y_hats_cum:{y_hats_cum}")
+            #logging.info(f"y_hats:{y_hats}")
+            #logging.info(f"y_hats_cum:{y_hats_cum}")
             interp_output = self.pl_module.interpret_output(
                 detach(out),
                 reduction="none",
                 attention_prediction_horizon=0,  # attention only for first prediction horizon
             )
             cnt = 0
-            logging.info(f"allocated before iter:{torch.cuda.memory_allocated()}")
-            logging.info(f"max_allocated before iter:{torch.cuda.max_memory_allocated()}")
+            #logging.info(f"allocated before iter:{torch.cuda.memory_allocated()}")
+            #logging.info(f"max_allocated before iter:{torch.cuda.max_memory_allocated()}")
             for idx in range(len(y_hats)):
                 #logging.info(f"allocated:{torch.cuda.memory_allocated()}")
                 #logging.info(f"max_allocated:{torch.cuda.max_memory_allocated()}")
@@ -297,6 +299,7 @@ class WandbClfEvalCallback(WandbEvalCallback, Callback):
                         row["error_cum_min"],
                         row["rmse"],
                         row["mae"],
+                        row["error"]
                     )
                     cnt += 1
             del x

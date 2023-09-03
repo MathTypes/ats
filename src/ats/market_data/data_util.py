@@ -13,6 +13,7 @@ import ta
 
 import pandas_market_calendars as mcal
 from scipy.signal import find_peaks
+from sklearn.preprocessing import StandardScaler
 
 from ats.calendar import market_time
 from ats.model.mom_trans.classical_strategies import (
@@ -691,6 +692,12 @@ def ticker_transform(raw_data, config, base_price=500):
             raw_data["daily_vol_5d"] = calc_daily_vol(raw_data["daily_returns_5d"])
             raw_data["daily_vol_10d"] = calc_daily_vol(raw_data["daily_returns_10d"])
             raw_data["daily_vol_20d"] = calc_daily_vol(raw_data["daily_returns_20d"])
+            #std_scaler = StandardScaler()
+ 
+            #raw_data["daily_vol_1d"] = std_scaler.fit_transform(raw_data["daily_vol_1d"].to_numpy())
+            #raw_data["daily_vol_5d"] = std_scaler.fit_transform(raw_data["daily_vol_5d"].to_numpy())
+            #raw_data["daily_vol_10d"] = std_scaler.fit_transform(raw_data["daily_vol_10d"].to_numpy())
+            #raw_data["daily_vol_20d"] = std_scaler.fit_transform(raw_data["daily_vol_20d"].to_numpy())
             raw_data["daily_skew_1d"] = calc_skew(raw_data["daily_returns_1d"])
             raw_data["daily_skew_5d"] = calc_skew(raw_data["daily_returns_5d"])
             raw_data["daily_skew_10d"] = calc_skew(raw_data["daily_returns_10d"])

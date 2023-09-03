@@ -634,15 +634,19 @@ class PatchTftSupervised(BaseModelWithCovariates):
         self.returns_output_size = returns_output_size
         if isinstance(returns_output_size, (tuple, list)):
             self.output_layer = nn.ModuleList(
-                [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                            num_layers=n_layers,
-                            activation=nn.ReLU)
-                  for output_size in returns_output_size
-                ])
+                [nn.Linear(d_model, output_size) for output_size in returns_output_size]
+            )
         else:
-            self.output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
-                                          num_layers=n_layers,
-                                          activation=nn.ReLU)
+            self.output_layer = nn.Linear(d_model, returns_output_size)
+            #self.output_layer = nn.ModuleList(
+            #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+            #                num_layers=n_layers,
+            #                activation=nn.ReLU)
+            #      for output_size in returns_output_size
+            #    ])
+            #self.output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=returns_output_size,
+            #                              num_layers=n_layers,
+            #                              activation=nn.ReLU)
         self.vol_output_layer = None
         self.vol_output_size = vol_output_size
         logging.info(f"vol_output_size:{vol_output_size}, vol_output_size_type:{type(vol_output_size)}")
