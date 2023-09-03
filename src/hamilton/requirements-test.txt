@@ -1,0 +1,5 @@
+graphviz
+networkx
+pyarrow
+pytest
+pytest-cov

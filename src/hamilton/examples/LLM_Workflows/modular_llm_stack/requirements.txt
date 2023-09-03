@@ -1,0 +1,14 @@
+# comment out the vector DB packages you don't need
+click
+cohere
+datasets
+lancedb
+marqo
+numpy
+openai
+pandas
+pinecone-client
+sentence-transformers
+sf-hamilton
+sf-hamilton[visualization]
+weaviate-client

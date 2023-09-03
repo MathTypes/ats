@@ -1,0 +1,11 @@
+arxiv
+openai
+pandas
+PyPDF2
+requests
+scipy
+sf-hamilton[visualization]
+tenacity
+termcolor
+tiktoken==0.3.3
+tqdm
