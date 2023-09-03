@@ -29,7 +29,7 @@ try:
     from . import base
     from .version import VERSION
 except ImportError:
-    from version import VERSION
+    from hamilton.version import VERSION
 
     from hamilton import base
 
