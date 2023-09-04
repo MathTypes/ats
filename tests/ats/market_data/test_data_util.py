@@ -4,6 +4,7 @@ import math
 from functools import cached_property, partial
 import pytz
 
+from numpy import nan
 from hydra import initialize, compose
 import numpy as np
 import pandas as pd
@@ -513,7 +514,7 @@ def test_add_example_features_daily_close():
 	        "dataset.read_snapshot=False",
                 "model.features.add_macro_event=True",
                 "job.test_start_date=2023-07-01",
-                "job.test_end_date=2023-07-28",
+                "job.test_end_date=2023-10-28",
             ],
             return_hydra_config=True
         )
@@ -562,15 +563,41 @@ def test_add_example_features_daily_close():
         raw_data = data_util.add_example_group_features(
             cal=market_cal, macro_data_builder=macro_data_builder, raw_data=raw_data, config=cfg)
 
+        logging.error(f"raw_data['new_york_last_daily_open'][-60:]:{raw_data['new_york_last_daily_open'][-60:].to_list()}")
+        logging.error(f"raw_data['new_york_last_daily_close'][-60:]:{raw_data['new_york_last_daily_close'][-60:].to_list()}")
+        logging.error(f"raw_data['london_last_daily_open'][-60:]:{raw_data['london_last_daily_open'][-60:].to_list()}")
+        logging.error(f"raw_data['london_last_daily_close'][-60:]:{raw_data['london_last_daily_close'][-60:].to_list()}")
+        logging.error(f"raw_data['last_weekly_close'][-60:]:{raw_data['last_weekly_close'][-60:].to_list()}")
+        logging.error(f"raw_data['last_monthly_close'][-60:]:{raw_data['last_monthly_close'][-60:].to_list()}")
         np.testing.assert_array_almost_equal(
-            raw_data["new_york_last_daily_open"][-10:],
-            [1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999],
+            raw_data["london_last_daily_open"][-60:],
+            [1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999],
             decimal=3, verbose=True, err_msg="can not match new_york_last_daily_open",
         )
         np.testing.assert_array_almost_equal(
-            raw_data["new_york_last_daily_close"][-10:],
-            [1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43],
+            raw_data["london_last_daily_close"][-60:],
+            [1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43],
+            decimal=3, verbose=True, err_msg="can not match new_york_last_daily_close",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["new_york_last_daily_open"][-60:],
+            [1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1064.33, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999],
             decimal=3, verbose=True, err_msg="can not match new_york_last_daily_open",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["new_york_last_daily_close"][-60:],
+            [1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1065.6299999999999, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43],
+            decimal=3, verbose=True, err_msg="can not match new_york_last_daily_close",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["last_weekly_close"][-60:],
+            [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43],
+            decimal=3, verbose=True, err_msg="can not match last_weekly_close",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["last_monthly_close"][-60:],
+            [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan],
+            decimal=3, verbose=True, err_msg="can not match last_monthly_close",
         )
 
 
@@ -581,7 +608,7 @@ def test_add_example_features_vwap_around_london_open():
             overrides=[
 	        "dataset.read_snapshot=False",
                 "model.features.add_macro_event=True",
-                "job.test_start_date=2023-07-01",
+                "job.test_start_date=2023-06-01",
                 "job.test_end_date=2023-07-28",
             ],
             return_hydra_config=True
@@ -626,5 +653,6 @@ def test_add_example_features_vwap_around_london_open():
             decimal=3, verbose=True, err_msg="can not match ret_from_vwap_around_london_open",
         )
 
+    
 if __name__ == "__main__":
     logging_utils.init_logging()
