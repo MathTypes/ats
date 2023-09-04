@@ -740,7 +740,7 @@ class TimeSeriesDataSet(Dataset):
 
     def fit_target_normalizer(self, data, key, target_normalizer):
         target = self.target[key]
-        logging.info(f"fitting key:{key}, target:{target}")
+        #logging.info(f"fitting key:{key}, target:{target}")
         #logging.info(f"target_normalizer:{target_normalizer}")
         # fit target normalizer
         try:
@@ -754,7 +754,7 @@ class TimeSeriesDataSet(Dataset):
                 target_normalizer.fit(data[target], data)
             else:
                 target_normalizer.fit(data[target])
-        logging.info(f"after initial fit:{data.describe()}")
+        #logging.info(f"after initial fit:{data.describe()}")
         #logging.info(f"target_normalizer.fit:{target_normalizer.fit}")
         # transform target
         if isinstance(target_normalizer, EncoderNormalizer):
@@ -794,7 +794,7 @@ class TimeSeriesDataSet(Dataset):
             )
             # logging.info(f"default normalizr scales:{scales}")
 
-        logging.info(f"scales:{scales}")
+        #logging.info(f"scales:{scales}")
         # add target scales
         if self.add_target_scales:
             # logging.info(f"does not expect add_target_scales")

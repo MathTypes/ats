@@ -604,6 +604,9 @@ class PatchTftSupervised(BaseModelWithCovariates):
         returns_daily_output_size = None
         returns_weekly_output_size = None
         returns_monthly_output_size = None
+        returns_daily_close_output_size = None
+        returns_weekly_close_output_size = None
+        returns_monthly_close_output_size = None
         time_daily_output_size = None
         time_weekly_output_size = None
         time_monthly_output_size = None
@@ -618,6 +621,12 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 returns_weekly_output_size = output_size["returns_weekly_prediction"]
             if "returns_monthly_prediction" in output_size:
                 returns_monthly_output_size = output_size["returns_monthly_prediction"]
+            if "returns_daily_close" in output_size:
+                returns_daily_close_output_size = output_size["returns_daily_close"]
+            if "returns_weekly_close" in output_size:
+                returns_weekly_close_output_size = output_size["returns_weekly_close"]
+            if "returns_monthly_close" in output_size:
+                returns_monthly_close_output_size = output_size["returns_monthly_close"]
             if "time_daily_prediction" in output_size:
                 time_daily_output_size = output_size["time_daily_prediction"]
             if "time_weekly_prediction" in output_size:
@@ -652,11 +661,15 @@ class PatchTftSupervised(BaseModelWithCovariates):
         logging.info(f"vol_output_size:{vol_output_size}, vol_output_size_type:{type(vol_output_size)}")
         if vol_output_size is not None:
             if isinstance(vol_output_size, (tuple, list)):
+                #self.vol_output_layer = nn.ModuleList(
+                #    [nn.Linear(d_model, output_size) for output_size in vol_output_size]
+                #)
                 self.vol_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
                       for output_size in vol_output_size])
             else:
+                #self.vol_output_layer = nn.Linear(d_model, vol_output_size)
                 self.vol_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=vol_output_size,
                                                   num_layers=n_layers,
                                                   activation=nn.ReLU)
@@ -696,6 +709,43 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                              output_dim=returns_monthly_output_size,
                                                              num_layers=n_layers,
                                                              activation=nn.ReLU)            
+
+        self.returns_daily_close_output_layer = None
+        if returns_daily_close_output_size:
+            if self.n_head_targets(head="returns_daily_close") > 1:  # if to run with multiple targets
+                self.returns_daily_close_output_layer = nn.ModuleList(
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in returns_daily_close_output_size])
+            else:
+                self.returns_daily_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                                  output_dim=returns_daily_close_output_size,
+                                                                  num_layers=n_layers,
+                                                                  activation=nn.ReLU)                
+        self.returns_weekly_close_output_layer = None
+        if returns_weekly_close_output_size:
+            if self.n_head_targets(head="returns_weekly_close") > 1:  # if to run with multiple targets
+                self.returns_weekly_close_output_layer = nn.ModuleList(
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in returns_weekly_close_output_size])
+            else:
+                self.returns_weekly_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                                   output_dim=returns_weekly_close_output_size,
+                                                                   num_layers=n_layers,
+                                                                   activation=nn.ReLU)            
+        self.returns_monthly_close_output_layer = None
+        if returns_monthly_close_output_size:
+            if self.n_head_targets(head="returns_monthly_close") > 1:  # if to run with multiple targets
+                self.returns_monthly_close_output_layer = nn.ModuleList(
+	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                                num_layers=n_layers, activation=nn.ReLU)
+                      for output_size in returns_monthly_close_output_size])
+            else:
+                self.returns_monthly_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                                                                    output_dim=returns_monthly_close_output_size,
+                                                                    num_layers=n_layers,
+                                                                    activation=nn.ReLU)            
         self.time_daily_output_layer = None
         if time_daily_output_size:
             if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
@@ -1117,6 +1167,26 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 returns_monthly_output = [output_layer(embedding) for output_layer in self.returns_monthly_output_layer]
             else:
                 returns_monthly_output = self.returns_monthly_output_layer(embedding)
+
+
+        returns_daily_close_output = None
+        if self.returns_daily_close_output_layer:
+            if self.n_head_targets(head="returns_daily_close") > 1:  # if to run with multiple targets
+                returns_daily_close_output = [output_layer(embedding) for output_layer in self.returns_daily_close_output_layer]
+            else:
+                returns_daily_close_output = self.returns_daily_close_output_layer(embedding)
+        returns_weekly_close_output = None
+        if self.returns_weekly_close_output_layer:
+            if self.n_head_targets(head="returns_weekly_close") > 1:  # if to run with multiple targets
+                returns_weekly_close_output = [output_layer(embedding) for output_layer in self.returns_weekly_close_output_layer]
+            else:
+                returns_weekly_close_output = self.returns_weekly_close_output_layer(embedding)
+        returns_monthly_close_output = None
+        if self.returns_monthly_close_output_layer:
+            if self.n_head_targets(head="returns_monthly_close") > 1:  # if to run with multiple targets
+                returns_monthly_close_output = [output_layer(embedding) for output_layer in self.returns_monthly_close_output_layer]
+            else:
+                returns_monthly_close_output = self.returns_monthly_close_output_layer(embedding)
         time_daily_output = None
         if self.time_daily_output_layer:
             if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
@@ -1171,6 +1241,21 @@ class PatchTftSupervised(BaseModelWithCovariates):
                 returns_monthly_output = [ torch.squeeze(val, dim=-1) for val in returns_monthly_output]
             else:
                 returns_monthly_output = torch.squeeze(returns_monthly_output, dim=-1)
+        if returns_daily_close_output is not None:
+            if isinstance(returns_daily_close_output, List):
+                returns_daily_close_output = [ torch.squeeze(val, dim=-1) for val in returns_daily_close_output]
+            else:
+                returns_daily_close_output = torch.squeeze(returns_daily_close_output, dim=-1)
+        if returns_weekly_close_output is not None:
+            if isinstance(returns_weekly_close_output, List):
+                returns_weekly_close_output = [ torch.squeeze(val, dim=-1) for val in returns_weekly_close_output]
+            else:
+                returns_weekly_close_output = torch.squeeze(returns_weekly_closee_output, dim=-1)
+        if returns_monthly_close_output is not None:
+            if isinstance(returns_monthly_close_output, List):
+                returns_monthly_close_output = [ torch.squeeze(val, dim=-1) for val in returns_monthly_close_output]
+            else:
+                returns_monthly_close_output = torch.squeeze(returns_monthly_close_output, dim=-1)
         if time_daily_output is not None:
             if isinstance(time_daily_output, List):
                 time_daily_output = [ torch.squeeze(val, dim=-1) for val in time_daily_output]
@@ -1200,6 +1285,12 @@ class PatchTftSupervised(BaseModelWithCovariates):
             returns_weekly_output=self.transform_output(returns_weekly_output, target_scale=x["target_scale"], head="returns_weekly_prediction")
         if returns_monthly_output is not None:
             returns_monthly_output=self.transform_output(returns_monthly_output, target_scale=x["target_scale"], head="returns_monthly_prediction")
+        if returns_daily_close_output is not None:
+            returns_daily_close_output=self.transform_output(returns_daily_close_output, target_scale=x["target_scale"], head="returns_daily_close")
+        if returns_weekly_close_output is not None:
+            returns_weekly_close_output=self.transform_output(returns_weekly_close_output, target_scale=x["target_scale"], head="returns_weekly_close")
+        if returns_monthly_close_output is not None:
+            returns_monthly_close_output=self.transform_output(returns_monthly_close_output, target_scale=x["target_scale"], head="returns_monthly_close")
         if time_daily_output is not None:
             time_daily_output=self.transform_output(time_daily_output, target_scale=x["target_scale"], head="time_daily_prediction")
         if time_weekly_output is not None:
@@ -1227,6 +1318,9 @@ class PatchTftSupervised(BaseModelWithCovariates):
             returns_daily_prediction=returns_daily_output,
             returns_weekly_prediction=returns_weekly_output,
             returns_monthly_prediction=returns_monthly_output,
+            returns_daily_close=returns_daily_close_output,
+            returns_weekly_close=returns_weekly_close_output,
+            returns_monthly_close=returns_monthly_close_output,
             time_daily_prediction=time_daily_output,
             time_weekly_prediction=time_weekly_output,
             time_monthly_prediction=time_monthly_output,

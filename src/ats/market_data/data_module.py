@@ -45,7 +45,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
                 if "volume_back" in target[i]:
                     normalizer_list.append(EncoderNormalizer(transformation=None))
                 elif "daily_vol" in target[i]:
-                    normalizer_list.append(EncoderNormalizer(transformation="relu"))
+                    normalizer_list.append(EncoderNormalizer(transformation=None))
                 else:
                     normalizer_list.append(EncoderNormalizer(transformation=None))
             target_normalizer[name] = MultiNormalizer(normalizer_list)

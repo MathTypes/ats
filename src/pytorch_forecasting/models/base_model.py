@@ -1233,7 +1233,8 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             y_quantile = y_quantile.detach().cpu()[idx, : x["decoder_lengths"][idx]]
             if draw_mode == "pred_cum":
                 y = torch.subtract(y, base)
-                if not head in ["returns_daily_prediction", "returns_weekly_prediction", "returns_monthly_prediction"]:
+                if not head in ["returns_daily_prediction", "returns_weekly_prediction", "returns_monthly_prediction",
+                                "returns_daily_close","returns_weekly_close","returns_monthly_close"]:
                     y_hat = torch.cumsum(y_hat, dim=-1)
                     y_quantile = torch.cumsum(y_quantile, dim=-2)
             # move to cpu

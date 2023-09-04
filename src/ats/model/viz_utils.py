@@ -384,7 +384,7 @@ def create_viz_row(
         raw_im = PIL.Image.open(BytesIO(img_bytes))
 
         fig = make_subplots(
-            rows=2,
+            rows=3,
             cols=3,
             specs=[
                 [
@@ -428,7 +428,7 @@ def create_viz_row(
             draw_mode="pred_cum",
             x_time=x_time,
         )
-        if False:
+        if True:
             pl_module.plot_prediction(
                 x,
                 out,
@@ -437,6 +437,39 @@ def create_viz_row(
                 row=2,
                 col=1,
                 head="returns_daily_prediction",
+                draw_mode="pred_cum",
+                x_time=x_time,
+            )
+            pl_module.plot_prediction(
+                x,
+                out,
+                idx=idx,
+                ax=fig,
+                row=3,
+                col=1,
+                head="returns_daily_close",
+                draw_mode="pred_cum",
+                x_time=x_time,
+            )
+            pl_module.plot_prediction(
+                x,
+                out,
+                idx=idx,
+                ax=fig,
+                row=3,
+                col=2,
+                head="returns_weekly_prediction",
+                draw_mode="pred_cum",
+                x_time=x_time,
+            )
+            pl_module.plot_prediction(
+                x,
+                out,
+                idx=idx,
+                ax=fig,
+                row=3,
+                col=3,
+                head="returns_weekly_close",
                 draw_mode="pred_cum",
                 x_time=x_time,
             )
