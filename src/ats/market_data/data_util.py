@@ -692,6 +692,7 @@ def ticker_transform(raw_data, config, base_price=500):
             raw_data["daily_vol_5d"] = calc_daily_vol(raw_data["daily_returns_5d"])
             raw_data["daily_vol_10d"] = calc_daily_vol(raw_data["daily_returns_10d"])
             raw_data["daily_vol_20d"] = calc_daily_vol(raw_data["daily_returns_20d"])
+            raw_data["daily_vol_diff_1_20d"] = raw_data.apply(lambda x: val_diff(x, base_col="daily_vol_20d", diff_col="daily_vol_1d"), axis=1)
             #std_scaler = StandardScaler()
  
             #raw_data["daily_vol_1d"] = std_scaler.fit_transform(raw_data["daily_vol_1d"].to_numpy())
@@ -710,6 +711,12 @@ def ticker_transform(raw_data, config, base_price=500):
     return raw_data
 
 def time_diff(row, base_col, diff_col):
+    if pd.isna(row[diff_col]):
+        return np.nan
+    else:
+        return (row[diff_col] - row[base_col])
+
+def val_diff(row, base_col, diff_col):
     if pd.isna(row[diff_col]):
         return np.nan
     else:
@@ -780,6 +787,32 @@ def fill_cum_volume(row, time_col, pre_interval_mins=30, post_interval_mins=30):
         if ((row["timestamp"] > row[time_col]-before_mins) and
             (row["timestamp"] < row[time_col]+after_mins)):
             return row["cum_volume"]
+        else:
+            return np.nan
+
+def fill_open(row, time_col, pre_interval_mins=30, post_interval_mins=30):
+    before_mins=pre_interval_mins*60*.5+1
+    after_mins=post_interval_mins*60*.5+1
+    if pd.isna(row[time_col]):
+        return np.nan
+    else:
+        #logging.error(f"open row:{row['timestamp']}, time_col:{time_col}, before:{row[time_col]-before_mins}, after:{row[time_col]+after_mins}")
+        if ((row["timestamp"] > row[time_col]-before_mins) and
+            (row["timestamp"] < row[time_col]+after_mins)):
+            return row["open"]
+        else:
+            return np.nan
+
+def fill_close(row, time_col, pre_interval_mins=30, post_interval_mins=30):
+    before_mins=pre_interval_mins*60*.5+1
+    after_mins=post_interval_mins*60*.5+1
+    if pd.isna(row[time_col]):
+        return np.nan
+    else:
+        #logging.error(f"close row:{row['timestamp']}, time_col:{time_col}, before:{row[time_col]-before_mins}, after:{row[time_col]+after_mins}")
+        if ((row["timestamp"] > row[time_col]-before_mins) and
+            (row["timestamp"] < row[time_col]+after_mins)):
+            return row["close"]
         else:
             return np.nan
 
@@ -915,13 +948,22 @@ def add_example_level_features_df(cal, macro_data_builder, config, raw_data):
 
     lse_cal = mcal.get_calendar("LSE")
     raw_data["weekly_close_time"] = raw_data.timestamp.apply(
-        market_time.compute_weekly_close_time, cal=cal
+        market_time.compute_weekly_close_time, cal=new_york_cal
+    )
+    raw_data["last_weekly_close_time"] = raw_data.timestamp.apply(
+        market_time.compute_last_weekly_close_time, cal=new_york_cal
     )
     raw_data["monthly_close_time"] = raw_data.timestamp.apply(
-        market_time.compute_monthly_close_time, cal=cal
+        market_time.compute_monthly_close_time, cal=new_york_cal
+    )
+    raw_data["last_monthly_close_time"] = raw_data.timestamp.apply(
+        market_time.compute_last_monthly_close_time, cal=new_york_cal
     )
     raw_data["option_expiration_time"] = raw_data.timestamp.apply(
-        market_time.compute_option_expiration_time, cal=cal
+        market_time.compute_option_expiration_time, cal=new_york_cal
+    )
+    raw_data["last_option_expiration_time"] = raw_data.timestamp.apply(
+        market_time.compute_last_option_expiration_time, cal=new_york_cal
     )
 
     if macro_data_builder.add_macro_event:
@@ -953,7 +995,6 @@ def add_example_level_features_df(cal, macro_data_builder, config, raw_data):
     raw_data["new_york_last_close_time"] = raw_data.timestamp.apply(
         market_time.compute_last_close_time, cal=new_york_cal
     )
-
     raw_data["new_york_close_time"] = raw_data.timestamp.apply(
         market_time.compute_next_close_time, cal=new_york_cal
     )
@@ -1417,13 +1458,10 @@ def add_example_group_features(cal, macro_data_builder, raw_data, config):
     raw_data["london_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="london_last_open_time", pre_interval_mins=interval_mins*2,
                                                     post_interval_mins=interval_mins*2, axis=1)
     raw_data["london_open_cum_dv"] = raw_data.london_open_cum_dv.ffill()
-    #logging.error(f"london_open_cum_dv:{raw_data[['timestamp','london_open_cum_dv','cum_dv','cum_volume']]}")
-    #exit(0)
     raw_data["london_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="london_last_open_time", pre_interval_mins=interval_mins*2,
                                                         post_interval_mins=interval_mins*2, axis=1)
     raw_data["london_open_cum_volume"] = raw_data.london_open_cum_volume.ffill()
     raw_data["ret_from_vwap_since_london_open"] = raw_data.apply(compute_ret_from_vwap, dv_col="london_open_cum_dv", volume_col="london_open_cum_volume", axis=1)    
-
     
     raw_data["pre_new_york_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="new_york_last_open_time",
                                                              pre_interval_mins=interval_mins*2, post_interval_mins=0, axis=1)
@@ -1445,6 +1483,30 @@ def add_example_group_features(cal, macro_data_builder, raw_data, config):
     raw_data["ret_from_vwap_post_new_york_open"] = raw_data.apply(compute_ret, base_col="vwap_post_new_york_open", axis=1)
     raw_data = raw_data.drop(columns=["post_new_york_open_cum_dv", "post_new_york_open_cum_volume"])
 
+    raw_data["new_york_last_daily_open"] = raw_data.apply(fill_close, time_col="new_york_last_open_time",
+                                                          pre_interval_mins=0, post_interval_mins=interval_mins, axis=1)
+    raw_data["new_york_last_daily_close"] = raw_data.apply(fill_close, time_col="new_york_last_close_time",
+                                                           pre_interval_mins=0, post_interval_mins=interval_mins, axis=1)
+    raw_data["last_weekly_close"] = raw_data.apply(fill_close, time_col="last_weekly_close_time",
+                                                   pre_interval_mins=0, post_interval_mins=interval_mins, axis=1)
+    raw_data["last_monthly_close"] = raw_data.apply(fill_close, time_col="last_monthly_close_time",
+                                                    pre_interval_mins=0, post_interval_mins=interval_mins, axis=1)
+    raw_data["last_option_expiration_close"] = raw_data.apply(fill_close, time_col="last_option_expiration_time",
+                                                              pre_interval_mins=0, post_interval_mins=interval_mins, axis=1)
+    raw_data["london_last_daily_open"] = raw_data.apply(fill_close, time_col="london_last_open_time",
+                                                  pre_interval_mins=0, post_interval_mins=interval_mins*2, axis=1)
+    raw_data["london_last_daily_close"] = raw_data.apply(fill_close, time_col="new_york_last_close_time",
+                                                         pre_interval_mins=0, post_interval_mins=interval_mins*2, axis=1)    
+    
+    raw_data["new_york_last_daily_open"] = raw_data.new_york_last_daily_open.ffill()
+    raw_data["new_york_last_daily_close"] = raw_data.new_york_last_daily_close.ffill()
+    raw_data["last_weekly_close"] = raw_data.last_weekly_close.ffill()
+    raw_data["last_monthly_close"] = raw_data.last_monthly_close.ffill()
+    raw_data["last_option_expiration_close"] = raw_data.last_option_expiration_close.ffill()
+    raw_data["london_last_daily_open"] = raw_data.london_last_daily_open.ffill()
+    raw_data["london_last_daily_close"] = raw_data.london_last_daily_close.ffill()
+    logging.info(f"raw_data:{raw_data[['new_york_last_daily_open','new_york_last_daily_close']].iloc[-20:]}")
+    #exit(0)
     raw_data["around_new_york_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="new_york_last_open_time",
                                                              pre_interval_mins=interval_mins*2, post_interval_mins=interval_mins*2, axis=1)
     raw_data["around_new_york_open_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="new_york_last_open_time",
@@ -1455,7 +1517,6 @@ def add_example_group_features(cal, macro_data_builder, raw_data, config):
     raw_data["ret_from_vwap_around_new_york_open"] = raw_data.apply(compute_ret, base_col="vwap_around_new_york_open", axis=1)
     raw_data = raw_data.drop(columns=["around_new_york_open_cum_dv", "around_new_york_open_cum_volume"])
 
-    
     raw_data["pre_new_york_close_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="new_york_last_close_time",
                                                            pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
     raw_data["pre_new_york_close_cum_volume"] = raw_data.apply(fill_cum_volume, time_col="new_york_last_close_time",
@@ -1485,7 +1546,6 @@ def add_example_group_features(cal, macro_data_builder, raw_data, config):
     raw_data["vwap_around_new_york_close"] = raw_data.vwap_around_new_york_close.ffill()
     raw_data["ret_from_vwap_around_new_york_close"] = raw_data.apply(compute_ret, base_col="vwap_around_new_york_close", axis=1)
     raw_data = raw_data.drop(columns=["around_new_york_close_cum_dv", "around_new_york_close_cum_volume"])
-
 
     raw_data["pre_london_open_cum_dv"] = raw_data.apply(fill_cum_dv, time_col="london_last_open_time",
                                                         pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)

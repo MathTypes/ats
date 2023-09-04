@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 from functools import cached_property, partial
+import pytz
 
 from hydra import initialize, compose
 import numpy as np
@@ -17,6 +18,7 @@ from ats.util import logging_utils
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 pd.options.display.float_format = "{:.5f}".format
+
 
 def test_rolling():
     start_timestamp = 1325689200
@@ -500,6 +502,75 @@ def test_add_example_features_vwap_around_new_york_open():
             raw_data["ret_from_vwap_around_new_york_open"],
             [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0.00000, 0.00065, 0.06385, 0.00194],
             decimal=3, verbose=True, err_msg="can not match weekly_close_time",
+        )
+
+
+def test_add_example_features_daily_close():
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+                "model.features.add_macro_event=True",
+                "job.test_start_date=2023-07-01",
+                "job.test_end_date=2023-07-28",
+            ],
+            return_hydra_config=True
+        )
+        env_mgr = EnvMgr(cfg)
+        market_cal = env_mgr.market_cal
+        macro_data_builder = MacroDataBuilder(env_mgr)
+        start_datetime = datetime.datetime(2023,7, 1, 12, 0, 0).replace(tzinfo=pytz.UTC)
+        logging.info(f"start_datetime:{start_datetime}")
+        start_timestamp = start_datetime.timestamp()
+        delta = 30*60
+        px_delta = 0.1
+        vol_delta = 1
+        steps = 46*7
+        timestamps = [start_timestamp + i*delta for i in range(steps)]
+        tickers = ["ES" for i in range(steps)]
+        opens = [1040 + i*px_delta + 0.01 for i in range(steps)]
+        highs = [1040 + i*px_delta + 0.1 for i in range(steps)]
+        lows = [1040 + i*px_delta - 0.01 for i in range(steps)]
+        closes = [1040 + i*px_delta + 0.03 for i in range(steps)]
+        volumes = [1 + i*vol_delta for i in range(steps)]
+        dvs = [(1 + i*vol_delta)*(1040 + i*px_delta + 0.03) for i in range(steps)]
+        raw_data = {
+            "ticker": tickers,
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": volumes,
+            "dv": dvs,
+            "timestamp": timestamps
+        }
+        raw_data = pd.DataFrame(data=raw_data)
+        data_len = len(raw_data.timestamp)
+        raw_data["time"] = raw_data.timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x))
+        # fake the time interval to one day so that we can have 5 day high with 5
+        # intervals
+        #full_ds = ray.data.from_pandas(raw_data)
+        #add_group_features = partial(data_util.add_group_features, 30*23*2)
+        raw_data = data_util.add_group_features(raw_data, cfg)
+        add_example_features = partial(
+            data_util.add_example_level_features, cal=market_cal,
+            macro_data_builder=macro_data_builder, config=cfg)
+        full_ds = ray.data.from_pandas(raw_data) 
+        full_ds = full_ds.map_batches(add_example_features)
+        raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_group_features(
+            cal=market_cal, macro_data_builder=macro_data_builder, raw_data=raw_data, config=cfg)
+
+        np.testing.assert_array_almost_equal(
+            raw_data["new_york_last_daily_open"][-10:],
+            [1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999, 1069.1299999999999],
+            decimal=3, verbose=True, err_msg="can not match new_york_last_daily_open",
+        )
+        np.testing.assert_array_almost_equal(
+            raw_data["new_york_last_daily_close"][-10:],
+            [1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43, 1070.43],
+            decimal=3, verbose=True, err_msg="can not match new_york_last_daily_open",
         )
 
 
