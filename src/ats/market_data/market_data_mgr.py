@@ -6,8 +6,12 @@ import pandas as pd
 #import modin.pandas as pd
 import os
 import ray
+from ray import workflow
 import time
 import traceback
+
+from hamilton import base, driver, log_setup
+from hamilton.experimental import h_ray
 
 from numba import njit
 import wandb
@@ -18,52 +22,7 @@ from ats.market_data import data_util
 from ats.market_data.data_module import TimeSeriesDataModule
 
 
-@ray.remote
-def get_input_for_ticker(
-    base_dir, start_date, end_date, ticker, asset_type, time_interval
-):
-    try:
-        from ats.market_data import data_util
-
-        logging.info(f"reading from base_dir:{base_dir}, ticker:{ticker}")
-        all_data = data_util.get_processed_data(
-            base_dir, start_date, end_date, ticker, asset_type, time_interval
-        )
-        all_data = all_data.replace([np.inf, -np.inf], np.nan)
-        all_data = all_data.dropna()
-        all_data = all_data.drop(columns=["time_idx"])
-        # logging.info(f"all_data:all_data.head()")
-        return all_data
-    except Exception as e:
-        print(f"can not get input for {ticker}, {e}")
-        logging.info(f"can not get input for {ticker}, {e}")
-        return None
-
-
-def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_interval):
-    base_dir = f"{base_dir}/{asset_type}/{time_interval}/{ticker}"
-    input_dirs = []
-    start_date = start_date + datetime.timedelta(days=-60)
-    start_date = start_date.replace(day=1)
-    # end_date = datetime.datetime.strptime(config.job.test_end_date,"%Y-%m-%d")
-    # logging.info(f"looking for {base_dir}, start_date:{start_date}, end_date:{end_date}, {type(end_date)}")
-    for cur_date in time_util.monthlist(start_date, end_date):
-        for_date = cur_date[0]
-        # logging.info(f"checking {for_date}")
-        date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
-        # logging.info(f"listing:{date_dir}")
-        try:
-            files = os.listdir(date_dir)
-            files = [
-                date_dir + "/" + f for f in files if os.path.isfile(date_dir + "/" + f)
-            ]  # Filtering only the files.
-            input_dirs.extend(files)
-        except:
-            logging.warn(f"can not find files under {date_dir}")
-    # logging.info(f"reading files:{input_dirs}")
-    return input_dirs
-
-
+#@ray.remote
 def read_snapshot(input_dirs) -> pd.DataFrame:
     ds = ray.data.read_parquet(input_dirs, parallelism=10).sort("time_idx")
     ds = ds.to_pandas(10000000)
@@ -144,9 +103,6 @@ class MarketDataMgr(object):
         eval_time_idx = eval_data["time_idx"]    
         test_time_idx = test_data["time_idx"]    
         logging.info(f"full data after filtering: {full_data.iloc[-3:]}")
-        #logging.info(f"train data after filtering: {train_data.iloc[-30:][['time_idx','ticker','time']]}")
-        #logging.info(f"eval data after filtering: {eval_data.iloc[-30:][['time_idx','ticker','time']]}")
-        #logging.info(f"test data after filtering: {test_data.iloc[-30:][['time_idx','ticker','time']]}")
         logging.info(f"full_data:{len(full_data)}, train:{len(train_time_idx)}, eval:{len(eval_time_idx)}, test:{len(test_time_idx)}")
         logging.info(f"full_data:{full_data.describe()}")
         full_data = full_data.sort_values(["ticker", "time"])
@@ -188,81 +144,30 @@ class MarketDataMgr(object):
         if not full_data is None:
             return full_data
 
-        train_data_vec = []
-        refs = []
-        for ticker in env_mgr.model_tickers:
-            logging.info(f"adding {ticker} from {env_mgr.dataset_base_dir}")
-            logging.info(f"{env_mgr.data_start_date}, {env_mgr.data_end_date}")
-            ticker_train_data = get_input_for_ticker.remote(
-                env_mgr.dataset_base_dir,
-                env_mgr.data_start_date,
-                env_mgr.data_end_date,
-                ticker,
-                "FUT",
-                env_mgr.time_interval,
-            )
-            refs.append(ticker_train_data)
-        all_results = ray.get(refs)
-        for result in all_results:
-            ticker_train_data = result
-            if ticker_train_data is None or ticker_train_data.empty:
-                continue
-            ticker_train_data["new_idx"] = ticker_train_data.apply(
-                lambda x: x.ticker + "_" + str(x.series_idx), axis=1
-            )
-            ticker_train_data = ticker_train_data.set_index("new_idx")
-            train_data_vec.append(ticker_train_data)
-        full_data = pd.concat(train_data_vec)
-        #logging.info(f"full_data:{full_data.iloc[:2]}")
-        # TODO: the original time comes from aggregated time is UTC, but actually
-        # has New York time in it.
-        full_data["time"] = full_data.time.apply(
-            market_time.utc_to_nyse_time,
-            interval_minutes=self.config.dataset.interval_mins,
+        log_setup.setup_logging()
+        workflow.init()
+        # You can also script module import loading by knowing the module name
+        # See run.py for an example of doing it that way.
+        from ats.features.data_loaders import load_data_parquet
+        from ats.features.preprocess import time_features, return_features 
+        modules = [load_data_parquet, time_features, return_features]
+        initial_columns = {  # could load data here via some other means, or delegate to a module as we have done.
+            "config": self.config,
+            "env_mgr": env_mgr,
+            "cal": self.market_cal,
+            "macro_data_builder": self.macro_data_builder
+        }
+        rga = h_ray.RayWorkflowGraphAdapter(
+            result_builder=base.PandasDataFrameResult(),
+            # Ray will resume a run if possible based on workflow id
+            workflow_id=f"wf-{env_mgr.run_id}",
         )
-        full_data["timestamp"] = full_data.time.apply(lambda x: int(x.timestamp()))
-        # Do not use what are in serialized files as we need to recompute across different months.
-        full_data = full_data.drop(
-            columns=[
-                "close_back",
-                "volume_back",
-                "dv_back",
-                "close_fwd",
-                "volume_fwd",
-                "dv_fwd",
-                "cum_volume",
-                "cum_dv",
-            ]
-        )
-        full_data = full_data.reset_index()
-        full_data["new_idx"] = full_data.apply(
-            lambda x: x.ticker + "_" + str(x.timestamp), axis=1
-        )
-        full_data = full_data.set_index("new_idx")
-        full_data = full_data.sort_index()
-        full_data["time_idx"] = range(0, len(full_data))
-        full_data = data_util.add_group_features(full_data, config=self.config)
-        #logging.error(f"full_data:{full_data[['time_idx', 'timestamp']]}")
-        #logging.info(f"full_data after add_group:{full_data.iloc[:2]}")
-        full_ds = ray.data.from_pandas(full_data)
-        add_example_features = partial(
-            data_util.add_example_level_features, cal=self.market_cal,
-            macro_data_builder=self.macro_data_builder, config=self.config)
-        full_ds = full_ds.repartition(100).map_batches(add_example_features, batch_size=4096)
-        full_data = full_ds.to_pandas(limit=10000000)
-        full_data["new_idx"] = full_data.apply(
-            lambda x: x.ticker + "_" + str(x.timestamp), axis=1
-        )
-        full_data = full_data.set_index("new_idx")
-        full_data = full_data.sort_index()
-        #logging.info(f"full_data after add_example:{full_data.iloc[:10]}")
-        #full_data = data_util.add_example_level_features(self.market_cal, self.macro_data_builder, full_data)
-        #logging.error(f"before example full_data:{full_data[['time_idx','timestamp']]}")
-        full_data = data_util.add_example_group_features(cal=self.market_cal, macro_data_builder=self.macro_data_builder,
-                                                         raw_data=full_data, config=self.config)
+        dr = driver.Driver(initial_columns, *modules, adapter=rga)
+    
+        output_columns = self.config.model.features.time_varying_known_reals
+        full_data = dr.execute(["example_group_features"])
         logging.error(f"full_data before filtering:{full_data.describe()}")
         logging.error(f"full_data.ret_from_vwap_around_london_open>0.15:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
-        #logging.info(f"ret_from_high_21d:{full_data[full_data.ret_from_high_21d>0.15].iloc[-3:]}")
         logging.error(f"full_data.ret_from_close_cumsum_low_51d<-0.24:{full_data[full_data.ret_from_close_cumsum_low_51d<-0.24].iloc[-10:]}") 
         logging.error(f"full_data.ret_from_close_cumsum_low_201d<-0.3:{full_data[full_data.ret_from_close_cumsum_low_201d<-0.3].iloc[-10:]}")
         logging.error(f"full_data.ret_from_close_cumsum_high_201d>0.3:{full_data[full_data.ret_from_close_cumsum_high_201d>0.3].iloc[-10:]}")

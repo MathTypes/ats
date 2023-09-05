@@ -97,6 +97,6 @@ features:
 max_lag: 365
 max_lead: 7
 
-daily_lookback: 20
-weekly_lookback: 20
-monthly_lookback: 20
+daily_lookback: 2
+weekly_lookback: 2
+monthly_lookback: 2

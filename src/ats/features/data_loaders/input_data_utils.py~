@@ -1,0 +1,46 @@
+
+def get_input_for_ticker(
+    base_dir, start_date, end_date, ticker, asset_type, time_interval
+):
+    try:
+        from ats.market_data import data_util
+
+        logging.info(f"reading from base_dir:{base_dir}, ticker:{ticker}")
+        all_data = data_util.get_processed_data(
+            base_dir, start_date, end_date, ticker, asset_type, time_interval
+        )
+        all_data = all_data.replace([np.inf, -np.inf], np.nan)
+        all_data = all_data.dropna()
+        all_data = all_data.drop(columns=["time_idx"])
+        # logging.info(f"all_data:all_data.head()")
+        return all_data
+    except Exception as e:
+        print(f"can not get input for {ticker}, {e}")
+        logging.info(f"can not get input for {ticker}, {e}")
+        return None
+
+
+def get_input_dirs(base_dir, start_date, end_date, ticker, asset_type, time_interval):
+    base_dir = f"{base_dir}/{asset_type}/{time_interval}/{ticker}"
+    input_dirs = []
+    start_date = start_date + datetime.timedelta(days=-60)
+    start_date = start_date.replace(day=1)
+    # end_date = datetime.datetime.strptime(config.job.test_end_date,"%Y-%m-%d")
+    # logging.info(f"looking for {base_dir}, start_date:{start_date}, end_date:{end_date}, {type(end_date)}")
+    for cur_date in time_util.monthlist(start_date, end_date):
+        for_date = cur_date[0]
+        # logging.info(f"checking {for_date}")
+        date_dir = os.path.join(base_dir, for_date.strftime("%Y%m%d"))
+        # logging.info(f"listing:{date_dir}")
+        try:
+            files = os.listdir(date_dir)
+            files = [
+                date_dir + "/" + f for f in files if os.path.isfile(date_dir + "/" + f)
+            ]  # Filtering only the files.
+            input_dirs.extend(files)
+        except:
+            logging.warn(f"can not find files under {date_dir}")
+    # logging.info(f"reading files:{input_dirs}")
+    return input_dirs
+
+

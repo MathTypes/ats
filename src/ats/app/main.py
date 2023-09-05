@@ -43,7 +43,8 @@ def my_app(cfg: DictConfig) -> None:
     }
     logging_utils.init_logging()
     logging.info(f"cfg:{cfg}, dir(cfg)")
-    ray.init(object_store_memory=30*1024*1024*1024)
+    ray.init(object_store_memory=30*1024*1024*1024,
+             storage=f"{cfg.dataset.base_dir}/cache")
     enable_dask_on_ray()
     cfg["model"]["prediction_length"]
     cfg["model"]["context_length"]
