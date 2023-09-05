@@ -28,6 +28,7 @@ def get_next_macro_event_time(cal, x_time, mdb, imp):
 _OPEN_TIME_DICT = {}
 _CLOSE_TIME_DICT = {}
 
+@functools.lru_cache(maxsize=128000)
 def get_open_time(cal, x_date):
     if not cal in _OPEN_TIME_DICT.keys():
         _OPEN_TIME_DICT[cal] = {}
@@ -53,6 +54,7 @@ def get_open_time(cal, x_date):
     else:
         return None
 
+@functools.lru_cache(maxsize=128000)
 def get_close_time(cal, x_date):
     if not cal in _CLOSE_TIME_DICT.keys():
         _CLOSE_TIME_DICT[cal] = {}

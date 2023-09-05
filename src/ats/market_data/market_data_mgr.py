@@ -159,7 +159,7 @@ class MarketDataMgr(object):
             "cal": self.market_cal,
             "macro_data_builder": self.macro_data_builder
         }
-        cache_path = "tmp"
+        cache_path = "/tmp/hamilton_cache"
         pathlib.Path(cache_path).mkdir(exist_ok=True)
         #adapter = h_cache.CachingGraphAdapter(cache_path, base.PandasDataFrameResult())
         rga = h_ray.RayWorkflowGraphAdapter(

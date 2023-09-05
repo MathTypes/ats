@@ -44,18 +44,21 @@ def new_york_open_time(timestamp: pd.Series) -> pd.Series:
     return timestamp.apply(
         market_time.compute_next_open_time, cal=new_york_cal
     )
+
 @tag(cache="parquet")
 def new_york_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_close_time, cal=new_york_cal
     )
+
 @tag(cache="parquet")
 def london_open_time(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_next_open_time, cal=lse_cal
     )
+
 @tag(cache="parquet")
 def london_close_time(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
@@ -76,18 +79,21 @@ def new_york_last_open_time_0(timestamp: pd.Series) -> pd.Series:
     return timestamp.apply(
         market_time.compute_last_open_time, cal=new_york_cal, k=0
     )
+
 @tag(cache="parquet")
 def new_york_last_close_time_0(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=new_york_cal, k=0
     )
+
 @tag(cache="parquet")
 def new_york_last_open_time_1(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=new_york_cal, k=1
     )
+
 @tag(cache="parquet")
 def new_york_last_close_time_1(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
@@ -96,25 +102,25 @@ def new_york_last_close_time_1(timestamp: pd.Series) -> pd.Series:
     )
 
 @tag(cache="parquet")
-def lse_last_open_time_0(timestamp: pd.Series) -> pd.Series:
+def london_last_open_time_0(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal, k=0
     )
 @tag(cache="parquet")
-def lse_last_close_time_0(timestamp: pd.Series) -> pd.Series:
+def london_last_close_time_0(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal, k=0
     )
 @tag(cache="parquet")
-def lse_last_open_time_1(timestamp: pd.Series) -> pd.Series:
+def london_last_open_time_1(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal, k=1
     )
 @tag(cache="parquet")
-def lse_last_close_time_1(timestamp: pd.Series) -> pd.Series:
+def london_last_close_time_1(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal, k=1
@@ -207,8 +213,8 @@ def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
                   last_macro_event_time_imp3: pd.Series, next_macro_event_time_imp3: pd.Series,
                   new_york_last_open_time_0: pd.Series, new_york_last_close_time_0: pd.Series,
                   new_york_last_open_time_1: pd.Series, new_york_last_close_time_1: pd.Series,
-                  lse_last_open_time_0: pd.Series, lse_last_close_time_0: pd.Series,
-                  lse_last_open_time_1: pd.Series, lse_last_close_time_1: pd.Series,
+                  london_last_open_time_0: pd.Series, london_last_close_time_0: pd.Series,
+                  london_last_open_time_1: pd.Series, london_last_close_time_1: pd.Series,
                   new_york_open_time: pd.Series, new_york_close_time: pd.Series,
                   london_open_time: pd.Series, london_close_time: pd.Series) -> pd.DataFrame:
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
@@ -234,10 +240,10 @@ def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     raw_data["new_york_last_open_time_1"] = new_york_last_open_time_1
     raw_data["new_york_last_close_time_0"] = new_york_last_close_time_0
     raw_data["new_york_last_close_time_1"] = new_york_last_close_time_1
-    raw_data["lse_last_open_time_0"] = lse_last_open_time_0
-    raw_data["lse_last_open_time_1"] = lse_last_open_time_1
-    raw_data["lse_last_close_time_0"] = lse_last_close_time_0
-    raw_data["lse_last_close_time_1"] = lse_last_close_time_1
+    raw_data["london_last_open_time_0"] = london_last_open_time_0
+    raw_data["london_last_open_time_1"] = london_last_open_time_1
+    raw_data["london_last_close_time_0"] = london_last_close_time_0
+    raw_data["london_last_close_time_1"] = london_last_close_time_1
     raw_data["new_york_open_time"] = new_york_open_time
     raw_data["new_york_close_time"] = new_york_close_time
     raw_data["london_open_time"] = london_open_time
