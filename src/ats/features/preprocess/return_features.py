@@ -169,52 +169,23 @@ def example_level_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCal
     raw_data["last_option_expiration_time"] = time_features["last_option_expiration_time"]
 
     if macro_data_builder.add_macro_event:
-        raw_data["last_macro_event_time_imp1"] = raw_data.timestamp.apply(
-            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder, imp=1
-        )
-        raw_data["next_macro_event_time_imp1"] = raw_data.timestamp.apply(
-            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder, imp=1
-        )
-        raw_data["last_macro_event_time_imp2"] = raw_data.timestamp.apply(
-            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder, imp=2
-        )
-        raw_data["next_macro_event_time_imp2"] = raw_data.timestamp.apply(
-            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder, imp=1
-        )
-        raw_data["last_macro_event_time_imp3"] = raw_data.timestamp.apply(
-            market_time.compute_last_macro_event_time, cal=cal, mdb=macro_data_builder, imp=3
-        )
-        raw_data["next_macro_event_time_imp3"] = raw_data.timestamp.apply(
-            market_time.compute_next_macro_event_time, cal=cal, mdb=macro_data_builder, imp=3
-        )
-
+        raw_data["last_macro_event_time_imp1"] = time_features["last_macro_event_time_imp1"]
+        raw_data["next_macro_event_time_imp1"] = time_features["next_macro_event_time_imp1"]
+        raw_data["last_macro_event_time_imp2"] = time_features["last_macro_event_time_imp2"]
+        raw_data["next_macro_event_time_imp2"] = time_features["next_macro_event_time_imp2"]
+        raw_data["last_macro_event_time_imp3"] = time_features["last_macro_event_time_imp3"]
+        raw_data["next_macro_event_time_imp3"] = time_features["next_macro_event_time_imp3"]
 
     for idx in range(config.model.daily_lookback):
-        raw_data[f"new_york_last_open_time_{idx}"] = raw_data.timestamp.apply(
-            market_time.compute_last_open_time, cal=new_york_cal, k=idx
-        )
-        raw_data[f"new_york_last_close_time_{idx}"] = raw_data.timestamp.apply(
-            market_time.compute_last_close_time, cal=new_york_cal, k=idx
-        )
-        raw_data[f"london_last_open_time_{idx}"] = raw_data.timestamp.apply(
-            market_time.compute_last_open_time, cal=lse_cal, k=idx
-        )
-        raw_data[f"london_last_close_time_{idx}"] = raw_data.timestamp.apply(
-            market_time.compute_last_close_time, cal=lse_cal, k=idx
-        )
+        raw_data[f"new_york_last_open_time_{idx}"] = time_features[f"new_york_last_open_time_{idx}"] 
+        raw_data[f"new_york_last_close_time_{idx}"] = time_features[f"new_york_last_close_time_{idx}"]
+        raw_data[f"london_last_open_time_{idx}"] = time_features[f"london_last_open_time_{idx}"]
+        raw_data[f"london_last_close_time_{idx}"] = time_features[f"london_last_close_time_{idx}"]
 
-    raw_data["new_york_open_time"] = raw_data.timestamp.apply(
-        market_time.compute_next_open_time, cal=new_york_cal
-    )
-    raw_data["new_york_close_time"] = raw_data.timestamp.apply(
-        market_time.compute_next_close_time, cal=new_york_cal
-    )
-    raw_data["london_open_time"] = raw_data.timestamp.apply(
-        market_time.compute_next_open_time, cal=lse_cal
-    )
-    raw_data["london_close_time"] = raw_data.timestamp.apply(
-        market_time.compute_next_close_time, cal=lse_cal
-    )
+    raw_data["new_york_open_time"] = time_features[f"new_york_open_time"]
+    raw_data["new_york_close_time"] = time_features[f"new_york_close_time"]
+    raw_data["london_open_time"] = time_features[f"london_open_time"]
+    raw_data["london_close_time"] = time_features[f"london_close_time"]
     raw_data["time_to_new_york_open"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="new_york_open_time"
     )

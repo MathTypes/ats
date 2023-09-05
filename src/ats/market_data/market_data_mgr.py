@@ -1,6 +1,7 @@
 import datetime
 from functools import cached_property, partial
 import logging
+import pathlib
 import numpy as np
 import pandas as pd
 #import modin.pandas as pd
@@ -12,6 +13,7 @@ import traceback
 
 from hamilton import base, driver, log_setup
 from hamilton.experimental import h_ray
+from hamilton.experimental import h_cache
 
 from numba import njit
 import wandb
@@ -157,9 +159,12 @@ class MarketDataMgr(object):
             "cal": self.market_cal,
             "macro_data_builder": self.macro_data_builder
         }
+        cache_path = "tmp"
+        pathlib.Path(cache_path).mkdir(exist_ok=True)
+        #adapter = h_cache.CachingGraphAdapter(cache_path, base.PandasDataFrameResult())
         rga = h_ray.RayWorkflowGraphAdapter(
             result_builder=base.PandasDataFrameResult(),
-            # Ray will resume a run if possible based on workflow id
+        #    # Ray will resume a run if possible based on workflow id
             workflow_id=f"wf-{env_mgr.run_id}",
         )
         dr = driver.Driver(initial_columns, *modules, adapter=rga)
