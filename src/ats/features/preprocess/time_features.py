@@ -4,7 +4,7 @@ import math
 import os
 from typing import Dict
 
-from hamilton.function_modifiers import tag
+from hamilton.function_modifiers import tag, does, extract_columns, parameterize, source, value
 
 from numba import njit
 import numpy as np
@@ -37,6 +37,9 @@ HALFLIFE_WINSORISE = 252
 
 def timestamp(sorted_data: pd.DataFrame) -> pd.Series:
     return sorted_data["timestamp"]
+
+def time(sorted_data: pd.DataFrame) -> pd.Series:
+    return sorted_data["time"]
 
 @tag(cache="parquet")
 def new_york_open_time(timestamp: pd.Series) -> pd.Series:
@@ -81,6 +84,26 @@ def new_york_last_open_time_0(timestamp: pd.Series) -> pd.Series:
     )
 
 @tag(cache="parquet")
+def month(time: pd.Series) -> pd.Series:
+    return time.dt.month  # categories have be strings
+
+@tag(cache="parquet")
+def year(time: pd.Series) -> pd.Series:
+    return time.dt.year  # categories have be strings
+
+@tag(cache="parquet")
+def hour_of_day(time: pd.Series) -> pd.Series:
+    return time.apply(lambda x: x.hour)
+
+@tag(cache="parquet")
+def day_of_week(time: pd.Series) -> pd.Series:
+    return time.apply(lambda x: x.dayofweek)
+
+@tag(cache="parquet")
+def day_of_month(time: pd.Series) -> pd.Series:
+    return time.apply(lambda x: x.day)
+
+@tag(cache="parquet")
 def new_york_last_close_time_0(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
@@ -119,6 +142,23 @@ def london_last_open_time_1(timestamp: pd.Series) -> pd.Series:
     return timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal, k=1
     )
+
+@tag(cache="parquet")
+def london_last_close_time(london_last_close_time_0: pd.Series) -> pd.Series:
+    return london_last_close_time_0
+
+@tag(cache="parquet")
+def london_last_open_time(london_last_open_time_0: pd.Series) -> pd.Series:
+    return london_last_open_time_0
+
+@tag(cache="parquet")
+def new_york_last_close_time(new_york_last_close_time_0: pd.Series) -> pd.Series:
+    return new_york_last_close_time_0
+
+@tag(cache="parquet")
+def new_york_last_open_time(new_york_last_open_time_0: pd.Series) -> pd.Series:
+    return new_york_last_open_time_0
+
 @tag(cache="parquet")
 def london_last_close_time_1(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
@@ -202,6 +242,53 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
         market_time.compute_next_macro_event_time, cal=new_york_cal,
         mdb=macro_data_builder, imp=3)
 
+@parameterize(
+    time_high_1d_ff_shift_1d={"time_col": source("time_high_1d_ff"), "lookback_days":value(1)},
+    time_high_5d_ff_shift_5d={"time_col": source("time_high_5d_ff"), "lookback_days":value(5)},
+    time_high_11d_ff_shift_11d={"time_col": source("time_high_11d_ff"), "lookback_days":value(11)},
+    time_high_21d_ff_shift_21d={"time_col": source("time_high_21d_ff"), "lookback_days":value(21)},
+    time_low_1d_ff_shift_1d={"time_col": source("time_low_1d_ff"), "lookback_days":value(1)},
+    time_low_5d_ff_shift_5d={"time_col": source("time_low_5d_ff"), "lookback_days":value(5)},
+    time_low_11d_ff_shift_11d={"time_col": source("time_low_11d_ff"), "lookback_days":value(11)},
+    time_low_21d_ff_shift_21d={"time_col": source("time_low_21d_ff"), "lookback_days":value(21)},
+)
+def time_shift(time_col:pd.Series, lookback_days:int, interval_per_day: int) -> pd.Series:
+    return time_col.shift(-lookback_days*interval_per_day)
+
+@parameterize(
+    time_high_1_ff={"close_col": value("close_high_1_ff")},
+    time_high_5_ff={"close_col": value("close_high_5_ff")},
+    time_high_11_ff={"close_col": value("close_high_11_ff")},
+    time_high_21_ff={"close_col": value("close_high_21_ff")},
+    time_high_51_ff={"close_col": value("close_high_51_ff")},
+    time_high_101_ff={"close_col": value("close_high_101_ff")},
+    time_high_201_ff={"close_col": value("close_high_201_ff")},
+    time_low_1_ff={"close_col": value("close_low_1_ff")},
+    time_low_5_ff={"close_col": value("close_low_5_ff")},
+    time_low_11_ff={"close_col": value("close_low_11_ff")},
+    time_low_21_ff={"close_col": value("close_low_21_ff")},
+    time_low_51_ff={"close_col": value("close_low_51_ff")},
+    time_low_101_ff={"close_col": value("close_low_101_ff")},
+    time_low_201_ff={"close_col": value("close_low_201_ff")},
+    time_high_1d_ff={"close_col": value("close_high_1d_ff")},
+    time_high_5d_ff={"close_col": value("close_high_5d_ff")},
+    time_high_11d_ff={"close_col": value("close_high_11d_ff")},
+    time_high_21d_ff={"close_col": value("close_high_21d_ff")},
+    time_high_51d_ff={"close_col": value("close_high_51d_ff")},
+    time_high_101d_ff={"close_col": value("close_high_101d_ff")},
+    time_high_201d_ff={"close_col": value("close_high_201d_ff")},
+    time_low_1d_ff={"close_col": value("close_low_1d_ff")},
+    time_low_5d_ff={"close_col": value("close_low_5d_ff")},
+    time_low_11d_ff={"close_col": value("close_low_11d_ff")},
+    time_low_21d_ff={"close_col": value("close_low_21d_ff")},
+    time_low_51d_ff={"close_col": value("close_low_51d_ff")},
+    time_low_101d_ff={"close_col": value("close_low_101d_ff")},
+    time_low_201d_ff={"close_col": value("close_low_201d_ff")},
+)
+def time_at(sorted_data:pd.DataFrame, close_col:str) -> pd.Series:
+    time_series = sorted_data.apply(lambda x: get_close_time(x, close_col=close_col), axis=1)
+    time_series = time_series.ffill()
+    return time_series
 
 def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
                   macro_data_builder:MacroDataBuilder, config:DictConfig,

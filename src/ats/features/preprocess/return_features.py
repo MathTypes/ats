@@ -153,9 +153,109 @@ def group_features(sorted_data : pd.DataFrame, config: DictConfig) -> pd.DataFra
 
     return raw_data
 
+@parameterize(
+    time_to_new_york_open={"diff_time": source("new_york_open_time")},
+    time_to_new_york_last_open={"diff_time": source("new_york_last_open_time")},
+    time_to_new_york_last_close={"diff_time": source("new_york_last_close_time")},
+    time_to_new_york_close={"diff_time": source("new_york_close_time")},
+    time_to_london_open={"diff_time": source("london_open_time")},
+    time_to_london_last_open={"diff_time": source("london_last_open_time")},
+    time_to_london_last_close={"diff_time": source("london_last_close_time")},
+    time_to_london_close={"diff_time": source("london_close_time")},
+    time_to_weekly_close={"diff_time": source("weekly_close_time")},
+    time_to_monthly_close={"diff_time": source("monthly_close_time")},
+    time_to_option_expiration={"diff_time": source("option_expiration_time")},
+    time_to_last_macro_event_imp1={"diff_time": source("last_macro_event_time_imp1")},
+    time_to_last_macro_event_imp2={"diff_time": source("last_macro_event_time_imp2")},
+    time_to_last_macro_event_imp3={"diff_time": source("last_macro_event_time_imp3")},
+    time_to_next_macro_event_imp1={"diff_time": source("next_macro_event_time_imp1")},
+    time_to_next_macro_event_imp2={"diff_time": source("next_macro_event_time_imp2")},
+    time_to_next_macro_event_imp3={"diff_time": source("next_macro_event_time_imp3")},
+    time_to_high_1_ff={"diff_time": source("time_high_1_ff")},
+    time_to_high_5_ff={"diff_time": source("time_high_5_ff")},
+    time_to_high_11_ff={"diff_time": source("time_high_11_ff")},
+    time_to_high_21_ff={"diff_time": source("time_high_21_ff")},
+    time_to_high_51_ff={"diff_time": source("time_high_51_ff")},
+    time_to_high_101_ff={"diff_time": source("time_high_101_ff")},
+    time_to_high_201_ff={"diff_time": source("time_high_201_ff")},
+    time_to_low_1_ff={"diff_time": source("time_low_1_ff")},
+    time_to_low_5_ff={"diff_time": source("time_low_5_ff")},
+    time_to_low_11_ff={"diff_time": source("time_low_11_ff")},
+    time_to_low_21_ff={"diff_time": source("time_low_21_ff")},
+    time_to_low_51_ff={"diff_time": source("time_low_51_ff")},
+    time_to_low_101_ff={"diff_time": source("time_low_101_ff")},
+    time_to_low_201_ff={"diff_time": source("time_low_201_ff")},
+    time_to_high_1d_ff_shift_1d={"diff_time": source("time_high_1d_ff_shift_1d")},
+    time_to_low_1d_ff_shift_1d={"diff_time": source("time_low_1d_ff_shift_1d")},
+    time_to_high_5d_ff_shift_5d={"diff_time": source("time_high_5d_ff_shift_5d")},
+    time_to_low_5d_ff_shift_5d={"diff_time": source("time_low_5d_ff_shift_5d")},
+    time_to_high_11d_ff_shift_11d={"diff_time": source("time_high_11d_ff_shift_11d")},
+    time_to_low_11d_ff_shift_11d={"diff_time": source("time_low_11d_ff_shift_11d")},
+    time_to_high_21d_ff_shift_21d={"diff_time": source("time_high_21d_ff_shift_21d")},
+    time_to_low_21d_ff_shift_21d={"diff_time": source("time_low_21d_ff_shift_21d")},
+    time_to_high_51d_ff_shift_51d={"diff_time": source("time_high_51d_ff_shift_51d")},
+    time_to_low_51d_ff_shift_51d={"diff_time": source("time_low_51d_ff_shift_51d")},
+    time_to_high_101d_ff_shift_101d={"diff_time": source("time_high_101d_ff_shift_101d")},
+    time_to_low_101d_ff_shift_101d={"diff_time": source("time_low_101d_ff_shift_101d")},
+    time_to_high_201d_ff_shift_201d={"diff_time": source("time_high_201d_ff_shift_201d")},
+    time_to_low_201d_ff_shift_201d={"diff_time": source("time_low_201d_ff_shift_201d")},
+    time_to_high_1d_ff={"diff_time": source("time_high_1d_ff")},
+    time_to_low_1d_ff={"diff_time": source("time_low_1d_ff")},
+    time_to_high_5d_ff={"diff_time": source("time_high_5d_ff")},
+    time_to_low_5d_ff={"diff_time": source("time_low_5d_ff")},
+    time_to_high_11d_ff={"diff_time": source("time_high_11d_ff")},
+    time_to_low_11d_ff={"diff_time": source("time_low_11d_ff")},
+    time_to_high_21d_ff={"diff_time": source("time_high_21d_ff")},
+    time_to_low_21d_ff={"diff_time": source("time_low_21d_ff")},
+    time_to_high_51d_ff={"diff_time": source("time_high_51d_ff")},
+    time_to_low_51d_ff={"diff_time": source("time_low_51d_ff")},
+    time_to_high_101d_ff={"diff_time": source("time_high_101d_ff")},
+    time_to_low_101d_ff={"diff_time": source("time_low_101d_ff")},
+    time_to_high_201d_ff={"diff_time": source("time_high_201d_ff")},
+    time_to_low_201d_ff={"diff_time": source("time_low_201d_ff")},
+)
+def time_to(timestamp:pd.Series, diff_time:pd.Series) -> pd.Series:
+    return timestamp-diff_time
+
+
 def example_level_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
                            macro_data_builder:MacroDataBuilder, config:DictConfig,
-                           time_features: pd.DataFrame) -> pd.DataFrame:
+                           time_features: pd.DataFrame,
+                           month: pd.Series, year:pd.Series, hour_of_day:pd.Series,
+                           time_to_low_1d_ff_shift_1d: pd.Series, time_to_low_5d_ff_shift_5d: pd.Series,
+                           time_to_low_11d_ff_shift_11d: pd.Series, time_to_low_21d_ff_shift_21d: pd.Series,
+                           time_to_high_1d_ff_shift_1d: pd.Series, time_to_high_5d_ff_shift_5d: pd.Series,
+                           time_to_high_11d_ff_shift_11d: pd.Series, time_to_high_21d_ff_shift_21d: pd.Series,
+                           time_to_low_1_ff: pd.Series, time_to_low_5_ff: pd.Series,
+                           time_to_low_11_ff: pd.Series, time_to_low_21_ff: pd.Series,
+                           time_to_low_51_ff: pd.Series, time_to_low_101_ff: pd.Series,
+                           time_to_low_201_ff: pd.Series,
+                           time_to_high_1_ff: pd.Series, time_to_high_5_ff: pd.Series,
+                           time_to_high_11_ff: pd.Series, time_to_high_21_ff: pd.Series,
+                           time_to_high_51_ff: pd.Series, time_to_high_101_ff: pd.Series,
+                           time_to_high_201_ff: pd.Series,
+                           day_of_week:pd.Series, day_of_month:pd.Series,
+                           time_to_last_macro_event_imp1: pd.Series, time_to_next_macro_event_imp1: pd.Series,
+                           time_to_last_macro_event_imp2: pd.Series, time_to_next_macro_event_imp2: pd.Series,
+                           time_to_last_macro_event_imp3: pd.Series, time_to_next_macro_event_imp3: pd.Series,
+                           time_to_low_1d_ff: pd.Series, time_to_low_5d_ff: pd.Series,
+                           time_to_low_11d_ff: pd.Series, time_to_low_21d_ff: pd.Series,
+                           time_to_low_51d_ff: pd.Series, time_to_low_101d_ff: pd.Series,
+                           time_to_low_201d_ff: pd.Series,
+                           time_to_high_1d_ff: pd.Series, time_to_high_5d_ff: pd.Series,
+                           time_to_high_11d_ff: pd.Series, time_to_high_21d_ff: pd.Series,
+                           time_to_high_51d_ff: pd.Series, time_to_high_101d_ff: pd.Series,
+                           time_to_high_201d_ff: pd.Series,
+                           time_to_weekly_close:pd.Series, time_to_monthly_close:pd.Series,
+                           time_to_option_expiration:pd.Series,
+                           time_to_new_york_open:pd.Series,
+                           time_to_new_york_last_open:pd.Series,
+                           time_to_new_york_last_close:pd.Series,
+                           time_to_new_york_close:pd.Series,
+                           time_to_london_open:pd.Series,
+                           time_to_london_last_open:pd.Series,
+                           time_to_london_close:pd.Series,
+                           time_to_london_last_close:pd.Series) -> pd.DataFrame:
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     new_york_cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
@@ -197,164 +297,71 @@ def example_level_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCal
     raw_data["time_to_new_york_open"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="new_york_open_time"
     )
-    raw_data["time_to_new_york_last_open"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="new_york_last_open_time_0"
-    )
-    raw_data["time_to_new_york_last_close"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="new_york_last_close_time_0"
-    )
-    raw_data["time_to_new_york_close"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="new_york_close_time"
-    )
-    raw_data["time_to_london_open"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="london_open_time"
-    )
-    raw_data["time_to_london_last_open"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="london_last_open_time_0"
-    )
-    raw_data["time_to_london_last_close"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="london_last_close_time_0"
-    )
-    raw_data["time_to_london_close"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="london_close_time"
-    )
-    raw_data["month"] = raw_data.time.dt.month  # categories have be strings
-    raw_data["year"] = raw_data.time.dt.year  # categories have be strings
-    raw_data["hour_of_day"] = raw_data.time.apply(lambda x: x.hour)
-    raw_data["day_of_week"] = raw_data.time.apply(lambda x: x.dayofweek)
-    raw_data["day_of_month"] = raw_data.time.apply(lambda x: x.day)
+    raw_data["time_to_new_york_last_open"] = time_to_new_york_last_open
+    raw_data["time_to_new_york_last_close"] = time_to_new_york_last_close
+    raw_data["time_to_new_york_close"] = time_to_new_york_close
+    raw_data["time_to_london_open"] = time_to_london_open
+    raw_data["time_to_london_last_open"] = time_to_london_last_open
+    raw_data["time_to_london_last_close"] = time_to_london_last_close
+    raw_data["time_to_london_close"] = time_to_london_close
+
+    raw_data["month"] = month
+    raw_data["year"] = year
+    raw_data["hour_of_day"] = hour_of_day
+    raw_data["day_of_week"] = day_of_week
+    raw_data["day_of_month"] = day_of_month
     # TODO: use business time instead of calendar time. this changes a lot
     # during new year.
-    raw_data["time_to_weekly_close"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="weekly_close_time"
-    )
-    raw_data["time_to_monthly_close"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="monthly_close_time"
-    )
-    raw_data["time_to_option_expiration"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="option_expiration_time"
-    )
+    raw_data["time_to_weekly_close"] = time_to_weekly_close
+    raw_data["time_to_monthly_close"] = time_to_monthly_close
+    raw_data["time_to_option_expiration"] = time_to_option_expiration
     if macro_data_builder.add_macro_event:
-        raw_data["time_to_last_macro_event_imp1"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time_imp1"
-        )
-        raw_data["time_to_next_macro_event_imp1"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time_imp1"
-        )
-        raw_data["time_to_last_macro_event_imp2"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time_imp2"
-        )
-        raw_data["time_to_next_macro_event_imp2"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time_imp2"
-        )
-        raw_data["time_to_last_macro_event_imp3"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="last_macro_event_time_imp3"
-        )
-        raw_data["time_to_next_macro_event_imp3"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="next_macro_event_time_imp3"
-        )
-    raw_data["time_to_high_5_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_high_5_ff"
-    )
-    raw_data["time_to_low_5_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_low_5_ff"
-    )
-    raw_data["time_to_high_11_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_high_11_ff"
-    )
-    raw_data["time_to_low_11_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_low_11_ff"
-    )
-    raw_data["time_to_high_21_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_high_21_ff"
-    )
-    raw_data["time_to_low_21_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_low_21_ff"
-    )
-    raw_data["time_to_high_51_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_high_51_ff"
-    )
-    raw_data["time_to_low_51_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_low_51_ff"
-    )
-    raw_data["time_to_high_101_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_high_101_ff"
-    )
-    raw_data["time_to_low_101_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_low_101_ff"
-    )
-    raw_data["time_to_high_201_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_high_201_ff"
-    )
-    raw_data["time_to_low_201_ff"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="time_low_201_ff"
-    )
+        raw_data["time_to_last_macro_event_imp1"] = time_to_last_macro_event_imp1
+        raw_data["time_to_next_macro_event_imp1"] = time_to_next_macro_event_imp1
+        raw_data["time_to_last_macro_event_imp2"] = time_to_last_macro_event_imp2
+        raw_data["time_to_next_macro_event_imp2"] = time_to_next_macro_event_imp2
+        raw_data["time_to_last_macro_event_imp3"] = time_to_last_macro_event_imp3
+        raw_data["time_to_next_macro_event_imp3"] = time_to_next_macro_event_imp3
+
+    raw_data["time_to_high_5_ff"] = time_to_high_5_ff
+    raw_data["time_to_low_5_ff"] = time_to_low_5_ff
+    raw_data["time_to_high_11_ff"] = time_to_high_11_ff
+    raw_data["time_to_low_11_ff"] = time_to_low_11_ff
+    raw_data["time_to_high_21_ff"] = time_to_high_21_ff
+    raw_data["time_to_low_21_ff"] = time_to_low_21_ff
+    raw_data["time_to_high_51_ff"] = time_to_high_51_ff
+    raw_data["time_to_low_51_ff"] = time_to_low_51_ff
+    raw_data["time_to_high_101_ff"] = time_to_high_101_ff
+    raw_data["time_to_low_101_ff"] = time_to_low_101_ff
+    raw_data["time_to_high_201_ff"] = time_to_high_201_ff
+    raw_data["time_to_low_201_ff"] = time_to_low_201_ff
 
     if add_daily_rolling_features:
-        raw_data["time_to_high_1d_ff_shift_1d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_1d_ff_shift_1d"
-        )
-        raw_data["time_to_low_1d_ff_shift_1d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_1d_ff_shift_1d"
-        )
+        raw_data["time_to_high_1d_ff_shift_1d"] = time_to_high_1d_ff_shift_1d
+        raw_data["time_to_low_1d_ff_shift_1d"] = time_to_low_1d_ff_shift_1d
         raw_data["time_to_low_1d_ff_shift_1d"] = raw_data.time_to_low_1d_ff_shift_1d.apply(
             lambda x : (x-20000)/12000)
         raw_data["time_to_high_1d_ff_shift_1d"] = raw_data.time_to_high_1d_ff_shift_1d.apply(
             lambda x : (x-20000)/12000)
-        raw_data["time_to_high_1d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_1d_ff"
-        )
-        raw_data["time_to_low_1d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_1d_ff"
-        )
-        raw_data["time_to_high_5d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_5d_ff"
-        )
-        raw_data["time_to_low_5d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_5d_ff"
-        )
-        raw_data["time_to_high_5d_ff_shift_5d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_5d_ff_shift_5d"
-        )
-        raw_data["time_to_low_5d_ff_shift_5d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_5d_ff_shift_5d"
-        )
-        raw_data["time_to_high_11d_ff_shift_11d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_11d_ff_shift_11d"
-        )
-        raw_data["time_to_low_11d_ff_shift_11d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_11d_ff_shift_11d"
-        )
-        raw_data["time_to_high_11d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_11d_ff"
-        )
-        raw_data["time_to_low_11d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_11d_ff"
-        )
-        raw_data["time_to_high_21d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_21d_ff"
-        )
-        raw_data["time_to_low_21d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_21d_ff"
-        )
-        raw_data["time_to_high_21d_ff_shift_21d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_21d_ff_shift_21d"
-        )
-        raw_data["time_to_low_21d_ff_shift_21d"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_21d_ff_shift_21d"
-        )
-        raw_data["time_to_high_51d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_51d_ff"
-        )
-        raw_data["time_to_low_51d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_51d_ff"
-        )
-        raw_data["time_to_high_201d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_high_201d_ff"
-        )
-        raw_data["time_to_low_201d_ff"] = raw_data.apply(
-            time_diff, axis=1, base_col="timestamp", diff_col="time_low_201d_ff"
-        )
+        raw_data["time_to_high_1d_ff"] = time_to_high_1d_ff
+        raw_data["time_to_low_1d_ff"] = time_to_low_1d_ff
+        raw_data["time_to_high_5d_ff"] = time_to_high_5d_ff
+        raw_data["time_to_low_5d_ff"] = time_to_low_5d_ff
+        raw_data["time_to_high_5d_ff_shift_5d"] = time_to_high_5d_ff_shift_5d
+        raw_data["time_to_low_5d_ff_shift_5d"] = time_to_low_5d_ff_shift_5d
+        raw_data["time_to_high_11d_ff_shift_11d"] = time_to_high_11d_ff_shift_11d
+        raw_data["time_to_low_11d_ff_shift_11d"] = time_to_low_11d_ff_shift_11d
+        raw_data["time_to_high_11d_ff"] = time_to_high_11d_ff
+        raw_data["time_to_low_11d_ff"] = time_to_low_11d_ff
+        raw_data["time_to_high_21d_ff"] = time_to_high_21d_ff
+        raw_data["time_to_low_21d_ff"] = time_to_low_21d_ff
+        raw_data["time_to_high_21d_ff_shift_21d"] = time_to_high_21d_ff_shift_21d
+        raw_data["time_to_low_21d_ff_shift_21d"] = time_to_low_21d_ff_shift_21d
+        raw_data["time_to_high_51d_ff"] = time_to_high_51d_ff
+        raw_data["time_to_low_51d_ff"] = time_to_low_51d_ff
+        raw_data["time_to_high_201d_ff"] = time_to_high_201d_ff
+        raw_data["time_to_low_201d_ff"] = time_to_low_201d_ff
+
     return raw_data
 
 def pre_macro_event_cum_dv_imp1(example_level_features:pd.DataFrame) -> pd.Series:
@@ -411,7 +418,7 @@ def ret_from_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mi
     vwap_around_new_york_close={"time_col": value("new_york_last_close_time")},
     vwap_around_london_close={"time_col": value("london_last_close_time")},
 )
-def around_vwap(example_level_features:pd.DataFrame, time_col:str) ->pd.Series:
+def around_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
     raw_data = example_level_features
     cum_dv_col = f"around_{time_col}_cum_dv"
     cum_volume_col = f"around_{time_col}_cum_volume"
@@ -548,6 +555,14 @@ def ret_from_close_cumsum_low(close_back_cumsum: pd.Series, close_back_cumsum_lo
 #@profile_util.profile
 def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:MacroDataBuilder,
                            example_level_features:pd.DataFrame, config:DictConfig,
+                           time_to_new_york_open: pd.Series,
+                           time_to_new_york_close: pd.Series,
+                           time_to_london_open: pd.Series,
+                           time_to_london_close: pd.Series,
+                           time_to_new_york_last_open: pd.Series,
+                           time_to_new_york_last_close: pd.Series,
+                           time_to_london_last_open: pd.Series,
+                           time_to_london_last_close: pd.Series,
                            ret_from_close_cumsum_high_5d: pd.Series,
                            ret_from_close_cumsum_high_11d: pd.Series,
                            ret_from_close_cumsum_high_21d: pd.Series,
