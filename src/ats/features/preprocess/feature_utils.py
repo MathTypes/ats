@@ -738,25 +738,16 @@ def compute_ret_velocity(row, ret_col, time_col):
     return row[ret_col]/row[time_col]
 
 def compute_ret_from_vwap(row, dv_col, volume_col, base_price=500):
-    #logging.error(f"volume_col:{volume_col}")
     if pd.isna(row[dv_col]) or pd.isna(row[volume_col]):
         return np.nan
     else:
-        #logging.error(f"row['cum_volume']:{row['cum_volume']}")
-        #logging.error(f"row['cum_dv']:{row['cum_dv']}")
-        #logging.error(f"row[{volume_col}]:{row[volume_col]}")
-        #logging.error(f"row[{dv_col}]:{row[dv_col]}")
-        #logging.error(f"row[close]:{row['close']}")
         if row["cum_volume"]>row[volume_col]:
             if row["cum_dv"] == row[dv_col]:
-                #logging.error(f"no cum_dv change")
                 return 0
             else:
                 vwap_price = (row["cum_dv"] - row[dv_col])/(row["cum_volume"]-row[volume_col])
-                #logging.error(f"vwap_price:{vwap_price}, close:{row['close']}")
                 return np.log(row["close"]+base_price) - np.log(vwap_price+base_price)
         else:
-            #logging.error(f"cum volume does not change")
             return 0
 
 def fill_cum_dv(row, time_col, pre_interval_mins=30, post_interval_mins=30):

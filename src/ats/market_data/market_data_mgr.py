@@ -157,7 +157,11 @@ class MarketDataMgr(object):
             "config": self.config,
             "env_mgr": env_mgr,
             "cal": self.market_cal,
-            "macro_data_builder": self.macro_data_builder
+            "macro_data_builder": self.macro_data_builder,
+            "feast_repository_path":".",
+            "feast_config":{},
+            "interval_mins": self.config.dataset.interval_mins,
+            "interval_per_day":int(23 * 60 / self.config.dataset.interval_mins)
         }
         cache_path = "/tmp/hamilton_cache"
         pathlib.Path(cache_path).mkdir(exist_ok=True)
