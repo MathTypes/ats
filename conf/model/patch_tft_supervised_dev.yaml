@@ -41,11 +41,11 @@ returns_daily_close:
   logging_metrics: ["SMAPE"]
 returns_weekly_close:
   loss_name: SMAPE
-  target: ["ret_to_weekly_close"]
+  target: ["ret_to_next_weekly_close"]
   logging_metrics: ["SMAPE"]
 returns_monthly_close:
   loss_name: SMAPE
-  target: ["ret_to_monthly_close"]
+  target: ["ret_to_next_monthly_close"]
   logging_metrics: ["SMAPE"]
 returns_daily_prediction:
   loss_name: SMAPE
@@ -97,6 +97,6 @@ features:
 max_lag: 365
 max_lead: 7
 
-daily_lookback: 2
-weekly_lookback: 2
-monthly_lookback: 2
+daily_lookback: 20
+weekly_lookback: 20
+monthly_lookback: 20
