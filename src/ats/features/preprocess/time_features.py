@@ -76,12 +76,6 @@ def weekly_close_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) -> pd
         market_time.compute_weekly_close_time, cal=new_york_cal
     )
 
-@tag(cache="parquet")
-def new_york_last_open_time_0(timestamp: pd.Series) -> pd.Series:
-    new_york_cal = mcal.get_calendar("NYSE")
-    return timestamp.apply(
-        market_time.compute_last_open_time, cal=new_york_cal, k=0
-    )
 
 @tag(cache="parquet")
 def month(time: pd.Series) -> pd.Series:
@@ -103,44 +97,173 @@ def day_of_week(time: pd.Series) -> pd.Series:
 def day_of_month(time: pd.Series) -> pd.Series:
     return time.apply(lambda x: x.day)
 
-@tag(cache="parquet")
-def new_york_last_close_time_0(timestamp: pd.Series) -> pd.Series:
+@parameterize(
+    new_york_last_open_time_0={"k":value(0)},
+    new_york_last_open_time_1={"k":value(1)},
+    new_york_last_open_time_2={"k":value(2)},
+    new_york_last_open_time_3={"k":value(3)},
+    new_york_last_open_time_4={"k":value(4)},
+    new_york_last_open_time_5={"k":value(5)},
+    new_york_last_open_time_6={"k":value(6)},
+    new_york_last_open_time_7={"k":value(7)},
+    new_york_last_open_time_8={"k":value(8)},
+    new_york_last_open_time_9={"k":value(9)},
+    new_york_last_open_time_10={"k":value(10)},
+    new_york_last_open_time_11={"k":value(11)},
+    new_york_last_open_time_12={"k":value(12)},
+    new_york_last_open_time_13={"k":value(13)},
+    new_york_last_open_time_14={"k":value(14)},
+    new_york_last_open_time_15={"k":value(15)},
+    new_york_last_open_time_16={"k":value(16)},
+    new_york_last_open_time_17={"k":value(17)},
+    new_york_last_open_time_18={"k":value(18)},
+    new_york_last_open_time_19={"k":value(19)},
+)
+def new_york_last_open_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
-        market_time.compute_last_open_time, cal=new_york_cal, k=0
+        market_time.compute_last_open_time, cal=new_york_cal, k=k
     )
 
-@tag(cache="parquet")
-def new_york_last_open_time_1(timestamp: pd.Series) -> pd.Series:
+
+@parameterize(
+    new_york_last_close_time_0={"k":value(0)},
+    new_york_last_close_time_1={"k":value(1)},
+    new_york_last_close_time_2={"k":value(2)},
+    new_york_last_close_time_3={"k":value(3)},
+    new_york_last_close_time_4={"k":value(4)},
+    new_york_last_close_time_5={"k":value(5)},
+    new_york_last_close_time_6={"k":value(6)},
+    new_york_last_close_time_7={"k":value(7)},
+    new_york_last_close_time_8={"k":value(8)},
+    new_york_last_close_time_9={"k":value(9)},
+    new_york_last_close_time_10={"k":value(10)},
+    new_york_last_close_time_11={"k":value(11)},
+    new_york_last_close_time_12={"k":value(12)},
+    new_york_last_close_time_13={"k":value(13)},
+    new_york_last_close_time_14={"k":value(14)},
+    new_york_last_close_time_15={"k":value(15)},
+    new_york_last_close_time_16={"k":value(16)},
+    new_york_last_close_time_17={"k":value(17)},
+    new_york_last_close_time_18={"k":value(18)},
+    new_york_last_close_time_19={"k":value(19)},
+)
+def new_york_last_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
-        market_time.compute_last_open_time, cal=new_york_cal, k=1
+        market_time.compute_last_close_time, cal=new_york_cal, k=k
     )
 
-@tag(cache="parquet")
-def new_york_last_close_time_1(timestamp: pd.Series) -> pd.Series:
+@parameterize(
+    last_weekly_close_time_0={"k":value(0)},
+    last_weekly_close_time_1={"k":value(1)},
+    last_weekly_close_time_2={"k":value(2)},
+    last_weekly_close_time_3={"k":value(3)},
+    last_weekly_close_time_4={"k":value(4)},
+    last_weekly_close_time_5={"k":value(5)},
+    last_weekly_close_time_6={"k":value(6)},
+    last_weekly_close_time_7={"k":value(7)},
+    last_weekly_close_time_8={"k":value(8)},
+    last_weekly_close_time_9={"k":value(9)},
+    last_weekly_close_time_10={"k":value(10)},
+    last_weekly_close_time_11={"k":value(11)},
+    last_weekly_close_time_12={"k":value(12)},
+    last_weekly_close_time_13={"k":value(13)},
+    last_weekly_close_time_14={"k":value(14)},
+    last_weekly_close_time_15={"k":value(15)},
+    last_weekly_close_time_16={"k":value(16)},
+    last_weekly_close_time_17={"k":value(17)},
+    last_weekly_close_time_18={"k":value(18)},
+    last_weekly_close_time_19={"k":value(19)},
+)
+def last_weekly_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
-        market_time.compute_last_open_time, cal=new_york_cal, k=1
+        market_time.compute_last_weekly_close_time, cal=new_york_cal, k=1
     )
 
-@tag(cache="parquet")
-def london_last_open_time_0(timestamp: pd.Series) -> pd.Series:
-    lse_cal = mcal.get_calendar("LSE")
+@parameterize(
+    last_monthly_close_time_0={"k":value(0)},
+    last_monthly_close_time_1={"k":value(1)},
+    last_monthly_close_time_2={"k":value(2)},
+    last_monthly_close_time_3={"k":value(3)},
+    last_monthly_close_time_4={"k":value(4)},
+    last_monthly_close_time_5={"k":value(5)},
+    last_monthly_close_time_6={"k":value(6)},
+    last_monthly_close_time_7={"k":value(7)},
+    last_monthly_close_time_8={"k":value(8)},
+    last_monthly_close_time_9={"k":value(9)},
+    last_monthly_close_time_10={"k":value(10)},
+    last_monthly_close_time_11={"k":value(11)},
+    last_monthly_close_time_12={"k":value(12)},
+    last_monthly_close_time_13={"k":value(13)},
+    last_monthly_close_time_14={"k":value(14)},
+    last_monthly_close_time_15={"k":value(15)},
+    last_monthly_close_time_16={"k":value(16)},
+    last_monthly_close_time_17={"k":value(17)},
+    last_monthly_close_time_18={"k":value(18)},
+    last_monthly_close_time_19={"k":value(19)},
+)
+def last_monthly_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
+    new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
-        market_time.compute_last_open_time, cal=lse_cal, k=0
+        market_time.compute_last_monthly_close_time, cal=new_york_cal, k=k
     )
-@tag(cache="parquet")
-def london_last_close_time_0(timestamp: pd.Series) -> pd.Series:
+        
+@parameterize(
+    london_last_open_time_0={"k":value(0)},
+    london_last_open_time_1={"k":value(1)},
+    london_last_open_time_2={"k":value(2)},
+    london_last_open_time_3={"k":value(3)},
+    london_last_open_time_4={"k":value(4)},
+    london_last_open_time_5={"k":value(5)},
+    london_last_open_time_6={"k":value(6)},
+    london_last_open_time_7={"k":value(7)},
+    london_last_open_time_8={"k":value(8)},
+    london_last_open_time_9={"k":value(9)},
+    london_last_open_time_10={"k":value(10)},
+    london_last_open_time_11={"k":value(11)},
+    london_last_open_time_12={"k":value(12)},
+    london_last_open_time_13={"k":value(13)},
+    london_last_open_time_14={"k":value(14)},
+    london_last_open_time_15={"k":value(15)},
+    london_last_open_time_16={"k":value(16)},
+    london_last_open_time_17={"k":value(17)},
+    london_last_open_time_18={"k":value(18)},
+    london_last_open_time_19={"k":value(19)},
+)
+def london_last_open_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
-        market_time.compute_last_open_time, cal=lse_cal, k=0
+        market_time.compute_last_open_time, cal=lse_cal, k=k
     )
-@tag(cache="parquet")
-def london_last_open_time_1(timestamp: pd.Series) -> pd.Series:
+
+@parameterize(
+    london_last_close_time_0={"k":value(0)},
+    london_last_close_time_1={"k":value(1)},
+    london_last_close_time_2={"k":value(2)},
+    london_last_close_time_3={"k":value(3)},
+    london_last_close_time_4={"k":value(4)},
+    london_last_close_time_5={"k":value(5)},
+    london_last_close_time_6={"k":value(6)},
+    london_last_close_time_7={"k":value(7)},
+    london_last_close_time_8={"k":value(8)},
+    london_last_close_time_9={"k":value(9)},
+    london_last_close_time_10={"k":value(10)},
+    london_last_close_time_11={"k":value(11)},
+    london_last_close_time_12={"k":value(12)},
+    london_last_close_time_13={"k":value(13)},
+    london_last_close_time_14={"k":value(14)},
+    london_last_close_time_15={"k":value(15)},
+    london_last_close_time_16={"k":value(16)},
+    london_last_close_time_17={"k":value(17)},
+    london_last_close_time_18={"k":value(18)},
+    london_last_close_time_19={"k":value(19)},
+)
+def london_last_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
-        market_time.compute_last_open_time, cal=lse_cal, k=1
+        market_time.compute_last_open_time, cal=lse_cal, k=k
     )
 
 @tag(cache="parquet")
@@ -159,12 +282,6 @@ def new_york_last_close_time(new_york_last_close_time_0: pd.Series) -> pd.Series
 def new_york_last_open_time(new_york_last_open_time_0: pd.Series) -> pd.Series:
     return new_york_last_open_time_0
 
-@tag(cache="parquet")
-def london_last_close_time_1(timestamp: pd.Series) -> pd.Series:
-    lse_cal = mcal.get_calendar("LSE")
-    return timestamp.apply(
-        market_time.compute_last_open_time, cal=lse_cal, k=1
-    )
 @tag(cache="parquet")
 def last_weekly_close_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
@@ -243,47 +360,109 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
         mdb=macro_data_builder, imp=3)
 
 @parameterize(
-    time_high_1d_ff_shift_1d={"time_col": source("time_high_1d_ff"), "lookback_days":value(1)},
-    time_high_5d_ff_shift_5d={"time_col": source("time_high_5d_ff"), "lookback_days":value(5)},
-    time_high_11d_ff_shift_11d={"time_col": source("time_high_11d_ff"), "lookback_days":value(11)},
-    time_high_21d_ff_shift_21d={"time_col": source("time_high_21d_ff"), "lookback_days":value(21)},
-    time_low_1d_ff_shift_1d={"time_col": source("time_low_1d_ff"), "lookback_days":value(1)},
-    time_low_5d_ff_shift_5d={"time_col": source("time_low_5d_ff"), "lookback_days":value(5)},
-    time_low_11d_ff_shift_11d={"time_col": source("time_low_11d_ff"), "lookback_days":value(11)},
-    time_low_21d_ff_shift_21d={"time_col": source("time_low_21d_ff"), "lookback_days":value(21)},
+    __time_high_1d_ff_shift_1d={"time_col": source("time_high_1d_ff"), "lookback_days":value(1)},
+    __time_high_5d_ff_shift_5d={"time_col": source("time_high_5d_ff"), "lookback_days":value(5)},
+    __time_high_11d_ff_shift_11d={"time_col": source("time_high_11d_ff"), "lookback_days":value(11)},
+    __time_high_21d_ff_shift_21d={"time_col": source("time_high_21d_ff"), "lookback_days":value(21)},
+    __time_low_1d_ff_shift_1d={"time_col": source("time_low_1d_ff"), "lookback_days":value(1)},
+    __time_low_5d_ff_shift_5d={"time_col": source("time_low_5d_ff"), "lookback_days":value(5)},
+    __time_low_11d_ff_shift_11d={"time_col": source("time_low_11d_ff"), "lookback_days":value(11)},
+    __time_low_21d_ff_shift_21d={"time_col": source("time_low_21d_ff"), "lookback_days":value(21)},
 )
 def time_shift(time_col:pd.Series, lookback_days:int, interval_per_day: int) -> pd.Series:
     return time_col.shift(-lookback_days*interval_per_day)
 
 @parameterize(
-    time_high_1_ff={"close_col": value("close_high_1_ff")},
-    time_high_5_ff={"close_col": value("close_high_5_ff")},
-    time_high_11_ff={"close_col": value("close_high_11_ff")},
-    time_high_21_ff={"close_col": value("close_high_21_ff")},
-    time_high_51_ff={"close_col": value("close_high_51_ff")},
-    time_high_101_ff={"close_col": value("close_high_101_ff")},
-    time_high_201_ff={"close_col": value("close_high_201_ff")},
-    time_low_1_ff={"close_col": value("close_low_1_ff")},
-    time_low_5_ff={"close_col": value("close_low_5_ff")},
-    time_low_11_ff={"close_col": value("close_low_11_ff")},
-    time_low_21_ff={"close_col": value("close_low_21_ff")},
-    time_low_51_ff={"close_col": value("close_low_51_ff")},
-    time_low_101_ff={"close_col": value("close_low_101_ff")},
-    time_low_201_ff={"close_col": value("close_low_201_ff")},
-    time_high_1d_ff={"close_col": value("close_high_1d_ff")},
-    time_high_5d_ff={"close_col": value("close_high_5d_ff")},
-    time_high_11d_ff={"close_col": value("close_high_11d_ff")},
-    time_high_21d_ff={"close_col": value("close_high_21d_ff")},
-    time_high_51d_ff={"close_col": value("close_high_51d_ff")},
-    time_high_101d_ff={"close_col": value("close_high_101d_ff")},
-    time_high_201d_ff={"close_col": value("close_high_201d_ff")},
-    time_low_1d_ff={"close_col": value("close_low_1d_ff")},
-    time_low_5d_ff={"close_col": value("close_low_5d_ff")},
-    time_low_11d_ff={"close_col": value("close_low_11d_ff")},
-    time_low_21d_ff={"close_col": value("close_low_21d_ff")},
-    time_low_51d_ff={"close_col": value("close_low_51d_ff")},
-    time_low_101d_ff={"close_col": value("close_low_101d_ff")},
-    time_low_201d_ff={"close_col": value("close_low_201d_ff")},
+    time_to_new_york_open={"diff_time": source("new_york_open_time")},
+    time_to_new_york_last_open={"diff_time": source("new_york_last_open_time")},
+    time_to_new_york_last_close={"diff_time": source("new_york_last_close_time")},
+    time_to_new_york_close={"diff_time": source("new_york_close_time")},
+    time_to_london_open={"diff_time": source("london_open_time")},
+    time_to_london_last_open={"diff_time": source("london_last_open_time")},
+    time_to_london_last_close={"diff_time": source("london_last_close_time")},
+    time_to_london_close={"diff_time": source("london_close_time")},
+    time_to_weekly_close={"diff_time": source("weekly_close_time")},
+    time_to_monthly_close={"diff_time": source("monthly_close_time")},
+    time_to_option_expiration={"diff_time": source("option_expiration_time")},
+    time_to_last_macro_event_imp1={"diff_time": source("last_macro_event_time_imp1")},
+    time_to_last_macro_event_imp2={"diff_time": source("last_macro_event_time_imp2")},
+    time_to_last_macro_event_imp3={"diff_time": source("last_macro_event_time_imp3")},
+    time_to_next_macro_event_imp1={"diff_time": source("next_macro_event_time_imp1")},
+    time_to_next_macro_event_imp2={"diff_time": source("next_macro_event_time_imp2")},
+    time_to_next_macro_event_imp3={"diff_time": source("next_macro_event_time_imp3")},
+    time_to_high_5_ff={"diff_time": source("time_high_5_ff")},
+    time_to_high_11_ff={"diff_time": source("time_high_11_ff")},
+    time_to_high_21_ff={"diff_time": source("time_high_21_ff")},
+    time_to_high_51_ff={"diff_time": source("time_high_51_ff")},
+    time_to_high_101_ff={"diff_time": source("time_high_101_ff")},
+    time_to_high_201_ff={"diff_time": source("time_high_201_ff")},
+    time_to_low_5_ff={"diff_time": source("time_low_5_ff")},
+    time_to_low_11_ff={"diff_time": source("time_low_11_ff")},
+    time_to_low_21_ff={"diff_time": source("time_low_21_ff")},
+    time_to_low_51_ff={"diff_time": source("time_low_51_ff")},
+    time_to_low_101_ff={"diff_time": source("time_low_101_ff")},
+    time_to_low_201_ff={"diff_time": source("time_low_201_ff")},
+    time_to_high_1d_ff_shift_1d={"diff_time": source("time_high_1d_ff_shift_1d")},
+    time_to_low_1d_ff_shift_1d={"diff_time": source("time_low_1d_ff_shift_1d")},
+    time_to_high_5d_ff_shift_5d={"diff_time": source("time_high_5d_ff_shift_5d")},
+    time_to_low_5d_ff_shift_5d={"diff_time": source("time_low_5d_ff_shift_5d")},
+    time_to_high_11d_ff_shift_11d={"diff_time": source("time_high_11d_ff_shift_11d")},
+    time_to_low_11d_ff_shift_11d={"diff_time": source("time_low_11d_ff_shift_11d")},
+    time_to_high_21d_ff_shift_21d={"diff_time": source("time_high_21d_ff_shift_21d")},
+    time_to_low_21d_ff_shift_21d={"diff_time": source("time_low_21d_ff_shift_21d")},
+    time_to_high_51d_ff_shift_51d={"diff_time": source("time_high_51d_ff_shift_51d")},
+    time_to_low_51d_ff_shift_51d={"diff_time": source("time_low_51d_ff_shift_51d")},
+    time_to_high_101d_ff_shift_101d={"diff_time": source("time_high_101d_ff_shift_101d")},
+    time_to_low_101d_ff_shift_101d={"diff_time": source("time_low_101d_ff_shift_101d")},
+    time_to_high_201d_ff_shift_201d={"diff_time": source("time_high_201d_ff_shift_201d")},
+    time_to_low_201d_ff_shift_201d={"diff_time": source("time_low_201d_ff_shift_201d")},
+    time_to_high_1d_ff={"diff_time": source("time_high_1d_ff")},
+    time_to_low_1d_ff={"diff_time": source("time_low_1d_ff")},
+    time_to_high_5d_ff={"diff_time": source("time_high_5d_ff")},
+    time_to_low_5d_ff={"diff_time": source("time_low_5d_ff")},
+    time_to_high_11d_ff={"diff_time": source("time_high_11d_ff")},
+    time_to_low_11d_ff={"diff_time": source("time_low_11d_ff")},
+    time_to_high_21d_ff={"diff_time": source("time_high_21d_ff")},
+    time_to_low_21d_ff={"diff_time": source("time_low_21d_ff")},
+    time_to_high_51d_ff={"diff_time": source("time_high_51d_ff")},
+    time_to_low_51d_ff={"diff_time": source("time_low_51d_ff")},
+    time_to_high_101d_ff={"diff_time": source("time_high_101d_ff")},
+    time_to_low_101d_ff={"diff_time": source("time_low_101d_ff")},
+    time_to_high_201d_ff={"diff_time": source("time_high_201d_ff")},
+    time_to_low_201d_ff={"diff_time": source("time_low_201d_ff")},
+)
+def time_to(timestamp:pd.Series, diff_time:pd.Series) -> pd.Series:
+    return timestamp-diff_time
+
+@parameterize(
+    __time_high_1_ff={"close_col": value("close_high_1_ff")},
+    __time_high_5_ff={"close_col": value("close_high_5_ff")},
+    __time_high_11_ff={"close_col": value("close_high_11_ff")},
+    __time_high_21_ff={"close_col": value("close_high_21_ff")},
+    __time_high_51_ff={"close_col": value("close_high_51_ff")},
+    __time_high_101_ff={"close_col": value("close_high_101_ff")},
+    __time_high_201_ff={"close_col": value("close_high_201_ff")},
+    __time_low_1_ff={"close_col": value("close_low_1_ff")},
+    __time_low_5_ff={"close_col": value("close_low_5_ff")},
+    __time_low_11_ff={"close_col": value("close_low_11_ff")},
+    __time_low_21_ff={"close_col": value("close_low_21_ff")},
+    __time_low_51_ff={"close_col": value("close_low_51_ff")},
+    __time_low_101_ff={"close_col": value("close_low_101_ff")},
+    __time_low_201_ff={"close_col": value("close_low_201_ff")},
+    __time_high_1d_ff={"close_col": value("close_high_1d_ff")},
+    __time_high_5d_ff={"close_col": value("close_high_5d_ff")},
+    __time_high_11d_ff={"close_col": value("close_high_11d_ff")},
+    __time_high_21d_ff={"close_col": value("close_high_21d_ff")},
+    __time_high_51d_ff={"close_col": value("close_high_51d_ff")},
+    __time_high_101d_ff={"close_col": value("close_high_101d_ff")},
+    __time_high_201d_ff={"close_col": value("close_high_201d_ff")},
+    __time_low_1d_ff={"close_col": value("close_low_1d_ff")},
+    __time_low_5d_ff={"close_col": value("close_low_5d_ff")},
+    __time_low_11d_ff={"close_col": value("close_low_11d_ff")},
+    __time_low_21d_ff={"close_col": value("close_low_21d_ff")},
+    __time_low_51d_ff={"close_col": value("close_low_51d_ff")},
+    __time_low_101d_ff={"close_col": value("close_low_101d_ff")},
+    __time_low_201d_ff={"close_col": value("close_low_201d_ff")},
 )
 def time_at(sorted_data:pd.DataFrame, close_col:str) -> pd.Series:
     time_series = sorted_data.apply(lambda x: get_close_time(x, close_col=close_col), axis=1)

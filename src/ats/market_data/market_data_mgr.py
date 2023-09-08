@@ -151,8 +151,8 @@ class MarketDataMgr(object):
         # You can also script module import loading by knowing the module name
         # See run.py for an example of doing it that way.
         from ats.features.data_loaders import load_data_parquet
-        from ats.features.preprocess import time_features, return_features 
-        modules = [load_data_parquet, time_features, return_features]
+        from ats.features.preprocess import price_features, time_features, return_features 
+        modules = [load_data_parquet, price_features, time_features, return_features]
         initial_columns = {  # could load data here via some other means, or delegate to a module as we have done.
             "config": self.config,
             "env_mgr": env_mgr,
@@ -160,6 +160,7 @@ class MarketDataMgr(object):
             "macro_data_builder": self.macro_data_builder,
             "feast_repository_path":".",
             "feast_config":{},
+            "base_price":float(self.config.dataset.base_price),
             "interval_mins": self.config.dataset.interval_mins,
             "interval_per_day":int(23 * 60 / self.config.dataset.interval_mins)
         }
