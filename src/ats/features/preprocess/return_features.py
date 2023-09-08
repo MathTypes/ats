@@ -252,7 +252,7 @@ def joined_data(group_features: pd.DataFrame) -> pd.DataFrame:
 
 
 
-def example_level_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
+def xxample_level_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
                            macro_data_builder:MacroDataBuilder, config:DictConfig,
                            time_features: pd.DataFrame,
                            month: pd.Series, year:pd.Series, hour_of_day:pd.Series,
@@ -289,33 +289,120 @@ def example_level_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCal
                            time_to_london_open:pd.Series,
                            time_to_london_last_open:pd.Series,
                            time_to_london_close:pd.Series,
+                           weekly_close_time:pd.Series,
+                           last_weekly_close_time:pd.Series,
+                           monthly_close_time:pd.Series,
+                           last_monthly_close_time:pd.Series,
+                           option_expiration_time:pd.Series,
+                           last_option_expiration_time:pd.Series,
                            time_to_london_last_close:pd.Series) -> pd.DataFrame:
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     new_york_cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
     raw_data = group_features
     
-    raw_data["week_of_year"] = time_features["week_of_year"]
-    raw_data["month_of_year"] = time_features["month_of_year"]
+    raw_data["week_of_year"] = week_of_year
+    raw_data["month_of_year"] = month_of_year
 
-    raw_data["weekly_close_time"] = time_features["weekly_close_time"]
-    raw_data["last_weekly_close_time"] = time_features["last_weekly_close_time"]
-    raw_data["monthly_close_time"] = time_features["monthly_close_time"]
-    raw_data["last_monthly_close_time"] = time_features["last_monthly_close_time"]
-    raw_data["option_expiration_time"] = time_features["option_expiration_time"]
-    raw_data["last_option_expiration_time"] = time_features["last_option_expiration_time"]
+    raw_data["weekly_close_time"] = weekly_close_time
+    raw_data["last_weekly_close_time"] = last_weekly_close_time
+    raw_data["monthly_close_time"] = monthly_close_time
+    raw_data["last_monthly_close_time"] = last_monthly_close_time
+    raw_data["option_expiration_time"] = option_expiration_time
+    raw_data["last_option_expiration_time"] = last_option_expiration_time
 
     if macro_data_builder.add_macro_event:
-        raw_data["last_macro_event_time_imp1"] = time_features["last_macro_event_time_imp1"]
-        raw_data["next_macro_event_time_imp1"] = time_features["next_macro_event_time_imp1"]
-        raw_data["last_macro_event_time_imp2"] = time_features["last_macro_event_time_imp2"]
-        raw_data["next_macro_event_time_imp2"] = time_features["next_macro_event_time_imp2"]
-        raw_data["last_macro_event_time_imp3"] = time_features["last_macro_event_time_imp3"]
-        raw_data["next_macro_event_time_imp3"] = time_features["next_macro_event_time_imp3"]
+        raw_data["last_macro_event_time_imp1"] = last_macro_event_time_imp1
+        raw_data["next_macro_event_time_imp1"] = next_macro_event_time_imp1
+        raw_data["last_macro_event_time_imp2"] = last_macro_event_time_imp2
+        raw_data["next_macro_event_time_imp2"] = next_macro_event_time_imp2
+        raw_data["last_macro_event_time_imp3"] = last_macro_event_time_imp3
+        raw_data["next_macro_event_time_imp3"] = next_macro_event_time_imp3
 
+    raw_data[f"new_york_last_open_time_0"] = new_york_last_open_time_0
+    raw_data[f"new_york_last_open_time_1"] = new_york_last_open_time_1
+    raw_data[f"new_york_last_open_time_2"] = new_york_last_open_time_2
+    raw_data[f"new_york_last_open_time_3"] = new_york_last_open_time_3
+    raw_data[f"new_york_last_open_time_4"] = new_york_last_open_time_4
+    raw_data[f"new_york_last_open_time_5"] = new_york_last_open_time_5
+    raw_data[f"new_york_last_open_time_6"] = new_york_last_open_time_6
+    raw_data[f"new_york_last_open_time_7"] = new_york_last_open_time_7
+    raw_data[f"new_york_last_open_time_8"] = new_york_last_open_time_8
+    raw_data[f"new_york_last_open_time_9"] = new_york_last_open_time_9
+    raw_data[f"new_york_last_open_time_10"] = new_york_last_open_time_10
+    raw_data[f"new_york_last_open_time_11"] = new_york_last_open_time_11
+    raw_data[f"new_york_last_open_time_12"] = new_york_last_open_time_12
+    raw_data[f"new_york_last_open_time_13"] = new_york_last_open_time_13
+    raw_data[f"new_york_last_open_time_14"] = new_york_last_open_time_14
+    raw_data[f"new_york_last_open_time_15"] = new_york_last_open_time_15
+    raw_data[f"new_york_last_open_time_16"] = new_york_last_open_time_16
+    raw_data[f"new_york_last_open_time_17"] = new_york_last_open_time_17
+    raw_data[f"new_york_last_open_time_18"] = new_york_last_open_time_18
+    raw_data[f"new_york_last_open_time_19"] = new_york_last_open_time_19
+
+    raw_data[f"new_york_last_close_time_0"] = new_york_last_close_time_0
+    raw_data[f"new_york_last_close_time_1"] = new_york_last_close_time_1
+    raw_data[f"new_york_last_close_time_2"] = new_york_last_close_time_2
+    raw_data[f"new_york_last_close_time_3"] = new_york_last_close_time_3
+    raw_data[f"new_york_last_close_time_4"] = new_york_last_close_time_4
+    raw_data[f"new_york_last_close_time_5"] = new_york_last_close_time_5
+    raw_data[f"new_york_last_close_time_6"] = new_york_last_close_time_6
+    raw_data[f"new_york_last_close_time_7"] = new_york_last_close_time_7
+    raw_data[f"new_york_last_close_time_8"] = new_york_last_close_time_8
+    raw_data[f"new_york_last_close_time_9"] = new_york_last_close_time_9
+    raw_data[f"new_york_last_close_time_10"] = new_york_last_close_time_10
+    raw_data[f"new_york_last_close_time_11"] = new_york_last_close_time_11
+    raw_data[f"new_york_last_close_time_12"] = new_york_last_close_time_12
+    raw_data[f"new_york_last_close_time_13"] = new_york_last_close_time_13
+    raw_data[f"new_york_last_close_time_14"] = new_york_last_close_time_14
+    raw_data[f"new_york_last_close_time_15"] = new_york_last_close_time_15
+    raw_data[f"new_york_last_close_time_16"] = new_york_last_close_time_16
+    raw_data[f"new_york_last_close_time_17"] = new_york_last_close_time_17
+    raw_data[f"new_york_last_close_time_18"] = new_york_last_close_time_18
+    raw_data[f"new_york_last_close_time_19"] = new_york_last_close_time_19
+
+    raw_data[f"london_last_open_time_0"] = london_last_open_time_0
+    raw_data[f"london_last_open_time_1"] = london_last_open_time_1
+    raw_data[f"london_last_open_time_2"] = london_last_open_time_2
+    raw_data[f"london_last_open_time_3"] = london_last_open_time_3
+    raw_data[f"london_last_open_time_4"] = london_last_open_time_4
+    raw_data[f"london_last_open_time_5"] = london_last_open_time_5
+    raw_data[f"london_last_open_time_6"] = london_last_open_time_6
+    raw_data[f"london_last_open_time_7"] = london_last_open_time_7
+    raw_data[f"london_last_open_time_8"] = london_last_open_time_8
+    raw_data[f"london_last_open_time_9"] = london_last_open_time_9
+    raw_data[f"london_last_open_time_10"] = london_last_open_time_10
+    raw_data[f"london_last_open_time_11"] = london_last_open_time_11
+    raw_data[f"london_last_open_time_12"] = london_last_open_time_12
+    raw_data[f"london_last_open_time_13"] = london_last_open_time_13
+    raw_data[f"london_last_open_time_14"] = london_last_open_time_14
+    raw_data[f"london_last_open_time_15"] = london_last_open_time_15
+    raw_data[f"london_last_open_time_16"] = london_last_open_time_16
+    raw_data[f"london_last_open_time_17"] = london_last_open_time_17
+    raw_data[f"london_last_open_time_18"] = london_last_open_time_18
+    raw_data[f"london_last_open_time_19"] = london_last_open_time_19
+
+    raw_data[f"london_last_close_time_0"] = london_last_close_time_0
+    raw_data[f"london_last_close_time_1"] = london_last_close_time_1
+    raw_data[f"london_last_close_time_2"] = london_last_close_time_2
+    raw_data[f"london_last_close_time_3"] = london_last_close_time_3
+    raw_data[f"london_last_close_time_4"] = london_last_close_time_4
+    raw_data[f"london_last_close_time_5"] = london_last_close_time_5
+    raw_data[f"london_last_close_time_6"] = london_last_close_time_6
+    raw_data[f"london_last_close_time_7"] = london_last_close_time_7
+    raw_data[f"london_last_close_time_8"] = london_last_close_time_8
+    raw_data[f"london_last_close_time_9"] = london_last_close_time_9
+    raw_data[f"london_last_close_time_10"] = london_last_close_time_10
+    raw_data[f"london_last_close_time_11"] = london_last_close_time_11
+    raw_data[f"london_last_close_time_12"] = london_last_close_time_12
+    raw_data[f"london_last_close_time_13"] = london_last_close_time_13
+    raw_data[f"london_last_close_time_14"] = london_last_close_time_14
+    raw_data[f"london_last_close_time_15"] = london_last_close_time_15
+    raw_data[f"london_last_close_time_16"] = london_last_close_time_16
+    raw_data[f"london_last_close_time_17"] = london_last_close_time_17
+    raw_data[f"london_last_close_time_18"] = london_last_close_time_18
+    raw_data[f"london_last_close_time_19"] = london_last_close_time_19
     for idx in range(config.model.daily_lookback):
-        raw_data[f"new_york_last_open_time_{idx}"] = time_features[f"new_york_last_open_time_{idx}"] 
-        raw_data[f"new_york_last_close_time_{idx}"] = time_features[f"new_york_last_close_time_{idx}"]
         raw_data[f"london_last_open_time_{idx}"] = time_features[f"london_last_open_time_{idx}"]
         raw_data[f"london_last_close_time_{idx}"] = time_features[f"london_last_close_time_{idx}"]
 
@@ -398,29 +485,6 @@ def example_level_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCal
 
     return raw_data
 
-def pre_macro_event_cum_dv_imp1(example_level_features:pd.DataFrame) -> pd.Series:
-    return example_level_features.apply(fill_cum_dv, time_col="last_macro_event_time_imp1",
-                          pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
-
-def pre_macro_event_cum_volume_imp1(example_level_features:pd.DataFrame) -> pd.Series:
-    return example_level_features.apply(fill_cum_volume, time_col="last_macro_event_time_imp1",
-                                        pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
-def pre_macro_event_cum_dv_imp2(example_level_features:pd.DataFrame) -> pd.Series:
-    return example_level_features.apply(fill_cum_dv, time_col="last_macro_event_time_imp2",
-                          pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
-
-def pre_macro_event_cum_volume_imp2(example_level_features:pd.DataFrame) -> pd.Series:
-    return example_level_features.apply(fill_cum_volume, time_col="last_macro_event_time_imp2",
-                                        pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
-
-def pre_macro_event_cum_dv_imp3(example_level_features:pd.DataFrame) -> pd.Series:
-    return example_level_features.apply(fill_cum_dv, time_col="last_macro_event_time_imp3",
-                          pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
-
-def pre_macro_event_cum_volume_imp3(example_level_features:pd.DataFrame) -> pd.Series:
-    return example_level_features.apply(fill_cum_volume, time_col="last_macro_event_time_imp3",
-                                        pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
-
 @parameterize(
     ret_from_vwap_since_last_macro_event_imp1={"time_col": value("last_macro_event_time_imp1")},
     ret_from_vwap_since_last_macro_event_imp2={"time_col": value("last_macro_event_time_imp2")},
@@ -428,8 +492,8 @@ def pre_macro_event_cum_volume_imp3(example_level_features:pd.DataFrame) -> pd.S
     ret_from_vwap_since_new_york_open={"time_col": value("new_york_last_open_time")},
     ret_from_vwap_since_london_open={"time_col": value("london_last_open_time")},
 )
-def ret_from_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mins: int) ->pd.Series:
-    raw_data = example_level_features
+def ret_from_vwap(time_features:pd.DataFrame, time_col:str, interval_mins: int) ->pd.Series:
+    raw_data = time_features
     cum_dv_col = f"{time_col}_cum_dv"
     cum_volume_col = f"{time_col}_cum_volume"
     raw_data[cum_dv_col] = raw_data.apply(
@@ -452,8 +516,8 @@ def ret_from_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mi
     vwap_around_new_york_close={"time_col": value("new_york_last_close_time")},
     vwap_around_london_close={"time_col": value("london_last_close_time")},
 )
-def around_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
-    raw_data = example_level_features
+def around_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
+    raw_data = time_features
     cum_dv_col = f"around_{time_col}_cum_dv"
     cum_volume_col = f"around_{time_col}_cum_volume"
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
@@ -483,8 +547,8 @@ def around_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mins
     vwap_post_macro_event_imp2={"time_col": value("last_macro_event_time_imp2")},
     vwap_post_macro_event_imp3={"time_col": value("last_macro_event_time_imp3")},
 )
-def post_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
-    raw_data = example_level_features
+def post_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
+    raw_data = time_features
     cum_dv_col = f"post_{time_col}_cum_dv"
     cum_volume_col = f"post_{time_col}_cum_volume"
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
@@ -514,8 +578,8 @@ def post_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mins:i
     vwap_pre_macro_event_imp2={"time_col": value("last_macro_event_time_imp2")},
     vwap_pre_macro_event_imp3={"time_col": value("last_macro_event_time_imp3")},
 )
-def pre_vwap(example_level_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
-    raw_data = example_level_features
+def pre_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
+    raw_data = time_features
     cum_dv_col = f"pre_{time_col}_cum_dv"
     cum_volume_col = f"pre_{time_col}_cum_volume"
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
@@ -623,6 +687,9 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_vwap_pre_new_york_open={"base_col": source("vwap_pre_new_york_open")},
     ret_from_vwap_post_new_york_open={"base_col": source("vwap_post_new_york_open")},
     ret_from_vwap_around_new_york_open={"base_col": source("vwap_around_new_york_open")},
+    ret_from_vwap_pre_london_open={"base_col": source("vwap_pre_london_open")},
+    ret_from_vwap_post_london_open={"base_col": source("vwap_post_london_open")},
+    ret_from_vwap_around_london_open={"base_col": source("vwap_around_london_open")},
     ret_from_new_york_last_daily_open_0={"base_col": source("new_york_last_daily_open_0")},
     ret_from_new_york_last_daily_open_1={"base_col": source("new_york_last_daily_open_1")},
     ret_from_new_york_last_daily_open_2={"base_col": source("new_york_last_daily_open_2")},
@@ -701,8 +768,48 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_london_last_daily_close_15={"base_col": source("london_last_daily_close_15")},
     ret_from_london_last_daily_close_16={"base_col": source("london_last_daily_close_16")},
     ret_from_london_last_daily_close_17={"base_col": source("london_last_daily_close_17")},
-    ret_from_london_last_daily_close_18={"base_col": source("londn_last_daily_close_18")},
+    ret_from_london_last_daily_close_18={"base_col": source("london_last_daily_close_18")},
     ret_from_london_last_daily_close_19={"base_col": source("london_last_daily_close_19")},
+    ret_from_last_weekly_close_0={"base_col": source("last_weekly_close_0")},
+    ret_from_last_weekly_close_1={"base_col": source("last_weekly_close_1")},
+    ret_from_last_weekly_close_2={"base_col": source("last_weekly_close_2")},
+    ret_from_last_weekly_close_3={"base_col": source("last_weekly_close_3")},
+    ret_from_last_weekly_close_4={"base_col": source("last_weekly_close_4")},
+    ret_from_last_weekly_close_5={"base_col": source("last_weekly_close_5")},
+    ret_from_last_weekly_close_6={"base_col": source("last_weekly_close_6")},
+    ret_from_last_weekly_close_7={"base_col": source("last_weekly_close_7")},
+    ret_from_last_weekly_close_8={"base_col": source("last_weekly_close_8")},
+    ret_from_last_weekly_close_9={"base_col": source("last_weekly_close_9")},
+    ret_from_last_weekly_close_10={"base_col": source("last_weekly_close_10")},
+    ret_from_last_weekly_close_11={"base_col": source("last_weekly_close_11")},
+    ret_from_last_weekly_close_12={"base_col": source("last_weekly_close_12")},
+    ret_from_last_weekly_close_13={"base_col": source("last_weekly_close_13")},
+    ret_from_last_weekly_close_14={"base_col": source("last_weekly_close_14")},
+    ret_from_last_weekly_close_15={"base_col": source("last_weekly_close_15")},
+    ret_from_last_weekly_close_16={"base_col": source("last_weekly_close_16")},
+    ret_from_last_weekly_close_17={"base_col": source("last_weekly_close_17")},
+    ret_from_last_weekly_close_18={"base_col": source("last_weekly_close_18")},
+    ret_from_last_weekly_close_19={"base_col": source("last_weekly_close_19")},
+    ret_from_last_monthly_close_0={"base_col": source("last_monthly_close_0")},
+    ret_from_last_monthly_close_1={"base_col": source("last_monthly_close_1")},
+    ret_from_last_monthly_close_2={"base_col": source("last_monthly_close_2")},
+    ret_from_last_monthly_close_3={"base_col": source("last_monthly_close_3")},
+    ret_from_last_monthly_close_4={"base_col": source("last_monthly_close_4")},
+    ret_from_last_monthly_close_5={"base_col": source("last_monthly_close_5")},
+    ret_from_last_monthly_close_6={"base_col": source("last_monthly_close_6")},
+    ret_from_last_monthly_close_7={"base_col": source("last_monthly_close_7")},
+    ret_from_last_monthly_close_8={"base_col": source("last_monthly_close_8")},
+    ret_from_last_monthly_close_9={"base_col": source("last_monthly_close_9")},
+    ret_from_last_monthly_close_10={"base_col": source("last_monthly_close_10")},
+    ret_from_last_monthly_close_11={"base_col": source("last_monthly_close_11")},
+    ret_from_last_monthly_close_12={"base_col": source("last_monthly_close_12")},
+    ret_from_last_monthly_close_13={"base_col": source("last_monthly_close_13")},
+    ret_from_last_monthly_close_14={"base_col": source("last_monthly_close_14")},
+    ret_from_last_monthly_close_15={"base_col": source("last_monthly_close_15")},
+    ret_from_last_monthly_close_16={"base_col": source("last_monthly_close_16")},
+    ret_from_last_monthly_close_17={"base_col": source("last_monthly_close_17")},
+    ret_from_last_monthly_close_18={"base_col": source("last_monthly_close_18")},
+    ret_from_last_monthly_close_19={"base_col": source("last_monthly_close_19")},
     ret_to_next_new_york_close={"base_col": source("next_new_york_close")},
     ret_to_next_weekly_close={"base_col": source("next_weekly_close")},
     ret_to_next_monthly_close={"base_col": source("next_monthly_close")},
@@ -824,6 +931,86 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            time_to_london_last_open:pd.Series,
                            time_to_london_close:pd.Series,
                            time_to_london_last_close:pd.Series,
+                           new_york_last_daily_open_0: pd.Series,
+                           new_york_last_daily_open_1: pd.Series,
+                           new_york_last_daily_open_2: pd.Series,
+                           new_york_last_daily_open_3: pd.Series,
+                           new_york_last_daily_open_4: pd.Series,
+                           new_york_last_daily_open_5: pd.Series,
+                           new_york_last_daily_open_6: pd.Series,
+                           new_york_last_daily_open_7: pd.Series,
+                           new_york_last_daily_open_8: pd.Series,
+                           new_york_last_daily_open_9: pd.Series,
+                           new_york_last_daily_open_10: pd.Series,
+                           new_york_last_daily_open_11: pd.Series,
+                           new_york_last_daily_open_12: pd.Series,
+                           new_york_last_daily_open_13: pd.Series,
+                           new_york_last_daily_open_14: pd.Series,
+                           new_york_last_daily_open_15: pd.Series,
+                           new_york_last_daily_open_16: pd.Series,
+                           new_york_last_daily_open_17: pd.Series,
+                           new_york_last_daily_open_18: pd.Series,
+                           new_york_last_daily_open_19: pd.Series,
+                           new_york_last_daily_close_0: pd.Series,
+                           new_york_last_daily_close_1: pd.Series,
+                           new_york_last_daily_close_2: pd.Series,
+                           new_york_last_daily_close_3: pd.Series,
+                           new_york_last_daily_close_4: pd.Series,
+                           new_york_last_daily_close_5: pd.Series,
+                           new_york_last_daily_close_6: pd.Series,
+                           new_york_last_daily_close_7: pd.Series,
+                           new_york_last_daily_close_8: pd.Series,
+                           new_york_last_daily_close_9: pd.Series,
+                           new_york_last_daily_close_10: pd.Series,
+                           new_york_last_daily_close_11: pd.Series,
+                           new_york_last_daily_close_12: pd.Series,
+                           new_york_last_daily_close_13: pd.Series,
+                           new_york_last_daily_close_14: pd.Series,
+                           new_york_last_daily_close_15: pd.Series,
+                           new_york_last_daily_close_16: pd.Series,
+                           new_york_last_daily_close_17: pd.Series,
+                           new_york_last_daily_close_18: pd.Series,
+                           new_york_last_daily_close_19: pd.Series,
+                           london_last_daily_open_0: pd.Series,
+                           london_last_daily_open_1: pd.Series,
+                           london_last_daily_open_2: pd.Series,
+                           london_last_daily_open_3: pd.Series,
+                           london_last_daily_open_4: pd.Series,
+                           london_last_daily_open_5: pd.Series,
+                           london_last_daily_open_6: pd.Series,
+                           london_last_daily_open_7: pd.Series,
+                           london_last_daily_open_8: pd.Series,
+                           london_last_daily_open_9: pd.Series,
+                           london_last_daily_open_10: pd.Series,
+                           london_last_daily_open_11: pd.Series,
+                           london_last_daily_open_12: pd.Series,
+                           london_last_daily_open_13: pd.Series,
+                           london_last_daily_open_14: pd.Series,
+                           london_last_daily_open_15: pd.Series,
+                           london_last_daily_open_16: pd.Series,
+                           london_last_daily_open_17: pd.Series,
+                           london_last_daily_open_18: pd.Series,
+                           london_last_daily_open_19: pd.Series,
+                           london_last_daily_close_0: pd.Series,
+                           london_last_daily_close_1: pd.Series,
+                           london_last_daily_close_2: pd.Series,
+                           london_last_daily_close_3: pd.Series,
+                           london_last_daily_close_4: pd.Series,
+                           london_last_daily_close_5: pd.Series,
+                           london_last_daily_close_6: pd.Series,
+                           london_last_daily_close_7: pd.Series,
+                           london_last_daily_close_8: pd.Series,
+                           london_last_daily_close_9: pd.Series,
+                           london_last_daily_close_10: pd.Series,
+                           london_last_daily_close_11: pd.Series,
+                           london_last_daily_close_12: pd.Series,
+                           london_last_daily_close_13: pd.Series,
+                           london_last_daily_close_14: pd.Series,
+                           london_last_daily_close_15: pd.Series,
+                           london_last_daily_close_16: pd.Series,
+                           london_last_daily_close_17: pd.Series,
+                           london_last_daily_close_18: pd.Series,
+                           london_last_daily_close_19: pd.Series,
                            ret_from_high_1d: pd.Series,
                            ret_from_high_5d: pd.Series,
                            ret_from_high_11d: pd.Series,
@@ -854,6 +1041,9 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            ret_from_low_11d_bf: pd.Series,
                            ret_from_low_21d_bf: pd.Series,
                            ret_from_low_51d_bf: pd.Series,
+                           weekly_close_time: pd.Series,
+                           monthly_close_time: pd.Series,
+                           last_weekly_close_time: pd.Series,
                            last_weekly_close_time_0: pd.Series,
                            last_weekly_close_time_1: pd.Series,
                            last_weekly_close_time_2: pd.Series,
@@ -874,6 +1064,7 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            last_weekly_close_time_17: pd.Series,
                            last_weekly_close_time_18: pd.Series,
                            last_weekly_close_time_19: pd.Series,
+                           last_monthly_close_time: pd.Series,
                            last_monthly_close_time_0: pd.Series,
                            last_monthly_close_time_1: pd.Series,
                            last_monthly_close_time_2: pd.Series,
@@ -918,6 +1109,46 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            ret_from_close_cumsum_low_51: pd.Series,
                            ret_from_close_cumsum_low_101: pd.Series,
                            ret_from_close_cumsum_low_201: pd.Series,
+                           ret_from_last_weekly_close_0: pd.Series,
+                           ret_from_last_weekly_close_1: pd.Series,
+                           ret_from_last_weekly_close_2: pd.Series,
+                           ret_from_last_weekly_close_3: pd.Series,
+                           ret_from_last_weekly_close_4: pd.Series,
+                           ret_from_last_weekly_close_5: pd.Series,
+                           ret_from_last_weekly_close_6: pd.Series,
+                           ret_from_last_weekly_close_7: pd.Series,
+                           ret_from_last_weekly_close_8: pd.Series,
+                           ret_from_last_weekly_close_9: pd.Series,
+                           ret_from_last_weekly_close_10: pd.Series,
+                           ret_from_last_weekly_close_11: pd.Series,
+                           ret_from_last_weekly_close_12: pd.Series,
+                           ret_from_last_weekly_close_13: pd.Series,
+                           ret_from_last_weekly_close_14: pd.Series,
+                           ret_from_last_weekly_close_15: pd.Series,
+                           ret_from_last_weekly_close_16: pd.Series,
+                           ret_from_last_weekly_close_17: pd.Series,
+                           ret_from_last_weekly_close_18: pd.Series,
+                           ret_from_last_weekly_close_19: pd.Series,
+                           ret_from_last_monthly_close_0: pd.Series,
+                           ret_from_last_monthly_close_1: pd.Series,
+                           ret_from_last_monthly_close_2: pd.Series,
+                           ret_from_last_monthly_close_3: pd.Series,
+                           ret_from_last_monthly_close_4: pd.Series,
+                           ret_from_last_monthly_close_5: pd.Series,
+                           ret_from_last_monthly_close_6: pd.Series,
+                           ret_from_last_monthly_close_7: pd.Series,
+                           ret_from_last_monthly_close_8: pd.Series,
+                           ret_from_last_monthly_close_9: pd.Series,
+                           ret_from_last_monthly_close_10: pd.Series,
+                           ret_from_last_monthly_close_11: pd.Series,
+                           ret_from_last_monthly_close_12: pd.Series,
+                           ret_from_last_monthly_close_13: pd.Series,
+                           ret_from_last_monthly_close_14: pd.Series,
+                           ret_from_last_monthly_close_15: pd.Series,
+                           ret_from_last_monthly_close_16: pd.Series,
+                           ret_from_last_monthly_close_17: pd.Series,
+                           ret_from_last_monthly_close_18: pd.Series,
+                           ret_from_last_monthly_close_19: pd.Series,
                            ret_from_vwap_since_last_macro_event_imp1: pd.Series,
                            ret_from_vwap_since_last_macro_event_imp2: pd.Series,
                            ret_from_vwap_since_last_macro_event_imp3: pd.Series,
@@ -931,7 +1162,11 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            vwap_post_macro_event_imp3: pd.Series,
                            vwap_around_macro_event_imp3: pd.Series,
                            ret_from_vwap_since_new_york_open: pd.Series,
-                           ret_from_vwap_since_london_open: pd.Series,
+                           ret_from_vwap_pre_new_york_open: pd.Series,
+                           ret_from_vwap_post_new_york_open: pd.Series,
+                           ret_from_vwap_around_new_york_open: pd.Series,
+                           week_of_year: pd.Series,
+                           month_of_year: pd.Series,
                            vwap_around_new_york_open: pd.Series,
                            vwap_pre_new_york_open: pd.Series,
                            vwap_post_new_york_open: pd.Series,
@@ -943,8 +1178,133 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            vwap_post_london_open: pd.Series,
                            vwap_around_london_close: pd.Series,
                            vwap_pre_london_close: pd.Series,
-                           vwap_post_london_close: pd.Series) ->pd.DataFrame:
-    raw_data = example_level_features
+                           last_macro_event_time_imp1: pd.Series,
+                           last_macro_event_time_imp2: pd.Series,
+                           last_macro_event_time_imp3: pd.Series,
+                           next_macro_event_time_imp1: pd.Series,
+                           next_macro_event_time_imp2: pd.Series,
+                           next_macro_event_time_imp3: pd.Series,
+                           ret_from_high_5: pd.Series,
+                           ret_from_high_11: pd.Series,
+                           ret_from_high_21: pd.Series,
+                           ret_from_high_51: pd.Series,
+                           ret_from_high_101: pd.Series,
+                           ret_from_high_201: pd.Series,
+                           ret_from_low_5: pd.Series,
+                           ret_from_low_11: pd.Series,
+                           ret_from_low_21: pd.Series,
+                           ret_from_low_51: pd.Series,
+                           ret_from_low_101: pd.Series,
+                           ret_from_low_201: pd.Series,
+                           ret_velocity_from_high_5: pd.Series,
+                           ret_velocity_from_high_11: pd.Series,
+                           ret_velocity_from_high_21: pd.Series,
+                           ret_velocity_from_high_51: pd.Series,
+                           ret_velocity_from_high_101: pd.Series,
+                           ret_velocity_from_high_201: pd.Series,
+                           ret_velocity_from_low_5: pd.Series,
+                           ret_velocity_from_low_11: pd.Series,
+                           ret_velocity_from_low_21: pd.Series,
+                           ret_velocity_from_low_51: pd.Series,
+                           ret_velocity_from_low_101: pd.Series,
+                           ret_velocity_from_low_201: pd.Series,
+                           ret_from_vwap_pre_macro_event_imp1: pd.Series,
+                           ret_from_vwap_post_macro_event_imp1: pd.Series,
+                           ret_from_vwap_around_macro_event_imp1: pd.Series,
+                           ret_from_vwap_pre_macro_event_imp2: pd.Series,
+                           ret_from_vwap_post_macro_event_imp2: pd.Series,
+                           ret_from_vwap_around_macro_event_imp2: pd.Series,
+                           ret_from_vwap_pre_macro_event_imp3: pd.Series,
+                           ret_from_vwap_post_macro_event_imp3: pd.Series,
+                           ret_from_vwap_around_macro_event_imp3: pd.Series,
+                           ret_from_vwap_since_london_open: pd.Series,
+                           ret_from_vwap_around_london_open: pd.Series,
+                           ret_from_vwap_post_london_open: pd.Series,
+                           ret_from_vwap_pre_london_open: pd.Series,
+                           ret_from_new_york_last_daily_open_0: pd.Series,
+                           ret_from_new_york_last_daily_open_1: pd.Series,
+                           ret_from_new_york_last_daily_open_2: pd.Series,
+                           ret_from_new_york_last_daily_open_3: pd.Series,
+                           ret_from_new_york_last_daily_open_4: pd.Series,
+                           ret_from_new_york_last_daily_open_5: pd.Series,
+                           ret_from_new_york_last_daily_open_6: pd.Series,
+                           ret_from_new_york_last_daily_open_7: pd.Series,
+                           ret_from_new_york_last_daily_open_8: pd.Series,
+                           ret_from_new_york_last_daily_open_9: pd.Series,
+                           ret_from_new_york_last_daily_open_10: pd.Series,
+                           ret_from_new_york_last_daily_open_11: pd.Series,
+                           ret_from_new_york_last_daily_open_12: pd.Series,
+                           ret_from_new_york_last_daily_open_13: pd.Series,
+                           ret_from_new_york_last_daily_open_14: pd.Series,
+                           ret_from_new_york_last_daily_open_15: pd.Series,
+                           ret_from_new_york_last_daily_open_16: pd.Series,
+                           ret_from_new_york_last_daily_open_17: pd.Series,
+                           ret_from_new_york_last_daily_open_18: pd.Series,
+                           ret_from_new_york_last_daily_open_19: pd.Series,
+                           ret_from_new_york_last_daily_close_0: pd.Series,
+                           ret_from_new_york_last_daily_close_1: pd.Series,
+                           ret_from_new_york_last_daily_close_2: pd.Series,
+                           ret_from_new_york_last_daily_close_3: pd.Series,
+                           ret_from_new_york_last_daily_close_4: pd.Series,
+                           ret_from_new_york_last_daily_close_5: pd.Series,
+                           ret_from_new_york_last_daily_close_6: pd.Series,
+                           ret_from_new_york_last_daily_close_7: pd.Series,
+                           ret_from_new_york_last_daily_close_8: pd.Series,
+                           ret_from_new_york_last_daily_close_9: pd.Series,
+                           ret_from_new_york_last_daily_close_10: pd.Series,
+                           ret_from_new_york_last_daily_close_11: pd.Series,
+                           ret_from_new_york_last_daily_close_12: pd.Series,
+                           ret_from_new_york_last_daily_close_13: pd.Series,
+                           ret_from_new_york_last_daily_close_14: pd.Series,
+                           ret_from_new_york_last_daily_close_15: pd.Series,
+                           ret_from_new_york_last_daily_close_16: pd.Series,
+                           ret_from_new_york_last_daily_close_17: pd.Series,
+                           ret_from_new_york_last_daily_close_18: pd.Series,
+                           ret_from_new_york_last_daily_close_19: pd.Series,
+                           ret_from_london_last_daily_open_0: pd.Series,
+                           ret_from_london_last_daily_open_1: pd.Series,
+                           ret_from_london_last_daily_open_2: pd.Series,
+                           ret_from_london_last_daily_open_3: pd.Series,
+                           ret_from_london_last_daily_open_4: pd.Series,
+                           ret_from_london_last_daily_open_5: pd.Series,
+                           ret_from_london_last_daily_open_6: pd.Series,
+                           ret_from_london_last_daily_open_7: pd.Series,
+                           ret_from_london_last_daily_open_8: pd.Series,
+                           ret_from_london_last_daily_open_9: pd.Series,
+                           ret_from_london_last_daily_open_10: pd.Series,
+                           ret_from_london_last_daily_open_11: pd.Series,
+                           ret_from_london_last_daily_open_12: pd.Series,
+                           ret_from_london_last_daily_open_13: pd.Series,
+                           ret_from_london_last_daily_open_14: pd.Series,
+                           ret_from_london_last_daily_open_15: pd.Series,
+                           ret_from_london_last_daily_open_16: pd.Series,
+                           ret_from_london_last_daily_open_17: pd.Series,
+                           ret_from_london_last_daily_open_18: pd.Series,
+                           ret_from_london_last_daily_open_19: pd.Series,
+                           ret_from_london_last_daily_close_0: pd.Series,
+                           ret_from_london_last_daily_close_1: pd.Series,
+                           ret_from_london_last_daily_close_2: pd.Series,
+                           ret_from_london_last_daily_close_3: pd.Series,
+                           ret_from_london_last_daily_close_4: pd.Series,
+                           ret_from_london_last_daily_close_5: pd.Series,
+                           ret_from_london_last_daily_close_6: pd.Series,
+                           ret_from_london_last_daily_close_7: pd.Series,
+                           ret_from_london_last_daily_close_8: pd.Series,
+                           ret_from_london_last_daily_close_9: pd.Series,
+                           ret_from_london_last_daily_close_10: pd.Series,
+                           ret_from_london_last_daily_close_11: pd.Series,
+                           ret_from_london_last_daily_close_12: pd.Series,
+                           ret_from_london_last_daily_close_13: pd.Series,
+                           ret_from_london_last_daily_close_14: pd.Series,
+                           ret_from_london_last_daily_close_15: pd.Series,
+                           ret_from_london_last_daily_close_16: pd.Series,
+                           ret_from_london_last_daily_close_17: pd.Series,
+                           ret_from_london_last_daily_close_18: pd.Series,
+                           ret_from_london_last_daily_close_19: pd.Series,
+                           option_expiration_time: pd.Series,
+                           last_option_expiration_time: pd.Series) -> pd.Series:
+
+    raw_data = group_features
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     interval_mins = config.dataset.interval_mins
     new_york_cal = mcal.get_calendar("NYSE")

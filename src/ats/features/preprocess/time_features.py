@@ -41,6 +41,12 @@ def timestamp(sorted_data: pd.DataFrame) -> pd.Series:
 def time(sorted_data: pd.DataFrame) -> pd.Series:
     return sorted_data["time"]
 
+def week_of_year(time: pd.Series) -> pd.Series:
+    return time.apply(lambda x: x.isocalendar()[1])
+
+def month_of_year(time: pd.Series) -> pd.Series:
+    return time.apply(lambda x: x.month)
+
 @tag(cache="parquet")
 def new_york_open_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
@@ -477,10 +483,126 @@ def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
                   last_macro_event_time_imp1: pd.Series, next_macro_event_time_imp1: pd.Series,
                   last_macro_event_time_imp2: pd.Series, next_macro_event_time_imp2: pd.Series,
                   last_macro_event_time_imp3: pd.Series, next_macro_event_time_imp3: pd.Series,
-                  new_york_last_open_time_0: pd.Series, new_york_last_close_time_0: pd.Series,
-                  new_york_last_open_time_1: pd.Series, new_york_last_close_time_1: pd.Series,
-                  london_last_open_time_0: pd.Series, london_last_close_time_0: pd.Series,
-                  london_last_open_time_1: pd.Series, london_last_close_time_1: pd.Series,
+                  new_york_last_open_time_0: pd.Series,
+                  new_york_last_open_time_1: pd.Series,
+                  new_york_last_open_time_2: pd.Series,
+                  new_york_last_open_time_3: pd.Series,
+                  new_york_last_open_time_4: pd.Series,
+                  new_york_last_open_time_5: pd.Series,
+                  new_york_last_open_time_6: pd.Series,
+                  new_york_last_open_time_7: pd.Series,
+                  new_york_last_open_time_8: pd.Series,
+                  new_york_last_open_time_9: pd.Series,
+                  new_york_last_open_time_10: pd.Series,
+                  new_york_last_open_time_11: pd.Series,
+                  new_york_last_open_time_12: pd.Series,
+                  new_york_last_open_time_13: pd.Series,
+                  new_york_last_open_time_14: pd.Series,
+                  new_york_last_open_time_15: pd.Series,
+                  new_york_last_open_time_16: pd.Series,
+                  new_york_last_open_time_17: pd.Series,
+                  new_york_last_open_time_18: pd.Series,
+                  new_york_last_open_time_19: pd.Series,
+                  new_york_last_close_time_0: pd.Series,
+                  new_york_last_close_time_1: pd.Series,
+                  new_york_last_close_time_2: pd.Series,
+                  new_york_last_close_time_3: pd.Series,
+                  new_york_last_close_time_4: pd.Series,
+                  new_york_last_close_time_5: pd.Series,
+                  new_york_last_close_time_6: pd.Series,
+                  new_york_last_close_time_7: pd.Series,
+                  new_york_last_close_time_8: pd.Series,
+                  new_york_last_close_time_9: pd.Series,
+                  new_york_last_close_time_10: pd.Series,
+                  new_york_last_close_time_11: pd.Series,
+                  new_york_last_close_time_12: pd.Series,
+                  new_york_last_close_time_13: pd.Series,
+                  new_york_last_close_time_14: pd.Series,
+                  new_york_last_close_time_15: pd.Series,
+                  new_york_last_close_time_16: pd.Series,
+                  new_york_last_close_time_17: pd.Series,
+                  new_york_last_close_time_18: pd.Series,
+                  new_york_last_close_time_19: pd.Series,
+                  last_weekly_close_time_0: pd.Series,
+                  last_weekly_close_time_1: pd.Series,
+                  last_weekly_close_time_2: pd.Series,
+                  last_weekly_close_time_3: pd.Series,
+                  last_weekly_close_time_4: pd.Series,
+                  last_weekly_close_time_5: pd.Series,
+                  last_weekly_close_time_6: pd.Series,
+                  last_weekly_close_time_7: pd.Series,
+                  last_weekly_close_time_8: pd.Series,
+                  last_weekly_close_time_9: pd.Series,
+                  last_weekly_close_time_10: pd.Series,
+                  last_weekly_close_time_11: pd.Series,
+                  last_weekly_close_time_12: pd.Series,
+                  last_weekly_close_time_13: pd.Series,
+                  last_weekly_close_time_14: pd.Series,
+                  last_weekly_close_time_15: pd.Series,
+                  last_weekly_close_time_16: pd.Series,
+                  last_weekly_close_time_17: pd.Series,
+                  last_weekly_close_time_18: pd.Series,
+                  last_weekly_close_time_19: pd.Series,
+                  last_monthly_close_time_0: pd.Series,
+                  last_monthly_close_time_1: pd.Series,
+                  last_monthly_close_time_2: pd.Series,
+                  last_monthly_close_time_3: pd.Series,
+                  last_monthly_close_time_4: pd.Series,
+                  last_monthly_close_time_5: pd.Series,
+                  last_monthly_close_time_6: pd.Series,
+                  last_monthly_close_time_7: pd.Series,
+                  last_monthly_close_time_8: pd.Series,
+                  last_monthly_close_time_9: pd.Series,
+                  last_monthly_close_time_10: pd.Series,
+                  last_monthly_close_time_11: pd.Series,
+                  last_monthly_close_time_12: pd.Series,
+                  last_monthly_close_time_13: pd.Series,
+                  last_monthly_close_time_14: pd.Series,
+                  last_monthly_close_time_15: pd.Series,
+                  last_monthly_close_time_16: pd.Series,
+                  last_monthly_close_time_17: pd.Series,
+                  last_monthly_close_time_18: pd.Series,
+                  last_monthly_close_time_19: pd.Series,
+                  london_last_open_time_0: pd.Series,
+                  london_last_open_time_1: pd.Series,
+                  london_last_open_time_2: pd.Series,
+                  london_last_open_time_3: pd.Series,
+                  london_last_open_time_4: pd.Series,
+                  london_last_open_time_5: pd.Series,
+                  london_last_open_time_6: pd.Series,
+                  london_last_open_time_7: pd.Series,
+                  london_last_open_time_8: pd.Series,
+                  london_last_open_time_9: pd.Series,
+                  london_last_open_time_10: pd.Series,
+                  london_last_open_time_11: pd.Series,
+                  london_last_open_time_12: pd.Series,
+                  london_last_open_time_13: pd.Series,
+                  london_last_open_time_14: pd.Series,
+                  london_last_open_time_15: pd.Series,
+                  london_last_open_time_16: pd.Series,
+                  london_last_open_time_17: pd.Series,
+                  london_last_open_time_18: pd.Series,
+                  london_last_open_time_19: pd.Series,
+                  london_last_close_time_0: pd.Series,
+                  london_last_close_time_1: pd.Series,
+                  london_last_close_time_2: pd.Series,
+                  london_last_close_time_3: pd.Series,
+                  london_last_close_time_4: pd.Series,
+                  london_last_close_time_5: pd.Series,
+                  london_last_close_time_6: pd.Series,
+                  london_last_close_time_7: pd.Series,
+                  london_last_close_time_8: pd.Series,
+                  london_last_close_time_9: pd.Series,
+                  london_last_close_time_10: pd.Series,
+                  london_last_close_time_11: pd.Series,
+                  london_last_close_time_12: pd.Series,
+                  london_last_close_time_13: pd.Series,
+                  london_last_close_time_14: pd.Series,
+                  london_last_close_time_15: pd.Series,
+                  london_last_close_time_16: pd.Series,
+                  london_last_close_time_17: pd.Series,
+                  london_last_close_time_18: pd.Series,
+                  london_last_close_time_19: pd.Series,
                   new_york_open_time: pd.Series, new_york_close_time: pd.Series,
                   london_open_time: pd.Series, london_close_time: pd.Series) -> pd.DataFrame:
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
@@ -502,14 +624,134 @@ def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     raw_data["next_macro_event_time_imp2"] = next_macro_event_time_imp2
     raw_data["last_macro_event_time_imp3"] = last_macro_event_time_imp3
     raw_data["next_macro_event_time_imp3"] = next_macro_event_time_imp3
+    raw_data["new_york_last_open_time"] = new_york_last_open_time_0
     raw_data["new_york_last_open_time_0"] = new_york_last_open_time_0
     raw_data["new_york_last_open_time_1"] = new_york_last_open_time_1
+    raw_data["new_york_last_open_time_2"] = new_york_last_open_time_2
+    raw_data["new_york_last_open_time_3"] = new_york_last_open_time_3
+    raw_data["new_york_last_open_time_4"] = new_york_last_open_time_4
+    raw_data["new_york_last_open_time_5"] = new_york_last_open_time_5
+    raw_data["new_york_last_open_time_6"] = new_york_last_open_time_6
+    raw_data["new_york_last_open_time_7"] = new_york_last_open_time_7
+    raw_data["new_york_last_open_time_8"] = new_york_last_open_time_8
+    raw_data["new_york_last_open_time_9"] = new_york_last_open_time_9
+    raw_data["new_york_last_open_time_10"] = new_york_last_open_time_10
+    raw_data["new_york_last_open_time_11"] = new_york_last_open_time_11
+    raw_data["new_york_last_open_time_12"] = new_york_last_open_time_12
+    raw_data["new_york_last_open_time_13"] = new_york_last_open_time_13
+    raw_data["new_york_last_open_time_14"] = new_york_last_open_time_14
+    raw_data["new_york_last_open_time_15"] = new_york_last_open_time_15
+    raw_data["new_york_last_open_time_16"] = new_york_last_open_time_16
+    raw_data["new_york_last_open_time_17"] = new_york_last_open_time_17
+    raw_data["new_york_last_open_time_18"] = new_york_last_open_time_18
+    raw_data["new_york_last_open_time_19"] = new_york_last_open_time_19
+    raw_data["new_york_last_close_time"] = new_york_last_close_time_0
     raw_data["new_york_last_close_time_0"] = new_york_last_close_time_0
     raw_data["new_york_last_close_time_1"] = new_york_last_close_time_1
+    raw_data["new_york_last_close_time_2"] = new_york_last_close_time_2
+    raw_data["new_york_last_close_time_3"] = new_york_last_close_time_3
+    raw_data["new_york_last_close_time_4"] = new_york_last_close_time_4
+    raw_data["new_york_last_close_time_5"] = new_york_last_close_time_5
+    raw_data["new_york_last_close_time_6"] = new_york_last_close_time_6
+    raw_data["new_york_last_close_time_7"] = new_york_last_close_time_7
+    raw_data["new_york_last_close_time_8"] = new_york_last_close_time_8
+    raw_data["new_york_last_close_time_9"] = new_york_last_close_time_9
+    raw_data["new_york_last_close_time_10"] = new_york_last_close_time_10
+    raw_data["new_york_last_close_time_11"] = new_york_last_close_time_11
+    raw_data["new_york_last_close_time_12"] = new_york_last_close_time_12
+    raw_data["new_york_last_close_time_13"] = new_york_last_close_time_13
+    raw_data["new_york_last_close_time_14"] = new_york_last_close_time_14
+    raw_data["new_york_last_close_time_15"] = new_york_last_close_time_15
+    raw_data["new_york_last_close_time_16"] = new_york_last_close_time_16
+    raw_data["new_york_last_close_time_17"] = new_york_last_close_time_17
+    raw_data["new_york_last_close_time_18"] = new_york_last_close_time_18
+    raw_data["new_york_last_close_time_19"] = new_york_last_close_time_19
+    raw_data["london_last_open_time"] = london_last_open_time_0
     raw_data["london_last_open_time_0"] = london_last_open_time_0
     raw_data["london_last_open_time_1"] = london_last_open_time_1
+    raw_data["london_last_open_time_2"] = london_last_open_time_2
+    raw_data["london_last_open_time_3"] = london_last_open_time_3
+    raw_data["london_last_open_time_4"] = london_last_open_time_4
+    raw_data["london_last_open_time_5"] = london_last_open_time_5
+    raw_data["london_last_open_time_6"] = london_last_open_time_6
+    raw_data["london_last_open_time_7"] = london_last_open_time_7
+    raw_data["london_last_open_time_8"] = london_last_open_time_8
+    raw_data["london_last_open_time_9"] = london_last_open_time_9
+    raw_data["london_last_open_time_10"] = london_last_open_time_10
+    raw_data["london_last_open_time_11"] = london_last_open_time_11
+    raw_data["london_last_open_time_12"] = london_last_open_time_12
+    raw_data["london_last_open_time_13"] = london_last_open_time_13
+    raw_data["london_last_open_time_14"] = london_last_open_time_14
+    raw_data["london_last_open_time_15"] = london_last_open_time_15
+    raw_data["london_last_open_time_16"] = london_last_open_time_16
+    raw_data["london_last_open_time_17"] = london_last_open_time_17
+    raw_data["london_last_open_time_18"] = london_last_open_time_18
+    raw_data["london_last_open_time_19"] = london_last_open_time_19
+
+    raw_data["london_last_close_time"] = london_last_close_time_0
     raw_data["london_last_close_time_0"] = london_last_close_time_0
     raw_data["london_last_close_time_1"] = london_last_close_time_1
+    raw_data["london_last_close_time_2"] = london_last_close_time_2
+    raw_data["london_last_close_time_3"] = london_last_close_time_3
+    raw_data["london_last_close_time_4"] = london_last_close_time_4
+    raw_data["london_last_close_time_5"] = london_last_close_time_5
+    raw_data["london_last_close_time_6"] = london_last_close_time_6
+    raw_data["london_last_close_time_7"] = london_last_close_time_7
+    raw_data["london_last_close_time_8"] = london_last_close_time_8
+    raw_data["london_last_close_time_9"] = london_last_close_time_9
+    raw_data["london_last_close_time_10"] = london_last_close_time_10
+    raw_data["london_last_close_time_11"] = london_last_close_time_11
+    raw_data["london_last_close_time_12"] = london_last_close_time_12
+    raw_data["london_last_close_time_13"] = london_last_close_time_13
+    raw_data["london_last_close_time_14"] = london_last_close_time_14
+    raw_data["london_last_close_time_15"] = london_last_close_time_15
+    raw_data["london_last_close_time_16"] = london_last_close_time_16
+    raw_data["london_last_close_time_17"] = london_last_close_time_17
+    raw_data["london_last_close_time_18"] = london_last_close_time_18
+    raw_data["london_last_close_time_19"] = london_last_close_time_19
+
+    raw_data["last_weekly_close_time_0"] = last_weekly_close_time_0
+    raw_data["last_weekly_close_time_1"] = last_weekly_close_time_1
+    raw_data["last_weekly_close_time_2"] = last_weekly_close_time_2
+    raw_data["last_weekly_close_time_3"] = last_weekly_close_time_3
+    raw_data["last_weekly_close_time_4"] = last_weekly_close_time_4
+    raw_data["last_weekly_close_time_5"] = last_weekly_close_time_5
+    raw_data["last_weekly_close_time_6"] = last_weekly_close_time_6
+    raw_data["last_weekly_close_time_7"] = last_weekly_close_time_7
+    raw_data["last_weekly_close_time_8"] = last_weekly_close_time_8
+    raw_data["last_weekly_close_time_9"] = last_weekly_close_time_9
+    raw_data["last_weekly_close_time_10"] = last_weekly_close_time_10
+    raw_data["last_weekly_close_time_11"] = last_weekly_close_time_11
+    raw_data["last_weekly_close_time_12"] = last_weekly_close_time_12
+    raw_data["last_weekly_close_time_13"] = last_weekly_close_time_13
+    raw_data["last_weekly_close_time_14"] = last_weekly_close_time_14
+    raw_data["last_weekly_close_time_15"] = last_weekly_close_time_15
+    raw_data["last_weekly_close_time_16"] = last_weekly_close_time_16
+    raw_data["last_weekly_close_time_17"] = last_weekly_close_time_17
+    raw_data["last_weekly_close_time_18"] = last_weekly_close_time_18
+    raw_data["last_weekly_close_time_19"] = last_weekly_close_time_19
+
+    raw_data["last_monthly_close_time_0"] = last_monthly_close_time_0
+    raw_data["last_monthly_close_time_1"] = last_monthly_close_time_1
+    raw_data["last_monthly_close_time_2"] = last_monthly_close_time_2
+    raw_data["last_monthly_close_time_3"] = last_monthly_close_time_3
+    raw_data["last_monthly_close_time_4"] = last_monthly_close_time_4
+    raw_data["last_monthly_close_time_5"] = last_monthly_close_time_5
+    raw_data["last_monthly_close_time_6"] = last_monthly_close_time_6
+    raw_data["last_monthly_close_time_7"] = last_monthly_close_time_7
+    raw_data["last_monthly_close_time_8"] = last_monthly_close_time_8
+    raw_data["last_monthly_close_time_9"] = last_monthly_close_time_9
+    raw_data["last_monthly_close_time_10"] = last_monthly_close_time_10
+    raw_data["last_monthly_close_time_11"] = last_monthly_close_time_11
+    raw_data["last_monthly_close_time_12"] = last_monthly_close_time_12
+    raw_data["last_monthly_close_time_13"] = last_monthly_close_time_13
+    raw_data["last_monthly_close_time_14"] = last_monthly_close_time_14
+    raw_data["last_monthly_close_time_15"] = last_monthly_close_time_15
+    raw_data["last_monthly_close_time_16"] = last_monthly_close_time_16
+    raw_data["last_monthly_close_time_17"] = last_monthly_close_time_17
+    raw_data["last_monthly_close_time_18"] = last_monthly_close_time_18
+    raw_data["last_monthly_close_time_19"] = last_monthly_close_time_19
+
     raw_data["new_york_open_time"] = new_york_open_time
     raw_data["new_york_close_time"] = new_york_close_time
     raw_data["london_open_time"] = london_open_time
