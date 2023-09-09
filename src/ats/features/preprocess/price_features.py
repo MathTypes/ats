@@ -104,7 +104,141 @@ def group_feature_colt(group_features:pd.DataFrame, col_name:str) -> pd.Series:
 
 
 @parameterize(
+    bollinger_5d_2={"window": value(5), "window_dev":value(2)},
+    bollinger_5d_3={"window": value(5), "window_dev":value(3)},
+    bollinger_10d_2={"window": value(10), "window_dev":value(2)},
+    bollinger_10d_3={"window": value(10), "window_dev":value(3)},
+    bollinger_20d_2={"window": value(20), "window_dev":value(2)},
+    bollinger_20d_3={"window": value(20), "window_dev":value(3)},
+    bollinger_50d_2={"window": value(50), "window_dev":value(2)},
+    bollinger_50d_3={"window": value(50), "window_dev":value(3)},
+    bollinger_100d_2={"window": value(100), "window_dev":value(2)},
+    bollinger_100d_3={"window": value(100), "window_dev":value(3)},
+    bollinger_200d_2={"window": value(200), "window_dev":value(2)},
+    bollinger_200d_3={"window": value(200), "window_dev":value(3)},
+)
+def bollinger_day_tmpl(close:pd.Series, window:int, window_dev:int, interval_per_day:int) -> pd.Series:
+    return ta.volatility.BollingerBands(close, window=window*interval_per_day, window_dev=window_dev)
+
+@parameterize(
+    bollinger_5_2={"window": value(5), "window_dev":value(2)},
+    bollinger_5_3={"window": value(5), "window_dev":value(3)},
+    bollinger_10_2={"window": value(10), "window_dev":value(2)},
+    bollinger_10_3={"window": value(10), "window_dev":value(3)},
+    bollinger_20_2={"window": value(20), "window_dev":value(2)},
+    bollinger_20_3={"window": value(20), "window_dev":value(3)},
+    bollinger_50_2={"window": value(50), "window_dev":value(2)},
+    bollinger_50_3={"window": value(50), "window_dev":value(3)},
+    bollinger_100_2={"window": value(100), "window_dev":value(2)},
+    bollinger_100_3={"window": value(100), "window_dev":value(3)},
+    bollinger_200_2={"window": value(200), "window_dev":value(2)},
+    bollinger_200_3={"window": value(200), "window_dev":value(3)},
+)
+def bollinger_tmpl(close:pd.Series, window:int, window_dev:int) -> pd.Series:
+    return ta.volatility.BollingerBands(close, window=window, window_dev=window_dev)
+
+
+@parameterize(
+    bb_high_5d_2={"bollinger": source("bollinger_5d_2")},
+    bb_high_5d_3={"bollinger": source("bollinger_5d_3")},
+    bb_high_10d_2={"bollinger": source("bollinger_10d_2")},
+    bb_high_10d_3={"bollinger": source("bollinger_10d_3")},
+    bb_high_20d_2={"bollinger": source("bollinger_20d_2")},
+    bb_high_20d_3={"bollinger": source("bollinger_20d_3")},
+    bb_high_50d_2={"bollinger": source("bollinger_50d_2")},
+    bb_high_50d_3={"bollinger": source("bollinger_50d_3")},
+    bb_high_100d_2={"bollinger": source("bollinger_100d_2")},
+    bb_high_100d_3={"bollinger": source("bollinger_100d_3")},
+    bb_high_200d_2={"bollinger": source("bollinger_200d_2")},
+    bb_high_200d_3={"bollinger": source("bollinger_200d_3")},
+)
+def bb_high_day_tmpl(bollinger:pd.Series) -> pd.Series:
+    return bollinger.bollinger_hband()
+
+@parameterize(
+    bb_low_5d_2={"bollinger": source("bollinger_5d_2")},
+    bb_low_5d_3={"bollinger": source("bollinger_5d_3")},
+    bb_low_10d_2={"bollinger": source("bollinger_10d_2")},
+    bb_low_10d_3={"bollinger": source("bollinger_10d_3")},
+    bb_low_20d_2={"bollinger": source("bollinger_20d_2")},
+    bb_low_20d_3={"bollinger": source("bollinger_20d_3")},
+    bb_low_50d_2={"bollinger": source("bollinger_50d_2")},
+    bb_low_50d_3={"bollinger": source("bollinger_50d_3")},
+    bb_low_100d_2={"bollinger": source("bollinger_100d_2")},
+    bb_low_100d_3={"bollinger": source("bollinger_100d_3")},
+    bb_low_200d_2={"bollinger": source("bollinger_200d_2")},
+    bb_low_200d_3={"bollinger": source("bollinger_200d_3")},
+)
+def bb_low_day_tmpl(bollinger:pd.Series) -> pd.Series:
+    return bollinger.bollinger_lband()
+
+@parameterize(
+    rsi_14d={"lookback_days":value(14)},
+    rsi_28d={"lookback_days":value(28)},
+    rsi_42d={"lookback_days":value(42)},
+)
+def rsi_tmpl(lookback_days:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+    return ta.momentum.RSIIndicator(close=close, window=lookback_days*interval_per_day).rsi() 
+
+@parameterize(
+    sma_5d={"lookback_days":value(5)},
+    sma_10d={"lookback_days":value(10)},
+    sma_20d={"lookback_days":value(20)},
+    sma_50d={"lookback_days":value(50)},
+    sma_100d={"lookback_days":value(100)},
+    sma_200d={"lookback_days":value(200)},
+)
+def sma_day_tmpl(lookback_days:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+    return ta.trend.SMAIndicator(close=close, window=lookback_days*interval_per_day).sma_indicator()
+
+@parameterize(
+    sma_5={"lookback_days":value(5)},
+    sma_10={"lookback_days":value(10)},
+    sma_20={"lookback_days":value(20)},
+    sma_50={"lookback_days":value(50)},
+    sma_100={"lookback_days":value(100)},
+    sma_200={"lookback_days":value(200)}
+)
+def sma_tmpl(lookback_days:int, close:pd.Series) -> pd.Series:
+    return ta.trend.SMAIndicator(close=close, window=lookback_days).sma_indicator()
+
+@parameterize(
+    bb_high_5_2={"bollinger": source("bollinger_5_2")},
+    bb_high_5_3={"bollinger": source("bollinger_5_3")},
+    bb_high_10_2={"bollinger": source("bollinger_10_2")},
+    bb_high_10_3={"bollinger": source("bollinger_10_3")},
+    bb_high_20_2={"bollinger": source("bollinger_20_2")},
+    bb_high_20_3={"bollinger": source("bollinger_20_3")},
+    bb_high_50_2={"bollinger": source("bollinger_50_2")},
+    bb_high_50_3={"bollinger": source("bollinger_50_3")},
+    bb_high_100_2={"bollinger": source("bollinger_100_2")},
+    bb_high_100_3={"bollinger": source("bollinger_100_3")},
+    bb_high_200_2={"bollinger": source("bollinger_200_2")},
+    bb_high_200_3={"bollinger": source("bollinger_200_3")},
+)
+def bb_high_tmpl(bollinger:pd.Series) -> pd.Series:
+    return bollinger.bollinger_hband()
+
+@parameterize(
+    bb_low_5_2={"bollinger": source("bollinger_5_2")},
+    bb_low_5_3={"bollinger": source("bollinger_5_3")},
+    bb_low_10_2={"bollinger": source("bollinger_10_2")},
+    bb_low_10_3={"bollinger": source("bollinger_10_3")},
+    bb_low_20_2={"bollinger": source("bollinger_20_2")},
+    bb_low_20_3={"bollinger": source("bollinger_20_3")},
+    bb_low_50_2={"bollinger": source("bollinger_50_2")},
+    bb_low_50_3={"bollinger": source("bollinger_50_3")},
+    bb_low_100_2={"bollinger": source("bollinger_100_2")},
+    bb_low_100_3={"bollinger": source("bollinger_100_3")},
+    bb_low_200_2={"bollinger": source("bollinger_200_2")},
+    bb_low_200_3={"bollinger": source("bollinger_200_3")},
+)
+def bb_low_tmpl(bollinger:pd.Series) -> pd.Series:
+    return bollinger.bollinger_lband()
+                   
+@parameterize(
     next_new_york_close={"time_col": value("new_york_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
+    next_london_close={"time_col": value("london_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     next_weekly_close={"time_col": value("weekly_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     next_monthly_close={"time_col": value("monthly_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     last_option_expiration_close={"time_col": value("last_option_expiration_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
