@@ -668,11 +668,77 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float) -> p
 def ret_velocity_tmpl(ret_col: pd.Series, time_col: pd.Series) -> pd.Series:
     return ret_col/time_col
     
+@parameterize(
+    daily_returns_1d={"day_offset":value(1)},
+    daily_returns_5d={"day_offset":value(5)},
+    daily_returns_10d={"day_offset":value(10)},
+    daily_returns_20d={"day_offset":value(20)}
+)
+def daily_returns_day_tmpl(close:pd.Series, base_price:float, day_offset:int, interval_per_day:int) -> pd.Series:
+    return calc_returns(close, day_offset=day_offset*interval_per_day, base_price=base_price)
+
+@parameterize(
+    daily_returns={"day_offset":value(1)},
+    daily_returns_5={"day_offset":value(5)},
+    daily_returns_10={"day_offset":value(10)},
+    daily_returns_20={"day_offset":value(20)}
+)
+def daily_returns_tmpl(close:pd.Series, base_price:float, day_offset:int) -> pd.Series:
+    return calc_returns(close, day_offset=day_offset, base_price=base_price)
+
+@parameterize(
+    daily_vol={"return_col":source("daily_returns")},
+    daily_vol_5={"return_col":source("daily_returns_5")},
+    daily_vol_10={"return_col":source("daily_returns_10")},
+    daily_vol_20={"return_col":source("daily_returns_20")},
+    daily_vol_1d={"return_col":source("daily_returns_1d")},
+    daily_vol_5d={"return_col":source("daily_returns_5d")},
+    daily_vol_10d={"return_col":source("daily_returns_10d")},
+    daily_vol_20d={"return_col":source("daily_returns_20d")},
+)
+def daily_vol_tmpl(return_col:pd.Series) -> pd.Series:
+    return calc_daily_vol(return_col)
+
+@parameterize(
+    daily_skew={"return_col":source("daily_returns")},
+    daily_skew_5={"return_col":source("daily_returns_5")},
+    daily_skew_10={"return_col":source("daily_returns_10")},
+    daily_skew_20={"return_col":source("daily_returns_20")},
+    daily_skew_1d={"return_col":source("daily_returns_1d")},
+    daily_skew_5d={"return_col":source("daily_returns_5d")},
+    daily_skew_10d={"return_col":source("daily_returns_10d")},
+    daily_skew_20d={"return_col":source("daily_returns_20d")},
+)
+def daily_skew_tmpl(return_col:pd.Series) -> pd.Series:
+    return calc_skew(return_col)
+
+@parameterize(
+    daily_kurt={"return_col":source("daily_returns")},
+    daily_kurt_5={"return_col":source("daily_returns_5")},
+    daily_kurt_10={"return_col":source("daily_returns_10")},
+    daily_kurt_20={"return_col":source("daily_returns_20")},
+    daily_kurt_1d={"return_col":source("daily_returns_1d")},
+    daily_kurt_5d={"return_col":source("daily_returns_5d")},
+    daily_kurt_10d={"return_col":source("daily_returns_10d")},
+    daily_kurt_20d={"return_col":source("daily_returns_20d")},
+)
+def daily_kurt_tmpl(return_col:pd.Series) -> pd.Series:
+    return calc_kurt(return_col)
+
 
 #@profile_util.profile
 def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:MacroDataBuilder,
+                           base_price:float,
                            group_features:pd.DataFrame, config:DictConfig,
                            time_features: pd.DataFrame,
+                           daily_returns:pd.Series, daily_returns_5:pd.Series,daily_returns_10:pd.Series,daily_returns_20:pd.Series,
+                           daily_vol:pd.Series,daily_vol_5:pd.Series,daily_vol_10:pd.Series,daily_vol_20:pd.Series,
+                           daily_skew:pd.Series,daily_skew_5:pd.Series,daily_skew_10:pd.Series,daily_skew_20:pd.Series,
+                           daily_kurt:pd.Series,daily_kurt_5:pd.Series,daily_kurt_10:pd.Series,daily_kurt_20:pd.Series,
+                           daily_returns_1d:pd.Series, daily_returns_5d:pd.Series,daily_returns_10d:pd.Series,daily_returns_20d:pd.Series,
+                           daily_vol_1d:pd.Series,daily_vol_5d:pd.Series,daily_vol_10d:pd.Series,daily_vol_20d:pd.Series,
+                           daily_skew_1d:pd.Series,daily_skew_5d:pd.Series,daily_skew_10d:pd.Series,daily_skew_20d:pd.Series,
+                           daily_kurt_1d:pd.Series,daily_kurt_5d:pd.Series,daily_kurt_10d:pd.Series,daily_kurt_20d:pd.Series,
                            close: pd.Series,
                            month: pd.Series, year:pd.Series, hour_of_day:pd.Series,
                            time_to_low_1d_ff_shift_1d: pd.Series, time_to_low_5d_ff_shift_5d: pd.Series,
@@ -1156,7 +1222,7 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            next_london_close: pd.Series,
                            last_option_expiration_time: pd.Series) -> pd.Series:
 
-    raw_data = group_features
+    raw_data = group_features.copy()
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     interval_mins = config.dataset.interval_mins
     new_york_cal = mcal.get_calendar("NYSE")
@@ -1340,22 +1406,22 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     raw_data["vwap_post_new_york_open"] = vwap_post_new_york_open
     raw_data["ret_from_vwap_post_new_york_open"] = ret_from_vwap_post_new_york_open
 
-    raw_data["daily_returns"] = calc_returns(close, day_offset=1, base_price=base_price)
-    raw_data["daily_returns_5"] = calc_returns(close, day_offset=5, base_price=base_price)
-    raw_data["daily_returns_10"] = calc_returns(close, day_offset=10, base_price=base_price)
-    raw_data["daily_returns_20"] = calc_returns(close, day_offset=20, base_price=base_price)
-    raw_data["daily_vol"] = calc_daily_vol(raw_data["daily_returns"])
-    raw_data["daily_vol_5"] = calc_daily_vol(raw_data["daily_returns_5"])
-    raw_data["daily_vol_10"] = calc_daily_vol(raw_data["daily_returns_10"])
-    raw_data["daily_vol_20"] = calc_daily_vol(raw_data["daily_returns_20"])
-    raw_data["daily_skew"] = calc_skew(raw_data["daily_returns"])
-    raw_data["daily_skew_5"] = calc_skew(raw_data["daily_returns_5"])
-    raw_data["daily_skew_10"] = calc_skew(raw_data["daily_returns_10"])
-    raw_data["daily_skew_20"] = calc_skew(raw_data["daily_returns_20"])
-    raw_data["daily_kurt"] = calc_kurt(raw_data["daily_returns"])
-    raw_data["daily_kurt_5"] = calc_kurt(raw_data["daily_returns_5"])
-    raw_data["daily_kurt_10"] = calc_kurt(raw_data["daily_returns_10"])
-    raw_data["daily_kurt_20"] = calc_kurt(raw_data["daily_returns_20"])
+    raw_data["daily_returns"] = daily_returns
+    raw_data["daily_returns_5"] = daily_returns_5
+    raw_data["daily_returns_10"] = daily_returns_10
+    raw_data["daily_returns_20"] = daily_returns_20
+    raw_data["daily_vol"] = daily_vol
+    raw_data["daily_vol_5"] = daily_vol_5
+    raw_data["daily_vol_10"] = daily_vol_10
+    raw_data["daily_vol_20"] = daily_vol_20
+    raw_data["daily_skew"] = daily_skew
+    raw_data["daily_skew_5"] = daily_skew_5
+    raw_data["daily_skew_10"] = daily_skew_10
+    raw_data["daily_skew_20"] = daily_skew_20
+    raw_data["daily_kurt"] = daily_kurt
+    raw_data["daily_kurt_5"] = daily_kurt_5
+    raw_data["daily_kurt_10"] = daily_kurt_10
+    raw_data["daily_kurt_20"] = daily_kurt_20
 
     trend_combinations = [(8, 24), (16, 48), (32, 96)]
     for short_window, long_window in trend_combinations:
@@ -1368,23 +1434,23 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
             raw_data[f"macd_{short_window}_{long_window}_day"] = MACDStrategy.calc_signal(
                 raw_data["close"], short_window*interval_per_day, long_window*interval_per_day, interval_per_day=46
             )
-        raw_data["daily_returns_1d"] = calc_returns(raw_data["close"], day_offset=1*interval_per_day, base_price=base_price)
-        raw_data["daily_returns_5d"] = calc_returns(raw_data["close"], day_offset=5*interval_per_day, base_price=base_price)
-        raw_data["daily_returns_10d"] = calc_returns(raw_data["close"], day_offset=10*interval_per_day, base_price=base_price)
-        raw_data["daily_returns_20d"] = calc_returns(raw_data["close"], day_offset=20*interval_per_day, base_price=base_price)
-        raw_data["daily_vol_1d"] = calc_daily_vol(raw_data["daily_returns_1d"])
-        raw_data["daily_vol_5d"] = calc_daily_vol(raw_data["daily_returns_5d"])
-        raw_data["daily_vol_10d"] = calc_daily_vol(raw_data["daily_returns_10d"])
-        raw_data["daily_vol_20d"] = calc_daily_vol(raw_data["daily_returns_20d"])
+        raw_data["daily_returns_1d"] = daily_returns_1d
+        raw_data["daily_returns_5d"] = daily_returns_5d
+        raw_data["daily_returns_10d"] = daily_returns_10d
+        raw_data["daily_returns_20d"] = daily_returns_20d
+        raw_data["daily_vol_1d"] = daily_vol_1d
+        raw_data["daily_vol_5d"] = daily_vol_5d
+        raw_data["daily_vol_10d"] = daily_vol_10d
+        raw_data["daily_vol_20d"] = daily_vol_20d
         raw_data["daily_vol_diff_1_20d"] = raw_data["daily_vol_1d"]*diff_mul - raw_data["daily_vol_20d"]
-        raw_data["daily_skew_1d"] = calc_skew(raw_data["daily_returns_1d"])
-        raw_data["daily_skew_5d"] = calc_skew(raw_data["daily_returns_5d"])
-        raw_data["daily_skew_10d"] = calc_skew(raw_data["daily_returns_10d"])
-        raw_data["daily_skew_20d"] = calc_skew(raw_data["daily_returns_20d"])
-        raw_data["daily_kurt_1d"] = calc_kurt(raw_data["daily_returns_1d"])
-        raw_data["daily_kurt_5d"] = calc_kurt(raw_data["daily_returns_5d"])
-        raw_data["daily_kurt_10d"] = calc_kurt(raw_data["daily_returns_10d"])
-        raw_data["daily_kurt_20d"] = calc_kurt(raw_data["daily_returns_20d"])
+        raw_data["daily_skew_1d"] = daily_skew_1d
+        raw_data["daily_skew_5d"] = daily_skew_5d
+        raw_data["daily_skew_10d"] = daily_skew_10d
+        raw_data["daily_skew_20d"] = daily_skew_20d
+        raw_data["daily_kurt_1d"] = daily_kurt_1d
+        raw_data["daily_kurt_5d"] = daily_kurt_5d
+        raw_data["daily_kurt_10d"] = daily_kurt_10d
+        raw_data["daily_kurt_20d"] = daily_kurt_20d
 
     raw_data[f"new_york_last_daily_open_0"] = new_york_last_daily_open_0
     raw_data[f"new_york_last_daily_close_0"] = new_york_last_daily_close_0
