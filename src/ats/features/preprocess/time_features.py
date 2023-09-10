@@ -366,19 +366,6 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
         mdb=macro_data_builder, imp=3)
 
 @parameterize(
-    __time_high_1d_ff_shift_1d={"time_col": source("time_high_1d_ff"), "lookback_days":value(1)},
-    __time_high_5d_ff_shift_5d={"time_col": source("time_high_5d_ff"), "lookback_days":value(5)},
-    __time_high_11d_ff_shift_11d={"time_col": source("time_high_11d_ff"), "lookback_days":value(11)},
-    __time_high_21d_ff_shift_21d={"time_col": source("time_high_21d_ff"), "lookback_days":value(21)},
-    __time_low_1d_ff_shift_1d={"time_col": source("time_low_1d_ff"), "lookback_days":value(1)},
-    __time_low_5d_ff_shift_5d={"time_col": source("time_low_5d_ff"), "lookback_days":value(5)},
-    __time_low_11d_ff_shift_11d={"time_col": source("time_low_11d_ff"), "lookback_days":value(11)},
-    __time_low_21d_ff_shift_21d={"time_col": source("time_low_21d_ff"), "lookback_days":value(21)},
-)
-def time_shift(time_col:pd.Series, lookback_days:int, interval_per_day: int) -> pd.Series:
-    return time_col.shift(-lookback_days*interval_per_day)
-
-@parameterize(
     time_to_new_york_open={"diff_time": source("new_york_open_time")},
     time_to_new_york_last_open={"diff_time": source("new_york_last_open_time")},
     time_to_new_york_last_close={"diff_time": source("new_york_last_close_time")},
@@ -416,12 +403,6 @@ def time_shift(time_col:pd.Series, lookback_days:int, interval_per_day: int) -> 
     time_to_low_11d_ff_shift_11d={"diff_time": source("time_low_11d_ff_shift_11d")},
     time_to_high_21d_ff_shift_21d={"diff_time": source("time_high_21d_ff_shift_21d")},
     time_to_low_21d_ff_shift_21d={"diff_time": source("time_low_21d_ff_shift_21d")},
-    time_to_high_51d_ff_shift_51d={"diff_time": source("time_high_51d_ff_shift_51d")},
-    time_to_low_51d_ff_shift_51d={"diff_time": source("time_low_51d_ff_shift_51d")},
-    time_to_high_101d_ff_shift_101d={"diff_time": source("time_high_101d_ff_shift_101d")},
-    time_to_low_101d_ff_shift_101d={"diff_time": source("time_low_101d_ff_shift_101d")},
-    time_to_high_201d_ff_shift_201d={"diff_time": source("time_high_201d_ff_shift_201d")},
-    time_to_low_201d_ff_shift_201d={"diff_time": source("time_low_201d_ff_shift_201d")},
     time_to_high_1d_ff={"diff_time": source("time_high_1d_ff")},
     time_to_low_1d_ff={"diff_time": source("time_low_1d_ff")},
     time_to_high_5d_ff={"diff_time": source("time_high_5d_ff")},
@@ -609,8 +590,6 @@ def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     new_york_cal = mcal.get_calendar("NYSE")
 
     raw_data = group_features
-    raw_data["week_of_year"] = raw_data["time"].apply(lambda x: x.isocalendar()[1])
-    raw_data["month_of_year"] = raw_data["time"].apply(lambda x: x.month)
 
     raw_data["weekly_close_time"] = weekly_close_time
     raw_data["last_weekly_close_time"] = last_weekly_close_time

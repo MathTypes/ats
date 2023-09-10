@@ -1,6 +1,6 @@
 hidden_size: 20
 prediction_length: 46
-context_length: 460
+context_length: 280
 patch_len: 6
 stride: 3
 d_model: 48

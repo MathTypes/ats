@@ -730,7 +730,6 @@ def daily_kurt_tmpl(return_col:pd.Series) -> pd.Series:
 def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:MacroDataBuilder,
                            base_price:float,
                            group_features:pd.DataFrame, config:DictConfig,
-                           time_features: pd.DataFrame,
                            daily_returns:pd.Series, daily_returns_5:pd.Series,daily_returns_10:pd.Series,daily_returns_20:pd.Series,
                            daily_vol:pd.Series,daily_vol_5:pd.Series,daily_vol_10:pd.Series,daily_vol_20:pd.Series,
                            daily_skew:pd.Series,daily_skew_5:pd.Series,daily_skew_10:pd.Series,daily_skew_20:pd.Series,
@@ -1221,7 +1220,6 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            next_monthly_close: pd.Series,
                            next_london_close: pd.Series,
                            last_option_expiration_time: pd.Series) -> pd.Series:
-
     raw_data = group_features.copy()
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     interval_mins = config.dataset.interval_mins
@@ -1230,63 +1228,64 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
 
     raw_data["week_of_year"] = week_of_year
     raw_data["month_of_year"] = month_of_year
-
     raw_data["weekly_close_time"] = weekly_close_time
     raw_data["last_weekly_close_time"] = last_weekly_close_time
     raw_data["monthly_close_time"] = monthly_close_time
     raw_data["last_monthly_close_time"] = last_monthly_close_time
     raw_data["option_expiration_time"] = option_expiration_time
     raw_data["last_option_expiration_time"] = last_option_expiration_time
+    raw_data["time_to_low_1d_ff_shift_1d"] = time_to_low_1d_ff_shift_1d
+    raw_data["time_to_low_5d_ff_shift_5d"] = time_to_low_5d_ff_shift_5d
+    raw_data["time_to_low_11d_ff_shift_11d"] = time_to_low_11d_ff_shift_11d
+    raw_data["time_to_low_21d_ff_shift_21d"] = time_to_low_21d_ff_shift_21d
+    raw_data["time_to_high_1d_ff_shift_1d"] = time_to_high_1d_ff_shift_1d
+    raw_data["time_to_high_5d_ff_shift_5d"] = time_to_high_5d_ff_shift_5d
+    raw_data["time_to_high_11d_ff_shift_11d"] = time_to_high_11d_ff_shift_11d
+    raw_data["time_to_high_21d_ff_shift_21d"] = time_to_high_21d_ff_shift_21d
+    raw_data["time_to_last_macro_event_imp1"] = time_to_last_macro_event_imp1
+    raw_data["time_to_last_macro_event_imp2"] = time_to_last_macro_event_imp2
+    raw_data["time_to_last_macro_event_imp3"] = time_to_last_macro_event_imp3
+    raw_data["time_to_next_macro_event_imp1"] = time_to_next_macro_event_imp1
+    raw_data["time_to_next_macro_event_imp2"] = time_to_next_macro_event_imp2
+    raw_data["time_to_next_macro_event_imp3"] = time_to_next_macro_event_imp3
+    raw_data["time_to_low_1d_ff"] = time_to_low_1d_ff
+    raw_data["time_to_low_5d_ff"] = time_to_low_5d_ff
+    raw_data["time_to_low_11d_ff"] = time_to_low_11d_ff
+    raw_data["time_to_low_21d_ff"] = time_to_low_21d_ff
+    raw_data["time_to_low_51d_ff"] = time_to_low_51d_ff
+    raw_data["time_to_low_101d_ff"] = time_to_low_101d_ff
+    raw_data["time_to_low_201d_ff"] = time_to_low_201d_ff
+    raw_data["time_to_high_1d_ff"] = time_to_high_1d_ff
+    raw_data["time_to_high_5d_ff" ] = time_to_high_5d_ff
+    raw_data["time_to_high_11d_ff"] = time_to_high_11d_ff
+    raw_data["time_to_high_21d_ff"] = time_to_high_21d_ff
+    raw_data["time_to_high_51d_ff"] = time_to_high_51d_ff
+    raw_data["time_to_high_101d_ff"] = time_to_high_101d_ff
+    raw_data["time_to_high_201d_ff"] = time_to_high_201d_ff
+    raw_data["time_to_low_5_ff"] = time_to_low_5_ff
+    raw_data["time_to_low_11_ff"] = time_to_low_11_ff
+    raw_data["time_to_low_21_ff"] = time_to_low_21_ff
+    raw_data["time_to_low_51_ff"] = time_to_low_51_ff
+    raw_data["time_to_low_101_ff"] = time_to_low_101_ff
+    raw_data["time_to_low_201_ff"] = time_to_low_201_ff
+    raw_data["time_to_high_5_ff" ] = time_to_high_5_ff
+    raw_data["time_to_high_11_ff"] = time_to_high_11_ff
+    raw_data["time_to_high_21_ff"] = time_to_high_21_ff
+    raw_data["time_to_high_51_ff"] = time_to_high_51_ff
+    raw_data["time_to_high_101_ff"] = time_to_high_101_ff
+    raw_data["time_to_high_201_ff"] = time_to_high_201_ff
+    raw_data["time_to_weekly_close"] = time_to_weekly_close
+    raw_data["time_to_monthly_close"] = time_to_monthly_close
+    raw_data["time_to_option_expiration"] = time_to_option_expiration
+    raw_data["time_to_new_york_open" ] = time_to_new_york_open
+    raw_data["time_to_new_york_last_open"] = time_to_new_york_last_open
+    raw_data["time_to_new_york_last_close"] = time_to_new_york_last_close
+    raw_data["time_to_new_york_close"] = time_to_new_york_close
+    raw_data["time_to_london_open"] = time_to_london_open
+    raw_data["time_to_london_last_open"] = time_to_london_last_open
+    raw_data["time_to_london_close"] = time_to_london_close
+    raw_data["time_to_london_last_close"] = time_to_london_last_close
 
-    if macro_data_builder.add_macro_event:
-        raw_data["last_macro_event_time_imp1"] = last_macro_event_time_imp1
-        raw_data["next_macro_event_time_imp1"] = next_macro_event_time_imp1
-        raw_data["last_macro_event_time_imp2"] = last_macro_event_time_imp2
-        raw_data["next_macro_event_time_imp2"] = next_macro_event_time_imp2
-        raw_data["last_macro_event_time_imp3"] = last_macro_event_time_imp3
-        raw_data["next_macro_event_time_imp3"] = next_macro_event_time_imp3
-    
-    raw_data["last_weekly_close_time_0"] = last_weekly_close_time_0
-    raw_data["last_weekly_close_time_1"] = last_weekly_close_time_1
-    raw_data["last_weekly_close_time_2"] = last_weekly_close_time_2
-    raw_data["last_weekly_close_time_3"] = last_weekly_close_time_3
-    raw_data["last_weekly_close_time_4"] = last_weekly_close_time_4
-    raw_data["last_weekly_close_time_5"] = last_weekly_close_time_5
-    raw_data["last_weekly_close_time_6"] = last_weekly_close_time_6
-    raw_data["last_weekly_close_time_7"] = last_weekly_close_time_7
-    raw_data["last_weekly_close_time_8"] = last_weekly_close_time_8
-    raw_data["last_weekly_close_time_9"] = last_weekly_close_time_9
-    raw_data["last_weekly_close_time_10"] = last_weekly_close_time_10
-    raw_data["last_weekly_close_time_11"] = last_weekly_close_time_11
-    raw_data["last_weekly_close_time_12"] = last_weekly_close_time_12
-    raw_data["last_weekly_close_time_13"] = last_weekly_close_time_13
-    raw_data["last_weekly_close_time_14"] = last_weekly_close_time_14
-    raw_data["last_weekly_close_time_15"] = last_weekly_close_time_15
-    raw_data["last_weekly_close_time_16"] = last_weekly_close_time_16
-    raw_data["last_weekly_close_time_17"] = last_weekly_close_time_17
-    raw_data["last_weekly_close_time_18"] = last_weekly_close_time_18
-    raw_data["last_weekly_close_time_19"] = last_weekly_close_time_19
-
-    raw_data["last_monthly_close_time_0"] = last_monthly_close_time_0
-    raw_data["last_monthly_close_time_1"] = last_monthly_close_time_1
-    raw_data["last_monthly_close_time_2"] = last_monthly_close_time_2
-    raw_data["last_monthly_close_time_3"] = last_monthly_close_time_3
-    raw_data["last_monthly_close_time_4"] = last_monthly_close_time_4
-    raw_data["last_monthly_close_time_5"] = last_monthly_close_time_5
-    raw_data["last_monthly_close_time_6"] = last_monthly_close_time_6
-    raw_data["last_monthly_close_time_7"] = last_monthly_close_time_7
-    raw_data["last_monthly_close_time_8"] = last_monthly_close_time_8
-    raw_data["last_monthly_close_time_9"] = last_monthly_close_time_9
-    raw_data["last_monthly_close_time_10"] = last_monthly_close_time_10
-    raw_data["last_monthly_close_time_11"] = last_monthly_close_time_11
-    raw_data["last_monthly_close_time_12"] = last_monthly_close_time_12
-    raw_data["last_monthly_close_time_13"] = last_monthly_close_time_13
-    raw_data["last_monthly_close_time_14"] = last_monthly_close_time_14
-    raw_data["last_monthly_close_time_15"] = last_monthly_close_time_15
-    raw_data["last_monthly_close_time_16"] = last_monthly_close_time_16
-    raw_data["last_monthly_close_time_17"] = last_monthly_close_time_17
-    raw_data["last_monthly_close_time_18"] = last_monthly_close_time_18
-    raw_data["last_monthly_close_time_19"] = last_monthly_close_time_19
     
     if add_daily_rolling_features:
         raw_data["ret_from_close_cumsum_high_5d"] = ret_from_close_cumsum_high_5d
@@ -1374,36 +1373,23 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
 
     if macro_data_builder.add_macro_event:
         raw_data["ret_from_vwap_since_last_macro_event_imp1"] = ret_from_vwap_since_last_macro_event_imp1
-        raw_data["vwap_pre_macro_event_imp1"] = vwap_pre_macro_event_imp1
         raw_data["ret_from_vwap_pre_macro_event_imp1"] = ret_from_vwap_pre_macro_event_imp1
-        raw_data["vwap_post_macro_event_imp1"] = vwap_post_macro_event_imp1
         raw_data["ret_from_vwap_post_macro_event_imp1"] = ret_from_vwap_post_macro_event_imp1
-        raw_data["vwap_around_macro_event_imp1"] = vwap_around_macro_event_imp1
         raw_data["ret_from_vwap_around_macro_event_imp1"] = ret_from_vwap_around_macro_event_imp1
 
         raw_data["ret_from_vwap_since_last_macro_event_imp2"] = ret_from_vwap_since_last_macro_event_imp2
-        raw_data["vwap_pre_macro_event_imp2"] = vwap_pre_macro_event_imp2
         raw_data["ret_from_vwap_pre_macro_event_imp2"] = ret_from_vwap_pre_macro_event_imp2
-        raw_data["vwap_post_macro_event_imp2"] = vwap_post_macro_event_imp2
         raw_data["ret_from_vwap_post_macro_event_imp2"] = ret_from_vwap_post_macro_event_imp2
-        raw_data["vwap_around_macro_event_imp2"] = vwap_around_macro_event_imp2
         raw_data["ret_from_vwap_around_macro_event_imp2"] = ret_from_vwap_around_macro_event_imp2
 
         raw_data["ret_from_vwap_since_last_macro_event_imp3"] = ret_from_vwap_since_last_macro_event_imp3
-        raw_data["vwap_pre_macro_event_imp3"] = vwap_pre_macro_event_imp3
         raw_data["ret_from_vwap_pre_macro_event_imp3"] = ret_from_vwap_pre_macro_event_imp3
-        raw_data["vwap_post_macro_event_imp3"] = vwap_post_macro_event_imp3
         raw_data["ret_from_vwap_post_macro_event_imp3"] = ret_from_vwap_post_macro_event_imp3
-        raw_data["vwap_around_macro_event_imp3"] = vwap_around_macro_event_imp3
         raw_data["ret_from_vwap_around_macro_event_imp3"] = ret_from_vwap_around_macro_event_imp3
         
     raw_data["ret_from_vwap_since_new_york_open"] = ret_from_vwap_since_new_york_open
     raw_data["ret_from_vwap_since_london_open"] = ret_from_vwap_since_london_open
-    
-    raw_data["vwap_pre_new_york_open"] = vwap_pre_new_york_open
     raw_data["ret_from_vwap_pre_new_york_open"] = ret_from_vwap_pre_new_york_open
-
-    raw_data["vwap_post_new_york_open"] = vwap_post_new_york_open
     raw_data["ret_from_vwap_post_new_york_open"] = ret_from_vwap_post_new_york_open
 
     raw_data["daily_returns"] = daily_returns
@@ -1429,7 +1415,7 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
             raw_data["close"], short_window, long_window, interval_per_day=1
         )
     if add_daily_rolling_features:
-        interval_per_day = int(23 * 60 / interval_minutes)        
+        interval_per_day = int(23 * 60 / interval_mins)        
         for short_window, long_window in trend_combinations:
             raw_data[f"macd_{short_window}_{long_window}_day"] = MACDStrategy.calc_signal(
                 raw_data["close"], short_window*interval_per_day, long_window*interval_per_day, interval_per_day=46
@@ -1442,7 +1428,7 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
         raw_data["daily_vol_5d"] = daily_vol_5d
         raw_data["daily_vol_10d"] = daily_vol_10d
         raw_data["daily_vol_20d"] = daily_vol_20d
-        raw_data["daily_vol_diff_1_20d"] = raw_data["daily_vol_1d"]*diff_mul - raw_data["daily_vol_20d"]
+        raw_data["daily_vol_diff_1_20d"] = raw_data["daily_vol_1d"] - raw_data["daily_vol_20d"]
         raw_data["daily_skew_1d"] = daily_skew_1d
         raw_data["daily_skew_5d"] = daily_skew_5d
         raw_data["daily_skew_10d"] = daily_skew_10d
@@ -1452,88 +1438,6 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
         raw_data["daily_kurt_10d"] = daily_kurt_10d
         raw_data["daily_kurt_20d"] = daily_kurt_20d
 
-    raw_data[f"new_york_last_daily_open_0"] = new_york_last_daily_open_0
-    raw_data[f"new_york_last_daily_close_0"] = new_york_last_daily_close_0
-    raw_data[f"new_york_last_daily_open_1"] = new_york_last_daily_open_1
-    raw_data[f"new_york_last_daily_close_1"] = new_york_last_daily_close_1
-    raw_data[f"new_york_last_daily_open_2"] = new_york_last_daily_open_2
-    raw_data[f"new_york_last_daily_close_2"] = new_york_last_daily_close_2
-    raw_data[f"new_york_last_daily_open_3"] = new_york_last_daily_open_3
-    raw_data[f"new_york_last_daily_close_3"] = new_york_last_daily_close_3
-    raw_data[f"new_york_last_daily_open_4"] = new_york_last_daily_open_4
-    raw_data[f"new_york_last_daily_close_4"] = new_york_last_daily_close_4
-    raw_data[f"new_york_last_daily_open_5"] = new_york_last_daily_open_5
-    raw_data[f"new_york_last_daily_close_5"] = new_york_last_daily_close_5
-    raw_data[f"new_york_last_daily_open_6"] = new_york_last_daily_open_6
-    raw_data[f"new_york_last_daily_close_6"] = new_york_last_daily_close_6
-    raw_data[f"new_york_last_daily_open_7"] = new_york_last_daily_open_7
-    raw_data[f"new_york_last_daily_close_7"] = new_york_last_daily_close_8
-    raw_data[f"new_york_last_daily_open_8"] = new_york_last_daily_open_8
-    raw_data[f"new_york_last_daily_close_8"] = new_york_last_daily_close_8
-    raw_data[f"new_york_last_daily_open_9"] = new_york_last_daily_open_9
-    raw_data[f"new_york_last_daily_close_9"] = new_york_last_daily_close_9
-    raw_data[f"new_york_last_daily_open_10"] = new_york_last_daily_open_10
-    raw_data[f"new_york_last_daily_close_10"] = new_york_last_daily_close_10
-    raw_data[f"new_york_last_daily_open_11"] = new_york_last_daily_open_1
-    raw_data[f"new_york_last_daily_close_11"] = new_york_last_daily_close_11
-    raw_data[f"new_york_last_daily_open_12"] = new_york_last_daily_open_12
-    raw_data[f"new_york_last_daily_close_12"] = new_york_last_daily_close_12
-    raw_data[f"new_york_last_daily_open_13"] = new_york_last_daily_open_13
-    raw_data[f"new_york_last_daily_close_13"] = new_york_last_daily_close_13
-    raw_data[f"new_york_last_daily_open_14"] = new_york_last_daily_open_14
-    raw_data[f"new_york_last_daily_close_14"] = new_york_last_daily_close_14
-    raw_data[f"new_york_last_daily_open_15"] = new_york_last_daily_open_15
-    raw_data[f"new_york_last_daily_close_15"] = new_york_last_daily_close_15
-    raw_data[f"new_york_last_daily_open_16"] = new_york_last_daily_open_16
-    raw_data[f"new_york_last_daily_close_16"] = new_york_last_daily_close_16
-    raw_data[f"new_york_last_daily_open_17"] = new_york_last_daily_open_17
-    raw_data[f"new_york_last_daily_close_17"] = new_york_last_daily_close_18
-    raw_data[f"new_york_last_daily_open_18"] = new_york_last_daily_open_18
-    raw_data[f"new_york_last_daily_close_18"] = new_york_last_daily_close_18
-    raw_data[f"new_york_last_daily_open_19"] = new_york_last_daily_open_19
-    raw_data[f"new_york_last_daily_close_19"] = new_york_last_daily_close_19
-
-    raw_data[f"london_last_daily_open_0"] = london_last_daily_open_0
-    raw_data[f"london_last_daily_close_0"] = london_last_daily_close_0
-    raw_data[f"london_last_daily_open_1"] = london_last_daily_open_1
-    raw_data[f"london_last_daily_close_1"] = london_last_daily_close_1
-    raw_data[f"london_last_daily_open_2"] = london_last_daily_open_2
-    raw_data[f"london_last_daily_close_2"] = london_last_daily_close_2
-    raw_data[f"london_last_daily_open_3"] = london_last_daily_open_3
-    raw_data[f"london_last_daily_close_3"] = london_last_daily_close_3
-    raw_data[f"london_last_daily_open_4"] = london_last_daily_open_4
-    raw_data[f"london_last_daily_close_4"] = london_last_daily_close_4
-    raw_data[f"london_last_daily_open_5"] = london_last_daily_open_5
-    raw_data[f"london_last_daily_close_5"] = london_last_daily_close_5
-    raw_data[f"london_last_daily_open_6"] = london_last_daily_open_6
-    raw_data[f"london_last_daily_close_6"] = london_last_daily_close_6
-    raw_data[f"london_last_daily_open_7"] = london_last_daily_open_7
-    raw_data[f"london_last_daily_close_7"] = london_last_daily_close_8
-    raw_data[f"london_last_daily_open_8"] = london_last_daily_open_8
-    raw_data[f"london_last_daily_close_8"] = london_last_daily_close_8
-    raw_data[f"london_last_daily_open_9"] = london_last_daily_open_9
-    raw_data[f"london_last_daily_close_9"] = london_last_daily_close_9
-    raw_data[f"london_last_daily_open_10"] = london_last_daily_open_10
-    raw_data[f"london_last_daily_close_10"] = london_last_daily_close_10
-    raw_data[f"london_last_daily_open_11"] = london_last_daily_open_1
-    raw_data[f"london_last_daily_close_11"] = london_last_daily_close_11
-    raw_data[f"london_last_daily_open_12"] = london_last_daily_open_12
-    raw_data[f"london_last_daily_close_12"] = london_last_daily_close_12
-    raw_data[f"london_last_daily_open_13"] = london_last_daily_open_13
-    raw_data[f"london_last_daily_close_13"] = london_last_daily_close_13
-    raw_data[f"london_last_daily_open_14"] = london_last_daily_open_14
-    raw_data[f"london_last_daily_close_14"] = london_last_daily_close_14
-    raw_data[f"london_last_daily_open_15"] = london_last_daily_open_15
-    raw_data[f"london_last_daily_close_15"] = london_last_daily_close_15
-    raw_data[f"london_last_daily_open_16"] = london_last_daily_open_16
-    raw_data[f"london_last_daily_close_16"] = london_last_daily_close_16
-    raw_data[f"london_last_daily_open_17"] = london_last_daily_open_17
-    raw_data[f"london_last_daily_close_17"] = london_last_daily_close_18
-    raw_data[f"london_last_daily_open_18"] = london_last_daily_open_18
-    raw_data[f"london_last_daily_close_18"] = london_last_daily_close_18
-    raw_data[f"london_last_daily_open_19"] = london_last_daily_open_19
-    raw_data[f"london_last_daily_close_19"] = london_last_daily_close_19
-                        
     raw_data[f"ret_from_new_york_last_daily_open_0"] = ret_from_new_york_last_daily_open_0
     raw_data[f"ret_from_new_york_last_daily_open_1"] = ret_from_new_york_last_daily_open_1
     raw_data[f"ret_from_new_york_last_daily_open_2"] = ret_from_new_york_last_daily_open_2
@@ -1660,14 +1564,9 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     raw_data[f"ret_from_last_monthly_close_18"] = ret_from_last_monthly_close_18
     raw_data[f"ret_from_last_monthly_close_19"] = ret_from_last_monthly_close_19
 
-    raw_data["next_new_york_close"] = next_new_york_close
-    raw_data["next_weekly_close"] = next_weekly_close
-    raw_data["next_monthly_close"] = next_monthly_close
     raw_data["ret_to_next_new_york_close"] = ret_to_next_new_york_close
     raw_data["ret_to_next_weekly_close"] = ret_to_next_weekly_close
     raw_data["ret_to_next_monthly_close"] = ret_to_next_monthly_close
-    raw_data["last_option_expiration_close"] = last_option_expiration_close
-
                                                         
     raw_data["ret_from_vwap_around_new_york_open"] = ret_from_vwap_around_new_york_open
     raw_data["ret_from_vwap_pre_new_york_close"] = ret_from_vwap_pre_new_york_close
