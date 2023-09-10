@@ -674,8 +674,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                   num_layers=n_layers,
                                                   activation=nn.ReLU)
         self.returns_daily_output_layer = None
+        self.returns_daily_output_size = returns_daily_output_size
         if returns_daily_output_size:
-            if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
+            if isinstance(returns_daily_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
                 self.returns_daily_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -686,8 +688,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                             num_layers=n_layers,
                                                             activation=nn.ReLU)                
         self.returns_weekly_output_layer = None
+        self.returns_weekly_output_size = returns_weekly_output_size
         if returns_weekly_output_size:
-            if self.n_head_targets(head="returns_weekly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(returns_weekly_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_weekly_prediction") > 1:  # if to run with multiple targets
                 self.returns_weekly_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -698,8 +702,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                              num_layers=n_layers,
                                                              activation=nn.ReLU)            
         self.returns_monthly_output_layer = None
+        self.returns_monthly_output_size = returns_monthly_output_size
         if returns_monthly_output_size:
-            if self.n_head_targets(head="returns_monthly_prediction") > 1:  # if to run with multiple targets
+            #if self.n_head_targets(head="returns_monthly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(returns_monthly_output_size, (tuple, list)):
                 self.returns_monthly_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -711,8 +717,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                              activation=nn.ReLU)            
 
         self.returns_daily_close_output_layer = None
+        self.returns_daily_close_output_size = returns_daily_close_output_size
         if returns_daily_close_output_size:
-            if self.n_head_targets(head="returns_daily_close") > 1:  # if to run with multiple targets
+            if isinstance(returns_daily_close_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_daily_close") > 1:  # if to run with multiple targets
                 self.returns_daily_close_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -723,8 +731,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                                   num_layers=n_layers,
                                                                   activation=nn.ReLU)                
         self.returns_weekly_close_output_layer = None
+        self.returns_weekly_close_output_size = returns_weekly_close_output_size
         if returns_weekly_close_output_size:
-            if self.n_head_targets(head="returns_weekly_close") > 1:  # if to run with multiple targets
+            #if self.n_head_targets(head="returns_weekly_close") > 1:  # if to run with multiple targets
+            if isinstance(returns_weekly_close_output_size, (tuple, list)):
                 self.returns_weekly_close_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -735,8 +745,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                                    num_layers=n_layers,
                                                                    activation=nn.ReLU)            
         self.returns_monthly_close_output_layer = None
+        self.returns_monthly_close_output_size = returns_monthly_close_output_size
         if returns_monthly_close_output_size:
-            if self.n_head_targets(head="returns_monthly_close") > 1:  # if to run with multiple targets
+            if isinstance(returns_monthly_close_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_monthly_close") > 1:  # if to run with multiple targets
                 self.returns_monthly_close_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -747,8 +759,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                                     num_layers=n_layers,
                                                                     activation=nn.ReLU)            
         self.time_daily_output_layer = None
+        self.time_daily_output_size = time_daily_output_size
         if time_daily_output_size:
-            if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
+            if isinstance(time_daily_output_size, (tuple, list)):
+            #if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
                 self.time_daily_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -759,8 +773,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                          num_layers=n_layers,
                                                          activation=nn.ReLU)
         self.time_weekly_output_layer = None
+        self.time_weekly_output_size = time_weekly_output_size
         if time_weekly_output_size:
-            if self.n_head_targets(head="time_weekly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(time_weekly_output_size, (tuple, list)):
+            #if self.n_head_targets(head="time_weekly_prediction") > 1:  # if to run with multiple targets
                 self.time_weekly_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -771,8 +787,10 @@ class PatchTftSupervised(BaseModelWithCovariates):
                                                           num_layers=n_layers,
                                                           activation=nn.ReLU)
         self.time_monthly_output_layer = None
+        self.time_monthly_output_size = time_monthly_output_size
         if time_monthly_output_size:
-            if self.n_head_targets(head="time_monthly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(time_monthly_output_size, (tuple, list)):
+            #if self.n_head_targets(head="time_monthly_prediction") > 1:  # if to run with multiple targets
                 self.time_monthly_output_layer = nn.ModuleList(
 	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
                                 num_layers=n_layers, activation=nn.ReLU)
@@ -1151,19 +1169,22 @@ class PatchTftSupervised(BaseModelWithCovariates):
         #logging.info(f"output len:len{output}, tensor.shape:{output[0].shape}")
         returns_daily_output = None
         if self.returns_daily_output_layer:
-            if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
+            if isinstance(self.returns_daily_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
                 returns_daily_output = [output_layer(embedding) for output_layer in self.returns_daily_output_layer]
             else:
                 returns_daily_output = self.returns_daily_output_layer(embedding)
         returns_weekly_output = None
         if self.returns_weekly_output_layer:
-            if self.n_head_targets(head="returns_weekly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(self.returns_weekly_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_weekly_prediction") > 1:  # if to run with multiple targets
                 returns_weekly_output = [output_layer(embedding) for output_layer in self.returns_weekly_output_layer]
             else:
                 returns_weekly_output = self.returns_weekly_output_layer(embedding)
         returns_monthly_output = None
         if self.returns_monthly_output_layer:
-            if self.n_head_targets(head="returns_monthly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(self.returns_monthly_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_monthly_prediction") > 1:  # if to run with multiple targets
                 returns_monthly_output = [output_layer(embedding) for output_layer in self.returns_monthly_output_layer]
             else:
                 returns_monthly_output = self.returns_monthly_output_layer(embedding)
@@ -1171,37 +1192,43 @@ class PatchTftSupervised(BaseModelWithCovariates):
 
         returns_daily_close_output = None
         if self.returns_daily_close_output_layer:
-            if self.n_head_targets(head="returns_daily_close") > 1:  # if to run with multiple targets
+            if isinstance(self.returns_daily_close_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_daily_close") > 1:  # if to run with multiple targets
                 returns_daily_close_output = [output_layer(embedding) for output_layer in self.returns_daily_close_output_layer]
             else:
                 returns_daily_close_output = self.returns_daily_close_output_layer(embedding)
         returns_weekly_close_output = None
         if self.returns_weekly_close_output_layer:
-            if self.n_head_targets(head="returns_weekly_close") > 1:  # if to run with multiple targets
+            if isinstance(self.returns_weekly_close_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_weekly_close") > 1:  # if to run with multiple targets
                 returns_weekly_close_output = [output_layer(embedding) for output_layer in self.returns_weekly_close_output_layer]
             else:
                 returns_weekly_close_output = self.returns_weekly_close_output_layer(embedding)
         returns_monthly_close_output = None
         if self.returns_monthly_close_output_layer:
-            if self.n_head_targets(head="returns_monthly_close") > 1:  # if to run with multiple targets
+            if isinstance(self.returns_monthly_close_output_size, (tuple, list)):
+            #if self.n_head_targets(head="returns_monthly_close") > 1:  # if to run with multiple targets
                 returns_monthly_close_output = [output_layer(embedding) for output_layer in self.returns_monthly_close_output_layer]
             else:
                 returns_monthly_close_output = self.returns_monthly_close_output_layer(embedding)
         time_daily_output = None
         if self.time_daily_output_layer:
-            if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
+            if isinstance(self.time_daily_output_size, (tuple, list)):
+            #if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
                 time_daily_output = [output_layer(embedding) for output_layer in self.time_daily_output_layer]
             else:
                 time_daily_output = self.time_daily_output_layer(embedding)
         time_weekly_output = None
         if self.time_weekly_output_layer:
-            if self.n_head_targets(head="time_weekly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(self.time_weekly_output_size, (tuple, list)):
+            #if self.n_head_targets(head="time_weekly_prediction") > 1:  # if to run with multiple targets
                 time_weekly_output = [output_layer(embedding) for output_layer in self.time_weekly_output_layer]
             else:
                 time_weekly_output = self.time_weekly_output_layer(embedding)
         time_monthly_output = None
         if self.time_monthly_output_layer:
-            if self.n_head_targets(head="time_monthly_prediction") > 1:  # if to run with multiple targets
+            if isinstance(self.time_monthly_output_size, (tuple, list)):
+            #if self.n_head_targets(head="time_monthly_prediction") > 1:  # if to run with multiple targets
                 time_monthly_output = [output_layer(embedding) for output_layer in self.time_monthly_output_layer]
             else:
                 time_monthly_output = self.time_monthly_output_layer(embedding)
