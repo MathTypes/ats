@@ -40,7 +40,8 @@ HALFLIFE_WINSORISE = 252
 
 #@profile_util.profile
 #@njit(parallel=True)
-def group_features(sorted_data : pd.DataFrame, config: DictConfig) -> pd.DataFrame:
+
+def clean_sorted_data(sorted_data : pd.DataFrame, config: DictConfig) -> pd.DataFrame:
     interval_minutes = config.dataset.interval_mins
     add_daily_rolling_features = config.model.features.add_daily_rolling_features
     base_price = config.dataset.base_price
@@ -144,110 +145,217 @@ def group_features(sorted_data : pd.DataFrame, config: DictConfig) -> pd.DataFra
     ]:
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
-    new_features = raw_data.sort_values(['timestamp']).groupby(["ticker"], group_keys=False)[[
-        "volume", "dv", "close", "high", "low", "open", "timestamp"]].apply(ticker_transform, config)
-    new_features = new_features.drop(columns=["volume", "dv", "close", "high", "low", "open", "timestamp"])
-    raw_data = raw_data.join(new_features)
-    raw_data.reset_index(drop=True, inplace=True)
-    #del new_features
+            
+    return raw_data.sort_values(['timestamp'])
 
-    return raw_data
+#def timestamp(clean_sorted_data: pd.DataFrame) -> generic.SeriesGroupBy:
+#    return clean_sorted_data["timestamp"]
 
-@extract_columns(
-    "close",
-    "cum_volume",
-    "cum_dv",
-    "close_back",
-    "high_back",
-    "open_back",
-    "low_back",
-    "volume_back",
-    "dv_back",
-    "close_back_cumsum",
-    "volume_back_cumsum",
-    "close_high_1d_ff",
-    "time_high_1d_ff",
-    "close_high_1d_ff_shift_1d",
-    "time_high_1d_ff_shift_1d",
-    "close_low_1d_ff",
-    "time_low_1d_ff",
-    "close_low_1d_ff_shift_1d",
-    "time_low_1d_ff_shift_1d",
-    "close_high_5d_ff",
-    "time_high_5d_ff",
-    "close_high_5d_ff_shift_5d",
-    "time_high_5d_ff_shift_5d",
-    "close_low_5d_ff",
-    "time_low_5d_ff",
-    "close_low_5d_ff_shift_5d",
-    "time_low_5d_ff_shift_5d",
-    "close_high_11d_ff",
-    "time_high_11d_ff",
-    "close_high_11d_ff_shift_11d",
-    "time_high_11d_ff_shift_11d",
-    "close_low_11d_ff",
-    "time_low_11d_ff",
-    "close_low_11d_ff_shift_11d",
-    "time_low_11d_ff_shift_11d",
-    "close_high_21d_ff",
-    "time_high_21d_ff",
-    "close_high_21d_ff_shift_21d",
-    "time_high_21d_ff_shift_21d",
-    "close_low_21d_ff",
-    "time_low_21d_ff",
-    "close_low_21d_ff_shift_21d",
-    "time_low_21d_ff_shift_21d",    
-    "close_high_51d_ff",
-    "time_high_51d_ff",
-    "close_low_51d_ff",
-    "time_low_51d_ff",
-    "close_high_101d_ff",
-    "time_high_101d_ff",
-    "close_low_101d_ff",
-    "time_low_101d_ff",
-    "close_high_201d_ff",
-    "time_high_201d_ff",
-    "close_low_201d_ff",
-    "time_low_201d_ff",
-    "close_high_5_ff",
-    "time_high_5_ff",
-    "close_high_5_ff_shift_5",
-    "time_high_5_ff_shift_5",
-    "close_low_5_ff",
-    "time_low_5_ff",
-    "close_low_5_ff_shift_5",
-    "time_low_5_ff_shift_5",
-    "close_high_11_ff",
-    "time_high_11_ff",
-    "close_high_11_ff_shift_11",
-    "time_high_11_ff_shift_11",
-    "close_low_11_ff",
-    "time_low_11_ff",
-    "close_low_11_ff_shift_11",
-    "time_low_11_ff_shift_11",
-    "close_high_21_ff",
-    "time_high_21_ff",
-    "close_high_21_ff_shift_21",
-    "time_high_21_ff_shift_21",
-    "close_low_21_ff",
-    "time_low_21_ff",
-    "close_low_21_ff_shift_21",
-    "time_low_21_ff_shift_21",    
-    "close_high_51_ff",
-    "time_high_51_ff",
-    "close_low_51_ff",
-    "time_low_51_ff",
-    "close_high_101_ff",
-    "time_high_101_ff",
-    "close_low_101_ff",
-    "time_low_101_ff",
-    "close_high_201_ff",
-    "time_high_201_ff",
-    "close_low_201_ff",
-    "time_low_201_ff",
+
+#[[
+#        "volume", "dv", "close", "high", "low", "open", "timestamp"]]
+
+#    return new_features
+
+
+#    .apply(ticker_transform, config)
+#    new_features = new_features.drop(columns=["volume", "dv", "close", "high", "low", "open", "timestamp"])
+#    raw_data = raw_data.join(new_features)
+#    raw_data.reset_index(drop=True, inplace=True)
+#    #del new_features
+
+#    return raw_data
+
+def winsorize_col(col: pd.Series) -> pd.Series:
+    ewm = col.ewm(halflife=HALFLIFE_WINSORISE)
+    means = ewm.mean()
+    stds = ewm.std()
+    del ewm
+    col = np.minimum(col, means + VOL_THRESHOLD * stds)
+    col = np.maximum(col, means - VOL_THRESHOLD * stds)
+    return col
+
+def close(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    series = clean_sorted_data["close"].groupby(["ticker"], group_keys=False)
+    return series.transform(winsorize_col)
+
+def ticker(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    series = clean_sorted_data.index.get_level_values("ticker")
+    return series
+
+def high(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    series = clean_sorted_data["high"].groupby(["ticker"], group_keys=False)
+    return series.transform(winsorize_col)
+
+def low(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    series = clean_sorted_data["low"].groupby(["ticker"], group_keys=False)
+    return series.transform(winsorize_col)
+
+def open(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    series = clean_sorted_data["open"].groupby(["ticker"], group_keys=False)
+    return series.transform(winsorize_col)
+
+def cum_volume(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    series = clean_sorted_data["volume"].groupby(["ticker"], group_keys=False)
+    return series.transform("cumsum")
+
+def cum_dv(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    series = clean_sorted_data["dv"].groupby(["ticker"], group_keys=False)
+    return series.transform("cumsum")
+
+def back_ret(x:pd.Series, base_price:float) -> pd.Series:
+    return np.log(x+base_price) - np.log(x.shift(1)+base_price)
+
+def back_volume(x:pd.Series) -> pd.Series:
+    return np.log(x+2) - np.log(x.shift(1)+2)
+
+def close_back(close: pd.Series, base_price: float) -> pd.Series:
+    return close.groupby(["ticker"]).transform(lambda x : back_ret(x, base_price))
+
+def close_velocity_back(close_back: pd.Series) -> pd.Series:
+    series = close_back.groupby(["ticker"], group_keys=False)
+    return series.transform(lambda x: x-x.shift(1))
+
+def high_back(high: pd.Series, base_price: float) -> pd.Series:
+    return high.groupby(["ticker"]).transform(lambda x: back_ret(x, base_price))
+
+def low_back(low: pd.Series, base_price:float) -> pd.Series:
+    return low.groupby(["ticker"]).transform(lambda x:back_ret(x, base_price))
+
+def open_back(open: pd.Series,base_price: float) -> pd.Series:
+    return open.groupby(["ticker"]).transform(lambda x:back_ret(x, base_price))
+
+def volume_back(group_raw_volume: generic.SeriesGroupBy) -> pd.Series:
+    return group_raw_volume.transform(back_volume)
+
+def dv_back(group_raw_dv: generic.SeriesGroupBy) -> pd.Series:
+    return group_raw_dv.transform(back_volume)
+
+def close_back_cumsum(close_back: pd.Series) -> pd.Series:
+    return close_back.groupby(['ticker']).transform("cumsum")
+
+def volume_back_cumsum(volume_back: pd.Series) -> pd.Series:
+    return volume_back.groupby(['ticker']).transform("cumsum")
+
+@parameterize(
+    close_back_cumsum_high_1d_ff={"steps": value(1)},
+    close_back_cumsum_high_5d_ff={"steps": value(5)},
+    close_back_cumsum_high_11d_ff={"steps": value(11)},
+    close_back_cumsum_high_21d_ff={"steps": value(21)},
+    close_back_cumsum_high_51d_ff={"steps": value(51)},
+    close_back_cumsum_high_101d_ff={"steps": value(101)},
+    close_back_cumsum_high_201d_ff={"steps": value(201)},
 )
-def joined_data(group_features: pd.DataFrame) -> pd.DataFrame:
-    return group_features
+def close_back_cumsum_day_high_tmpl(steps:int, close_back_cumsum:pd.Series, interval_per_day:int) -> pd.Series:
+    return close_back_cumsum.groupby(['ticker']).transform(lambda x: x.rolling(steps*interval_per_day).max().ffill())
+
+@parameterize(
+    close_back_cumsum_high_5_ff={"steps": value(5)},
+    close_back_cumsum_high_11_ff={"steps": value(11)},
+    close_back_cumsum_high_21_ff={"steps": value(21)},
+    close_back_cumsum_high_51_ff={"steps": value(51)},
+    close_back_cumsum_high_101_ff={"steps": value(101)},
+    close_back_cumsum_high_201_ff={"steps": value(201)},
+)
+def close_back_cumsum_high_tmpl(steps:int, close_back_cumsum:pd.Series) -> pd.Series:
+    return close_back_cumsum.groupby(['ticker']).transform(lambda x: x.rolling(steps).max().ffill())
+
+@parameterize(
+    close_back_cumsum_low_1d_ff={"steps": value(1)},
+    close_back_cumsum_low_5d_ff={"steps": value(5)},
+    close_back_cumsum_low_11d_ff={"steps": value(11)},
+    close_back_cumsum_low_21d_ff={"steps": value(21)},
+    close_back_cumsum_low_51d_ff={"steps": value(51)},
+    close_back_cumsum_low_101d_ff={"steps": value(101)},
+    close_back_cumsum_low_201d_ff={"steps": value(201)},
+)
+def close_back_cumsum_day_low_tmpl(steps:int, close_back_cumsum:pd.Series, interval_per_day:int) -> pd.Series:
+    return close_back_cumsum.groupby(['ticker']).transform(lambda x: x.rolling(steps*interval_per_day).min().ffill())
+
+@parameterize(
+    close_back_cumsum_low_5_ff={"steps": value(5)},
+    close_back_cumsum_low_11_ff={"steps": value(11)},
+    close_back_cumsum_low_21_ff={"steps": value(21)},
+    close_back_cumsum_low_51_ff={"steps": value(51)},
+    close_back_cumsum_low_101_ff={"steps": value(101)},
+    close_back_cumsum_low_201_ff={"steps": value(201)},
+)
+def close_back_cumsum_low_tmpl(steps:int, close_back_cumsum:pd.Series) -> pd.Series:
+    return close_back_cumsum.groupby(['ticker']).transform(lambda x: x.rolling(steps).min().ffill())
+
+@parameterize(
+    time_high_1d_ff={"close_col": source("close_high_1d_ff"), "col_name":value("close_high_1d_ff")},
+    time_high_5d_ff={"close_col": source("close_high_5d_ff"), "col_name":value("close_high_5d_ff")},
+    time_high_11d_ff={"close_col": source("close_high_11d_ff"), "col_name":value("close_high_11d_ff")},
+    time_high_21d_ff={"close_col": source("close_high_21d_ff"), "col_name":value("close_high_21d_ff")},
+    time_high_51d_ff={"close_col": source("close_high_51d_ff"), "col_name":value("close_high_51d_ff")},
+    time_high_101d_ff={"close_col": source("close_high_101d_ff"), "col_name":value("close_high_101d_ff")},
+    time_high_201d_ff={"close_col": source("close_high_201d_ff"), "col_name":value("close_high_201d_ff")},
+    time_low_1d_ff={"close_col":source("close_low_1d_ff"), "col_name":value("close_low_1d_ff")},
+    time_low_5d_ff={"close_col": source("close_low_5d_ff"), "col_name":value("close_low_5d_ff")},
+    time_low_11d_ff={"close_col": source("close_low_11d_ff"), "col_name":value("close_low_11d_ff")},
+    time_low_21d_ff={"close_col": source("close_low_21d_ff"), "col_name":value("close_low_21d_ff")},
+    time_low_51d_ff={"close_col": source("close_low_51d_ff"), "col_name":value("close_low_51d_ff")},
+    time_low_101d_ff={"close_col": source("close_low_101d_ff"), "col_name":value("close_low_101d_ff")},
+    time_low_201d_ff={"close_col": source("close_low_201d_ff"), "col_name":value("close_low_201d_ff")},
+    time_high_5d_bf={"close_col": source("close_high_5d_bf"), "col_name":value("close_high_5d_bf")},
+    time_high_21d_bf={"close_col": source("close_high_21d_bf"), "col_name":value("close_high_21d_bf")},
+    time_high_51d_bf={"close_col": source("close_high_51d_bf"), "col_name":value("close_high_51d_bf")},
+    time_high_101d_bf={"close_col": source("close_high_101d_bf"), "col_name":value("close_high_101d_bf")},
+    time_high_201d_bf={"close_col": source("close_high_201d_bf"), "col_name":value("close_high_201d_bf")},
+    time_low_5d_bf={"close_col": source("close_low_5d_bf"), "col_name":value("close_low_5d_bf")},
+    time_low_21d_bf={"close_col": source("close_low_21d_bf"), "col_name":value("close_low_21d_bf")},
+    time_low_51d_bf={"close_col": source("close_low_51d_bf"), "col_name":value("close_low_51d_bf")},
+    time_low_101d_bf={"close_col": source("close_low_101d_bf"), "col_name":value("close_low_101d_bf")},
+    time_low_201d_bf={"close_col": source("close_low_201d_bf"), "col_name":value("close_low_201d_bf")},
+    time_high_5_ff={"close_col": source("close_high_5_ff"), "col_name":value("close_high_5_ff")},
+    time_high_11_ff={"close_col": source("close_high_11_ff"), "col_name":value("close_high_11_ff")},
+    time_high_21_ff={"close_col": source("close_high_21_ff"), "col_name":value("close_high_21_ff")},
+    time_high_51_ff={"close_col": source("close_high_51_ff"), "col_name":value("close_high_51_ff")},
+    time_high_101_ff={"close_col": source("close_high_101_ff"), "col_name":value("close_high_101_ff")},
+    time_high_201_ff={"close_col": source("close_high_201_ff"), "col_name":value("close_high_201_ff")},
+    time_low_5_ff={"close_col": source("close_low_5_ff"), "col_name":value("close_low_5_ff")},
+    time_low_11_ff={"close_col": source("close_low_11_ff"), "col_name":value("close_low_11_ff")},
+    time_low_21_ff={"close_col": source("close_low_21_ff"), "col_name":value("close_low_21_ff")},
+    time_low_51_ff={"close_col": source("close_low_51_ff"), "col_name":value("close_low_51_ff")},
+    time_low_101_ff={"close_col": source("close_low_101_ff"), "col_name":value("close_low_101_ff")},
+    time_low_201_ff={"close_col": source("close_low_201_ff"), "col_name":value("close_low_201_ff")},
+    time_high_5_bf={"close_col": source("close_high_5_bf"), "col_name":value("close_high_5_bf")},
+    time_high_21_bf={"close_col": source("close_high_21_bf"), "col_name":value("close_high_21_bf")},
+    time_high_51_bf={"close_col": source("close_high_51_bf"), "col_name":value("close_high_51_bf")},
+    time_high_101_bf={"close_col": source("close_high_101_bf"), "col_name":value("close_high_101_bf")},
+    time_high_201_bf={"close_col": source("close_high_201_bf"), "col_name":value("close_high_201_bf")},
+    time_low_5_bf={"close_col": source("close_low_5_bf"), "col_name":value("close_low_5_bf")},
+    time_low_21_bf={"close_col": source("close_low_21_bf"), "col_name":value("close_low_21_bf")},
+    time_low_51_bf={"close_col": source("close_low_51_bf"), "col_name":value("close_low_51_bf")},
+    time_low_101_bf={"close_col": source("close_low_101_bf"), "col_name":value("close_low_101_bf")},
+    time_low_201_bf={"close_col": source("close_low_201_bf"), "col_name":value("close_low_201_bf")},
+)
+def time_with_close_tmpl(close:pd.Series, timestamp:pd.Series, close_col:pd.Series, col_name:str) -> pd.Series:
+    df = pd.concat([close, timestamp, close_col], axis=1)
+    df.columns = ["close", "timestamp", "close_high"]
+    logging.error(f"df:{df}")
+    logging.error(f"df.index:{df.index}")
+    df = df.reset_index()
+    logging.error(f"df after reset:{df}")
+    series = df.groupby(['ticker']).apply(lambda x: find_close_time(x, "close_high"))
+    #series = series.unstack(level=2).drop(columns=['ticker'])
+    series = series.set_index(["time","ticker"])
+    series = series.ffill()
+    logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
+    #res = series[['timestamp']]
+    logging.error(f"time_with_close_tmpl_res, col_name:{col_name}, time_with_close_tmpl:{series}")
+    return series
+    #return series
+
+def find_close_time(df:pd.DataFrame, close_col_name:str) -> pd.Series:
+    logging.error(f"close_col:{close_col_name}")
+    logging.error(f"df:{df.shape}")
+    #logging.error(f"df:{df}")
+    res = df.apply(lambda x: get_close_time(x, close_col_name), axis=1, result_type="expand")
+    logging.error(f"find_close_time:{res}, res.shape:{res.shape}")
+    return res
+
 
 @parameterize(
     ret_from_vwap_since_last_macro_event_imp1={"time_col": value("last_macro_event_time_imp1")},
@@ -256,10 +364,14 @@ def joined_data(group_features: pd.DataFrame) -> pd.DataFrame:
     ret_from_vwap_since_new_york_open={"time_col": value("new_york_last_open_time")},
     ret_from_vwap_since_london_open={"time_col": value("london_last_open_time")},
 )
-def ret_from_vwap(time_features:pd.DataFrame, time_col:str, interval_mins: int) ->pd.Series:
+def ret_from_vwap(time_features:pd.DataFrame,
+                  cum_dv:pd.Series, cum_volume:pd.Series,
+                  time_col:str, interval_mins: int) ->pd.Series:
     raw_data = time_features
     cum_dv_col = f"{time_col}_cum_dv"
     cum_volume_col = f"{time_col}_cum_volume"
+    raw_data["cum_dv"] = cum_dv
+    raw_data["cum_volume"] = cum_volume
     raw_data[cum_dv_col] = raw_data.apply(
         fill_cum_dv, time_col=time_col,
         pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
@@ -280,10 +392,14 @@ def ret_from_vwap(time_features:pd.DataFrame, time_col:str, interval_mins: int) 
     vwap_around_new_york_close={"time_col": value("new_york_last_close_time")},
     vwap_around_london_close={"time_col": value("london_last_close_time")},
 )
-def around_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
+def around_vwap(time_features:pd.DataFrame,
+                cum_dv:pd.Series, cum_volume:pd.Series,
+                time_col:str, interval_mins:int) ->pd.Series:
     raw_data = time_features
     cum_dv_col = f"around_{time_col}_cum_dv"
     cum_volume_col = f"around_{time_col}_cum_volume"
+    raw_data["cum_dv"] = cum_dv
+    raw_data["cum_volume"] = cum_volume
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
                                           pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
@@ -311,8 +427,12 @@ def around_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->p
     vwap_post_macro_event_imp2={"time_col": value("last_macro_event_time_imp2")},
     vwap_post_macro_event_imp3={"time_col": value("last_macro_event_time_imp3")},
 )
-def post_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
+def post_vwap(time_features:pd.DataFrame,
+              cum_dv:pd.Series, cum_volume:pd.Series,
+              time_col:str, interval_mins:int) ->pd.Series:
     raw_data = time_features
+    raw_data["cum_dv"] = cum_dv
+    raw_data["cum_volume"] = cum_volume
     cum_dv_col = f"post_{time_col}_cum_dv"
     cum_volume_col = f"post_{time_col}_cum_volume"
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
@@ -342,10 +462,14 @@ def post_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.
     vwap_pre_macro_event_imp2={"time_col": value("last_macro_event_time_imp2")},
     vwap_pre_macro_event_imp3={"time_col": value("last_macro_event_time_imp3")},
 )
-def pre_vwap(time_features:pd.DataFrame, time_col:str, interval_mins:int) ->pd.Series:
+def pre_vwap(time_features:pd.DataFrame,
+             cum_dv:pd.Series, cum_volume:pd.Series,
+             time_col:str, interval_mins:int) ->pd.Series:
     raw_data = time_features
     cum_dv_col = f"pre_{time_col}_cum_dv"
     cum_volume_col = f"pre_{time_col}_cum_volume"
+    raw_data["cum_dv"] = cum_dv
+    raw_data["cum_volume"] = cum_volume
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
                                           pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
@@ -397,258 +521,260 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     return close_back_cumsum_ff - close_back_cumsum
 
 @parameterize(
-    ret_from_high_1d={"base_col": source("close_high_1d_ff")},
-    ret_from_high_1d_shift_1d={"base_col": source("close_high_1d_ff_shift_1d")},
-    ret_from_high_5d={"base_col": source("close_high_5d_ff")},
-    ret_from_high_5d_shift_5d={"base_col": source("close_high_5d_ff_shift_5d")},
-    ret_from_high_11d={"base_col": source("close_high_11d_ff")},
-    ret_from_high_11d_shift_11d={"base_col": source("close_high_11d_ff_shift_11d")},
-    ret_from_high_21d={"base_col": source("close_high_21d_ff")},
-    ret_from_high_21d_shift_21d={"base_col": source("close_high_21d_ff_shift_21d")},
-    ret_from_high_51d={"base_col": source("close_high_51d_ff")},
-    ret_from_high_101d={"base_col": source("close_high_101d_ff")},
-    ret_from_high_201d={"base_col": source("close_high_201d_ff")},
-    ret_from_low_1d={"base_col": source("close_low_1d_ff")},
-    ret_from_low_1d_shift_1d={"base_col": source("close_low_1d_ff_shift_1d")},
-    ret_from_low_5d={"base_col": source("close_low_5d_ff")},
-    ret_from_low_5d_shift_5d={"base_col": source("close_low_5d_ff_shift_5d")},
-    ret_from_low_11d={"base_col": source("close_low_11d_ff")},
-    ret_from_low_11d_shift_11d={"base_col": source("close_low_11d_ff_shift_11d")},
-    ret_from_low_21d={"base_col": source("close_low_21d_ff")},
-    ret_from_low_21d_shift_21d={"base_col": source("close_low_21d_ff_shift_21d")},
-    ret_from_low_51d={"base_col": source("close_low_51d_ff")},
-    ret_from_low_101d={"base_col": source("close_low_101d_ff")},
-    ret_from_low_201d={"base_col": source("close_low_201d_ff")},
-    ret_from_high_5d_bf={"base_col": source("close_high_5d_bf")},
-    ret_from_high_11d_bf={"base_col": source("close_high_11d_bf")},
-    ret_from_high_21d_bf={"base_col": source("close_high_21d_bf")},
-    ret_from_high_51d_bf={"base_col": source("close_high_51d_bf")},
-    ret_from_low_5d_bf={"base_col": source("close_low_5d_bf")},
-    ret_from_low_11d_bf={"base_col": source("close_low_11d_bf")},
-    ret_from_low_21d_bf={"base_col": source("close_low_21d_bf")},
-    ret_from_low_51d_bf={"base_col": source("close_low_51d_bf")},
-    ret_from_high_5={"base_col": source("close_high_5_ff")},
-    ret_from_high_11={"base_col": source("close_high_11_ff")},
-    ret_from_high_21={"base_col": source("close_high_21_ff")},
-    ret_from_high_51={"base_col": source("close_high_51_ff")},
-    ret_from_high_101={"base_col": source("close_high_101_ff")},
-    ret_from_high_201={"base_col": source("close_high_201_ff")},
-    ret_from_low_5={"base_col": source("close_low_5_ff")},
-    ret_from_low_11={"base_col": source("close_low_11_ff")},
-    ret_from_low_21={"base_col": source("close_low_21_ff")},
-    ret_from_low_51={"base_col": source("close_low_51_ff")},
-    ret_from_low_101={"base_col": source("close_low_101_ff")},
-    ret_from_low_201={"base_col": source("close_low_201_ff")},
-    ret_from_vwap_pre_macro_event_imp1={"base_col": source("vwap_pre_macro_event_imp1")},
-    ret_from_vwap_post_macro_event_imp1={"base_col": source("vwap_post_macro_event_imp1")},
-    ret_from_vwap_around_macro_event_imp1={"base_col": source("vwap_around_macro_event_imp1")},
-    ret_from_vwap_pre_macro_event_imp2={"base_col": source("vwap_pre_macro_event_imp2")},
-    ret_from_vwap_post_macro_event_imp2={"base_col": source("vwap_post_macro_event_imp2")},
-    ret_from_vwap_around_macro_event_imp2={"base_col": source("vwap_around_macro_event_imp2")},
-    ret_from_vwap_pre_macro_event_imp3={"base_col": source("vwap_pre_macro_event_imp3")},
-    ret_from_vwap_post_macro_event_imp3={"base_col": source("vwap_post_macro_event_imp3")},
-    ret_from_vwap_around_macro_event_imp3={"base_col": source("vwap_around_macro_event_imp3")},
-    ret_from_vwap_pre_new_york_open={"base_col": source("vwap_pre_new_york_open")},
-    ret_from_vwap_post_new_york_open={"base_col": source("vwap_post_new_york_open")},
-    ret_from_vwap_pre_new_york_close={"base_col":source("vwap_pre_new_york_close")},
-    ret_from_vwap_post_new_york_close={"base_col":source("vwap_post_new_york_close")},
-    ret_from_vwap_around_new_york_open={"base_col": source("vwap_around_new_york_open")},
-    ret_from_vwap_around_new_york_close={"base_col": source("vwap_around_new_york_close")},
+    ret_from_high_1d={"base_col": source("close_high_1d_ff"),"col_name":value("close_high_1d_ff")},
+    ret_from_high_1d_shift_1d={"base_col": source("close_high_1d_ff_shift_1d"),"col_name":value("close_high_1d_ff_shift_1d")},
+    ret_from_high_5d={"base_col": source("close_high_5d_ff"),"col_name":value("close_high_5d_ff")},
+    ret_from_high_5d_shift_5d={"base_col": source("close_high_5d_ff_shift_5d"),"col_name":value("close_high_5d_ff_shift_5d")},
+    ret_from_high_11d={"base_col": source("close_high_11d_ff"),"col_name":value("close_high_11d_ff")},
+    ret_from_high_11d_shift_11d={"base_col": source("close_high_11d_ff_shift_11d"),"col_name":value("close_high_11d_ff_shift_11d")},
+    ret_from_high_21d={"base_col": source("close_high_21d_ff"),"col_name":value("close_high_21d_ff")},
+    ret_from_high_21d_shift_21d={"base_col": source("close_high_21d_ff_shift_21d"),"col_name":value("close_high_21d_ff_shift_21d")},
+    ret_from_high_51d={"base_col": source("close_high_51d_ff"),"col_name":value("close_high_51d_ff")},
+    ret_from_high_101d={"base_col": source("close_high_101d_ff"),"col_name":value("close_high_101d_ff")},
+    ret_from_high_201d={"base_col": source("close_high_201d_ff"),"col_name":value("close_high_201d_ff")},
+    ret_from_low_1d={"base_col": source("close_low_1d_ff"),"col_name":value("close_low_1d_ff")},
+    ret_from_low_1d_shift_1d={"base_col": source("close_low_1d_ff_shift_1d"),"col_name":value("close_low_1d_ff_shift_1d")},
+    ret_from_low_5d={"base_col": source("close_low_5d_ff"),"col_name":value("close_low_5d_ff")},
+    ret_from_low_5d_shift_5d={"base_col": source("close_low_5d_ff_shift_5d"),"col_name":value("close_low_5d_ff_shift_5d")},
+    ret_from_low_11d={"base_col": source("close_low_11d_ff"),"col_name":value("close_low_11d_ff")},
+    ret_from_low_11d_shift_11d={"base_col": source("close_low_11d_ff_shift_11d"),"col_name":value("close_low_11d_ff_shift_11d")},
+    ret_from_low_21d={"base_col": source("close_low_21d_ff"),"col_name":value("close_low_21d_ff")},
+    ret_from_low_21d_shift_21d={"base_col": source("close_low_21d_ff_shift_21d"),"col_name":value("close_low_21d_ff_shift_21d")},
+    ret_from_low_51d={"base_col": source("close_low_51d_ff"),"col_name":value("close_low_51d_ff")},
+    ret_from_low_101d={"base_col": source("close_low_101d_ff"),"col_name":value("close_low_101d_ff")},
+    ret_from_low_201d={"base_col": source("close_low_201d_ff"),"col_name":value("close_low_201d_ff")},
+    ret_from_high_5d_bf={"base_col": source("close_high_5d_bf"),"col_name":value("close_high_5d_bf")},
+    ret_from_high_11d_bf={"base_col": source("close_high_11d_bf"),"col_name":value("close_high_11d_bf")},
+    ret_from_high_21d_bf={"base_col": source("close_high_21d_bf"),"col_name":value("close_high_21d_bf")},
+    ret_from_high_51d_bf={"base_col": source("close_high_51d_bf"),"col_name":value("close_high_51d_bf")},
+    ret_from_low_5d_bf={"base_col": source("close_low_5d_bf"),"col_name":value("close_low_5d_bf")},
+    ret_from_low_11d_bf={"base_col": source("close_low_11d_bf"),"col_name":value("close_low_11d_bf")},
+    ret_from_low_21d_bf={"base_col": source("close_low_21d_bf"),"col_name":value("close_low_21d_bf")},
+    ret_from_low_51d_bf={"base_col": source("close_low_51d_bf"),"col_name":value("close_low_51d_bf")},
+    ret_from_high_5={"base_col": source("close_high_5_ff"),"col_name":value("close_high_5_ff")},
+    ret_from_high_11={"base_col": source("close_high_11_ff"),"col_name":value("close_high_11_ff")},
+    ret_from_high_21={"base_col": source("close_high_21_ff"),"col_name":value("close_high_21_ff")},
+    ret_from_high_51={"base_col": source("close_high_51_ff"),"col_name":value("close_high_51_ff")},
+    ret_from_high_101={"base_col": source("close_high_101_ff"),"col_name":value("close_high_101_ff")},
+    ret_from_high_201={"base_col": source("close_high_201_ff"),"col_name":value("close_high_201_ff")},
+    ret_from_low_5={"base_col": source("close_low_5_ff"),"col_name":value("close_low_5_ff")},
+    ret_from_low_11={"base_col": source("close_low_11_ff"),"col_name":value("close_low_11_ff")},
+    ret_from_low_21={"base_col": source("close_low_21_ff"),"col_name":value("close_low_21_ff")},
+    ret_from_low_51={"base_col": source("close_low_51_ff"),"col_name":value("close_low_51_ff")},
+    ret_from_low_101={"base_col": source("close_low_101_ff"),"col_name":value("close_low_101_ff")},
+    ret_from_low_201={"base_col": source("close_low_201_ff"),"col_name":value("close_low_201_ff")},
+    ret_from_vwap_pre_macro_event_imp1={"base_col": source("vwap_pre_macro_event_imp1"),"col_name":value("vwap_pre_macro_event_imp1")},
+    ret_from_vwap_post_macro_event_imp1={"base_col": source("vwap_post_macro_event_imp1"),"col_name":value("vwap_post_macro_event_imp1")},
+    ret_from_vwap_around_macro_event_imp1={"base_col": source("vwap_around_macro_event_imp1"),"col_name":value("vwap_around_macro_event_imp1")},
+    ret_from_vwap_pre_macro_event_imp2={"base_col": source("vwap_pre_macro_event_imp2"),"col_name":value("vwap_pre_macro_event_imp2")},
+    ret_from_vwap_post_macro_event_imp2={"base_col": source("vwap_post_macro_event_imp2"),"col_name":value("vwap_post_macro_event_imp2")},
+    ret_from_vwap_around_macro_event_imp2={"base_col": source("vwap_around_macro_event_imp2"),"col_name":value("vwap_around_macro_event_imp2")},
+    ret_from_vwap_pre_macro_event_imp3={"base_col": source("vwap_pre_macro_event_imp3"),"col_name":value("vwap_pre_macro_event_imp3")},
+    ret_from_vwap_post_macro_event_imp3={"base_col": source("vwap_post_macro_event_imp3"),"col_name":value("vwap_post_macro_event_imp3")},
+    ret_from_vwap_around_macro_event_imp3={"base_col": source("vwap_around_macro_event_imp3"),"col_name":value("vwap_around_macro_event_imp3")},
+    ret_from_vwap_pre_new_york_open={"base_col": source("vwap_pre_new_york_open"),"col_name":value("vwap_pre_new_york_open")},
+    ret_from_vwap_post_new_york_open={"base_col": source("vwap_post_new_york_open"),"col_name":value("vwap_post_new_york_close")},
+    ret_from_vwap_pre_new_york_close={"base_col":source("vwap_pre_new_york_close"),"col_name":value("vwap_pre_new_york_close")},
+    ret_from_vwap_post_new_york_close={"base_col":source("vwap_post_new_york_close"),"col_name":value("vwap_post_new_york_close")},
+    ret_from_vwap_around_new_york_open={"base_col": source("vwap_around_new_york_open"),"col_name":value("vwap_around_new_york_open")},
+    ret_from_vwap_around_new_york_close={"base_col": source("vwap_around_new_york_close"),"col_name":value("vwap_around_new_york_close")},
 
-    ret_from_vwap_pre_london_open={"base_col": source("vwap_pre_london_open")},
-    ret_from_vwap_around_london_open={"base_col": source("vwap_around_london_open")},
-    ret_from_vwap_post_london_open={"base_col": source("vwap_post_london_open")},
-    ret_from_vwap_pre_london_close={"base_col": source("vwap_pre_london_close")},
-    ret_from_vwap_around_london_close={"base_col": source("vwap_around_london_close")},
-    ret_from_vwap_post_london_close={"base_col": source("vwap_post_london_close")},
-    ret_from_new_york_last_daily_open_0={"base_col": source("new_york_last_daily_open_0")},
-    ret_from_new_york_last_daily_open_1={"base_col": source("new_york_last_daily_open_1")},
-    ret_from_new_york_last_daily_open_2={"base_col": source("new_york_last_daily_open_2")},
-    ret_from_new_york_last_daily_open_3={"base_col": source("new_york_last_daily_open_3")},
-    ret_from_new_york_last_daily_open_4={"base_col": source("new_york_last_daily_open_4")},
-    ret_from_new_york_last_daily_open_5={"base_col": source("new_york_last_daily_open_5")},
-    ret_from_new_york_last_daily_open_6={"base_col": source("new_york_last_daily_open_6")},
-    ret_from_new_york_last_daily_open_7={"base_col": source("new_york_last_daily_open_7")},
-    ret_from_new_york_last_daily_open_8={"base_col": source("new_york_last_daily_open_8")},
-    ret_from_new_york_last_daily_open_9={"base_col": source("new_york_last_daily_open_9")},
-    ret_from_new_york_last_daily_open_10={"base_col": source("new_york_last_daily_open_10")},
-    ret_from_new_york_last_daily_open_11={"base_col": source("new_york_last_daily_open_11")},
-    ret_from_new_york_last_daily_open_12={"base_col": source("new_york_last_daily_open_12")},
-    ret_from_new_york_last_daily_open_13={"base_col": source("new_york_last_daily_open_13")},
-    ret_from_new_york_last_daily_open_14={"base_col": source("new_york_last_daily_open_14")},
-    ret_from_new_york_last_daily_open_15={"base_col": source("new_york_last_daily_open_15")},
-    ret_from_new_york_last_daily_open_16={"base_col": source("new_york_last_daily_open_16")},
-    ret_from_new_york_last_daily_open_17={"base_col": source("new_york_last_daily_open_17")},
-    ret_from_new_york_last_daily_open_18={"base_col": source("new_york_last_daily_open_18")},
-    ret_from_new_york_last_daily_open_19={"base_col": source("new_york_last_daily_open_19")},
-    ret_from_new_york_last_daily_close_0={"base_col": source("new_york_last_daily_close_0")},
-    ret_from_new_york_last_daily_close_1={"base_col": source("new_york_last_daily_close_1")},
-    ret_from_new_york_last_daily_close_2={"base_col": source("new_york_last_daily_close_2")},
-    ret_from_new_york_last_daily_close_3={"base_col": source("new_york_last_daily_close_3")},
-    ret_from_new_york_last_daily_close_4={"base_col": source("new_york_last_daily_close_4")},
-    ret_from_new_york_last_daily_close_5={"base_col": source("new_york_last_daily_close_5")},
-    ret_from_new_york_last_daily_close_6={"base_col": source("new_york_last_daily_close_6")},
-    ret_from_new_york_last_daily_close_7={"base_col": source("new_york_last_daily_close_7")},
-    ret_from_new_york_last_daily_close_8={"base_col": source("new_york_last_daily_close_8")},
-    ret_from_new_york_last_daily_close_9={"base_col": source("new_york_last_daily_close_9")},
-    ret_from_new_york_last_daily_close_10={"base_col": source("new_york_last_daily_close_10")},
-    ret_from_new_york_last_daily_close_11={"base_col": source("new_york_last_daily_close_11")},
-    ret_from_new_york_last_daily_close_12={"base_col": source("new_york_last_daily_close_12")},
-    ret_from_new_york_last_daily_close_13={"base_col": source("new_york_last_daily_close_13")},
-    ret_from_new_york_last_daily_close_14={"base_col": source("new_york_last_daily_close_14")},
-    ret_from_new_york_last_daily_close_15={"base_col": source("new_york_last_daily_close_15")},
-    ret_from_new_york_last_daily_close_16={"base_col": source("new_york_last_daily_close_16")},
-    ret_from_new_york_last_daily_close_17={"base_col": source("new_york_last_daily_close_17")},
-    ret_from_new_york_last_daily_close_18={"base_col": source("new_york_last_daily_close_18")},
-    ret_from_new_york_last_daily_close_19={"base_col": source("new_york_last_daily_close_19")},
-    ret_from_london_last_daily_open_0={"base_col": source("london_last_daily_open_0")},
-    ret_from_london_last_daily_open_1={"base_col": source("london_last_daily_open_1")},
-    ret_from_london_last_daily_open_2={"base_col": source("london_last_daily_open_2")},
-    ret_from_london_last_daily_open_3={"base_col": source("london_last_daily_open_3")},
-    ret_from_london_last_daily_open_4={"base_col": source("london_last_daily_open_4")},
-    ret_from_london_last_daily_open_5={"base_col": source("london_last_daily_open_5")},
-    ret_from_london_last_daily_open_6={"base_col": source("london_last_daily_open_6")},
-    ret_from_london_last_daily_open_7={"base_col": source("london_last_daily_open_7")},
-    ret_from_london_last_daily_open_8={"base_col": source("london_last_daily_open_8")},
-    ret_from_london_last_daily_open_9={"base_col": source("london_last_daily_open_9")},
-    ret_from_london_last_daily_open_10={"base_col": source("london_last_daily_open_10")},
-    ret_from_london_last_daily_open_11={"base_col": source("london_last_daily_open_11")},
-    ret_from_london_last_daily_open_12={"base_col": source("london_last_daily_open_12")},
-    ret_from_london_last_daily_open_13={"base_col": source("london_last_daily_open_13")},
-    ret_from_london_last_daily_open_14={"base_col": source("london_last_daily_open_14")},
-    ret_from_london_last_daily_open_15={"base_col": source("london_last_daily_open_15")},
-    ret_from_london_last_daily_open_16={"base_col": source("london_last_daily_open_16")},
-    ret_from_london_last_daily_open_17={"base_col": source("london_last_daily_open_17")},
-    ret_from_london_last_daily_open_18={"base_col": source("london_last_daily_open_18")},
-    ret_from_london_last_daily_open_19={"base_col": source("london_last_daily_open_19")},
-    ret_from_london_last_daily_close_0={"base_col": source("london_last_daily_close_0")},
-    ret_from_london_last_daily_close_1={"base_col": source("london_last_daily_close_1")},
-    ret_from_london_last_daily_close_2={"base_col": source("london_last_daily_close_2")},
-    ret_from_london_last_daily_close_3={"base_col": source("london_last_daily_close_3")},
-    ret_from_london_last_daily_close_4={"base_col": source("london_last_daily_close_4")},
-    ret_from_london_last_daily_close_5={"base_col": source("london_last_daily_close_5")},
-    ret_from_london_last_daily_close_6={"base_col": source("london_last_daily_close_6")},
-    ret_from_london_last_daily_close_7={"base_col": source("london_last_daily_close_7")},
-    ret_from_london_last_daily_close_8={"base_col": source("london_last_daily_close_8")},
-    ret_from_london_last_daily_close_9={"base_col": source("london_last_daily_close_9")},
-    ret_from_london_last_daily_close_10={"base_col": source("london_last_daily_close_10")},
-    ret_from_london_last_daily_close_11={"base_col": source("london_last_daily_close_11")},
-    ret_from_london_last_daily_close_12={"base_col": source("london_last_daily_close_12")},
-    ret_from_london_last_daily_close_13={"base_col": source("london_last_daily_close_13")},
-    ret_from_london_last_daily_close_14={"base_col": source("london_last_daily_close_14")},
-    ret_from_london_last_daily_close_15={"base_col": source("london_last_daily_close_15")},
-    ret_from_london_last_daily_close_16={"base_col": source("london_last_daily_close_16")},
-    ret_from_london_last_daily_close_17={"base_col": source("london_last_daily_close_17")},
-    ret_from_london_last_daily_close_18={"base_col": source("london_last_daily_close_18")},
-    ret_from_london_last_daily_close_19={"base_col": source("london_last_daily_close_19")},
-    ret_from_last_weekly_close_0={"base_col": source("last_weekly_close_0")},
-    ret_from_last_weekly_close_1={"base_col": source("last_weekly_close_1")},
-    ret_from_last_weekly_close_2={"base_col": source("last_weekly_close_2")},
-    ret_from_last_weekly_close_3={"base_col": source("last_weekly_close_3")},
-    ret_from_last_weekly_close_4={"base_col": source("last_weekly_close_4")},
-    ret_from_last_weekly_close_5={"base_col": source("last_weekly_close_5")},
-    ret_from_last_weekly_close_6={"base_col": source("last_weekly_close_6")},
-    ret_from_last_weekly_close_7={"base_col": source("last_weekly_close_7")},
-    ret_from_last_weekly_close_8={"base_col": source("last_weekly_close_8")},
-    ret_from_last_weekly_close_9={"base_col": source("last_weekly_close_9")},
-    ret_from_last_weekly_close_10={"base_col": source("last_weekly_close_10")},
-    ret_from_last_weekly_close_11={"base_col": source("last_weekly_close_11")},
-    ret_from_last_weekly_close_12={"base_col": source("last_weekly_close_12")},
-    ret_from_last_weekly_close_13={"base_col": source("last_weekly_close_13")},
-    ret_from_last_weekly_close_14={"base_col": source("last_weekly_close_14")},
-    ret_from_last_weekly_close_15={"base_col": source("last_weekly_close_15")},
-    ret_from_last_weekly_close_16={"base_col": source("last_weekly_close_16")},
-    ret_from_last_weekly_close_17={"base_col": source("last_weekly_close_17")},
-    ret_from_last_weekly_close_18={"base_col": source("last_weekly_close_18")},
-    ret_from_last_weekly_close_19={"base_col": source("last_weekly_close_19")},
-    ret_from_last_monthly_close_0={"base_col": source("last_monthly_close_0")},
-    ret_from_last_monthly_close_1={"base_col": source("last_monthly_close_1")},
-    ret_from_last_monthly_close_2={"base_col": source("last_monthly_close_2")},
-    ret_from_last_monthly_close_3={"base_col": source("last_monthly_close_3")},
-    ret_from_last_monthly_close_4={"base_col": source("last_monthly_close_4")},
-    ret_from_last_monthly_close_5={"base_col": source("last_monthly_close_5")},
-    ret_from_last_monthly_close_6={"base_col": source("last_monthly_close_6")},
-    ret_from_last_monthly_close_7={"base_col": source("last_monthly_close_7")},
-    ret_from_last_monthly_close_8={"base_col": source("last_monthly_close_8")},
-    ret_from_last_monthly_close_9={"base_col": source("last_monthly_close_9")},
-    ret_from_last_monthly_close_10={"base_col": source("last_monthly_close_10")},
-    ret_from_last_monthly_close_11={"base_col": source("last_monthly_close_11")},
-    ret_from_last_monthly_close_12={"base_col": source("last_monthly_close_12")},
-    ret_from_last_monthly_close_13={"base_col": source("last_monthly_close_13")},
-    ret_from_last_monthly_close_14={"base_col": source("last_monthly_close_14")},
-    ret_from_last_monthly_close_15={"base_col": source("last_monthly_close_15")},
-    ret_from_last_monthly_close_16={"base_col": source("last_monthly_close_16")},
-    ret_from_last_monthly_close_17={"base_col": source("last_monthly_close_17")},
-    ret_from_last_monthly_close_18={"base_col": source("last_monthly_close_18")},
-    ret_from_last_monthly_close_19={"base_col": source("last_monthly_close_19")},
-    ret_to_next_new_york_close={"base_col": source("next_new_york_close")},
-    ret_to_next_weekly_close={"base_col": source("next_weekly_close")},
-    ret_to_next_monthly_close={"base_col": source("next_monthly_close")},
-    ret_from_bb_high_5_2={"base_col": source("bb_high_5_2")},
-    ret_from_bb_high_5_3={"base_col": source("bb_high_5_3")},
-    ret_from_bb_high_10_2={"base_col": source("bb_high_10_2")},
-    ret_from_bb_high_10_3={"base_col": source("bb_high_10_3")},
-    ret_from_bb_high_20_2={"base_col": source("bb_high_20_2")},
-    ret_from_bb_high_20_3={"base_col": source("bb_high_20_3")},
-    ret_from_bb_high_50_2={"base_col": source("bb_high_50_2")},
-    ret_from_bb_high_50_3={"base_col": source("bb_high_50_3")},
-    ret_from_bb_high_100_2={"base_col": source("bb_high_100_2")},
-    ret_from_bb_high_100_3={"base_col": source("bb_high_100_3")},
-    ret_from_bb_high_200_2={"base_col": source("bb_high_200_2")},
-    ret_from_bb_high_200_3={"base_col": source("bb_high_200_3")},
+    ret_from_vwap_pre_london_open={"base_col": source("vwap_pre_london_open"),"col_name":value("vwap_pre_london_open")},
+    ret_from_vwap_around_london_open={"base_col": source("vwap_around_london_open"),"col_name":value("vwap_around_london_open")},
+    ret_from_vwap_post_london_open={"base_col": source("vwap_post_london_open"),"col_name":value("vwap_post_london_open")},
+    ret_from_vwap_pre_london_close={"base_col": source("vwap_pre_london_close"),"col_name":value("vwap_pre_london_close")},
+    ret_from_vwap_around_london_close={"base_col": source("vwap_around_london_close"),"col_name":value("vwap_around_london_close")},
+    ret_from_vwap_post_london_close={"base_col": source("vwap_post_london_close"),"col_name":value("vwap_post_london_close")},
+    ret_from_new_york_last_daily_open_0={"base_col": source("new_york_last_daily_open_0"),"col_name":value("new_york_last_daily_open_0")},
+    ret_from_new_york_last_daily_open_1={"base_col": source("new_york_last_daily_open_1"),"col_name":value("new_york_last_daily_open_1")},
+    ret_from_new_york_last_daily_open_2={"base_col": source("new_york_last_daily_open_2"),"col_name":value("new_york_last_daily_open_2")},
+    ret_from_new_york_last_daily_open_3={"base_col": source("new_york_last_daily_open_3"),"col_name":value("new_york_last_daily_open_3")},
+    ret_from_new_york_last_daily_open_4={"base_col": source("new_york_last_daily_open_4"),"col_name":value("new_york_last_daily_open_4")},
+    ret_from_new_york_last_daily_open_5={"base_col": source("new_york_last_daily_open_5"),"col_name":value("new_york_last_daily_open_5")},
+    ret_from_new_york_last_daily_open_6={"base_col": source("new_york_last_daily_open_6"),"col_name":value("new_york_last_daily_open_6")},
+    ret_from_new_york_last_daily_open_7={"base_col": source("new_york_last_daily_open_7"),"col_name":value("new_york_last_daily_open_7")},
+    ret_from_new_york_last_daily_open_8={"base_col": source("new_york_last_daily_open_8"),"col_name":value("new_york_last_daily_open_8")},
+    ret_from_new_york_last_daily_open_9={"base_col": source("new_york_last_daily_open_9"),"col_name":value("new_york_last_daily_open_9")},
+    ret_from_new_york_last_daily_open_10={"base_col": source("new_york_last_daily_open_10"),"col_name":value("new_york_last_daily_open_10")},
+    ret_from_new_york_last_daily_open_11={"base_col": source("new_york_last_daily_open_11"),"col_name":value("new_york_last_daily_open_11")},
+    ret_from_new_york_last_daily_open_12={"base_col": source("new_york_last_daily_open_12"),"col_name":value("new_york_last_daily_open_12")},
+    ret_from_new_york_last_daily_open_13={"base_col": source("new_york_last_daily_open_13"),"col_name":value("new_york_last_daily_open_13")},
+    ret_from_new_york_last_daily_open_14={"base_col": source("new_york_last_daily_open_14"),"col_name":value("new_york_last_daily_open_14")},
+    ret_from_new_york_last_daily_open_15={"base_col": source("new_york_last_daily_open_15"),"col_name":value("new_york_last_daily_open_15")},
+    ret_from_new_york_last_daily_open_16={"base_col": source("new_york_last_daily_open_16"),"col_name":value("new_york_last_daily_open_16")},
+    ret_from_new_york_last_daily_open_17={"base_col": source("new_york_last_daily_open_17"),"col_name":value("new_york_last_daily_open_17")},
+    ret_from_new_york_last_daily_open_18={"base_col": source("new_york_last_daily_open_18"),"col_name":value("new_york_last_daily_open_18")},
+    ret_from_new_york_last_daily_open_19={"base_col": source("new_york_last_daily_open_19"),"col_name":value("new_york_last_daily_open_19")},
+    ret_from_new_york_last_daily_close_0={"base_col": source("new_york_last_daily_close_0"),"col_name":value("new_york_last_daily_close_0")},
+    ret_from_new_york_last_daily_close_1={"base_col": source("new_york_last_daily_close_1"),"col_name":value("new_york_last_daily_close_1")},
+    ret_from_new_york_last_daily_close_2={"base_col": source("new_york_last_daily_close_2"),"col_name":value("new_york_last_daily_close_2")},
+    ret_from_new_york_last_daily_close_3={"base_col": source("new_york_last_daily_close_3"),"col_name":value("new_york_last_daily_close_3")},
+    ret_from_new_york_last_daily_close_4={"base_col": source("new_york_last_daily_close_4"),"col_name":value("new_york_last_daily_close_4")},
+    ret_from_new_york_last_daily_close_5={"base_col": source("new_york_last_daily_close_5"),"col_name":value("new_york_last_daily_close_5")},
+    ret_from_new_york_last_daily_close_6={"base_col": source("new_york_last_daily_close_6"),"col_name":value("new_york_last_daily_close_6")},
+    ret_from_new_york_last_daily_close_7={"base_col": source("new_york_last_daily_close_7"),"col_name":value("new_york_last_daily_close_7")},
+    ret_from_new_york_last_daily_close_8={"base_col": source("new_york_last_daily_close_8"),"col_name":value("new_york_last_daily_close_8")},
+    ret_from_new_york_last_daily_close_9={"base_col": source("new_york_last_daily_close_9"),"col_name":value("new_york_last_daily_close_9")},
+    ret_from_new_york_last_daily_close_10={"base_col": source("new_york_last_daily_close_10"),"col_name":value("new_york_last_daily_close_10")},
+    ret_from_new_york_last_daily_close_11={"base_col": source("new_york_last_daily_close_11"),"col_name":value("new_york_last_daily_close_11")},
+    ret_from_new_york_last_daily_close_12={"base_col": source("new_york_last_daily_close_12"),"col_name":value("new_york_last_daily_close_12")},
+    ret_from_new_york_last_daily_close_13={"base_col": source("new_york_last_daily_close_13"),"col_name":value("new_york_last_daily_close_13")},
+    ret_from_new_york_last_daily_close_14={"base_col": source("new_york_last_daily_close_14"),"col_name":value("new_york_last_daily_close_14")},
+    ret_from_new_york_last_daily_close_15={"base_col": source("new_york_last_daily_close_15"),"col_name":value("new_york_last_daily_close_15")},
+    ret_from_new_york_last_daily_close_16={"base_col": source("new_york_last_daily_close_16"),"col_name":value("new_york_last_daily_close_16")},
+    ret_from_new_york_last_daily_close_17={"base_col": source("new_york_last_daily_close_17"),"col_name":value("new_york_last_daily_close_17")},
+    ret_from_new_york_last_daily_close_18={"base_col": source("new_york_last_daily_close_18"),"col_name":value("new_york_last_daily_close_18")},
+    ret_from_new_york_last_daily_close_19={"base_col": source("new_york_last_daily_close_19"),"col_name":value("new_york_last_daily_close_19")},
+    ret_from_london_last_daily_open_0={"base_col": source("london_last_daily_open_0"),"col_name":value("london_last_daily_open_0")},
+    ret_from_london_last_daily_open_1={"base_col": source("london_last_daily_open_1"),"col_name":value("london_last_daily_open_1")},
+    ret_from_london_last_daily_open_2={"base_col": source("london_last_daily_open_2"),"col_name":value("london_last_daily_open_2")},
+    ret_from_london_last_daily_open_3={"base_col": source("london_last_daily_open_3"),"col_name":value("london_last_daily_open_3")},
+    ret_from_london_last_daily_open_4={"base_col": source("london_last_daily_open_4"),"col_name":value("london_last_daily_open_4")},
+    ret_from_london_last_daily_open_5={"base_col": source("london_last_daily_open_5"),"col_name":value("london_last_daily_open_5")},
+    ret_from_london_last_daily_open_6={"base_col": source("london_last_daily_open_6"),"col_name":value("london_last_daily_open_6")},
+    ret_from_london_last_daily_open_7={"base_col": source("london_last_daily_open_7"),"col_name":value("london_last_daily_open_7")},
+    ret_from_london_last_daily_open_8={"base_col": source("london_last_daily_open_8"),"col_name":value("london_last_daily_open_8")},
+    ret_from_london_last_daily_open_9={"base_col": source("london_last_daily_open_9"),"col_name":value("london_last_daily_open_9")},
+    ret_from_london_last_daily_open_10={"base_col": source("london_last_daily_open_10"),"col_name":value("london_last_daily_open_10")},
+    ret_from_london_last_daily_open_11={"base_col": source("london_last_daily_open_11"),"col_name":value("london_last_daily_open_11")},
+    ret_from_london_last_daily_open_12={"base_col": source("london_last_daily_open_12"),"col_name":value("london_last_daily_open_12")},
+    ret_from_london_last_daily_open_13={"base_col": source("london_last_daily_open_13"),"col_name":value("london_last_daily_open_13")},
+    ret_from_london_last_daily_open_14={"base_col": source("london_last_daily_open_14"),"col_name":value("london_last_daily_open_14")},
+    ret_from_london_last_daily_open_15={"base_col": source("london_last_daily_open_15"),"col_name":value("london_last_daily_open_15")},
+    ret_from_london_last_daily_open_16={"base_col": source("london_last_daily_open_16"),"col_name":value("london_last_daily_open_16")},
+    ret_from_london_last_daily_open_17={"base_col": source("london_last_daily_open_17"),"col_name":value("london_last_daily_open_17")},
+    ret_from_london_last_daily_open_18={"base_col": source("london_last_daily_open_18"),"col_name":value("london_last_daily_open_18")},
+    ret_from_london_last_daily_open_19={"base_col": source("london_last_daily_open_19"),"col_name":value("london_last_daily_open_19")},
+    ret_from_london_last_daily_close_0={"base_col": source("london_last_daily_close_0"),"col_name":value("london_last_daily_close_0")},
+    ret_from_london_last_daily_close_1={"base_col": source("london_last_daily_close_1"),"col_name":value("london_last_daily_close_1")},
+    ret_from_london_last_daily_close_2={"base_col": source("london_last_daily_close_2"),"col_name":value("london_last_daily_close_2")},
+    ret_from_london_last_daily_close_3={"base_col": source("london_last_daily_close_3"),"col_name":value("london_last_daily_close_3")},
+    ret_from_london_last_daily_close_4={"base_col": source("london_last_daily_close_4"),"col_name":value("london_last_daily_close_4")},
+    ret_from_london_last_daily_close_5={"base_col": source("london_last_daily_close_5"),"col_name":value("london_last_daily_close_5")},
+    ret_from_london_last_daily_close_6={"base_col": source("london_last_daily_close_6"),"col_name":value("london_last_daily_close_6")},
+    ret_from_london_last_daily_close_7={"base_col": source("london_last_daily_close_7"),"col_name":value("london_last_daily_close_7")},
+    ret_from_london_last_daily_close_8={"base_col": source("london_last_daily_close_8"),"col_name":value("london_last_daily_close_8")},
+    ret_from_london_last_daily_close_9={"base_col": source("london_last_daily_close_9"),"col_name":value("london_last_daily_close_9")},
+    ret_from_london_last_daily_close_10={"base_col": source("london_last_daily_close_10"),"col_name":value("london_last_daily_close_10")},
+    ret_from_london_last_daily_close_11={"base_col": source("london_last_daily_close_11"),"col_name":value("london_last_daily_close_11")},
+    ret_from_london_last_daily_close_12={"base_col": source("london_last_daily_close_12"),"col_name":value("london_last_daily_close_12")},
+    ret_from_london_last_daily_close_13={"base_col": source("london_last_daily_close_13"),"col_name":value("london_last_daily_close_13")},
+    ret_from_london_last_daily_close_14={"base_col": source("london_last_daily_close_14"),"col_name":value("london_last_daily_close_14")},
+    ret_from_london_last_daily_close_15={"base_col": source("london_last_daily_close_15"),"col_name":value("london_last_daily_close_15")},
+    ret_from_london_last_daily_close_16={"base_col": source("london_last_daily_close_16"),"col_name":value("london_last_daily_close_16")},
+    ret_from_london_last_daily_close_17={"base_col": source("london_last_daily_close_17"),"col_name":value("london_last_daily_close_17")},
+    ret_from_london_last_daily_close_18={"base_col": source("london_last_daily_close_18"),"col_name":value("london_last_daily_close_18")},
+    ret_from_london_last_daily_close_19={"base_col": source("london_last_daily_close_19"),"col_name":value("london_last_daily_close_19")},
+    ret_from_last_weekly_close_0={"base_col": source("last_weekly_close_0"),"col_name":value("last_weekly_close_0")},
+    ret_from_last_weekly_close_1={"base_col": source("last_weekly_close_1"),"col_name":value("last_weekly_close_1")},
+    ret_from_last_weekly_close_2={"base_col": source("last_weekly_close_2"),"col_name":value("last_weekly_close_2")},
+    ret_from_last_weekly_close_3={"base_col": source("last_weekly_close_3"),"col_name":value("last_weekly_close_3")},
+    ret_from_last_weekly_close_4={"base_col": source("last_weekly_close_4"),"col_name":value("last_weekly_close_4")},
+    ret_from_last_weekly_close_5={"base_col": source("last_weekly_close_5"),"col_name":value("last_weekly_close_5")},
+    ret_from_last_weekly_close_6={"base_col": source("last_weekly_close_6"),"col_name":value("last_weekly_close_6")},
+    ret_from_last_weekly_close_7={"base_col": source("last_weekly_close_7"),"col_name":value("last_weekly_close_7")},
+    ret_from_last_weekly_close_8={"base_col": source("last_weekly_close_8"),"col_name":value("last_weekly_close_8")},
+    ret_from_last_weekly_close_9={"base_col": source("last_weekly_close_9"),"col_name":value("last_weekly_close_9")},
+    ret_from_last_weekly_close_10={"base_col": source("last_weekly_close_10"),"col_name":value("last_weekly_close_10")},
+    ret_from_last_weekly_close_11={"base_col": source("last_weekly_close_11"),"col_name":value("last_weekly_close_11")},
+    ret_from_last_weekly_close_12={"base_col": source("last_weekly_close_12"),"col_name":value("last_weekly_close_12")},
+    ret_from_last_weekly_close_13={"base_col": source("last_weekly_close_13"),"col_name":value("last_weekly_close_13")},
+    ret_from_last_weekly_close_14={"base_col": source("last_weekly_close_14"),"col_name":value("last_weekly_close_14")},
+    ret_from_last_weekly_close_15={"base_col": source("last_weekly_close_15"),"col_name":value("last_weekly_close_15")},
+    ret_from_last_weekly_close_16={"base_col": source("last_weekly_close_16"),"col_name":value("last_weekly_close_16")},
+    ret_from_last_weekly_close_17={"base_col": source("last_weekly_close_17"),"col_name":value("last_weekly_close_17")},
+    ret_from_last_weekly_close_18={"base_col": source("last_weekly_close_18"),"col_name":value("last_weekly_close_18")},
+    ret_from_last_weekly_close_19={"base_col": source("last_weekly_close_19"),"col_name":value("last_weekly_close_19")},
+    ret_from_last_monthly_close_0={"base_col": source("last_monthly_close_0"),"col_name":value("last_monthly_close_0")},
+    ret_from_last_monthly_close_1={"base_col": source("last_monthly_close_1"),"col_name":value("last_monthly_close_1")},
+    ret_from_last_monthly_close_2={"base_col": source("last_monthly_close_2"),"col_name":value("last_monthly_close_2")},
+    ret_from_last_monthly_close_3={"base_col": source("last_monthly_close_3"),"col_name":value("last_monthly_close_3")},
+    ret_from_last_monthly_close_4={"base_col": source("last_monthly_close_4"),"col_name":value("last_monthly_close_4")},
+    ret_from_last_monthly_close_5={"base_col": source("last_monthly_close_5"),"col_name":value("last_monthly_close_5")},
+    ret_from_last_monthly_close_6={"base_col": source("last_monthly_close_6"),"col_name":value("last_monthly_close_6")},
+    ret_from_last_monthly_close_7={"base_col": source("last_monthly_close_7"),"col_name":value("last_monthly_close_7")},
+    ret_from_last_monthly_close_8={"base_col": source("last_monthly_close_8"),"col_name":value("last_monthly_close_8")},
+    ret_from_last_monthly_close_9={"base_col": source("last_monthly_close_9"),"col_name":value("last_monthly_close_9")},
+    ret_from_last_monthly_close_10={"base_col": source("last_monthly_close_10"),"col_name":value("last_monthly_close_10")},
+    ret_from_last_monthly_close_11={"base_col": source("last_monthly_close_11"),"col_name":value("last_monthly_close_11")},
+    ret_from_last_monthly_close_12={"base_col": source("last_monthly_close_12"),"col_name":value("last_monthly_close_12")},
+    ret_from_last_monthly_close_13={"base_col": source("last_monthly_close_13"),"col_name":value("last_monthly_close_13")},
+    ret_from_last_monthly_close_14={"base_col": source("last_monthly_close_14"),"col_name":value("last_monthly_close_14")},
+    ret_from_last_monthly_close_15={"base_col": source("last_monthly_close_15"),"col_name":value("last_monthly_close_15")},
+    ret_from_last_monthly_close_16={"base_col": source("last_monthly_close_16"),"col_name":value("last_monthly_close_16")},
+    ret_from_last_monthly_close_17={"base_col": source("last_monthly_close_17"),"col_name":value("last_monthly_close_17")},
+    ret_from_last_monthly_close_18={"base_col": source("last_monthly_close_18"),"col_name":value("last_monthly_close_18")},
+    ret_from_last_monthly_close_19={"base_col": source("last_monthly_close_19"),"col_name":value("last_monthly_close_19")},
+    ret_to_next_new_york_close={"base_col": source("next_new_york_close"),"col_name":value("next_new_york_close")},
+    ret_to_next_weekly_close={"base_col": source("next_weekly_close"),"col_name":value("next_weekly_close")},
+    ret_to_next_monthly_close={"base_col": source("next_monthly_close"),"col_name":value("next_monthly_close")},
+    ret_from_bb_high_5_2={"base_col": source("bb_high_5_2"), "col_name":value("bb_high_5_2")},
+    ret_from_bb_high_5_3={"base_col": source("bb_high_5_3"), "col_name":value("bb_high_5_3")},
+    ret_from_bb_high_10_2={"base_col": source("bb_high_10_2"), "col_name":value("bb_high_10_2")},
+    ret_from_bb_high_10_3={"base_col": source("bb_high_10_3"), "col_name":value("bb_high_10_3")},
+    ret_from_bb_high_20_2={"base_col": source("bb_high_20_2"), "col_name":value("bb_high_20_2")},
+    ret_from_bb_high_20_3={"base_col": source("bb_high_20_3"), "col_name":value("bb_high_20_3")},
+    ret_from_bb_high_50_2={"base_col": source("bb_high_50_2"), "col_name":value("bb_high_50_2")},
+    ret_from_bb_high_50_3={"base_col": source("bb_high_50_3"), "col_name":value("bb_high_50_3")},
+    ret_from_bb_high_100_2={"base_col": source("bb_high_100_2"), "col_name":value("bb_high_100_2")},
+    ret_from_bb_high_100_3={"base_col": source("bb_high_100_3"), "col_name":value("bb_high_100_3")},
+    ret_from_bb_high_200_2={"base_col": source("bb_high_200_2"), "col_name":value("bb_high_200_2")},
+    ret_from_bb_high_200_3={"base_col": source("bb_high_200_3"), "col_name":value("bb_high_200_3")},
 
-    ret_from_bb_low_5_2={"base_col": source("bb_low_5_2")},
-    ret_from_bb_low_5_3={"base_col": source("bb_low_5_3")},
-    ret_from_bb_low_10_2={"base_col": source("bb_low_10_2")},
-    ret_from_bb_low_10_3={"base_col": source("bb_low_10_3")},
-    ret_from_bb_low_20_2={"base_col": source("bb_low_20_2")},
-    ret_from_bb_low_20_3={"base_col": source("bb_low_20_3")},
-    ret_from_bb_low_50_2={"base_col": source("bb_low_50_2")},
-    ret_from_bb_low_50_3={"base_col": source("bb_low_50_3")},
-    ret_from_bb_low_100_2={"base_col": source("bb_low_100_2")},
-    ret_from_bb_low_100_3={"base_col": source("bb_low_100_3")},
-    ret_from_bb_low_200_2={"base_col": source("bb_low_200_2")},
-    ret_from_bb_low_200_3={"base_col": source("bb_low_200_3")},
+    ret_from_bb_low_5_2={"base_col": source("bb_low_5_2"), "col_name":value("bb_low_5_2")},
+    ret_from_bb_low_5_3={"base_col": source("bb_low_5_3"), "col_name":value("bb_low_5_3")},
+    ret_from_bb_low_10_2={"base_col": source("bb_low_10_2"), "col_name":value("bb_low_10_2")},
+    ret_from_bb_low_10_3={"base_col": source("bb_low_10_3"), "col_name":value("bb_low_10_3")},
+    ret_from_bb_low_20_2={"base_col": source("bb_low_20_2"), "col_name":value("bb_low_20_2")},
+    ret_from_bb_low_20_3={"base_col": source("bb_low_20_3"), "col_name":value("bb_low_20_3")},
+    ret_from_bb_low_50_2={"base_col": source("bb_low_50_2"), "col_name":value("bb_low_50_2")},
+    ret_from_bb_low_50_3={"base_col": source("bb_low_50_3"), "col_name":value("bb_low_50_3")},
+    ret_from_bb_low_100_2={"base_col": source("bb_low_100_2"), "col_name":value("bb_low_100_2")},
+    ret_from_bb_low_100_3={"base_col": source("bb_low_100_3"), "col_name":value("bb_low_100_3")},
+    ret_from_bb_low_200_2={"base_col": source("bb_low_200_2"), "col_name":value("bb_low_200_2")},
+    ret_from_bb_low_200_3={"base_col": source("bb_low_200_3"), "col_name":value("bb_low_200_3")},
 
-    ret_from_bb_high_5d_2={"base_col": source("bb_high_5d_2")},
-    ret_from_bb_high_5d_3={"base_col": source("bb_high_5d_3")},
-    ret_from_bb_high_10d_2={"base_col": source("bb_high_10d_2")},
-    ret_from_bb_high_10d_3={"base_col": source("bb_high_10d_3")},
-    ret_from_bb_high_20d_2={"base_col": source("bb_high_20d_2")},
-    ret_from_bb_high_20d_3={"base_col": source("bb_high_20d_3")},
-    ret_from_bb_high_50d_2={"base_col": source("bb_high_50d_2")},
-    ret_from_bb_high_50d_3={"base_col": source("bb_high_50d_3")},
-    ret_from_bb_high_100d_2={"base_col": source("bb_high_100d_2")},
-    ret_from_bb_high_100d_3={"base_col": source("bb_high_100d_3")},
-    ret_from_bb_high_200d_2={"base_col": source("bb_high_200d_2")},
-    ret_from_bb_high_200d_3={"base_col": source("bb_high_200d_3")},
+    ret_from_bb_high_5d_2={"base_col": source("bb_high_5d_2"), "col_name":value("bb_high_5d_2")},
+    ret_from_bb_high_5d_3={"base_col": source("bb_high_5d_3"), "col_name":value("bb_high_5d_3")},
+    ret_from_bb_high_10d_2={"base_col": source("bb_high_10d_2"), "col_name":value("bb_high_10d_2")},
+    ret_from_bb_high_10d_3={"base_col": source("bb_high_10d_3"), "col_name":value("bb_high_10d_3")},
+    ret_from_bb_high_20d_2={"base_col": source("bb_high_20d_2"), "col_name":value("bb_high_20d_2")},
+    ret_from_bb_high_20d_3={"base_col": source("bb_high_20d_3"), "col_name":value("bb_high_20d_3")},
+    ret_from_bb_high_50d_2={"base_col": source("bb_high_50d_2"), "col_name":value("bb_high_50d_2")},
+    ret_from_bb_high_50d_3={"base_col": source("bb_high_50d_3"), "col_name":value("bb_high_50d_3")},
+    ret_from_bb_high_100d_2={"base_col": source("bb_high_100d_2"), "col_name":value("bb_high_100d_2")},
+    ret_from_bb_high_100d_3={"base_col": source("bb_high_100d_3"), "col_name":value("bb_high_100d_3")},
+    ret_from_bb_high_200d_2={"base_col": source("bb_high_200d_2"), "col_name":value("bb_high_200d_2")},
+    ret_from_bb_high_200d_3={"base_col": source("bb_high_200d_3"), "col_name":value("bb_high_200d_3")},
 
-    ret_from_bb_low_5d_2={"base_col": source("bb_low_5d_2")},
-    ret_from_bb_low_5d_3={"base_col": source("bb_low_5d_3")},
-    ret_from_bb_low_10d_2={"base_col": source("bb_low_10d_2")},
-    ret_from_bb_low_10d_3={"base_col": source("bb_low_10d_3")},
-    ret_from_bb_low_20d_2={"base_col": source("bb_low_20d_2")},
-    ret_from_bb_low_20d_3={"base_col": source("bb_low_20d_3")},
-    ret_from_bb_low_50d_2={"base_col": source("bb_low_50d_2")},
-    ret_from_bb_low_50d_3={"base_col": source("bb_low_50d_3")},
-    ret_from_bb_low_100d_2={"base_col": source("bb_low_100d_2")},
-    ret_from_bb_low_100d_3={"base_col": source("bb_low_100d_3")},
-    ret_from_bb_low_200d_2={"base_col": source("bb_low_200d_2")},
-    ret_from_bb_low_200d_3={"base_col": source("bb_low_200d_3")},
-    ret_from_sma_5={"base_col": source("sma_5")},
-    ret_from_sma_10={"base_col": source("sma_10")},
-    ret_from_sma_20={"base_col": source("sma_20")},
-    ret_from_sma_50={"base_col": source("sma_50")},
-    ret_from_sma_100={"base_col": source("sma_100")},
-    ret_from_sma_200={"base_col": source("sma_200")},
-    ret_from_sma_5d={"base_col": source("sma_5d")},
-    ret_from_sma_10d={"base_col": source("sma_10d")},
-    ret_from_sma_20d={"base_col": source("sma_20d")},
-    ret_from_sma_50d={"base_col": source("sma_50d")},
-    ret_from_sma_100d={"base_col": source("sma_100d")},
-    ret_from_sma_200d={"base_col": source("sma_200d")},
+    ret_from_bb_low_5d_2={"base_col": source("bb_low_5d_2"), "col_name":value("bb_low_5d_3")},
+    ret_from_bb_low_5d_3={"base_col": source("bb_low_5d_3"), "col_name":value("bb_low_5d_3")},
+    ret_from_bb_low_10d_2={"base_col": source("bb_low_10d_2"), "col_name":value("bb_low_10d_2")},
+    ret_from_bb_low_10d_3={"base_col": source("bb_low_10d_3"), "col_name":value("bb_low_10d_3")},
+    ret_from_bb_low_20d_2={"base_col": source("bb_low_20d_2"), "col_name":value("bb_low_20d_2")},
+    ret_from_bb_low_20d_3={"base_col": source("bb_low_20d_3"), "col_name":value("bb_low_20d_3")},
+    ret_from_bb_low_50d_2={"base_col": source("bb_low_50d_2"), "col_name":value("bb_low_50d_2")},
+    ret_from_bb_low_50d_3={"base_col": source("bb_low_50d_3"), "col_name":value("bb_low_50d_3")},
+    ret_from_bb_low_100d_2={"base_col": source("bb_low_100d_2"), "col_name":value("bb_low_100d_2")},
+    ret_from_bb_low_100d_3={"base_col": source("bb_low_100d_3"), "col_name":value("bb_low_100d_3")},
+    ret_from_bb_low_200d_2={"base_col": source("bb_low_200d_2"), "col_name":value("bb_low_200d_2")},
+    ret_from_bb_low_200d_3={"base_col": source("bb_low_200d_3"), "col_name":value("bb_low_200d_3")},
+    ret_from_sma_5={"base_col": source("sma_5"), "col_name":value("sma_5")},
+    ret_from_sma_10={"base_col": source("sma_10"), "col_name":value("sma_10")},
+    ret_from_sma_20={"base_col": source("sma_20"), "col_name":value("sma_20")},
+    ret_from_sma_50={"base_col": source("sma_50"), "col_name":value("sma_50")},
+    ret_from_sma_100={"base_col": source("sma_100"), "col_name":value("sma_100")},
+    ret_from_sma_200={"base_col": source("sma_200"), "col_name":value("sma_200")},
+    ret_from_sma_5d={"base_col": source("sma_5d"), "col_name":value("sma_5d")},
+    ret_from_sma_10d={"base_col": source("sma_10d"), "col_name":value("sma_10d")},
+    ret_from_sma_20d={"base_col": source("sma_20d"), "col_name":value("sma_20d")},
+    ret_from_sma_50d={"base_col": source("sma_50d"), "col_name":value("sma_50d")},
+    ret_from_sma_100d={"base_col": source("sma_100d"), "col_name":value("sma_100d")},
+    ret_from_sma_200d={"base_col": source("sma_200d"), "col_name":value("sma_200d")},
 )
-def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float) -> pd.Series:
+def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
+    logging.error(f"ret_from_price_close, close:{close.iloc[:3]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col:{base_col.iloc[:3]}")
     return np.log(close+base_price) - np.log(base_col+base_price)
 
 @parameterize(
@@ -666,6 +792,8 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float) -> p
     ret_velocity_from_low_201={"ret_col": source("ret_from_low_201"), "time_col": source("time_to_low_201_ff")},
 )
 def ret_velocity_tmpl(ret_col: pd.Series, time_col: pd.Series) -> pd.Series:
+    logging.error(f"ret_col:{ret_col}")
+    logging.error(f"time_col:{time_col}")
     return ret_col/time_col
     
 @parameterize(
@@ -729,7 +857,8 @@ def daily_kurt_tmpl(return_col:pd.Series) -> pd.Series:
 #@profile_util.profile
 def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:MacroDataBuilder,
                            base_price:float,
-                           group_features:pd.DataFrame, config:DictConfig,
+                           clean_sorted_data:pd.DataFrame,
+                           config:DictConfig,
                            daily_returns:pd.Series, daily_returns_5:pd.Series,daily_returns_10:pd.Series,daily_returns_20:pd.Series,
                            daily_vol:pd.Series,daily_vol_5:pd.Series,daily_vol_10:pd.Series,daily_vol_20:pd.Series,
                            daily_skew:pd.Series,daily_skew_5:pd.Series,daily_skew_10:pd.Series,daily_skew_20:pd.Series,
@@ -1220,12 +1349,14 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            next_monthly_close: pd.Series,
                            next_london_close: pd.Series,
                            last_option_expiration_time: pd.Series) -> pd.Series:
-    raw_data = group_features.copy()
+    raw_data = clean_sorted_data.copy()
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     interval_mins = config.dataset.interval_mins
     new_york_cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
-
+    logging.error(f"raw_data:{raw_data.iloc[-10:]}")
+    logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d[-10:]}")
+    logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d.shape}")
     raw_data["week_of_year"] = week_of_year
     raw_data["month_of_year"] = month_of_year
     raw_data["weekly_close_time"] = weekly_close_time
