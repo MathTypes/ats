@@ -36,74 +36,6 @@ VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
 @parameterize(
-    _close_high_1d_ff={"col_name": value("close_high_1d_ff")},
-    _close_high_5d_ff={"col_name": value("close_high_5d_ff")},
-    _close_high_11d_ff={"col_name": value("close_high_11d_ff")},
-    _close_high_21d_ff={"col_name": value("close_high_21d_ff")},
-    _close_high_51d_ff={"col_name": value("close_high_51d_ff")},
-    _close_high_101d_ff={"col_name": value("close_high_101d_ff")},
-    _close_high_201d_ff={"col_name": value("close_high_201d_ff")},
-    _close_low_1d_ff={"col_name": value("close_low_1d_ff")},
-    _close_low_5d_ff={"col_name": value("close_low_5d_ff")},
-    _close_low_11d_ff={"col_name": value("close_low_11d_ff")},
-    _close_low_21d_ff={"col_name": value("close_low_21d_ff")},
-    _close_low_51d_ff={"col_name": value("close_low_51d_ff")},
-    _close_low_101d_ff={"col_name": value("close_low_101d_ff")},
-    _close_low_201d_ff={"col_name": value("close_low_201d_ff")},
-    _close_high_1_ff={"col_name": value("close_high_1_ff")},
-    _close_high_5_ff={"col_name": value("close_high_5_ff")},
-    _close_high_11_ff={"col_name": value("close_high_11_ff")},
-    _close_high_21_ff={"col_name": value("close_high_21_ff")},
-    _close_high_51_ff={"col_name": value("close_high_51_ff")},
-    _close_high_101_ff={"col_name": value("close_high_101_ff")},
-    _close_high_201_ff={"col_name": value("close_high_201_ff")},
-    _close_low_1_ff={"col_name": value("close_low_1_ff")},
-    _close_low_5_ff={"col_name": value("close_low_5_ff")},
-    _close_low_11_ff={"col_name": value("close_low_11_ff")},
-    _close_low_21_ff={"col_name": value("close_low_21_ff")},
-    _close_low_51_ff={"col_name": value("close_low_51_ff")},
-    _close_low_101_ff={"col_name": value("close_low_101_ff")},
-    _close_low_201_ff={"col_name": value("close_low_201_ff")},
-    _time_high_1d_ff={"col_name": value("time_high_1d_ff")},
-    _time_low_1d_ff={"col_name": value("time_low_1d_ff")},
-    _time_high_5d_ff={"col_name": value("time_high_5d_ff")},
-    _time_low_5d_ff={"col_name": value("time_low_5d_ff")},
-    _time_high_11d_ff={"col_name": value("time_high_11d_ff")},
-    _time_low_11d_ff={"col_name": value("time_low_11d_ff")},
-    _time_high_21d_ff={"col_name": value("time_high_21d_ff")},
-    _time_low_21d_ff={"col_name": value("time_low_21d_ff")},
-    _time_high_51d_ff={"col_name": value("time_high_51d_ff")},
-    _time_low_51d_ff={"col_name": value("time_low_51d_ff")},
-    _time_high_101d_ff={"col_name": value("time_high_101d_ff")},
-    _time_low_101d_ff={"col_name": value("time_low_101d_ff")},
-    _time_high_201d_ff={"col_name": value("time_high_201d_ff")},
-    _time_low_201d_ff={"col_name": value("time_low_201d_ff")},
-    _time_high_5_ff={"col_name": value("time_high_5_ff")},
-    _time_low_5_ff={"col_name": value("time_low_5_ff")},
-    _time_high_11_ff={"col_name": value("time_high_11_ff")},
-    _time_low_11_ff={"col_name": value("time_low_11_ff")},
-    _time_high_21_ff={"col_name": value("time_high_21_ff")},
-    _time_low_21_ff={"col_name": value("time_low_21_ff")},
-    _time_high_51_ff={"col_name": value("time_high_51_ff")},
-    _time_low_51_ff={"col_name": value("time_low_51_ff")},
-    _time_high_101_ff={"col_name": value("time_high_101_ff")},
-    _time_low_101_ff={"col_name": value("time_low_101_ff")},
-    _time_high_201_ff={"col_name": value("time_high_201_ff")},
-    _time_low_201_ff={"col_name": value("time_low_201_ff")},
-    _time_high_1d_ff_shift_1d={"col_name": value("time_high_1d_ff_shift_1d")},
-    _time_high_5d_ff_shift_5d={"col_name": value("time_high_5d_ff_shift_5d")},
-    _time_high_11d_ff_shift_11d={"col_name": value("time_high_11d_ff_shift_11d")},
-    _time_high_21d_ff_shift_21d={"col_name": value("time_high_21d_ff_shift_21d")},
-    _time_low_1d_ff_shift_1d={"col_name": value("time_low_1d_ff_shift_1d")},
-    _time_low_5d_ff_shift_5d={"col_name": value("time_low_5d_ff_shift_5d")},
-    _time_low_11d_ff_shift_11d={"col_name": value("time_low_11d_ff_shift_11d")},
-    _time_low_21d_ff_shift_21d={"col_name": value("time_low_21d_ff_shift_21d")},
-)
-def group_feature_colt(group_features:pd.DataFrame, col_name:str) -> pd.Series:
-    return group_features[col_name]
-
-
-@parameterize(
     bollinger_5d_2={"window": value(5), "window_dev":value(2)},
     bollinger_5d_3={"window": value(5), "window_dev":value(3)},
     bollinger_10d_2={"window": value(10), "window_dev":value(2)},
@@ -118,6 +50,7 @@ def group_feature_colt(group_features:pd.DataFrame, col_name:str) -> pd.Series:
     bollinger_200d_3={"window": value(200), "window_dev":value(3)},
 )
 def bollinger_day_tmpl(close:pd.Series, window:int, window_dev:int, interval_per_day:int) -> pd.Series:
+    logging.error(f"bollinger_day_tmpl_close:{close}")
     return ta.volatility.BollingerBands(close, window=window*interval_per_day, window_dev=window_dev)
 
 @parameterize(
@@ -153,6 +86,7 @@ def bollinger_tmpl(close:pd.Series, window:int, window_dev:int) -> pd.Series:
     bb_high_200d_3={"bollinger": source("bollinger_200d_3")},
 )
 def bb_high_day_tmpl(bollinger:pd.Series) -> pd.Series:
+    logging.error(f"bollinger:{bollinger}")
     return bollinger.bollinger_hband()
 
 @parameterize(
@@ -177,8 +111,16 @@ def bb_low_day_tmpl(bollinger:pd.Series) -> pd.Series:
     rsi_28d={"lookback_days":value(28)},
     rsi_42d={"lookback_days":value(42)},
 )
-def rsi_tmpl(lookback_days:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+def rsi_day_tmpl(lookback_days:int, close:pd.Series, interval_per_day:int) -> pd.Series:
     return ta.momentum.RSIIndicator(close=close, window=lookback_days*interval_per_day).rsi() 
+
+@parameterize(
+    rsi_14={"lookback_days":value(14)},
+    rsi_28={"lookback_days":value(28)},
+    rsi_42={"lookback_days":value(42)},
+)
+def rsi_tmpl(lookback_days:int, close:pd.Series) -> pd.Series:
+    return ta.momentum.RSIIndicator(close=close, window=lookback_days).rsi() 
 
 @parameterize(
     sma_5d={"lookback_days":value(5)},
@@ -371,73 +313,122 @@ def price_at_tmpl(time_features: pd.DataFrame, time_col: str,
                                axis=1).ffill()
 
 @parameterize(
-    close_back_cumsum_high_1d_ff={"lookback_days": value(1)},
-    close_back_cumsum_high_5d_ff={"lookback_days": value(5)},
-    close_back_cumsum_high_11d_ff={"lookback_days": value(11)},
-    close_back_cumsum_high_21d_ff={"lookback_days": value(21)},
-    close_back_cumsum_high_51d_ff={"lookback_days": value(51)},
-    close_back_cumsum_high_101d_ff={"lookback_days": value(101)},
-    close_back_cumsum_high_201d_ff={"lookback_days": value(201)},
+    close_high_5_ff={"steps": value(5)},
+    close_high_11_ff={"steps": value(11)},
+    close_high_21_ff={"steps": value(21)},
+    close_high_51_ff={"steps": value(51)},
+    close_high_101_ff={"steps": value(101)},
+    close_high_201_ff={"steps": value(201)},
 )
-def close_back_cumsum_high_ff(close_back_cumsum: pd.Series, interval_per_day: int, lookback_days: int) -> pd.Series:
-    close_back_cumsum_rolling_max = close_back_cumsum.rolling(lookback_days*interval_per_day).max()
-    return close_back_cumsum_rolling_max.ffill()
-
+def close_high_tmpl(steps:int, close:pd.Series) -> pd.Series:
+    return close.groupby(['ticker']).transform(lambda x: x.rolling(steps).max().ffill())
 
 @parameterize(
-    close_back_cumsum_low_1d_ff={"lookback_days": value(1)},
-    close_back_cumsum_low_5d_ff={"lookback_days": value(5)},
-    close_back_cumsum_low_11d_ff={"lookback_days": value(11)},
-    close_back_cumsum_low_21d_ff={"lookback_days": value(21)},
-    close_back_cumsum_low_51d_ff={"lookback_days": value(51)},
-    close_back_cumsum_low_101d_ff={"lookback_days": value(101)},
-    close_back_cumsum_low_201d_ff={"lookback_days": value(201)},
+    close_high_1d_ff={"steps": value(1)},
+    close_high_5d_ff={"steps": value(5)},
+    close_high_11d_ff={"steps": value(11)},
+    close_high_21d_ff={"steps": value(21)},
+    close_high_51d_ff={"steps": value(51)},
+    close_high_101d_ff={"steps": value(101)},
+    close_high_201d_ff={"steps": value(201)},
 )
-def close_back_cumsum_low_ff_tmpl(close_back_cumsum: pd.Series, interval_per_day: int, lookback_days: int) -> pd.Series:
-    close_back_cumsum_rolling_min = close_back_cumsum.rolling(lookback_days*interval_per_day).min()
-    return close_back_cumsum_rolling_min.ffill()
+def close_high_day_tmpl(steps:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+    logging.error(f"close:{close}")
+    series = close.groupby(['ticker']).transform(lambda x: x.rolling(steps*interval_per_day).max().ffill())
+    logging.error(f"series:{series}")
+    return series
 
 @parameterize(
-    close_back_cumsum_high_5_ff ={"steps": value(5)},
-    close_back_cumsum_high_11_ff ={"steps": value(11)},
-    close_back_cumsum_high_21_ff ={"steps": value(21)},
-    close_back_cumsum_high_51_ff ={"steps": value(51)},
-    close_back_cumsum_high_101_ff ={"steps": value(101)},
-    close_back_cumsum_high_201_ff ={"steps": value(201)},
+    close_high_5d_bf={"steps": value(5)},
+    close_high_11d_bf={"steps": value(11)},
+    close_high_21d_bf={"steps": value(21)},
+    close_high_51d_bf={"steps": value(51)},
+    close_high_101d_bf={"steps": value(101)},
+    close_high_201d_bf={"steps": value(201)},
 )
-def close_back_cumsum_max_tmpl(steps:int, close_back_cumsum:pd.Series) -> pd.Series:
-    return close_back_cumsum.rolling(steps).max().ffill()
+def close_high_day_bf_tmpl(steps:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+    res = close.groupby(['ticker']).transform(lambda x: x.rolling(steps*interval_per_day).max().bfill())
+    return res
+    #close_rolling_max = close.rolling(steps*interval_per_day).max()
+    #return close_rolling_max.bfill()
 
 @parameterize(
-    close_back_cumsum_low_5_ff ={"steps": value(5)},
-    close_back_cumsum_low_11_ff ={"steps": value(11)},
-    close_back_cumsum_low_21_ff ={"steps": value(21)},
-    close_back_cumsum_low_51_ff ={"steps": value(51)},
-    close_back_cumsum_low_101_ff ={"steps": value(101)},
-    close_back_cumsum_low_201_ff ={"steps": value(201)},
+    close_low_5d_bf={"steps": value(5)},
+    close_low_11d_bf={"steps": value(11)},
+    close_low_21d_bf={"steps": value(21)},
+    close_low_51d_bf={"steps": value(51)},
+    close_low_101d_bf={"steps": value(101)},
+    close_low_201d_bf={"steps": value(201)},
 )
-def close_back_cumsum_min_tmpl(steps:int, close_back_cumsum:pd.Series) -> pd.Series:
-    return close_back_cumsum.rolling(steps).min().ffill()
-
-
-@parameterize(
-    close_high_5d_bf ={"lookback_days": value(5)},
-    close_high_11d_bf ={"lookback_days": value(11)},
-    close_high_21d_bf ={"lookback_days": value(21)},
-    close_high_51d_bf ={"lookback_days": value(51)},
-    close_high_101d_bf ={"lookback_days": value(101)},
-    close_high_201d_bf ={"lookback_days": value(201)},
-)
-def close_high_bf_tmpl(lookback_days:int, close:pd.Series, interval_per_day:int) -> pd.Series:
-    return close.rolling(lookback_days*interval_per_day).max().bfill()
+def close_low_day_bf_tmpl(steps:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+    res = close.groupby(['ticker']).transform(lambda x: x.rolling(steps*interval_per_day).min().bfill())
+    #close_rolling_min = close.rolling(steps*interval_per_day).min()
+    #return close_rolling_min.bfill()
+    return res
 
 @parameterize(
-    close_low_5d_bf ={"lookback_days": value(5)},
-    close_low_11d_bf ={"lookback_days": value(11)},
-    close_low_21d_bf ={"lookback_days": value(21)},
-    close_low_51d_bf ={"lookback_days": value(51)},
-    close_low_101d_bf ={"lookback_days": value(101)},
-    close_low_201d_bf ={"lookback_days": value(201)},
+    close_low_1d_ff={"steps": value(1)},
+    close_low_5d_ff={"steps": value(5)},
+    close_low_11d_ff={"steps": value(11)},
+    close_low_21d_ff={"steps": value(21)},
+    close_low_51d_ff={"steps": value(51)},
+    close_low_101d_ff={"steps": value(101)},
+    close_low_201d_ff={"steps": value(201)},
 )
-def close_low_bf_tmpl(lookback_days:int, close:pd.Series, interval_per_day:int) -> pd.Series:
-    return close.rolling(lookback_days*interval_per_day).min().bfill()
+def close_low_day_tmpl(steps:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+    res = close.groupby(['ticker']).transform(lambda x: x.rolling(steps*interval_per_day).min().ffill())
+    logging.error(f"close_low_day_tmpl:{close_low_day_tmpl}")
+    return res
+
+@parameterize(
+    close_low_5_ff={"steps": value(5)},
+    close_low_11_ff={"steps": value(11)},
+    close_low_21_ff={"steps": value(21)},
+    close_low_51_ff={"steps": value(51)},
+    close_low_101_ff={"steps": value(101)},
+    close_low_201_ff={"steps": value(201)},
+)
+def close_low_tmpl(steps:int, close:pd.Series) -> pd.Series:
+    return close.groupby(['ticker']).transform(lambda x: x.rolling(steps).min().ffill())
+
+@parameterize(
+    close_high_1d_ff_shift_1d={"steps": value(1),"shift_col":source("close_high_1d_ff"),"col_name":value("close_high_1d_ff")},
+    close_low_1d_ff_shift_1d={"steps": value(1), "shift_col":source("close_low_1d_ff"),"col_name":value("close_low_1d_ff")},
+    close_high_5d_ff_shift_5d={"steps": value(5), "shift_col":source("close_high_5d_ff"),"col_name":value("close_high_5d_ff")},
+    close_low_5d_ff_shift_5d={"steps": value(5), "shift_col":source("close_low_5d_ff"),"col_name":value("close_low_5d_ff")},
+    close_high_11d_ff_shift_11d={"steps":value(11),"shift_col":source("close_high_11d_ff"),"col_name":value("close_high_11d_ff")},
+    close_low_11d_ff_shift_11d={"steps": value(11), "shift_col":source("close_low_11d_ff"),"col_name":value("close_low_11d_ff")},
+    close_high_21d_ff_shift_21d={"steps": value(21), "shift_col":source("close_high_21d_ff"),"col_name":value("close_high_21d_ff")},
+    close_low_21d_ff_shift_21d={"steps": value(21), "shift_col":source("close_low_21d_ff"),"col_name":value("close_low_21d_ff")},
+    close_high_51d_ff_shift_51d={"steps": value(51), "shift_col":source("close_high_51d_ff"),"col_name":value("close_high_51d_ff")},
+    close_low_51d_ff_shift_51d={"steps": value(51), "shift_col":source("close_low_51d_ff"),"col_name":value("close_low_51d_ff")},
+    close_high_101d_ff_shift_101d={"steps": value(101), "shift_col":source("close_high_101d_ff"),"col_name":value("close_high_101d_ff")},
+    close_low_101d_ff_shift_101d={"steps": value(101), "shift_col":source("close_low_101d_ff"),"col_name":value("close_low_101d_ff")},
+    close_high_201d_ff_shift_201d={"steps": value(201), "shift_col":source("close_high_201d_ff"),"col_name":value("close_high_201d_ff")},
+    close_low_201d_ff_shift_201d={"steps": value(201), "shift_col":source("close_low_201d_ff"),"col_name":value("close_low_201d_ff")},
+)
+def shift_price_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interval_per_day:int, col_name:str, ticker:pd.Series) -> pd.Series:
+    timestamp = timestamp.reset_index()
+    logging.error(f"shift_price_tmpl, col_name:{col_name}, shift_col:{shift_col.iloc[:50]}")
+    logging.error(f"shift_price_tmpl, col_name:{col_name}, timestamp:{timestamp.iloc[:50]}")
+    logging.error(f"shift_price_tmpl, col_name:{col_name}, ticker:{ticker}")
+    df = pd.concat([timestamp, shift_col], axis=1)
+    logging.error(f"shift_price_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[:50]}")
+    logging.error(f"df after reset:{df}")
+    series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
+    logging.error(f"shift_price_tmpl series:{series.iloc[:50]}")
+    #series = series.set_index(["ticker","time"])
+    logging.error(f"shift_price_tmpl_col_name:{col_name}, series:{series.iloc[:50]}, interval_per_day:{interval_per_day}, steps:{steps}")
+    return series
+
+@parameterize(
+    trimmed_close_back={"price_col": source("close_back")},
+    trimmed_open_back={"price_col": source("open_back")},
+    trimmed_high_back={"price_col": source("high_back")},
+    trimmed_low_back={"price_col": source("low_back")},
+)
+def trimmed_price_back_tmpl(price_col:pd.Series, ret_std:float, vol_threshold:float) -> pd.Series:
+    trimmed = np.minimum(price_col, vol_threshold * ret_std)
+    trimmed = np.minimum(price_col, vol_threshold * ret_std)
+    return trimmed
+
