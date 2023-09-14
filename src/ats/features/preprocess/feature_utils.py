@@ -124,12 +124,16 @@ def get_processed_data(
     # logging.info(f"ds:{ds.info()}")
     return ds
 
-
 def get_close_time(x, close_col):
+    #logging.error(f"get_close_time_x:{x}, x_shape:{x.shape}")
+    ticker = x["ticker"]
+    time = x["time"]
+    timestamp = None
     if x[close_col] == x["close"]:
-        return int(x["timestamp"])
+        timestamp = int(x["timestamp"])
     else:
-        return None
+        timestamp = None
+    return pd.Series([ticker,time,timestamp],index=['ticker','time','timestamp'])
 
 def get_time(x, close_col):
     if x[close_col] == x["close_back_cumsum"]:
@@ -204,7 +208,7 @@ def ticker_transform(raw_data, config, base_price=500):
         raw_data["close_back_cumsum_low_1d_ff"] = raw_data["close_back_cumsum_rolling_1d_min"].ffill()
         raw_data['close_rolling_1d_min'] = raw_data.close.rolling(interval_per_day).min()
         raw_data["close_low_1d_ff"] = raw_data["close_rolling_1d_min"].ffill()
-        raw_data["time_low_1d_ff"] = raw_data.apply(lambda x: get_close_time(x, close_col="close_high_1d_ff"), axis=1)
+        raw_data["time_low_1d_ff"] = raw_data.apply(lambda x: get_close_time(x, close_col="close_low_1d_ff"), axis=1)
         raw_data["time_low_1d_ff"]  = raw_data["time_high_1d_ff"].ffill()
         raw_data["close_low_1d_ff_shift_1d"] = raw_data["close_low_1d_ff"].shift(-1*interval_per_day)        
         raw_data["time_low_1d_ff_shift_1d"] = raw_data["time_low_1d_ff"].shift(-1*interval_per_day)
@@ -1448,7 +1452,7 @@ def example_group_features(cal:any, macro_data_builder:any, example_level_featur
         raw_data["ret_from_sma_100d"] = raw_data.apply(compute_ret, base_col="sma_100d", axis=1)
         raw_data["ret_from_sma_200d"] = raw_data.apply(compute_ret, base_col="sma_200d", axis=1)
 
-    logging.error(f"sampled_raw:{raw_data.iloc[-10:]}")
+    #logging.error(f"sampled_raw:{raw_data.iloc[-10:]}")
     return raw_data
 
 class Preprocessor:

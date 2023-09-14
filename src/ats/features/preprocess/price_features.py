@@ -376,8 +376,9 @@ def close_low_day_bf_tmpl(steps:int, close:pd.Series, interval_per_day:int) -> p
     close_low_201d_ff={"steps": value(201)},
 )
 def close_low_day_tmpl(steps:int, close:pd.Series, interval_per_day:int) -> pd.Series:
+    logging.error(f"close_low_day_tmpl close:{close.iloc[50:100]}, steps:{steps}")
     res = close.groupby(['ticker']).transform(lambda x: x.rolling(steps*interval_per_day).min().ffill())
-    logging.error(f"close_low_day_tmpl:{close_low_day_tmpl}")
+    logging.error(f"close_low_day_tmpl res:{res.iloc[50:100]}, steps:{steps}")
     return res
 
 @parameterize(
@@ -408,17 +409,19 @@ def close_low_tmpl(steps:int, close:pd.Series) -> pd.Series:
     close_low_201d_ff_shift_201d={"steps": value(201), "shift_col":source("close_low_201d_ff"),"col_name":value("close_low_201d_ff")},
 )
 def shift_price_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interval_per_day:int, col_name:str, ticker:pd.Series) -> pd.Series:
-    timestamp = timestamp.reset_index()
-    logging.error(f"shift_price_tmpl, col_name:{col_name}, shift_col:{shift_col.iloc[:50]}")
-    logging.error(f"shift_price_tmpl, col_name:{col_name}, timestamp:{timestamp.iloc[:50]}")
-    logging.error(f"shift_price_tmpl, col_name:{col_name}, ticker:{ticker}")
+    #timestamp = timestamp.reset_index()
+    #logging.error(f"shift_price_tmpl full timestamp before reindex, col_name:{col_name}, timestamp:{timestamp}")
+    logging.error(f"shift_price_tmpl before reindex, col_name:{col_name}, timestamp:{timestamp.iloc[50:100]}")
+    #timestamp = timestamp.reindex(["time","ticker"])
+    logging.error(f"shift_price_tmpl, col_name:{col_name}, shift_col:{shift_col.iloc[50:100]}")
+    logging.error(f"shift_price_tmpl, col_name:{col_name}, timestamp:{timestamp.iloc[50:100]}")
+    #logging.error(f"shift_price_tmpl, col_name:{col_name}, ticker:{ticker}")
     df = pd.concat([timestamp, shift_col], axis=1)
-    logging.error(f"shift_price_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[:50]}")
-    logging.error(f"df after reset:{df}")
+    logging.error(f"shift_price_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
-    logging.error(f"shift_price_tmpl series:{series.iloc[:50]}")
+    logging.error(f"shift_price_tmpl series:{series.iloc[50:100]}")
     #series = series.set_index(["ticker","time"])
-    logging.error(f"shift_price_tmpl_col_name:{col_name}, series:{series.iloc[:50]}, interval_per_day:{interval_per_day}, steps:{steps}")
+    logging.error(f"shift_price_tmpl_col_name:{col_name}, series:{series.iloc[50:100]}, interval_per_day:{interval_per_day}, steps:{steps}")
     return series
 
 @parameterize(

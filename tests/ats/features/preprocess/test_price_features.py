@@ -131,10 +131,29 @@ def test_close():
     )
 
 def test_close_low_1d_ff_shift_1d():
-    result = run_features("close_low_1d_ff_shift_1d", 5)
+    result = run_features("close_low_1d_ff_shift_1d", 50)
     print(f"result:{result}")
+    close = result["close"][:4]
+    timestamp = result["timestamp"][:4]
     np.testing.assert_array_almost_equal(
-        result["close_low_1d_ff_shift_1d"],
+        close,
+        [944.5, 944.5, 944.5, 944.5],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        timestamp,
+        [1283536800, 1283538600, 1283540400, 1283542200],
+        decimal=3
+    )
+
+def test_close_low_1d_ff():
+    result = run_features("close_low_1d_ff", 50)
+    print(f"result:{result}")
+    close = result[:4]
+    np.testing.assert_array_almost_equal(
+        close,
         [0.0018, 0.0011, -0.0009, 0.0002, 0.0013],
         decimal=3
     )
+
+
