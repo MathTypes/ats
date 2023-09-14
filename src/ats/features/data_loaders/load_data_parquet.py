@@ -72,6 +72,9 @@ def sorted_data(config : DictConfig, env_mgr : EnvMgr) -> pd.DataFrame:
     full_data = full_data.set_index("new_idx")
     full_data = full_data.sort_index()
     full_data["time_idx"] = range(0, len(full_data))
+    full_data = full_data.reset_index()
+    full_data = full_data.set_index(["time","ticker"])
+    full_data = full_data.sort_index()
     return full_data
 
 @profile_util.profile
