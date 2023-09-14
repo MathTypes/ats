@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 import os
+import traceback
 from typing import Dict
 
 from hamilton.function_modifiers import tag, does, extract_columns, parameterize, source, value
@@ -35,11 +36,15 @@ from ats.features.preprocess.feature_utils import *
 VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
-def timestamp(sorted_data: pd.DataFrame) -> pd.Series:
-    return sorted_data["timestamp"]
+def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
+    #series = clean_sorted_data[["timestamp"]]
+    series = clean_sorted_data["timestamp"]
+    logging.error(f"series:{series}")
+    return series
 
-def time(sorted_data: pd.DataFrame) -> pd.Series:
-    return sorted_data["time"]
+def time(clean_sorted_data: pd.DataFrame) -> pd.Series:
+    return clean_sorted_data.index.get_level_values(0).to_series()
 
 def week_of_year(time: pd.Series) -> pd.Series:
     return time.apply(lambda x: x.isocalendar()[1])
@@ -366,97 +371,74 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
         mdb=macro_data_builder, imp=3)
 
 @parameterize(
-    time_to_new_york_open={"diff_time": source("new_york_open_time")},
-    time_to_new_york_last_open={"diff_time": source("new_york_last_open_time")},
-    time_to_new_york_last_close={"diff_time": source("new_york_last_close_time")},
-    time_to_new_york_close={"diff_time": source("new_york_close_time")},
-    time_to_london_open={"diff_time": source("london_open_time")},
-    time_to_london_last_open={"diff_time": source("london_last_open_time")},
-    time_to_london_last_close={"diff_time": source("london_last_close_time")},
-    time_to_london_close={"diff_time": source("london_close_time")},
-    time_to_weekly_close={"diff_time": source("weekly_close_time")},
-    time_to_monthly_close={"diff_time": source("monthly_close_time")},
-    time_to_option_expiration={"diff_time": source("option_expiration_time")},
-    time_to_last_macro_event_imp1={"diff_time": source("last_macro_event_time_imp1")},
-    time_to_last_macro_event_imp2={"diff_time": source("last_macro_event_time_imp2")},
-    time_to_last_macro_event_imp3={"diff_time": source("last_macro_event_time_imp3")},
-    time_to_next_macro_event_imp1={"diff_time": source("next_macro_event_time_imp1")},
-    time_to_next_macro_event_imp2={"diff_time": source("next_macro_event_time_imp2")},
-    time_to_next_macro_event_imp3={"diff_time": source("next_macro_event_time_imp3")},
-    time_to_high_5_ff={"diff_time": source("time_high_5_ff")},
-    time_to_high_11_ff={"diff_time": source("time_high_11_ff")},
-    time_to_high_21_ff={"diff_time": source("time_high_21_ff")},
-    time_to_high_51_ff={"diff_time": source("time_high_51_ff")},
-    time_to_high_101_ff={"diff_time": source("time_high_101_ff")},
-    time_to_high_201_ff={"diff_time": source("time_high_201_ff")},
-    time_to_low_5_ff={"diff_time": source("time_low_5_ff")},
-    time_to_low_11_ff={"diff_time": source("time_low_11_ff")},
-    time_to_low_21_ff={"diff_time": source("time_low_21_ff")},
-    time_to_low_51_ff={"diff_time": source("time_low_51_ff")},
-    time_to_low_101_ff={"diff_time": source("time_low_101_ff")},
-    time_to_low_201_ff={"diff_time": source("time_low_201_ff")},
-    time_to_high_1d_ff_shift_1d={"diff_time": source("time_high_1d_ff_shift_1d")},
-    time_to_low_1d_ff_shift_1d={"diff_time": source("time_low_1d_ff_shift_1d")},
-    time_to_high_5d_ff_shift_5d={"diff_time": source("time_high_5d_ff_shift_5d")},
-    time_to_low_5d_ff_shift_5d={"diff_time": source("time_low_5d_ff_shift_5d")},
-    time_to_high_11d_ff_shift_11d={"diff_time": source("time_high_11d_ff_shift_11d")},
-    time_to_low_11d_ff_shift_11d={"diff_time": source("time_low_11d_ff_shift_11d")},
-    time_to_high_21d_ff_shift_21d={"diff_time": source("time_high_21d_ff_shift_21d")},
-    time_to_low_21d_ff_shift_21d={"diff_time": source("time_low_21d_ff_shift_21d")},
-    time_to_high_1d_ff={"diff_time": source("time_high_1d_ff")},
-    time_to_low_1d_ff={"diff_time": source("time_low_1d_ff")},
-    time_to_high_5d_ff={"diff_time": source("time_high_5d_ff")},
-    time_to_low_5d_ff={"diff_time": source("time_low_5d_ff")},
-    time_to_high_11d_ff={"diff_time": source("time_high_11d_ff")},
-    time_to_low_11d_ff={"diff_time": source("time_low_11d_ff")},
-    time_to_high_21d_ff={"diff_time": source("time_high_21d_ff")},
-    time_to_low_21d_ff={"diff_time": source("time_low_21d_ff")},
-    time_to_high_51d_ff={"diff_time": source("time_high_51d_ff")},
-    time_to_low_51d_ff={"diff_time": source("time_low_51d_ff")},
-    time_to_high_101d_ff={"diff_time": source("time_high_101d_ff")},
-    time_to_low_101d_ff={"diff_time": source("time_low_101d_ff")},
-    time_to_high_201d_ff={"diff_time": source("time_high_201d_ff")},
-    time_to_low_201d_ff={"diff_time": source("time_low_201d_ff")},
+    time_to_new_york_open={"diff_time": source("new_york_open_time"),"diff_col":value("new_york_open_time")},
+    time_to_new_york_last_open={"diff_time": source("new_york_last_open_time"),"diff_col":value("new_york_last_open_time")},
+    time_to_new_york_last_close={"diff_time": source("new_york_last_close_time"),"diff_col":value("new_york_last_close_time")},
+    time_to_new_york_close={"diff_time": source("new_york_close_time"),"diff_col":value("new_york_close_time")},
+    time_to_london_open={"diff_time": source("london_open_time"),"diff_col":value("london_open_time")},
+    time_to_london_last_open={"diff_time": source("london_last_open_time"),"diff_col":value("london_last_open_time")},
+    time_to_london_last_close={"diff_time": source("london_last_close_time"),"diff_col":value("london_last_close_time")},
+    time_to_london_close={"diff_time": source("london_close_time"),"diff_col":value("london_close_time")},
+    time_to_weekly_close={"diff_time": source("weekly_close_time"),"diff_col":value("weekly_close_time")},
+    time_to_monthly_close={"diff_time": source("monthly_close_time"),"diff_col":value("monthly_close_time")},
+    time_to_option_expiration={"diff_time": source("option_expiration_time"),"diff_col":value("option_expiration_time")},
+    time_to_last_macro_event_imp1={"diff_time": source("last_macro_event_time_imp1"),"diff_col":value("last_macro_event_time_imp1")},
+    time_to_last_macro_event_imp2={"diff_time": source("last_macro_event_time_imp2"),"diff_col":value("last_macro_event_time_imp2")},
+    time_to_last_macro_event_imp3={"diff_time": source("last_macro_event_time_imp3"),"diff_col":value("last_macro_event_time_imp3")},
+    time_to_next_macro_event_imp1={"diff_time": source("next_macro_event_time_imp1"),"diff_col":value("next_macro_event_time_imp1")},
+    time_to_next_macro_event_imp2={"diff_time": source("next_macro_event_time_imp2"),"diff_col":value("next_macro_event_time_imp2")},
+    time_to_next_macro_event_imp3={"diff_time": source("next_macro_event_time_imp3"),"diff_col":value("next_macro_event_time_imp3")},
+    time_to_high_5_ff={"diff_time": source("time_high_5_ff"),"diff_col":value("time_high_5_ff")},
+    time_to_high_11_ff={"diff_time": source("time_high_11_ff"),"diff_col":value("time_high_11_ff")},
+    time_to_high_21_ff={"diff_time": source("time_high_21_ff"),"diff_col":value("time_high_21_ff")},
+    time_to_high_51_ff={"diff_time": source("time_high_51_ff"),"diff_col":value("time_high_51_ff")},
+    time_to_high_101_ff={"diff_time": source("time_high_101_ff"),"diff_col":value("time_high_101_ff")},
+    time_to_high_201_ff={"diff_time": source("time_high_201_ff"),"diff_col":value("time_high_201_ff")},
+    time_to_low_5_ff={"diff_time": source("time_low_5_ff"),"diff_col":value("time_low_5_ff")},
+    time_to_low_11_ff={"diff_time": source("time_low_11_ff"),"diff_col":value("time_low_11_ff")},
+    time_to_low_21_ff={"diff_time": source("time_low_21_ff"),"diff_col":value("time_low_21_ff")},
+    time_to_low_51_ff={"diff_time": source("time_low_51_ff"),"diff_col":value("time_low_51_ff")},
+    time_to_low_101_ff={"diff_time": source("time_low_101_ff"),"diff_col":value("time_low_101_ff")},
+    time_to_low_201_ff={"diff_time": source("time_low_201_ff"),"diff_col":value("time_low_201_ff")},
+    time_to_high_1d_ff_shift_1d={"diff_time": source("time_high_1d_ff_shift_1d"),"diff_col":value("time_high_1d_ff_shift_1d")},
+    time_to_low_1d_ff_shift_1d={"diff_time": source("time_low_1d_ff_shift_1d"),"diff_col":value("time_low_1d_ff_shift_1d")},
+    time_to_high_5d_ff_shift_5d={"diff_time": source("time_high_5d_ff_shift_5d"),"diff_col":value("time_high_5d_ff_shift_5d")},
+    time_to_low_5d_ff_shift_5d={"diff_time": source("time_low_5d_ff_shift_5d"),"diff_col":value("time_low_5d_ff_shift_5d")},
+    time_to_high_11d_ff_shift_11d={"diff_time": source("time_high_11d_ff_shift_11d"),"diff_col":value("time_high_11d_ff_shift_11d")},
+    time_to_low_11d_ff_shift_11d={"diff_time": source("time_low_11d_ff_shift_11d"),"diff_col":value("time_low_11d_ff_shift_11d")},
+    time_to_high_21d_ff_shift_21d={"diff_time": source("time_high_21d_ff_shift_21d"),"diff_col":value("time_high_21d_ff_shift_21d")},
+    time_to_low_21d_ff_shift_21d={"diff_time": source("time_low_21d_ff_shift_21d"),"diff_col":value("time_low_21d_ff_shift_21d")},
+    time_to_high_1d_ff={"diff_time": source("time_high_1d_ff"),"diff_col":value("time_high_1d_ff")},
+    time_to_low_1d_ff={"diff_time": source("time_low_1d_ff"),"diff_col":value("time_low_1d_ff")},
+    time_to_high_5d_ff={"diff_time": source("time_high_5d_ff"),"diff_col":value("time_high_5d_ff")},
+    time_to_low_5d_ff={"diff_time": source("time_low_5d_ff"),"diff_col":value("time_low_5d_ff")},
+    time_to_high_11d_ff={"diff_time": source("time_high_11d_ff"),"diff_col":value("time_high_11d_ff")},
+    time_to_low_11d_ff={"diff_time": source("time_low_11d_ff"),"diff_col":value("time_low_11d_ff")},
+    time_to_high_21d_ff={"diff_time": source("time_high_21d_ff"),"diff_col":value("time_high_21d_ff")},
+    time_to_low_21d_ff={"diff_time": source("time_low_21d_ff"),"diff_col":value("time_low_21d_ff")},
+    time_to_high_51d_ff={"diff_time": source("time_high_51d_ff"),"diff_col":value("time_high_51d_ff")},
+    time_to_low_51d_ff={"diff_time": source("time_low_51d_ff"),"diff_col":value("time_low_51d_ff")},
+    time_to_high_101d_ff={"diff_time": source("time_high_101d_ff"),"diff_col":value("time_high_101d_ff")},
+    time_to_low_101d_ff={"diff_time": source("time_low_101d_ff"),"diff_col":value("time_low_101d_ff")},
+    time_to_high_201d_ff={"diff_time": source("time_high_201d_ff"),"diff_col":value("time_high_201d_ff")},
+    time_to_low_201d_ff={"diff_time": source("time_low_201d_ff"),"diff_col":value("time_low_201d_ff")},
 )
-def time_to(timestamp:pd.Series, diff_time:pd.Series) -> pd.Series:
-    return timestamp-diff_time
+def time_to(timestamp:pd.Series, diff_time:pd.Series, diff_col:str) -> pd.Series:
+    #traceback.print_stack()
+    logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp.iloc[-10:]}")
+    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time.iloc[-10:]}")
+    #timestamp = timestamp.reset_index()
+    df = pd.concat([timestamp, diff_time], axis=1)
+    df.columns = ["timestamp", "diff_time"]
+    logging.error(f"time_to_df:{df.iloc[-10:]}")
+    df["time_to"]=df["timestamp"] - df["diff_time"]
+    #diff_series = diff_series.set_index(["ticker","time"])
+    logging.error(f"time_to_df:{df.iloc[-10:]}")
+    diff_series = df["time_to"]
+    logging.error(f"diff_series:{diff_series.iloc[-10:]}")
+    return diff_series
 
-@parameterize(
-    __time_high_1_ff={"close_col": value("close_high_1_ff")},
-    __time_high_5_ff={"close_col": value("close_high_5_ff")},
-    __time_high_11_ff={"close_col": value("close_high_11_ff")},
-    __time_high_21_ff={"close_col": value("close_high_21_ff")},
-    __time_high_51_ff={"close_col": value("close_high_51_ff")},
-    __time_high_101_ff={"close_col": value("close_high_101_ff")},
-    __time_high_201_ff={"close_col": value("close_high_201_ff")},
-    __time_low_1_ff={"close_col": value("close_low_1_ff")},
-    __time_low_5_ff={"close_col": value("close_low_5_ff")},
-    __time_low_11_ff={"close_col": value("close_low_11_ff")},
-    __time_low_21_ff={"close_col": value("close_low_21_ff")},
-    __time_low_51_ff={"close_col": value("close_low_51_ff")},
-    __time_low_101_ff={"close_col": value("close_low_101_ff")},
-    __time_low_201_ff={"close_col": value("close_low_201_ff")},
-    __time_high_1d_ff={"close_col": value("close_high_1d_ff")},
-    __time_high_5d_ff={"close_col": value("close_high_5d_ff")},
-    __time_high_11d_ff={"close_col": value("close_high_11d_ff")},
-    __time_high_21d_ff={"close_col": value("close_high_21d_ff")},
-    __time_high_51d_ff={"close_col": value("close_high_51d_ff")},
-    __time_high_101d_ff={"close_col": value("close_high_101d_ff")},
-    __time_high_201d_ff={"close_col": value("close_high_201d_ff")},
-    __time_low_1d_ff={"close_col": value("close_low_1d_ff")},
-    __time_low_5d_ff={"close_col": value("close_low_5d_ff")},
-    __time_low_11d_ff={"close_col": value("close_low_11d_ff")},
-    __time_low_21d_ff={"close_col": value("close_low_21d_ff")},
-    __time_low_51d_ff={"close_col": value("close_low_51d_ff")},
-    __time_low_101d_ff={"close_col": value("close_low_101d_ff")},
-    __time_low_201d_ff={"close_col": value("close_low_201d_ff")},
-)
-def time_at(sorted_data:pd.DataFrame, close_col:str) -> pd.Series:
-    time_series = sorted_data.apply(lambda x: get_close_time(x, close_col=close_col), axis=1)
-    time_series = time_series.ffill()
-    return time_series
-
-def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
+def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,
                   macro_data_builder:MacroDataBuilder, config:DictConfig,
                   weekly_close_time: pd.Series, last_weekly_close_time: pd.Series,
                   monthly_close_time: pd.Series, last_monthly_close_time: pd.Series,
@@ -589,7 +571,7 @@ def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     new_york_cal = mcal.get_calendar("NYSE")
 
-    raw_data = group_features
+    raw_data = clean_sorted_data
 
     raw_data["weekly_close_time"] = weekly_close_time
     raw_data["last_weekly_close_time"] = last_weekly_close_time
@@ -736,3 +718,33 @@ def time_features(group_features:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     raw_data["london_open_time"] = london_open_time
     raw_data["london_close_time"] = london_close_time
     return raw_data
+
+@parameterize(
+    time_high_1d_ff_shift_1d={"steps": value(1), "shift_col":source("time_high_1d_ff"),"col_name":value("time_high_1d_ff")},
+    time_low_1d_ff_shift_1d={"steps": value(1), "shift_col":source("time_low_1d_ff"),"col_name":value("time_low_1d_ff")},
+    time_high_5d_ff_shift_5d={"steps": value(5), "shift_col":source("time_high_5d_ff"),"col_name":value("time_high_5d_ff")},
+    time_low_5d_ff_shift_5d={"steps": value(5), "shift_col":source("time_low_5d_ff"),"col_name":value("time_low_5d_ff")},
+    time_high_11d_ff_shift_11d={"steps": value(11), "shift_col":source("time_high_11d_ff"),"col_name":value("time_high_11d_ff")},
+    time_low_11d_ff_shift_11d={"steps": value(11), "shift_col":source("time_low_11d_ff"),"col_name":value("time_low_11d_ff")},
+    time_high_21d_ff_shift_21d={"steps": value(21), "shift_col":source("time_high_21d_ff"),"col_name":value("time_high_21d_ff")},
+    time_low_21d_ff_shift_21d={"steps": value(21), "shift_col":source("time_low_21d_ff"),"col_name":value("time_low_21d_ff")},
+    time_high_51d_ff_shift_51d={"steps": value(51), "shift_col":source("time_high_51d_ff"),"col_name":value("time_high_51d_ff")},
+    time_low_51d_ff_shift_51d={"steps": value(51), "shift_col":source("time_low_51d_ff"),"col_name":value("time_low_51d_ff")},
+    time_high_101d_ff_shift_101d={"steps": value(101), "shift_col":source("time_high_101d_ff"),"col_name":value("time_high_101d_ff")},
+    time_low_101d_ff_shift_101d={"steps": value(101), "shift_col":source("time_low_101d_ff"),"col_name":value("time_low_101d_ff")},
+    time_high_201d_ff_shift_201d={"steps": value(201), "shift_col":source("time_high_201d_ff"),"col_name":value("time_high_201d_ff")},
+    time_low_201d_ff_shift_201d={"steps": value(201), "shift_col":source("time_low_201d_ff"),"col_name":value("time_low_201d_ff")},
+)
+def shift_time_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interval_per_day:int, col_name:str, ticker:pd.Series) -> pd.Series:
+    timestamp = timestamp.reset_index()
+    logging.error(f"shift_tmpl, col_name:{col_name}, shift_col:{shift_col}")
+    logging.error(f"shift_tmpl, col_name:{col_name}, timestamp:{timestamp}")
+    logging.error(f"shift_tmpl, col_name:{col_name}, ticker:{ticker}")
+    df = pd.concat([timestamp, shift_col], axis=1)
+    logging.error(f"shift_tmpl_shift_col, col_name:{col_name}, df:{df}")
+    logging.error(f"df after reset:{df}")
+    series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
+    logging.error(f"shift_tmpl series:{series.iloc[:4]}")
+    #series = series.set_index(["ticker","time"])
+    logging.error(f"shift_tmpl_col_name:{col_name}, series:{series}, interval_per_day:{interval_per_day}, steps:{steps}")
+    return series
