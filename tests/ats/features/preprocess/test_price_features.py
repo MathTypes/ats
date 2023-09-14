@@ -130,3 +130,11 @@ def test_close():
         decimal=3
     )
 
+def test_close_low_1d_ff_shift_1d():
+    result = run_features("close_low_1d_ff_shift_1d", 5)
+    print(f"result:{result}")
+    np.testing.assert_array_almost_equal(
+        result["close_low_1d_ff_shift_1d"],
+        [0.0018, 0.0011, -0.0009, 0.0002, 0.0013],
+        decimal=3
+    )

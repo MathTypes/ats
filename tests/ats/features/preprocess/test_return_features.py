@@ -90,3 +90,12 @@ def test_ret_from_high_21():
         decimal=3
     )
 
+def test_ret_from_sma_5():
+    result = run_features("ret_from_sma_5", 5)
+    print(f"result:{result}")
+    np.testing.assert_array_almost_equal(
+        result["ret_from_sma_5"],
+        [0.0018, 0.0011, -0.0009, 0.0002, 0.0013],
+        decimal=3
+    )
+
