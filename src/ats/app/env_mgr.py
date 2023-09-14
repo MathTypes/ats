@@ -16,6 +16,8 @@ class EnvMgr(object):
     ):
         self.config = config
         self.run_id = run_id
+        if self.run_id is None:
+            self.run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.init_env()
 
     def init_env(self):
