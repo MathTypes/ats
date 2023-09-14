@@ -397,6 +397,11 @@ def create_viz_row(
                     {"secondary_y": True},
                     {"secondary_y": True},
                 ],
+                [
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                    {"secondary_y": True},
+                ],
             ],
         )
         fig.update_layout(
