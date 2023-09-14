@@ -160,6 +160,8 @@ class MarketDataMgr(object):
             "macro_data_builder": self.macro_data_builder,
             "feast_repository_path":".",
             "feast_config":{},
+            "ret_std":self.config.dataset.ret_std,
+            "vol_threshold":5.0,
             "base_price":float(self.config.dataset.base_price),
             "interval_mins": self.config.dataset.interval_mins,
             "interval_per_day":int(23 * 60 / self.config.dataset.interval_mins)
@@ -192,14 +194,6 @@ class MarketDataMgr(object):
         logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp3<0:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp3<-0.15].iloc[-10:]}") 
         logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp3>0.2:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp3>0.2].iloc[-10:]}") 
 
-        #full_data = full_data[(full_data.ret_from_vwap_around_new_york_open<0.15) &
-        #                      (full_data.ret_from_vwap_around_new_york_open>-0.15)]
-        #full_data = full_data[(full_data.ret_from_vwap_around_london_open<0.15) &
-        #                      (full_data.ret_from_vwap_around_london_open>-0.15)]
-        #full_data = full_data[(full_data.ret_from_high_201<0.15) &
-        #                      (full_data.ret_from_high_201>-0.15)]
-        #full_data = full_data[(full_data.daily_kurt<0.5) &
-        #                      (full_data.daily_kurt>-0.5)]
         logging.info(f"full_data:{full_data.describe()}")
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(full_data)
