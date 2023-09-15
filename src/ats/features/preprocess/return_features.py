@@ -779,12 +779,18 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
     base_col = base_col.reset_index()
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
     base_col.set_index(["time","ticker"], inplace = True)
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
-    df = pd.concat([close, base_col], axis=1)
-    df.columns = ["close", "idx", "timestamp", "diff_close"]
+    base_series = None
+    if "close" in base_col.columns:
+        base_series = base_col["close"]
+    else:
+        base_series = base_col.iloc[:,0]
+    df = pd.concat([close, base_series], axis=1)
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    df.columns = ["close", "diff_close"]
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["diff_close"]+base_price), axis=1)
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")

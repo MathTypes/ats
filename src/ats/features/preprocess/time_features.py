@@ -425,8 +425,8 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
 )
 def time_to(timestamp:pd.Series, diff_time:pd.Series, diff_col:str) -> pd.Series:
     #traceback.print_stack()
-    #logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp.iloc[-10:]}")
-    #logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time.iloc[-10:]}")
+    logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp.iloc[-10:]}, diff_col:{diff_col}")
+    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time.iloc[-10:]}, diff_col:{diff_col}")
     #timestamp = timestamp.reset_index()
     df = pd.concat([timestamp, diff_time], axis=1)
     df.columns = ["timestamp", "diff_time"]
@@ -736,15 +736,16 @@ def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     time_low_201d_ff_shift_201d={"steps": value(201), "shift_col":source("time_low_201d_ff"),"col_name":value("time_low_201d_ff")},
 )
 def shift_time_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interval_per_day:int, col_name:str, ticker:pd.Series) -> pd.Series:
-    timestamp = timestamp.reset_index()
-    #logging.error(f"shift_tmpl, col_name:{col_name}, shift_col:{shift_col}")
+    #logging.error(f"shift_tmpl, col_name:{col_name}, before reset_index timestamp:{timestamp}")
+    #timestamp = timestamp.reset_index()
+    logging.error(f"shift_tmpl, col_name:{col_name}, shift_col:{shift_col.iloc[50:100]}")
     #logging.error(f"shift_tmpl, col_name:{col_name}, timestamp:{timestamp}")
     #logging.error(f"shift_tmpl, col_name:{col_name}, ticker:{ticker}")
-    df = pd.concat([timestamp, shift_col], axis=1)
-    #logging.error(f"shift_tmpl_shift_col, col_name:{col_name}, df:{df}")
+    df = pd.concat([shift_col], axis=1)
+    logging.error(f"shift_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[50:100]}")
     #logging.error(f"df after reset:{df}")
     series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
-    #logging.error(f"shift_tmpl series:{series.iloc[:4]}")
-    #series = series.set_index(["ticker","time"])
-    #logging.error(f"shift_tmpl_col_name:{col_name}, series:{series}, interval_per_day:{interval_per_day}, steps:{steps}")
+    logging.error(f"shift_tmpl series:{series.iloc[50:100]}")
+    series = series.set_index(["time","ticker"])
+    logging.error(f"shift_tmpl_col_name:{col_name}, series:{series.iloc[50:100]}, interval_per_day:{interval_per_day}, steps:{steps}")
     return series
