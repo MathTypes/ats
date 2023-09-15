@@ -133,6 +133,16 @@ def test_time_to_low_5_ff():
         decimal=3
     )
 
+def test_new_york_last_open_time():
+    result = run_features("new_york_last_open_time", 5)
+    #print(f"result:{result}")
+    np.testing.assert_array_almost_equal(
+        result["new_york_last_open_time"],
+        [1283520600, 1283520600, 1283520600, 1283520600, 1283520600],
+        decimal=3
+    )
+    
+    
 def test_time_high_1d_ff_shift_1d():
     result = run_features("time_high_1d_ff_shift_1d", 100).iloc[:10]
     #print(f"result:{result['timestamp'].to_list()}")
