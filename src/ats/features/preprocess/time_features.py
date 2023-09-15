@@ -44,7 +44,10 @@ def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
     return series
 
 def time(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    return clean_sorted_data.index.get_level_values(0).to_series()
+    logging.error(f"time:{clean_sorted_data.iloc[5:10]}")
+    series =  clean_sorted_data.index.get_level_values(0).to_series()
+    logging.error(f"time series:{series}")
+    return series
 
 def week_of_year(time: pd.Series) -> pd.Series:
     return time.apply(lambda x: x.isocalendar()[1])
@@ -738,14 +741,14 @@ def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,
 def shift_time_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interval_per_day:int, col_name:str, ticker:pd.Series) -> pd.Series:
     #logging.error(f"shift_tmpl, col_name:{col_name}, before reset_index timestamp:{timestamp}")
     #timestamp = timestamp.reset_index()
-    logging.error(f"shift_tmpl, col_name:{col_name}, shift_col:{shift_col.iloc[50:100]}")
+    #logging.error(f"shift_tmpl, col_name:{col_name}, shift_col:{shift_col.iloc[50:100]}")
     #logging.error(f"shift_tmpl, col_name:{col_name}, timestamp:{timestamp}")
     #logging.error(f"shift_tmpl, col_name:{col_name}, ticker:{ticker}")
     df = pd.concat([shift_col], axis=1)
-    logging.error(f"shift_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[50:100]}")
+    #logging.error(f"shift_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[50:100]}")
     #logging.error(f"df after reset:{df}")
     series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
-    logging.error(f"shift_tmpl series:{series.iloc[50:100]}")
+    #logging.error(f"shift_tmpl series:{series.iloc[50:100]}")
     series = series.set_index(["time","ticker"])
-    logging.error(f"shift_tmpl_col_name:{col_name}, series:{series.iloc[50:100]}, interval_per_day:{interval_per_day}, steps:{steps}")
+    #logging.error(f"shift_tmpl_col_name:{col_name}, series:{series.iloc[50:100]}, interval_per_day:{interval_per_day}, steps:{steps}")
     return series

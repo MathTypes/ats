@@ -50,7 +50,6 @@ HALFLIFE_WINSORISE = 252
     bollinger_200d_3={"window": value(200), "window_dev":value(3)},
 )
 def bollinger_day_tmpl(close:pd.Series, window:int, window_dev:int, interval_per_day:int) -> pd.Series:
-    #logging.error(f"bollinger_day_tmpl_close:{close}")
     return ta.volatility.BollingerBands(close, window=window*interval_per_day, window_dev=window_dev)
 
 @parameterize(

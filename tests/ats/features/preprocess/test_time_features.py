@@ -91,6 +91,15 @@ def test_time_low_5_ff():
         decimal=3
     )
 
+def test_extract_time_feature():
+    result = run_features("time", 5)
+    timestamps = [x.timestamp() for x in result["time"]]
+    np.testing.assert_array_almost_equal(
+        timestamps,
+        [1283535000.0, 1283536800.0, 1283538600.0, 1283540400.0, 1283542200.0],
+        decimal=3
+    )
+
 def test_time_to_low_5_ff():
     result = run_features("time_to_low_5_ff", 5)
     #print(f"result:{result}")

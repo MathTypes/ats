@@ -225,11 +225,11 @@ def low_back(low: pd.Series, base_price:float) -> pd.Series:
 def open_back(open: pd.Series,base_price: float) -> pd.Series:
     return open.groupby(["ticker"]).transform(lambda x:back_ret(x, base_price))
 
-def volume_back(group_raw_volume: generic.SeriesGroupBy) -> pd.Series:
-    return group_raw_volume.transform(back_volume)
+def volume_back(cum_volume: pd.Series) -> pd.Series:
+    return cum_volume.groupby(["ticker"]).transform(lambda x:back_volume(x))
 
-def dv_back(group_raw_dv: generic.SeriesGroupBy) -> pd.Series:
-    return group_raw_dv.transform(back_volume)
+def dv_back(dv: pd.Series) -> pd.Series:
+    return dv.groupby(["ticker"]).transform(lambda x:back_volume(x))
 
 def close_back_cumsum(close_back: pd.Series) -> pd.Series:
     return close_back.groupby(['ticker']).transform("cumsum")
@@ -779,9 +779,9 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
     base_col = base_col.reset_index()
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
     base_col.set_index(["time","ticker"], inplace = True)
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
     base_series = None
     if "close" in base_col.columns:
@@ -789,7 +789,7 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     else:
         base_series = base_col.iloc[:,0]
     df = pd.concat([close, base_series], axis=1)
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     df.columns = ["close", "diff_close"]
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["diff_close"]+base_price), axis=1)
@@ -889,7 +889,16 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            daily_vol_1d:pd.Series,daily_vol_5d:pd.Series,daily_vol_10d:pd.Series,daily_vol_20d:pd.Series,
                            daily_skew_1d:pd.Series,daily_skew_5d:pd.Series,daily_skew_10d:pd.Series,daily_skew_20d:pd.Series,
                            daily_kurt_1d:pd.Series,daily_kurt_5d:pd.Series,daily_kurt_10d:pd.Series,daily_kurt_20d:pd.Series,
+                           ticker: pd.Series,
                            close: pd.Series,
+                           close_velocity_back: pd.Series,
+                           trimmed_close_back: pd.Series,
+                           volume_back: pd.Series,
+                           trimmed_high_back: pd.Series,
+                           trimmed_low_back: pd.Series,
+                           trimmed_open_back: pd.Series,
+                           timestamp: pd.Series,
+                           time: pd.Series,
                            month: pd.Series, year:pd.Series, hour_of_day:pd.Series,
                            time_to_low_1d_ff_shift_1d: pd.Series, time_to_low_5d_ff_shift_5d: pd.Series,
                            time_to_low_11d_ff_shift_11d: pd.Series, time_to_low_21d_ff_shift_21d: pd.Series,
@@ -1005,6 +1014,12 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            london_last_daily_close_17: pd.Series,
                            london_last_daily_close_18: pd.Series,
                            london_last_daily_close_19: pd.Series,
+                           rsi_14: pd.Series,
+                           rsi_28: pd.Series,
+                           rsi_42: pd.Series,
+                           rsi_14d: pd.Series,
+                           rsi_28d: pd.Series,
+                           rsi_42d: pd.Series,
                            ret_from_high_1d: pd.Series,
                            ret_from_high_5d: pd.Series,
                            ret_from_high_11d: pd.Series,
@@ -1379,6 +1394,8 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     #logging.error(f"raw_data:{raw_data.iloc[-10:]}")
     #logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d[-10:]}")
     #logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d.shape}")
+    raw_data["ticker"] = ticker
+    raw_data["timestamp"] = timestamp
     raw_data["week_of_year"] = week_of_year
     raw_data["month_of_year"] = month_of_year
     raw_data["weekly_close_time"] = weekly_close_time
@@ -1801,4 +1818,22 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
 
     
     #logging.error(f"sampled_raw:{raw_data.iloc[-10:]}")
+    raw_data["idx_ticker"] = raw_data["ticker"]
+    raw_data["close_back"] = trimmed_close_back
+    raw_data["close_velocity_back"] = close_velocity_back
+    raw_data["open_back"] = trimmed_open_back
+    raw_data["high_back"] = trimmed_high_back
+    raw_data["low_back"] = trimmed_low_back
+    raw_data["volume_back"] = volume_back
+    raw_data["rsi_14"] = rsi_14
+    raw_data["rsi_28"] = rsi_28
+    raw_data["rsi_42"] = rsi_42
+    raw_data["rsi_14d"] = rsi_14d
+    raw_data["rsi_28d"] = rsi_28d
+    raw_data["rsi_42d"] = rsi_42d
+    raw_data["idx_timestamp"] = raw_data["timestamp"]
+    raw_data["time"] = time
+    raw_data = raw_data.set_index(["idx_ticker","idx_timestamp"])
+    raw_data = raw_data.sort_values(["ticker", "timestamp"])
+
     return raw_data
