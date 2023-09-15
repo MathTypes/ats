@@ -334,26 +334,26 @@ def close_back_cumsum_low_tmpl(steps:int, close_back_cumsum:pd.Series) -> pd.Ser
 def time_with_close_tmpl(close:pd.Series, timestamp:pd.Series, close_col:pd.Series, col_name:str) -> pd.Series:
     df = pd.concat([close, timestamp, close_col], axis=1)
     df.columns = ["close", "timestamp", "close_high"]
-    logging.error(f"df:{df}")
-    logging.error(f"df.index:{df.index}")
+    #logging.error(f"df:{df}")
+    #logging.error(f"df.index:{df.index}")
     df = df.reset_index()
-    logging.error(f"df after reset:{df}")
+    #logging.error(f"df after reset:{df}")
     series = df.groupby(['ticker']).apply(lambda x: find_close_time(x, "close_high"))
     #series = series.unstack(level=2).drop(columns=['ticker'])
     series = series.set_index(["time","ticker"])
     series = series.ffill()
-    logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
+    #logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
     #res = series[['timestamp']]
-    logging.error(f"time_with_close_tmpl_res, col_name:{col_name}, time_with_close_tmpl:{series}")
+    #logging.error(f"time_with_close_tmpl_res, col_name:{col_name}, time_with_close_tmpl:{series}")
     return series
     #return series
 
 def find_close_time(df:pd.DataFrame, close_col_name:str) -> pd.Series:
-    logging.error(f"close_col:{close_col_name}")
-    logging.error(f"df:{df.shape}")
+    #logging.error(f"close_col:{close_col_name}")
+    #logging.error(f"df:{df.shape}")
     #logging.error(f"df:{df}")
     res = df.apply(lambda x: get_close_time(x, close_col_name), axis=1, result_type="expand")
-    logging.error(f"find_close_time:{res}, res.shape:{res.shape}")
+    #logging.error(f"find_close_time:{res}, res.shape:{res.shape}")
     return res
 
 
@@ -773,9 +773,25 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_sma_200d={"base_col": source("sma_200d"), "col_name":value("sma_200d")},
 )
 def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
-    logging.error(f"ret_from_price_close, close:{close.iloc[:3]}")
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col:{base_col.iloc[:3]}")
-    return np.log(close+base_price) - np.log(base_col+base_price)
+    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
+    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
+    base_col = base_col.reset_index()
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
+    base_col.set_index(["time","ticker"], inplace = True)
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
+    df = pd.concat([close, base_col], axis=1)
+    df.columns = ["close", "idx", "timestamp", "diff_close"]
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["diff_close"]+base_price), axis=1)
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
+    return series
+    #base_col = base_col.reindex(["time","ticker"])
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col:{base_col.iloc[50:100]}")
+    #return np.log(close+base_price) - np.log(base_col['close']+base_price)
 
 @parameterize(
     ret_velocity_from_high_5={"ret_col": source("ret_from_high_5"), "time_col": source("time_to_high_5_ff")},
@@ -792,8 +808,8 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     ret_velocity_from_low_201={"ret_col": source("ret_from_low_201"), "time_col": source("time_to_low_201_ff")},
 )
 def ret_velocity_tmpl(ret_col: pd.Series, time_col: pd.Series) -> pd.Series:
-    logging.error(f"ret_col:{ret_col}")
-    logging.error(f"time_col:{time_col}")
+    #logging.error(f"ret_col:{ret_col}")
+    #logging.error(f"time_col:{time_col}")
     return ret_col/time_col
     
 @parameterize(
@@ -1354,9 +1370,9 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     interval_mins = config.dataset.interval_mins
     new_york_cal = mcal.get_calendar("NYSE")
     lse_cal = mcal.get_calendar("LSE")
-    logging.error(f"raw_data:{raw_data.iloc[-10:]}")
-    logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d[-10:]}")
-    logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d.shape}")
+    #logging.error(f"raw_data:{raw_data.iloc[-10:]}")
+    #logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d[-10:]}")
+    #logging.error(f"time_to_low_21d_ff_shift_21d:{time_to_low_21d_ff_shift_21d.shape}")
     raw_data["week_of_year"] = week_of_year
     raw_data["month_of_year"] = month_of_year
     raw_data["weekly_close_time"] = weekly_close_time
@@ -1778,5 +1794,5 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
         raw_data["ret_from_sma_200d"] = ret_from_sma_200d
 
     
-    logging.error(f"sampled_raw:{raw_data.iloc[-10:]}")
+    #logging.error(f"sampled_raw:{raw_data.iloc[-10:]}")
     return raw_data

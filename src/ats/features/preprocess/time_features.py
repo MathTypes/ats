@@ -37,10 +37,10 @@ VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
 def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
+    #logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
     #series = clean_sorted_data[["timestamp"]]
     series = clean_sorted_data["timestamp"]
-    logging.error(f"series:{series}")
+    #logging.error(f"series:{series}")
     return series
 
 def time(clean_sorted_data: pd.DataFrame) -> pd.Series:
@@ -425,17 +425,17 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
 )
 def time_to(timestamp:pd.Series, diff_time:pd.Series, diff_col:str) -> pd.Series:
     #traceback.print_stack()
-    logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp.iloc[-10:]}")
-    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time.iloc[-10:]}")
+    #logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp.iloc[-10:]}")
+    #logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time.iloc[-10:]}")
     #timestamp = timestamp.reset_index()
     df = pd.concat([timestamp, diff_time], axis=1)
     df.columns = ["timestamp", "diff_time"]
-    logging.error(f"time_to_df:{df.iloc[-10:]}")
+    #logging.error(f"time_to_df:{df.iloc[-10:]}")
     df["time_to"]=df["timestamp"] - df["diff_time"]
     #diff_series = diff_series.set_index(["ticker","time"])
-    logging.error(f"time_to_df:{df.iloc[-10:]}")
+    #logging.error(f"time_to_df:{df.iloc[-10:]}")
     diff_series = df["time_to"]
-    logging.error(f"diff_series:{diff_series.iloc[-10:]}")
+    #logging.error(f"diff_series:{diff_series.iloc[-10:]}")
     return diff_series
 
 def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,
@@ -737,14 +737,14 @@ def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,
 )
 def shift_time_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interval_per_day:int, col_name:str, ticker:pd.Series) -> pd.Series:
     timestamp = timestamp.reset_index()
-    logging.error(f"shift_tmpl, col_name:{col_name}, shift_col:{shift_col}")
-    logging.error(f"shift_tmpl, col_name:{col_name}, timestamp:{timestamp}")
-    logging.error(f"shift_tmpl, col_name:{col_name}, ticker:{ticker}")
+    #logging.error(f"shift_tmpl, col_name:{col_name}, shift_col:{shift_col}")
+    #logging.error(f"shift_tmpl, col_name:{col_name}, timestamp:{timestamp}")
+    #logging.error(f"shift_tmpl, col_name:{col_name}, ticker:{ticker}")
     df = pd.concat([timestamp, shift_col], axis=1)
-    logging.error(f"shift_tmpl_shift_col, col_name:{col_name}, df:{df}")
-    logging.error(f"df after reset:{df}")
+    #logging.error(f"shift_tmpl_shift_col, col_name:{col_name}, df:{df}")
+    #logging.error(f"df after reset:{df}")
     series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
-    logging.error(f"shift_tmpl series:{series.iloc[:4]}")
+    #logging.error(f"shift_tmpl series:{series.iloc[:4]}")
     #series = series.set_index(["ticker","time"])
-    logging.error(f"shift_tmpl_col_name:{col_name}, series:{series}, interval_per_day:{interval_per_day}, steps:{steps}")
+    #logging.error(f"shift_tmpl_col_name:{col_name}, series:{series}, interval_per_day:{interval_per_day}, steps:{steps}")
     return series
