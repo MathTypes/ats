@@ -43,14 +43,15 @@ def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
     #logging.error(f"series:{series}")
     return series
 
-def time(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    logging.error(f"time:{clean_sorted_data.iloc[5:10]}")
-    series =  clean_sorted_data.index.get_level_values(0).to_series()
+def time(timestamp: pd.Series) -> pd.Series:
+    series = timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x, tz=datetime.timezone.utc))
+    #logging.error(f"time:{clean_sorted_data.iloc[5:10]}")
+    #series =  clean_sorted_data.index.get_level_values(0).to_series()
     logging.error(f"time series:{series}")
     return series
 
 def week_of_year(time: pd.Series) -> pd.Series:
-    return time.apply(lambda x: x.isocalendar()[1])
+    return time.apply(lambda x: x.isocalendar().week)
 
 def month_of_year(time: pd.Series) -> pd.Series:
     return time.apply(lambda x: x.month)

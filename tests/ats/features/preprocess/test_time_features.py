@@ -100,6 +100,30 @@ def test_extract_time_feature():
         decimal=3
     )
 
+def test_extract_week_of_year():
+    result = run_features("week_of_year", 500)["week_of_year"]
+    np.testing.assert_array_almost_equal(
+        result[:3], [33, 33, 33],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        result[-3:], [35, 35, 35],
+        decimal=3
+    )
+
+def test_extract_month_of_year():
+    result = run_features("month_of_year", 500)["month_of_year"]
+    np.testing.assert_array_almost_equal(
+        result[:3],
+        [8,8,8],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        result[-3:],
+        [9,9,9],
+        decimal=3
+    )
+
 def test_time_to_low_5_ff():
     result = run_features("time_to_low_5_ff", 5)
     #print(f"result:{result}")
