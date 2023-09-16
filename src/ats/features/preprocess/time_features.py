@@ -71,6 +71,10 @@ def new_york_close_time(timestamp: pd.Series) -> pd.Series:
     )
 
 @tag(cache="parquet")
+def is_new_york_close_time(timestamp: pd.Series, new_york_close_time: pd.Series) -> pd.Series:
+    return timestamp == new_york_close_time
+
+@tag(cache="parquet")
 def london_open_time(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(

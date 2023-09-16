@@ -151,3 +151,17 @@ def test_time_high_1d_ff_shift_1d():
         [1283437800.0, 1283437800.0, 1283437800.0, 1283450400.0, 1283452200.0, 1283454000.0, 1283455800.0, 1283457600.0, 1283457600.0, 1283457600.0],
         decimal=3
     )
+
+def test_is_new_york_close_time():
+    result = run_features("is_new_york_close_time", 50)
+    print(f"result:{result['is_new_york_close_time'].to_list()}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [False, False, False, True, False, False, False, False, False, False,
+         False, False, False, False, False, False, False, False, False, False,
+         False, False, False, False, False, False, False, False, False, False,
+         False, False, False, False, False, False, False, False, False, False,
+         False, False, False, False, False, False, False, False, False, False],
+        decimal=3
+    )
+
