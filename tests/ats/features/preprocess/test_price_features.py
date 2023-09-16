@@ -278,6 +278,78 @@ def test_weekly_low():
         decimal=3
     )
 
+def test_monthly_open():
+    result = run_features("monthly_open", 50)
+    open_list = result['monthly_open'][:10]
+    close_time_list = result.index.get_level_values(level=0)[:10]
+    ticker_list = result.index.get_level_values(level=1)[:10]
+    np.testing.assert_array_almost_equal(
+        open_list,
+        [1173.25, 1157.75, 1220.25, 1234.25, 1114.  , 1100.  , 1116.75,
+         1005.75,  803.  ,  726.25],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1204318800, 1206993600, 1209585600, 1212177600, 1214856000,
+         1217534400, 1220040000, 1222804800, 1225483200, 1227895200],
+        decimal=3
+    )
+
+def test_monthly_close():
+    result = run_features("monthly_close", 50)
+    close_list = result['monthly_close'][:10]
+    close_time_list = result.index.get_level_values(level=0)[:10]
+    ticker_list = result.index.get_level_values(level=1)[:10]
+    np.testing.assert_array_almost_equal(
+        close_list,
+        [1158.5 , 1221.25, 1238.  , 1120.75, 1109.  , 1118.5 ,  999.75,
+         796.  ,  720.25,  736.5],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1204318800, 1206993600, 1209585600, 1212177600, 1214856000,
+         1217534400, 1220040000, 1222804800, 1225483200, 1227895200],
+        decimal=3
+    )
+
+def test_monthly_high():
+    result = run_features("monthly_high", 50)
+    high_list = result['monthly_high'][:10]
+    close_time_list = result.index.get_level_values(level=0)[:10]
+    ticker_list = result.index.get_level_values(level=1)[:10]
+    np.testing.assert_array_almost_equal(
+        high_list,
+        [1175.5 , 1239.  , 1276.  , 1244.5 , 1127.25, 1144.25, 1133.  ,
+         1005.75,  839.  ,  748.25],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1204318800, 1206993600, 1209585600, 1212177600, 1214856000,
+         1217534400, 1220040000, 1222804800, 1225483200, 1227895200],
+        decimal=3
+    )
+
+def test_monthly_low():
+    result = run_features("monthly_low", 50)
+    low_list = result['monthly_low'][:10]
+    close_time_list = result.index.get_level_values(level=0)[:10]
+    ticker_list = result.index.get_level_values(level=1)[:10]
+    np.testing.assert_array_almost_equal(
+        low_list,
+        [1147.  , 1152.  , 1207.25, 1109.25, 1038.75, 1080.75,  947.75,
+         661.  ,  577.  ,  646.25],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1204318800, 1206993600, 1209585600, 1212177600, 1214856000,
+         1217534400, 1220040000, 1222804800, 1225483200, 1227895200],
+        decimal=3
+    )
+
 def test_close_low_1d_ff_shift_1d():
     result = run_features("close_low_1d_ff_shift_1d", 50)
     close = result["close"][:4]
