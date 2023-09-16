@@ -242,6 +242,7 @@ def compute_last_close_time(x, cal, k=0):
         while close_time is None or close_time > x:
             x_time = x_time + datetime.timedelta(days=-1)
             close_time = get_close_time(cal, x_time.date())
+            #logging.error(f"close_time:{close_time}, x:{x}")
         if k==0:
             return int(close_time)
         else:

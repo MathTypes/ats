@@ -180,7 +180,7 @@ def close(clean_sorted_data: pd.DataFrame) -> pd.Series:
     return series.transform(winsorize_col)
 
 def ticker(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    series = clean_sorted_data.index.get_level_values("ticker")
+    series = clean_sorted_data.index.get_level_values("ticker").to_series()
     return series
 
 def high(clean_sorted_data: pd.DataFrame) -> pd.Series:
@@ -372,6 +372,7 @@ def ret_from_vwap(time_features:pd.DataFrame,
     cum_volume_col = f"{time_col}_cum_volume"
     raw_data["cum_dv"] = cum_dv
     raw_data["cum_volume"] = cum_volume
+    #logging.error(f"time_features:{time_features.iloc[20:40]}")
     raw_data[cum_dv_col] = raw_data.apply(
         fill_cum_dv, time_col=time_col,
         pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
@@ -450,7 +451,9 @@ def post_vwap(time_features:pd.DataFrame,
         else:
             return data["close"].iloc[-1]
         return 0
-    return rol.apply(vwap_around, args=(cum_dv_col,cum_volume_col), raw=False).ffill()
+    series = rol.apply(vwap_around, args=(cum_dv_col,cum_volume_col), raw=False).ffill()
+    #logging.error(f"pre_vwap_series:{series}")
+    return series
 
 
 @parameterize(
@@ -466,15 +469,19 @@ def pre_vwap(time_features:pd.DataFrame,
              cum_dv:pd.Series, cum_volume:pd.Series,
              time_col:str, interval_mins:int) ->pd.Series:
     raw_data = time_features
-    cum_dv_col = f"pre_{time_col}_cum_dv"
-    cum_volume_col = f"pre_{time_col}_cum_volume"
     raw_data["cum_dv"] = cum_dv
     raw_data["cum_volume"] = cum_volume
+    cum_dv_col = f"pre_{time_col}_cum_dv"
+    cum_volume_col = f"pre_{time_col}_cum_volume"
+    #logging.error(f"pre_vwap_time_features:{time_features.iloc[10:40][[time_col,'timestamp','cum_dv','cum_volume']]}")
+    #logging.error(f"pre_vwap_time_col:{time_col}, interval_mins:{interval_mins}")
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
                                           pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
                                               pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
     rol = raw_data[cum_dv_col].rolling(window=2)
+    #logging.error(f"raw_data[cum_dv_col]:{raw_data[cum_dv_col].iloc[10:60]}")
+    #logging.error(f"raw_data[cum_volume_col]:{raw_data[cum_volume_col].iloc[10:60]}")
 
     def vwap_around(ser, cum_dv_col, cum_volume_col):
         data = raw_data.loc[ser.index]
@@ -485,7 +492,9 @@ def pre_vwap(time_features:pd.DataFrame,
         else:
             return data["close"].iloc[-1]
         return 0
-    return rol.apply(vwap_around, args=(cum_dv_col,cum_volume_col), raw=False).ffill()
+    series = rol.apply(vwap_around, args=(cum_dv_col,cum_volume_col), raw=False).ffill()
+    #logging.error(f"vwap_around_series:{series}")
+    return series
 
         
 #def close_back_cumsum(example_level_features:pd.DataFrame) -> pd.Series:
@@ -773,31 +782,28 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_sma_200d={"base_col": source("sma_200d"), "col_name":value("sma_200d")},
 )
 def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
-    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
-    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
+    logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
+    logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
     base_col = base_col.reset_index()
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
     base_col.set_index(["time","ticker"], inplace = True)
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
     base_series = None
     if "close" in base_col.columns:
         base_series = base_col["close"]
     else:
         base_series = base_col.iloc[:,0]
     df = pd.concat([close, base_series], axis=1)
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     df.columns = ["close", "diff_close"]
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["diff_close"]+base_price), axis=1)
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
     return series
-    #base_col = base_col.reindex(["time","ticker"])
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col:{base_col.iloc[50:100]}")
-    #return np.log(close+base_price) - np.log(base_col['close']+base_price)
 
 @parameterize(
     ret_velocity_from_high_5={"ret_col": source("ret_from_high_5"), "time_col": source("time_to_high_5_ff")},
@@ -874,7 +880,6 @@ def daily_skew_tmpl(return_col:pd.Series) -> pd.Series:
 )
 def daily_kurt_tmpl(return_col:pd.Series) -> pd.Series:
     return calc_kurt(return_col)
-
 
 #@profile_util.profile
 def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:MacroDataBuilder,
@@ -1837,3 +1842,14 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     raw_data = raw_data.sort_values(["ticker", "timestamp"])
 
     return raw_data
+
+@parameterize(
+    trimmed_close_back={"price_col": source("close_back")},
+    trimmed_open_back={"price_col": source("open_back")},
+    trimmed_high_back={"price_col": source("high_back")},
+    trimmed_low_back={"price_col": source("low_back")},
+)
+def trimmed_price_back_tmpl(price_col:pd.Series, ret_std:float, vol_threshold:float) -> pd.Series:
+    trimmed = np.minimum(price_col, vol_threshold * ret_std)
+    trimmed = np.minimum(price_col, vol_threshold * ret_std)
+    return trimmed

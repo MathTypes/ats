@@ -766,12 +766,20 @@ def fill_cum_dv(row, time_col, pre_interval_mins=30, post_interval_mins=30):
         #logging.error(f"no time_col:{time_col}")
         return np.nan
     else:
+        #logging.error(f"checking time_col:{time_col}, before_mins:{before_mins}, after_mins:{after_mins}, row[time]:{row[time_col]}, row[timestamp]:{row['timestamp']}")
         if ((row["timestamp"] > row[time_col]-before_mins) and
             (row["timestamp"] < row[time_col]+after_mins)):
-            #logging.error(f"checking time_col:{time_col}, before_mins:{before_mins}, after_mins:{after_mins}, row[time]:{row[time_col]}, return cum_dv")
+            #logging.error(f"find cum_dv")
             return row["cum_dv"]
         else:
-            return np.nan
+            # A tricky situation is that when we compute pre_vwap, last_close_time will
+            # be one day ahead.
+            next_time_check = row[time_col] + 86400
+            if ((row["timestamp"] > next_time_check-before_mins) and
+                (row["timestamp"] < next_time_check+after_mins)):
+                return row["cum_dv"]
+            else:
+                return np.nan
 
 def fill_cum_volume(row, time_col, pre_interval_mins=30, post_interval_mins=30):
     before_mins=pre_interval_mins*60*.5+1
@@ -783,7 +791,14 @@ def fill_cum_volume(row, time_col, pre_interval_mins=30, post_interval_mins=30):
             (row["timestamp"] < row[time_col]+after_mins)):
             return row["cum_volume"]
         else:
-            return np.nan
+            # A tricky situation is that when we compute pre_vwap, last_close_time will
+            # be one day ahead.
+            next_time_check = row[time_col] + 86400
+            if ((row["timestamp"] > next_time_check-before_mins) and
+                (row["timestamp"] < next_time_check+after_mins)):
+                return row["cum_dv"]
+            else:
+                return np.nan
 
 def fill_open(row, time_col, pre_interval_mins=30, post_interval_mins=30):
     before_mins=pre_interval_mins*60*.5+1
@@ -798,18 +813,25 @@ def fill_open(row, time_col, pre_interval_mins=30, post_interval_mins=30):
         else:
             return np.nan
 
-def fill_close(row, time_col, pre_interval_mins=30, post_interval_mins=30):
-    before_mins=pre_interval_mins*60*.5+1
-    after_mins=post_interval_mins*60*.5+1
-    if pd.isna(row[time_col]):
+def fill_close(row, is_col):
+    if not row[is_col]:
         return np.nan
     else:
-        #logging.error(f"close row:{row['timestamp']}, time_col:{time_col}, before:{row[time_col]-before_mins}, after:{row[time_col]+after_mins}")
-        if ((row["timestamp"] > row[time_col]-before_mins) and
-            (row["timestamp"] < row[time_col]+after_mins)):
-            return row["close"]
-        else:
-            return np.nan
+        return row["close"]
+
+        
+#def fill_close(row, time_col, time_delta):
+#    if pd.isna(row[time_col]) or not row["is_new_york_close"]:
+#        return np.nan
+#    else:
+#        return row["close"]
+        #logging.error(f"close row:{row['timestamp']}, time_col:{time_col}, check_time:{row[time_col]}, before:{row[time_col]-before_mins}, after:{row[time_col]+after_mins}")
+        #check_time = row[time_col]
+        #if ((row["timestamp"] > check_time-before_mins) and
+        #    (row["timestamp"] < check_time+after_mins)):
+        #    return row["close"]
+        #else:
+        #    return np.nan
 
 #@profile_util.profile
 #@njit(parallel=True)

@@ -176,33 +176,81 @@ def bb_high_tmpl(bollinger:pd.Series) -> pd.Series:
 )
 def bb_low_tmpl(bollinger:pd.Series) -> pd.Series:
     return bollinger.bollinger_lband()
-                   
+
+def daily_open(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, last_daily_close_time))
+    index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
+    #logging.error(f"index:{index}")
+    #logging.error(f"open before set_axis:{open}")
+    open = open.set_axis(index)
+    #logging.error(f"open after set_axis:{open}")
+    agg = open.groupby(["close_time", "ticker"]).agg('first')
+    #logging.error(f"agg:{agg}, agg_type:{type(agg)}")
+    return agg
+
+def daily_close(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, last_daily_close_time))
+    index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
+    open = open.set_axis(index)
+    agg = open.groupby(["close_time", "ticker"]).agg('last')
+    return agg
+
+def daily_high(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, last_daily_close_time))
+    index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
+    open = open.set_axis(index)
+    agg = open.groupby(["close_time", "ticker"]).agg('max')
+    return agg
+
+def daily_low(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, last_daily_close_time))
+    index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
+    open = open.set_axis(index)
+    agg = open.groupby(["close_time", "ticker"]).agg('min')
+    return agg
+
+def df_by_daily(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series,
+                high:pd.Series, close:pd.Series, low:pd.Series) -> pd.DataFrame:
+    logging.error(f"last_daily_close_time:{last_daily_close_time}")
+    logging.error(f"ticker:{ticker}")
+    COLUMN_NAMES = ["last_daily_close_time", "ticker", "open", "high", "close", "low"]
+    df_dict = dict.fromkeys(COLUMN_NAMES, [])
+    df_dict["last_daily_close_time"] = pd.Series(last_daily_close_time.values)
+    df_dict["timestamp"] = pd.Series(timestamp)
+    df_dict["ticker"] = pd.Series(ticker)
+    df_dict["open"] = pd.Series(open.values)
+    df_dict["high"] = pd.Series(high.values)
+    df_dict["close"] = pd.Series(close.values)
+    df_dict["low"] = pd.Series(low.values)
+    logging.error(f"open:{open}")
+    logging.error(f"close:{close}")
+    logging.error(f"timestamp:{timestamp}")
+    logging.error(f"high:{high}")
+    logging.error(f"low:{low}")
+    df = pd.DataFrame.from_dict(df_dict)[COLUMN_NAMES]
+    #df = pd.concat([ticker, last_daily_close_time, open, high, close, low], axis=1)
+    #df = pd.concat([ticker, open], axis=1) 
+    #df = df.sort_values(["ticker", "timestamp"])
+    #logging.error(f"df:{df}")
+    #agg = df.groupby(["ticker","last_daily_close_time"]).agg({'open':'first','close':'last','high':'max','low':'min'})
+    #logging.error(f"agg:{agg}")
+    #agg.columns = ["daily_open", "daily_close", "daily_high", "daily_low"]
+    return df
+
+#@extract_columns("daily_open", "daily_close", "daily_high", "daily_low", fill_with=-1)
+#def df_by_daily(last_daily_close_time:pd.Series, ticker:pd.Series, open:pd.Series,
+#                high:pd.Series, close:pd.Series, low:pd.Series) -> pd.DataFrame:
+#    logging.error(f"last_daily_close_time:{last_daily_close_time}")
+#    logging.error(f"ticker:{ticker}")
+#    df = pd.concat([ticker, last_daily_close_time, open, high, close, low], axis=1)
+#    agg = open_df.groupby(["ticker","last_daily_close_time"]).agg({'open':'first','close':'last','high':'max','low':'min'})
+#    agg.columns = ["daily_open", "daily_close", "daily_high", "daily_low"]
+#    return agg
+    
 @parameterize(
     next_new_york_close={"time_col": value("new_york_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    next_london_close={"time_col": value("london_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     next_weekly_close={"time_col": value("weekly_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     next_monthly_close={"time_col": value("monthly_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    last_option_expiration_close={"time_col": value("last_option_expiration_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_0={"time_col": value("new_york_last_open_time_0"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_1={"time_col": value("new_york_last_open_time_1"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_2={"time_col": value("new_york_last_open_time_2"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_3={"time_col": value("new_york_last_open_time_3"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_4={"time_col": value("new_york_last_open_time_4"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_5={"time_col": value("new_york_last_open_time_5"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_6={"time_col": value("new_york_last_open_time_6"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_7={"time_col": value("new_york_last_open_time_7"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_8={"time_col": value("new_york_last_open_time_8"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_9={"time_col": value("new_york_last_open_time_9"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_10={"time_col": value("new_york_last_open_time_10"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_11={"time_col": value("new_york_last_open_time_11"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_12={"time_col": value("new_york_last_open_time_12"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_13={"time_col": value("new_york_last_open_time_13"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_14={"time_col": value("new_york_last_open_time_14"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_15={"time_col": value("new_york_last_open_time_15"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_16={"time_col": value("new_york_last_open_time_16"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_17={"time_col": value("new_york_last_open_time_17"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_18={"time_col": value("new_york_last_open_time_18"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    new_york_last_daily_open_19={"time_col": value("new_york_last_open_time_19"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     new_york_last_daily_close_0={"time_col": value("new_york_last_close_time_0"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     new_york_last_daily_close_1={"time_col": value("new_york_last_close_time_1"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     new_york_last_daily_close_2={"time_col": value("new_york_last_close_time_2"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
@@ -223,46 +271,6 @@ def bb_low_tmpl(bollinger:pd.Series) -> pd.Series:
     new_york_last_daily_close_17={"time_col": value("new_york_last_close_time_17"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     new_york_last_daily_close_18={"time_col": value("new_york_last_close_time_18"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     new_york_last_daily_close_19={"time_col": value("new_york_last_close_time_19"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_0={"time_col": value("london_last_open_time_0"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_1={"time_col": value("london_last_open_time_1"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_2={"time_col": value("london_last_open_time_2"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_3={"time_col": value("london_last_open_time_3"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_4={"time_col": value("london_last_open_time_4"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_5={"time_col": value("london_last_open_time_5"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_6={"time_col": value("london_last_open_time_6"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_7={"time_col": value("london_last_open_time_7"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_8={"time_col": value("london_last_open_time_8"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_9={"time_col": value("london_last_open_time_9"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_10={"time_col": value("london_last_open_time_10"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_11={"time_col": value("london_last_open_time_11"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_12={"time_col": value("london_last_open_time_12"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_13={"time_col": value("london_last_open_time_13"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_14={"time_col": value("london_last_open_time_14"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_15={"time_col": value("london_last_open_time_15"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_16={"time_col": value("london_last_open_time_16"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_17={"time_col": value("london_last_open_time_17"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_18={"time_col": value("london_last_open_time_18"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_open_19={"time_col": value("london_last_open_time_19"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_0={"time_col": value("london_last_close_time_0"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_1={"time_col": value("london_last_close_time_1"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_2={"time_col": value("london_last_close_time_2"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_3={"time_col": value("london_last_close_time_3"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_4={"time_col": value("london_last_close_time_4"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_5={"time_col": value("london_last_close_time_5"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_6={"time_col": value("london_last_close_time_6"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_7={"time_col": value("london_last_close_time_7"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_8={"time_col": value("london_last_close_time_8"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_9={"time_col": value("london_last_close_time_9"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_10={"time_col": value("london_last_close_time_10"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_11={"time_col": value("london_last_close_time_11"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_12={"time_col": value("london_last_close_time_12"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_13={"time_col": value("london_last_close_time_13"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_14={"time_col": value("london_last_close_time_14"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_15={"time_col": value("london_last_close_time_15"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_16={"time_col": value("london_last_close_time_16"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_17={"time_col": value("london_last_close_time_17"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_18={"time_col": value("london_last_close_time_18"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
-    london_last_daily_close_19={"time_col": value("london_last_close_time_19"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     last_weekly_close_0={"time_col": value("last_weekly_close_time_0"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     last_weekly_close_1={"time_col": value("last_weekly_close_time_1"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     last_weekly_close_2={"time_col": value("last_weekly_close_time_2"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
@@ -305,11 +313,12 @@ def bb_low_tmpl(bollinger:pd.Series) -> pd.Series:
     last_monthly_close_19={"time_col": value("last_monthly_close_time_19"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
 )
 def price_at_tmpl(time_features: pd.DataFrame, time_col: str,
-                  pre_interval_mins:int, post_interval_mins:int, interval_mins:int) -> pd.Series:
-    return time_features.apply(fill_close, time_col=time_col,
-                               pre_interval_mins=pre_interval_mins,
-                               post_interval_mins=post_interval_mins,
-                               axis=1).ffill()
+                  pre_interval_mins:int, post_interval_mins:int,
+                  time_delta: datetime.timedelta) -> pd.Series:
+    logging.error(f"time_features time_col:{time_col}, pre_interval_mins:{pre_interval_mins}, post_interval_mins:{post_interval_mins}, {time_features.iloc[5:10]}")
+    series = time_features.apply(fill_close, time_col=time_col, time_delta=time_delta, axis=1).ffill()
+    logging.error(f"price_at_tmpl series:{series.iloc[10:15]}")
+    return series
 
 @parameterize(
     close_high_5_ff={"steps": value(5)},
@@ -423,14 +432,4 @@ def shift_price_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interv
     #logging.error(f"shift_price_tmpl_col_name:{col_name}, series:{series.iloc[50:100]}, interval_per_day:{interval_per_day}, steps:{steps}")
     return series
 
-@parameterize(
-    trimmed_close_back={"price_col": source("close_back")},
-    trimmed_open_back={"price_col": source("open_back")},
-    trimmed_high_back={"price_col": source("high_back")},
-    trimmed_low_back={"price_col": source("low_back")},
-)
-def trimmed_price_back_tmpl(price_col:pd.Series, ret_std:float, vol_threshold:float) -> pd.Series:
-    trimmed = np.minimum(price_col, vol_threshold * ret_std)
-    trimmed = np.minimum(price_col, vol_threshold * ret_std)
-    return trimmed
 

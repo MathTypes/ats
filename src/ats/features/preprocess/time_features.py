@@ -37,10 +37,10 @@ VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
 def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    #logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
+    logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
     #series = clean_sorted_data[["timestamp"]]
     series = clean_sorted_data["timestamp"]
-    #logging.error(f"series:{series}")
+    logging.error(f"series:{series}")
     return series
 
 def time(timestamp: pd.Series) -> pd.Series:
@@ -73,6 +73,14 @@ def new_york_close_time(timestamp: pd.Series) -> pd.Series:
 @tag(cache="parquet")
 def is_new_york_close_time(timestamp: pd.Series, new_york_close_time: pd.Series) -> pd.Series:
     return timestamp == new_york_close_time
+
+@tag(cache="parquet")
+def is_weekly_close_time(timestamp: pd.Series, weekly_close_time: pd.Series) -> pd.Series:
+    return timestamp == weekly_close_time
+
+@tag(cache="parquet")
+def is_monthyl_close_time(timestamp: pd.Series, last_monthly_close_time_0: pd.Series) -> pd.Series:
+    return timestamp == last_monthly_close_time_0
 
 @tag(cache="parquet")
 def london_open_time(timestamp: pd.Series) -> pd.Series:
@@ -173,6 +181,13 @@ def new_york_last_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
         market_time.compute_last_close_time, cal=new_york_cal, k=k
     )
 
+def last_daily_close_time(timestamp: pd.Series) -> pd.Series:
+    logging.error(f"timestamp:{timestamp}")
+    new_york_cal = mcal.get_calendar("NYSE")
+    return timestamp.apply(
+        market_time.compute_last_close_time, cal=new_york_cal, k=0
+    )
+
 @parameterize(
     last_weekly_close_time_0={"k":value(0)},
     last_weekly_close_time_1={"k":value(1)},
@@ -199,6 +214,12 @@ def last_weekly_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_weekly_close_time, cal=new_york_cal, k=1
+    )
+
+def last_weekly_close_time(timestamp: pd.Series) -> pd.Series:
+    new_york_cal = mcal.get_calendar("NYSE")
+    return timestamp.apply(
+        market_time.compute_last_weekly_close_time, cal=new_york_cal, k=0
     )
 
 @parameterize(
@@ -228,7 +249,13 @@ def last_monthly_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     return timestamp.apply(
         market_time.compute_last_monthly_close_time, cal=new_york_cal, k=k
     )
-        
+
+def last_monthly_close_time(timestamp: pd.Series) -> pd.Series:
+    new_york_cal = mcal.get_calendar("NYSE")
+    return timestamp.apply(
+        market_time.compute_last_monthly_close_time, cal=new_york_cal, k=0
+    )
+
 @parameterize(
     london_last_open_time_0={"k":value(0)},
     london_last_open_time_1={"k":value(1)},
