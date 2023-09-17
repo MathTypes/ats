@@ -39,7 +39,8 @@ HALFLIFE_WINSORISE = 252
 def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
     logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
     #series = clean_sorted_data[["timestamp"]]
-    series = clean_sorted_data["timestamp"]
+    #series = clean_sorted_data["timestamp"]
+    series = clean_sorted_data.index.get_level_values(0).to_series()
     logging.error(f"series:{series}")
     return series
 
@@ -781,6 +782,6 @@ def shift_time_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interva
     #logging.error(f"df after reset:{df}")
     series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
     #logging.error(f"shift_tmpl series:{series.iloc[50:100]}")
-    series = series.set_index(["time","ticker"])
+    series = series.set_index(["timestamp","ticker"])
     #logging.error(f"shift_tmpl_col_name:{col_name}, series:{series.iloc[50:100]}, interval_per_day:{interval_per_day}, steps:{steps}")
     return series

@@ -107,7 +107,7 @@ class MarketDataMgr(object):
         logging.info(f"full data after filtering: {full_data.iloc[-3:]}")
         logging.info(f"full_data:{len(full_data)}, train:{len(train_time_idx)}, eval:{len(eval_time_idx)}, test:{len(test_time_idx)}")
         logging.info(f"full_data:{full_data.describe()}")
-        full_data = full_data.sort_values(["ticker", "time"])
+        full_data = full_data.sort_values(["ticker", "timestamp"])
         data_module = TimeSeriesDataModule(
             config,
             full_data, train_time_idx, eval_time_idx, test_time_idx,
@@ -168,10 +168,8 @@ class MarketDataMgr(object):
         }
         cache_path = "/tmp/hamilton_cache"
         pathlib.Path(cache_path).mkdir(exist_ok=True)
-        #adapter = h_cache.CachingGraphAdapter(cache_path, base.PandasDataFrameResult())
         rga = h_ray.RayWorkflowGraphAdapter(
             result_builder=base.PandasDataFrameResult(),
-        #    # Ray will resume a run if possible based on workflow id
             workflow_id=f"wf-{env_mgr.run_id}",
         )
         dr = driver.Driver(initial_columns, *modules, adapter=rga)

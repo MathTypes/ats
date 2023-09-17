@@ -31,6 +31,7 @@ def run_features(feature_name, k=10):
         env_mgr = EnvMgr(cfg)
         md_mgr = market_data_mgr.MarketDataMgr(env_mgr)
         #log_setup.setup_logging()
+        ray.shutdown()
         ray.init(object_store_memory=30*1024*1024*1024,
                  storage=f"{cfg.dataset.base_dir}/cache",
                  log_to_driver=True)
@@ -117,21 +118,30 @@ def test_ret_from_vwap_pre_new_york_open():
         decimal=3
     )
 
-def test_ret_from_new_york_last_daily_close_0():
-    result = run_features("ret_from_new_york_last_daily_close_0", 100)["ret_from_new_york_last_daily_close_0"][10:15]
-    print(f"result:{result.to_list()}")
+def test_ret_from_last_daily_close_0():
+    result = run_features("ret_from_last_daily_close_0", 100)
+    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
-        result,
-        [-0.0012162281057896962, -0.0008685833951798116, -0.0006948063506895252, -0.00191188030775713, -0.0024339372238166845],
+        result['ret_from_last_daily_close_0'][10:15],
+        [0.002, 0.003, 0.003, 0.002, 0.001],
         decimal=3
     )
 
-def test_ret_from_new_york_last_daily_close_1():
-    result = run_features("ret_from_new_york_last_daily_close_1", 100)
+def test_ret_from_last_daily_close_1():
+    result = run_features("ret_from_last_daily_close_1", 100)
     print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_daily_close_1'][10:15],
         [0.002, 0.003, 0.003, 0.002, 0.001],
+        decimal=3
+    )
+
+def test_ret_from_last_daily_close_2():
+    result = run_features("ret_from_last_daily_close_2", 100)["ret_from_last_daily_close_2"][10:15]
+    print(f"result:{result.to_list()}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [-0.0012162281057896962, -0.0008685833951798116, -0.0006948063506895252, -0.00191188030775713, -0.0024339372238166845],
         decimal=3
     )
 
@@ -143,6 +153,8 @@ def test_ret_from_last_weekly_close_1():
         [0.002, 0.003, 0.003, 0.002, 0.001],
         decimal=3
     )
+
+
 def test_ret_from_last_monthly_close_1():
     result = run_features("ret_from_last_monthly_close_1", 100)
     print(f"result:{result}")
@@ -181,6 +193,15 @@ def test_ret_from_vwap_pre_london_open():
 
 def test_ret_from_vwap_pre_london_close():
     result = run_features("ret_from_vwap_pre_london_close", 100)['ret_from_vwap_pre_london_close'][10:15]
+    print(f"result:{result}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [0.0195, 0.0198, 0.0200, 0.0188, 0.0183],
+        decimal=3
+    )
+
+def test_example_group_features():
+    result = run_features("example_group_features", 100)
     print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result,

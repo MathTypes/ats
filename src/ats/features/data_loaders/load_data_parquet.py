@@ -52,6 +52,7 @@ def sorted_data(config : DictConfig, env_mgr : EnvMgr) -> pd.DataFrame:
         interval_minutes=config.dataset.interval_mins,
     )
     full_data["timestamp"] = full_data.time.apply(lambda x: int(x.timestamp()))
+    full_data["idx_timestamp"] = full_data["timestamp"]
     # Do not use what are in serialized files as we need to recompute across different months.
     full_data = full_data.drop(
         columns=[
@@ -73,7 +74,8 @@ def sorted_data(config : DictConfig, env_mgr : EnvMgr) -> pd.DataFrame:
     full_data = full_data.sort_index()
     full_data["time_idx"] = range(0, len(full_data))
     full_data = full_data.reset_index()
-    full_data = full_data.set_index(["time","ticker"])
+    full_data = full_data.set_index(["timestamp","ticker"])
+    #full_data["timestamp"] = full_data["idx_timestamp"]
     full_data = full_data.sort_index()
     return full_data
 

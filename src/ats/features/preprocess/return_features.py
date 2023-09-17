@@ -146,7 +146,7 @@ def clean_sorted_data(sorted_data : pd.DataFrame, config: DictConfig) -> pd.Data
         if column in raw_data.columns:
             raw_data = raw_data.drop(columns=[column])
             
-    return raw_data.sort_values(['timestamp'])
+    return raw_data.sort_index()
 
 #def timestamp(clean_sorted_data: pd.DataFrame) -> generic.SeriesGroupBy:
 #    return clean_sorted_data["timestamp"]
@@ -340,7 +340,7 @@ def time_with_close_tmpl(close:pd.Series, timestamp:pd.Series, close_col:pd.Seri
     #logging.error(f"df after reset:{df}")
     series = df.groupby(['ticker']).apply(lambda x: find_close_time(x, "close_high"))
     #series = series.unstack(level=2).drop(columns=['ticker'])
-    series = series.set_index(["time","ticker"])
+    series = series.set_index(["timestamp","ticker"])
     series = series.ffill()
     #logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
     #res = series[['timestamp']]
@@ -594,87 +594,29 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_vwap_pre_london_close={"base_col": source("vwap_pre_london_close"),"col_name":value("vwap_pre_london_close")},
     ret_from_vwap_around_london_close={"base_col": source("vwap_around_london_close"),"col_name":value("vwap_around_london_close")},
     ret_from_vwap_post_london_close={"base_col": source("vwap_post_london_close"),"col_name":value("vwap_post_london_close")},
-    ret_from_new_york_last_daily_open_0={"base_col": source("new_york_last_daily_open_0"),"col_name":value("new_york_last_daily_open_0")},
-    ret_from_new_york_last_daily_open_1={"base_col": source("new_york_last_daily_open_1"),"col_name":value("new_york_last_daily_open_1")},
-    ret_from_new_york_last_daily_open_2={"base_col": source("new_york_last_daily_open_2"),"col_name":value("new_york_last_daily_open_2")},
-    ret_from_new_york_last_daily_open_3={"base_col": source("new_york_last_daily_open_3"),"col_name":value("new_york_last_daily_open_3")},
-    ret_from_new_york_last_daily_open_4={"base_col": source("new_york_last_daily_open_4"),"col_name":value("new_york_last_daily_open_4")},
-    ret_from_new_york_last_daily_open_5={"base_col": source("new_york_last_daily_open_5"),"col_name":value("new_york_last_daily_open_5")},
-    ret_from_new_york_last_daily_open_6={"base_col": source("new_york_last_daily_open_6"),"col_name":value("new_york_last_daily_open_6")},
-    ret_from_new_york_last_daily_open_7={"base_col": source("new_york_last_daily_open_7"),"col_name":value("new_york_last_daily_open_7")},
-    ret_from_new_york_last_daily_open_8={"base_col": source("new_york_last_daily_open_8"),"col_name":value("new_york_last_daily_open_8")},
-    ret_from_new_york_last_daily_open_9={"base_col": source("new_york_last_daily_open_9"),"col_name":value("new_york_last_daily_open_9")},
-    ret_from_new_york_last_daily_open_10={"base_col": source("new_york_last_daily_open_10"),"col_name":value("new_york_last_daily_open_10")},
-    ret_from_new_york_last_daily_open_11={"base_col": source("new_york_last_daily_open_11"),"col_name":value("new_york_last_daily_open_11")},
-    ret_from_new_york_last_daily_open_12={"base_col": source("new_york_last_daily_open_12"),"col_name":value("new_york_last_daily_open_12")},
-    ret_from_new_york_last_daily_open_13={"base_col": source("new_york_last_daily_open_13"),"col_name":value("new_york_last_daily_open_13")},
-    ret_from_new_york_last_daily_open_14={"base_col": source("new_york_last_daily_open_14"),"col_name":value("new_york_last_daily_open_14")},
-    ret_from_new_york_last_daily_open_15={"base_col": source("new_york_last_daily_open_15"),"col_name":value("new_york_last_daily_open_15")},
-    ret_from_new_york_last_daily_open_16={"base_col": source("new_york_last_daily_open_16"),"col_name":value("new_york_last_daily_open_16")},
-    ret_from_new_york_last_daily_open_17={"base_col": source("new_york_last_daily_open_17"),"col_name":value("new_york_last_daily_open_17")},
-    ret_from_new_york_last_daily_open_18={"base_col": source("new_york_last_daily_open_18"),"col_name":value("new_york_last_daily_open_18")},
-    ret_from_new_york_last_daily_open_19={"base_col": source("new_york_last_daily_open_19"),"col_name":value("new_york_last_daily_open_19")},
-    ret_from_new_york_last_daily_close_0={"base_col": source("new_york_last_daily_close_0"),"col_name":value("new_york_last_daily_close_0")},
-    ret_from_new_york_last_daily_close_1={"base_col": source("new_york_last_daily_close_1"),"col_name":value("new_york_last_daily_close_1")},
-    ret_from_new_york_last_daily_close_2={"base_col": source("new_york_last_daily_close_2"),"col_name":value("new_york_last_daily_close_2")},
-    ret_from_new_york_last_daily_close_3={"base_col": source("new_york_last_daily_close_3"),"col_name":value("new_york_last_daily_close_3")},
-    ret_from_new_york_last_daily_close_4={"base_col": source("new_york_last_daily_close_4"),"col_name":value("new_york_last_daily_close_4")},
-    ret_from_new_york_last_daily_close_5={"base_col": source("new_york_last_daily_close_5"),"col_name":value("new_york_last_daily_close_5")},
-    ret_from_new_york_last_daily_close_6={"base_col": source("new_york_last_daily_close_6"),"col_name":value("new_york_last_daily_close_6")},
-    ret_from_new_york_last_daily_close_7={"base_col": source("new_york_last_daily_close_7"),"col_name":value("new_york_last_daily_close_7")},
-    ret_from_new_york_last_daily_close_8={"base_col": source("new_york_last_daily_close_8"),"col_name":value("new_york_last_daily_close_8")},
-    ret_from_new_york_last_daily_close_9={"base_col": source("new_york_last_daily_close_9"),"col_name":value("new_york_last_daily_close_9")},
-    ret_from_new_york_last_daily_close_10={"base_col": source("new_york_last_daily_close_10"),"col_name":value("new_york_last_daily_close_10")},
-    ret_from_new_york_last_daily_close_11={"base_col": source("new_york_last_daily_close_11"),"col_name":value("new_york_last_daily_close_11")},
-    ret_from_new_york_last_daily_close_12={"base_col": source("new_york_last_daily_close_12"),"col_name":value("new_york_last_daily_close_12")},
-    ret_from_new_york_last_daily_close_13={"base_col": source("new_york_last_daily_close_13"),"col_name":value("new_york_last_daily_close_13")},
-    ret_from_new_york_last_daily_close_14={"base_col": source("new_york_last_daily_close_14"),"col_name":value("new_york_last_daily_close_14")},
-    ret_from_new_york_last_daily_close_15={"base_col": source("new_york_last_daily_close_15"),"col_name":value("new_york_last_daily_close_15")},
-    ret_from_new_york_last_daily_close_16={"base_col": source("new_york_last_daily_close_16"),"col_name":value("new_york_last_daily_close_16")},
-    ret_from_new_york_last_daily_close_17={"base_col": source("new_york_last_daily_close_17"),"col_name":value("new_york_last_daily_close_17")},
-    ret_from_new_york_last_daily_close_18={"base_col": source("new_york_last_daily_close_18"),"col_name":value("new_york_last_daily_close_18")},
-    ret_from_new_york_last_daily_close_19={"base_col": source("new_york_last_daily_close_19"),"col_name":value("new_york_last_daily_close_19")},
-    ret_from_london_last_daily_open_0={"base_col": source("london_last_daily_open_0"),"col_name":value("london_last_daily_open_0")},
-    ret_from_london_last_daily_open_1={"base_col": source("london_last_daily_open_1"),"col_name":value("london_last_daily_open_1")},
-    ret_from_london_last_daily_open_2={"base_col": source("london_last_daily_open_2"),"col_name":value("london_last_daily_open_2")},
-    ret_from_london_last_daily_open_3={"base_col": source("london_last_daily_open_3"),"col_name":value("london_last_daily_open_3")},
-    ret_from_london_last_daily_open_4={"base_col": source("london_last_daily_open_4"),"col_name":value("london_last_daily_open_4")},
-    ret_from_london_last_daily_open_5={"base_col": source("london_last_daily_open_5"),"col_name":value("london_last_daily_open_5")},
-    ret_from_london_last_daily_open_6={"base_col": source("london_last_daily_open_6"),"col_name":value("london_last_daily_open_6")},
-    ret_from_london_last_daily_open_7={"base_col": source("london_last_daily_open_7"),"col_name":value("london_last_daily_open_7")},
-    ret_from_london_last_daily_open_8={"base_col": source("london_last_daily_open_8"),"col_name":value("london_last_daily_open_8")},
-    ret_from_london_last_daily_open_9={"base_col": source("london_last_daily_open_9"),"col_name":value("london_last_daily_open_9")},
-    ret_from_london_last_daily_open_10={"base_col": source("london_last_daily_open_10"),"col_name":value("london_last_daily_open_10")},
-    ret_from_london_last_daily_open_11={"base_col": source("london_last_daily_open_11"),"col_name":value("london_last_daily_open_11")},
-    ret_from_london_last_daily_open_12={"base_col": source("london_last_daily_open_12"),"col_name":value("london_last_daily_open_12")},
-    ret_from_london_last_daily_open_13={"base_col": source("london_last_daily_open_13"),"col_name":value("london_last_daily_open_13")},
-    ret_from_london_last_daily_open_14={"base_col": source("london_last_daily_open_14"),"col_name":value("london_last_daily_open_14")},
-    ret_from_london_last_daily_open_15={"base_col": source("london_last_daily_open_15"),"col_name":value("london_last_daily_open_15")},
-    ret_from_london_last_daily_open_16={"base_col": source("london_last_daily_open_16"),"col_name":value("london_last_daily_open_16")},
-    ret_from_london_last_daily_open_17={"base_col": source("london_last_daily_open_17"),"col_name":value("london_last_daily_open_17")},
-    ret_from_london_last_daily_open_18={"base_col": source("london_last_daily_open_18"),"col_name":value("london_last_daily_open_18")},
-    ret_from_london_last_daily_open_19={"base_col": source("london_last_daily_open_19"),"col_name":value("london_last_daily_open_19")},
-    ret_from_london_last_daily_close_0={"base_col": source("london_last_daily_close_0"),"col_name":value("london_last_daily_close_0")},
-    ret_from_london_last_daily_close_1={"base_col": source("london_last_daily_close_1"),"col_name":value("london_last_daily_close_1")},
-    ret_from_london_last_daily_close_2={"base_col": source("london_last_daily_close_2"),"col_name":value("london_last_daily_close_2")},
-    ret_from_london_last_daily_close_3={"base_col": source("london_last_daily_close_3"),"col_name":value("london_last_daily_close_3")},
-    ret_from_london_last_daily_close_4={"base_col": source("london_last_daily_close_4"),"col_name":value("london_last_daily_close_4")},
-    ret_from_london_last_daily_close_5={"base_col": source("london_last_daily_close_5"),"col_name":value("london_last_daily_close_5")},
-    ret_from_london_last_daily_close_6={"base_col": source("london_last_daily_close_6"),"col_name":value("london_last_daily_close_6")},
-    ret_from_london_last_daily_close_7={"base_col": source("london_last_daily_close_7"),"col_name":value("london_last_daily_close_7")},
-    ret_from_london_last_daily_close_8={"base_col": source("london_last_daily_close_8"),"col_name":value("london_last_daily_close_8")},
-    ret_from_london_last_daily_close_9={"base_col": source("london_last_daily_close_9"),"col_name":value("london_last_daily_close_9")},
-    ret_from_london_last_daily_close_10={"base_col": source("london_last_daily_close_10"),"col_name":value("london_last_daily_close_10")},
-    ret_from_london_last_daily_close_11={"base_col": source("london_last_daily_close_11"),"col_name":value("london_last_daily_close_11")},
-    ret_from_london_last_daily_close_12={"base_col": source("london_last_daily_close_12"),"col_name":value("london_last_daily_close_12")},
-    ret_from_london_last_daily_close_13={"base_col": source("london_last_daily_close_13"),"col_name":value("london_last_daily_close_13")},
-    ret_from_london_last_daily_close_14={"base_col": source("london_last_daily_close_14"),"col_name":value("london_last_daily_close_14")},
-    ret_from_london_last_daily_close_15={"base_col": source("london_last_daily_close_15"),"col_name":value("london_last_daily_close_15")},
-    ret_from_london_last_daily_close_16={"base_col": source("london_last_daily_close_16"),"col_name":value("london_last_daily_close_16")},
-    ret_from_london_last_daily_close_17={"base_col": source("london_last_daily_close_17"),"col_name":value("london_last_daily_close_17")},
-    ret_from_london_last_daily_close_18={"base_col": source("london_last_daily_close_18"),"col_name":value("london_last_daily_close_18")},
-    ret_from_london_last_daily_close_19={"base_col": source("london_last_daily_close_19"),"col_name":value("london_last_daily_close_19")},
-    ret_from_last_weekly_close_0={"base_col": source("last_weekly_close_0"),"col_name":value("last_weekly_close_0")},
+
+    ret_from_last_daily_close_0={"base_col": source("last_daily_close_0"),"col_name":value("last_daily_close")},
+    ret_from_last_daily_close_1={"base_col": source("last_daily_close_1"),"col_name":value("last_daily_close_1")},
+    ret_from_last_daily_close_2={"base_col": source("last_daily_close_2"),"col_name":value("last_daily_close_2")},
+    ret_from_last_daily_close_3={"base_col": source("last_daily_close_3"),"col_name":value("last_daily_close_3")},
+    ret_from_last_daily_close_4={"base_col": source("last_daily_close_4"),"col_name":value("last_daily_close_4")},
+    ret_from_last_daily_close_5={"base_col": source("last_daily_close_5"),"col_name":value("last_daily_close_5")},
+    ret_from_last_daily_close_6={"base_col": source("last_daily_close_6"),"col_name":value("last_daily_close_6")},
+    ret_from_last_daily_close_7={"base_col": source("last_daily_close_7"),"col_name":value("last_daily_close_7")},
+    ret_from_last_daily_close_8={"base_col": source("last_daily_close_8"),"col_name":value("last_daily_close_8")},
+    ret_from_last_daily_close_9={"base_col": source("last_daily_close_9"),"col_name":value("last_daily_close_9")},
+    ret_from_last_daily_close_10={"base_col": source("last_daily_close_10"),"col_name":value("last_daily_close_10")},
+    ret_from_last_daily_close_11={"base_col": source("last_daily_close_11"),"col_name":value("last_daily_close_11")},
+    ret_from_last_daily_close_12={"base_col": source("last_daily_close_12"),"col_name":value("last_daily_close_12")},
+    ret_from_last_daily_close_13={"base_col": source("last_daily_close_13"),"col_name":value("last_daily_close_13")},
+    ret_from_last_daily_close_14={"base_col": source("last_daily_close_14"),"col_name":value("last_daily_close_14")},
+    ret_from_last_daily_close_15={"base_col": source("last_daily_close_15"),"col_name":value("last_daily_close_15")},
+    ret_from_last_daily_close_16={"base_col": source("last_daily_close_16"),"col_name":value("last_daily_close_16")},
+    ret_from_last_daily_close_17={"base_col": source("last_daily_close_17"),"col_name":value("last_daily_close_17")},
+    ret_from_last_daily_close_18={"base_col": source("new_york_last_daily_close_18"),"col_name":value("last_daily_close_18")},
+    ret_from_last_daily_close_19={"base_col": source("last_daily_close_19"),"col_name":value("last_daily_close_19")},
+
+    ret_from_last_weekly_close_0={"base_col": source("last_weekly_close_0"),"col_name":value("last_weekly_close")},
     ret_from_last_weekly_close_1={"base_col": source("last_weekly_close_1"),"col_name":value("last_weekly_close_1")},
     ret_from_last_weekly_close_2={"base_col": source("last_weekly_close_2"),"col_name":value("last_weekly_close_2")},
     ret_from_last_weekly_close_3={"base_col": source("last_weekly_close_3"),"col_name":value("last_weekly_close_3")},
@@ -694,7 +636,8 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_last_weekly_close_17={"base_col": source("last_weekly_close_17"),"col_name":value("last_weekly_close_17")},
     ret_from_last_weekly_close_18={"base_col": source("last_weekly_close_18"),"col_name":value("last_weekly_close_18")},
     ret_from_last_weekly_close_19={"base_col": source("last_weekly_close_19"),"col_name":value("last_weekly_close_19")},
-    ret_from_last_monthly_close_0={"base_col": source("last_monthly_close_0"),"col_name":value("last_monthly_close_0")},
+
+    ret_from_last_monthly_close_0={"base_col": source("last_monthly_close_0"),"col_name":value("last_monthly_close")},
     ret_from_last_monthly_close_1={"base_col": source("last_monthly_close_1"),"col_name":value("last_monthly_close_1")},
     ret_from_last_monthly_close_2={"base_col": source("last_monthly_close_2"),"col_name":value("last_monthly_close_2")},
     ret_from_last_monthly_close_3={"base_col": source("last_monthly_close_3"),"col_name":value("last_monthly_close_3")},
@@ -786,17 +729,18 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
     logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
     logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
-    base_col = base_col.reset_index()
+    #base_col = base_col.reset_index()
     logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
     logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
-    base_col.set_index(["time","ticker"], inplace = True)
+    #base_col.set_index(["timestamp","ticker"], inplace = True)
     logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
     logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
+    logging.error(f"ret_from_price_base_col: base_col_type:{type(base_col)}")
     base_series = None
-    if "close" in base_col.columns:
-        base_series = base_col["close"]
+    if isinstance(base_col, (pd.Series)) or not "close" in base_col.columns:
+        base_series = base_col
     else:
-        base_series = base_col.iloc[:,0]
+        base_series = base_col["close"]
     df = pd.concat([close, base_series], axis=1)
     logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     df.columns = ["close", "diff_close"]
@@ -939,86 +883,6 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            time_to_london_last_open:pd.Series,
                            time_to_london_close:pd.Series,
                            time_to_london_last_close:pd.Series,
-                           new_york_last_daily_open_0: pd.Series,
-                           new_york_last_daily_open_1: pd.Series,
-                           new_york_last_daily_open_2: pd.Series,
-                           new_york_last_daily_open_3: pd.Series,
-                           new_york_last_daily_open_4: pd.Series,
-                           new_york_last_daily_open_5: pd.Series,
-                           new_york_last_daily_open_6: pd.Series,
-                           new_york_last_daily_open_7: pd.Series,
-                           new_york_last_daily_open_8: pd.Series,
-                           new_york_last_daily_open_9: pd.Series,
-                           new_york_last_daily_open_10: pd.Series,
-                           new_york_last_daily_open_11: pd.Series,
-                           new_york_last_daily_open_12: pd.Series,
-                           new_york_last_daily_open_13: pd.Series,
-                           new_york_last_daily_open_14: pd.Series,
-                           new_york_last_daily_open_15: pd.Series,
-                           new_york_last_daily_open_16: pd.Series,
-                           new_york_last_daily_open_17: pd.Series,
-                           new_york_last_daily_open_18: pd.Series,
-                           new_york_last_daily_open_19: pd.Series,
-                           new_york_last_daily_close_0: pd.Series,
-                           new_york_last_daily_close_1: pd.Series,
-                           new_york_last_daily_close_2: pd.Series,
-                           new_york_last_daily_close_3: pd.Series,
-                           new_york_last_daily_close_4: pd.Series,
-                           new_york_last_daily_close_5: pd.Series,
-                           new_york_last_daily_close_6: pd.Series,
-                           new_york_last_daily_close_7: pd.Series,
-                           new_york_last_daily_close_8: pd.Series,
-                           new_york_last_daily_close_9: pd.Series,
-                           new_york_last_daily_close_10: pd.Series,
-                           new_york_last_daily_close_11: pd.Series,
-                           new_york_last_daily_close_12: pd.Series,
-                           new_york_last_daily_close_13: pd.Series,
-                           new_york_last_daily_close_14: pd.Series,
-                           new_york_last_daily_close_15: pd.Series,
-                           new_york_last_daily_close_16: pd.Series,
-                           new_york_last_daily_close_17: pd.Series,
-                           new_york_last_daily_close_18: pd.Series,
-                           new_york_last_daily_close_19: pd.Series,
-                           london_last_daily_open_0: pd.Series,
-                           london_last_daily_open_1: pd.Series,
-                           london_last_daily_open_2: pd.Series,
-                           london_last_daily_open_3: pd.Series,
-                           london_last_daily_open_4: pd.Series,
-                           london_last_daily_open_5: pd.Series,
-                           london_last_daily_open_6: pd.Series,
-                           london_last_daily_open_7: pd.Series,
-                           london_last_daily_open_8: pd.Series,
-                           london_last_daily_open_9: pd.Series,
-                           london_last_daily_open_10: pd.Series,
-                           london_last_daily_open_11: pd.Series,
-                           london_last_daily_open_12: pd.Series,
-                           london_last_daily_open_13: pd.Series,
-                           london_last_daily_open_14: pd.Series,
-                           london_last_daily_open_15: pd.Series,
-                           london_last_daily_open_16: pd.Series,
-                           london_last_daily_open_17: pd.Series,
-                           london_last_daily_open_18: pd.Series,
-                           london_last_daily_open_19: pd.Series,
-                           london_last_daily_close_0: pd.Series,
-                           london_last_daily_close_1: pd.Series,
-                           london_last_daily_close_2: pd.Series,
-                           london_last_daily_close_3: pd.Series,
-                           london_last_daily_close_4: pd.Series,
-                           london_last_daily_close_5: pd.Series,
-                           london_last_daily_close_6: pd.Series,
-                           london_last_daily_close_7: pd.Series,
-                           london_last_daily_close_8: pd.Series,
-                           london_last_daily_close_9: pd.Series,
-                           london_last_daily_close_10: pd.Series,
-                           london_last_daily_close_11: pd.Series,
-                           london_last_daily_close_12: pd.Series,
-                           london_last_daily_close_13: pd.Series,
-                           london_last_daily_close_14: pd.Series,
-                           london_last_daily_close_15: pd.Series,
-                           london_last_daily_close_16: pd.Series,
-                           london_last_daily_close_17: pd.Series,
-                           london_last_daily_close_18: pd.Series,
-                           london_last_daily_close_19: pd.Series,
                            rsi_14: pd.Series,
                            rsi_28: pd.Series,
                            rsi_42: pd.Series,
@@ -1241,86 +1105,26 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            ret_from_vwap_around_london_close: pd.Series,
                            ret_from_vwap_post_london_close: pd.Series,
                            ret_from_vwap_pre_london_close: pd.Series,
-                           ret_from_new_york_last_daily_open_0: pd.Series,
-                           ret_from_new_york_last_daily_open_1: pd.Series,
-                           ret_from_new_york_last_daily_open_2: pd.Series,
-                           ret_from_new_york_last_daily_open_3: pd.Series,
-                           ret_from_new_york_last_daily_open_4: pd.Series,
-                           ret_from_new_york_last_daily_open_5: pd.Series,
-                           ret_from_new_york_last_daily_open_6: pd.Series,
-                           ret_from_new_york_last_daily_open_7: pd.Series,
-                           ret_from_new_york_last_daily_open_8: pd.Series,
-                           ret_from_new_york_last_daily_open_9: pd.Series,
-                           ret_from_new_york_last_daily_open_10: pd.Series,
-                           ret_from_new_york_last_daily_open_11: pd.Series,
-                           ret_from_new_york_last_daily_open_12: pd.Series,
-                           ret_from_new_york_last_daily_open_13: pd.Series,
-                           ret_from_new_york_last_daily_open_14: pd.Series,
-                           ret_from_new_york_last_daily_open_15: pd.Series,
-                           ret_from_new_york_last_daily_open_16: pd.Series,
-                           ret_from_new_york_last_daily_open_17: pd.Series,
-                           ret_from_new_york_last_daily_open_18: pd.Series,
-                           ret_from_new_york_last_daily_open_19: pd.Series,
-                           ret_from_new_york_last_daily_close_0: pd.Series,
-                           ret_from_new_york_last_daily_close_1: pd.Series,
-                           ret_from_new_york_last_daily_close_2: pd.Series,
-                           ret_from_new_york_last_daily_close_3: pd.Series,
-                           ret_from_new_york_last_daily_close_4: pd.Series,
-                           ret_from_new_york_last_daily_close_5: pd.Series,
-                           ret_from_new_york_last_daily_close_6: pd.Series,
-                           ret_from_new_york_last_daily_close_7: pd.Series,
-                           ret_from_new_york_last_daily_close_8: pd.Series,
-                           ret_from_new_york_last_daily_close_9: pd.Series,
-                           ret_from_new_york_last_daily_close_10: pd.Series,
-                           ret_from_new_york_last_daily_close_11: pd.Series,
-                           ret_from_new_york_last_daily_close_12: pd.Series,
-                           ret_from_new_york_last_daily_close_13: pd.Series,
-                           ret_from_new_york_last_daily_close_14: pd.Series,
-                           ret_from_new_york_last_daily_close_15: pd.Series,
-                           ret_from_new_york_last_daily_close_16: pd.Series,
-                           ret_from_new_york_last_daily_close_17: pd.Series,
-                           ret_from_new_york_last_daily_close_18: pd.Series,
-                           ret_from_new_york_last_daily_close_19: pd.Series,
-                           ret_from_london_last_daily_open_0: pd.Series,
-                           ret_from_london_last_daily_open_1: pd.Series,
-                           ret_from_london_last_daily_open_2: pd.Series,
-                           ret_from_london_last_daily_open_3: pd.Series,
-                           ret_from_london_last_daily_open_4: pd.Series,
-                           ret_from_london_last_daily_open_5: pd.Series,
-                           ret_from_london_last_daily_open_6: pd.Series,
-                           ret_from_london_last_daily_open_7: pd.Series,
-                           ret_from_london_last_daily_open_8: pd.Series,
-                           ret_from_london_last_daily_open_9: pd.Series,
-                           ret_from_london_last_daily_open_10: pd.Series,
-                           ret_from_london_last_daily_open_11: pd.Series,
-                           ret_from_london_last_daily_open_12: pd.Series,
-                           ret_from_london_last_daily_open_13: pd.Series,
-                           ret_from_london_last_daily_open_14: pd.Series,
-                           ret_from_london_last_daily_open_15: pd.Series,
-                           ret_from_london_last_daily_open_16: pd.Series,
-                           ret_from_london_last_daily_open_17: pd.Series,
-                           ret_from_london_last_daily_open_18: pd.Series,
-                           ret_from_london_last_daily_open_19: pd.Series,
-                           ret_from_london_last_daily_close_0: pd.Series,
-                           ret_from_london_last_daily_close_1: pd.Series,
-                           ret_from_london_last_daily_close_2: pd.Series,
-                           ret_from_london_last_daily_close_3: pd.Series,
-                           ret_from_london_last_daily_close_4: pd.Series,
-                           ret_from_london_last_daily_close_5: pd.Series,
-                           ret_from_london_last_daily_close_6: pd.Series,
-                           ret_from_london_last_daily_close_7: pd.Series,
-                           ret_from_london_last_daily_close_8: pd.Series,
-                           ret_from_london_last_daily_close_9: pd.Series,
-                           ret_from_london_last_daily_close_10: pd.Series,
-                           ret_from_london_last_daily_close_11: pd.Series,
-                           ret_from_london_last_daily_close_12: pd.Series,
-                           ret_from_london_last_daily_close_13: pd.Series,
-                           ret_from_london_last_daily_close_14: pd.Series,
-                           ret_from_london_last_daily_close_15: pd.Series,
-                           ret_from_london_last_daily_close_16: pd.Series,
-                           ret_from_london_last_daily_close_17: pd.Series,
-                           ret_from_london_last_daily_close_18: pd.Series,
-                           ret_from_london_last_daily_close_19: pd.Series,
+                           ret_from_last_daily_close_0: pd.Series,
+                           ret_from_last_daily_close_1: pd.Series,
+                           ret_from_last_daily_close_2: pd.Series,
+                           ret_from_last_daily_close_3: pd.Series,
+                           ret_from_last_daily_close_4: pd.Series,
+                           ret_from_last_daily_close_5: pd.Series,
+                           ret_from_last_daily_close_6: pd.Series,
+                           ret_from_last_daily_close_7: pd.Series,
+                           ret_from_last_daily_close_8: pd.Series,
+                           ret_from_last_daily_close_9: pd.Series,
+                           ret_from_last_daily_close_10: pd.Series,
+                           ret_from_last_daily_close_11: pd.Series,
+                           ret_from_last_daily_close_12: pd.Series,
+                           ret_from_last_daily_close_13: pd.Series,
+                           ret_from_last_daily_close_14: pd.Series,
+                           ret_from_last_daily_close_15: pd.Series,
+                           ret_from_last_daily_close_16: pd.Series,
+                           ret_from_last_daily_close_17: pd.Series,
+                           ret_from_last_daily_close_18: pd.Series,
+                           ret_from_last_daily_close_19: pd.Series,
                            ret_from_sma_5: pd.Series,
                            ret_from_sma_10: pd.Series,
                            ret_from_sma_20: pd.Series,
@@ -1613,89 +1417,26 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
         raw_data["daily_kurt_10d"] = daily_kurt_10d
         raw_data["daily_kurt_20d"] = daily_kurt_20d
 
-    raw_data[f"ret_from_new_york_last_daily_open_0"] = ret_from_new_york_last_daily_open_0
-    raw_data[f"ret_from_new_york_last_daily_open_1"] = ret_from_new_york_last_daily_open_1
-    raw_data[f"ret_from_new_york_last_daily_open_2"] = ret_from_new_york_last_daily_open_2
-    raw_data[f"ret_from_new_york_last_daily_open_3"] = ret_from_new_york_last_daily_open_3
-    raw_data[f"ret_from_new_york_last_daily_open_4"] = ret_from_new_york_last_daily_open_4
-    raw_data[f"ret_from_new_york_last_daily_open_5"] = ret_from_new_york_last_daily_open_5
-    raw_data[f"ret_from_new_york_last_daily_open_6"] = ret_from_new_york_last_daily_open_6
-    raw_data[f"ret_from_new_york_last_daily_open_7"] = ret_from_new_york_last_daily_open_7
-    raw_data[f"ret_from_new_york_last_daily_open_8"] = ret_from_new_york_last_daily_open_8
-    raw_data[f"ret_from_new_york_last_daily_open_9"] = ret_from_new_york_last_daily_open_9
-    raw_data[f"ret_from_new_york_last_daily_open_10"] = ret_from_new_york_last_daily_open_10
-    raw_data[f"ret_from_new_york_last_daily_open_11"] = ret_from_new_york_last_daily_open_11
-    raw_data[f"ret_from_new_york_last_daily_open_12"] = ret_from_new_york_last_daily_open_12
-    raw_data[f"ret_from_new_york_last_daily_open_13"] = ret_from_new_york_last_daily_open_13
-    raw_data[f"ret_from_new_york_last_daily_open_14"] = ret_from_new_york_last_daily_open_14
-    raw_data[f"ret_from_new_york_last_daily_open_15"] = ret_from_new_york_last_daily_open_15
-    raw_data[f"ret_from_new_york_last_daily_open_16"] = ret_from_new_york_last_daily_open_16
-    raw_data[f"ret_from_new_york_last_daily_open_17"] = ret_from_new_york_last_daily_open_17
-    raw_data[f"ret_from_new_york_last_daily_open_18"] = ret_from_new_york_last_daily_open_18
-    raw_data[f"ret_from_new_york_last_daily_open_19"] = ret_from_new_york_last_daily_open_19
-
-    raw_data[f"ret_from_new_york_last_daily_close_0"] = ret_from_new_york_last_daily_close_0
-    raw_data[f"ret_from_new_york_last_daily_close_1"] = ret_from_new_york_last_daily_close_1
-    raw_data[f"ret_from_new_york_last_daily_close_2"] = ret_from_new_york_last_daily_close_2
-    raw_data[f"ret_from_new_york_last_daily_close_3"] = ret_from_new_york_last_daily_close_3
-    raw_data[f"ret_from_new_york_last_daily_close_4"] = ret_from_new_york_last_daily_close_4
-    raw_data[f"ret_from_new_york_last_daily_close_5"] = ret_from_new_york_last_daily_close_5
-    raw_data[f"ret_from_new_york_last_daily_close_6"] = ret_from_new_york_last_daily_close_6
-    raw_data[f"ret_from_new_york_last_daily_close_7"] = ret_from_new_york_last_daily_close_7
-    raw_data[f"ret_from_new_york_last_daily_close_8"] = ret_from_new_york_last_daily_close_8
-    raw_data[f"ret_from_new_york_last_daily_close_9"] = ret_from_new_york_last_daily_close_9
-    raw_data[f"ret_from_new_york_last_daily_close_10"] = ret_from_new_york_last_daily_close_10
-    raw_data[f"ret_from_new_york_last_daily_close_11"] = ret_from_new_york_last_daily_close_11
-    raw_data[f"ret_from_new_york_last_daily_close_12"] = ret_from_new_york_last_daily_close_12
-    raw_data[f"ret_from_new_york_last_daily_close_13"] = ret_from_new_york_last_daily_close_13
-    raw_data[f"ret_from_new_york_last_daily_close_14"] = ret_from_new_york_last_daily_close_14
-    raw_data[f"ret_from_new_york_last_daily_close_15"] = ret_from_new_york_last_daily_close_15
-    raw_data[f"ret_from_new_york_last_daily_close_16"] = ret_from_new_york_last_daily_close_16
-    raw_data[f"ret_from_new_york_last_daily_close_17"] = ret_from_new_york_last_daily_close_17
-    raw_data[f"ret_from_new_york_last_daily_close_18"] = ret_from_new_york_last_daily_close_18
-    raw_data[f"ret_from_new_york_last_daily_close_19"] = ret_from_new_york_last_daily_close_19
-
-    raw_data[f"ret_from_london_last_daily_open_0"] = ret_from_london_last_daily_open_0
-    raw_data[f"ret_from_london_last_daily_open_1"] = ret_from_london_last_daily_open_1
-    raw_data[f"ret_from_london_last_daily_open_2"] = ret_from_london_last_daily_open_2
-    raw_data[f"ret_from_london_last_daily_open_3"] = ret_from_london_last_daily_open_3
-    raw_data[f"ret_from_london_last_daily_open_4"] = ret_from_london_last_daily_open_4
-    raw_data[f"ret_from_london_last_daily_open_5"] = ret_from_london_last_daily_open_5
-    raw_data[f"ret_from_london_last_daily_open_6"] = ret_from_london_last_daily_open_6
-    raw_data[f"ret_from_london_last_daily_open_7"] = ret_from_london_last_daily_open_7
-    raw_data[f"ret_from_london_last_daily_open_8"] = ret_from_london_last_daily_open_8
-    raw_data[f"ret_from_london_last_daily_open_9"] = ret_from_london_last_daily_open_9
-    raw_data[f"ret_from_london_last_daily_open_10"] = ret_from_london_last_daily_open_10
-    raw_data[f"ret_from_london_last_daily_open_11"] = ret_from_london_last_daily_open_11
-    raw_data[f"ret_from_london_last_daily_open_12"] = ret_from_london_last_daily_open_12
-    raw_data[f"ret_from_london_last_daily_open_13"] = ret_from_london_last_daily_open_13
-    raw_data[f"ret_from_london_last_daily_open_14"] = ret_from_london_last_daily_open_14
-    raw_data[f"ret_from_london_last_daily_open_15"] = ret_from_london_last_daily_open_15
-    raw_data[f"ret_from_london_last_daily_open_16"] = ret_from_london_last_daily_open_16
-    raw_data[f"ret_from_london_last_daily_open_17"] = ret_from_london_last_daily_open_17
-    raw_data[f"ret_from_london_last_daily_open_18"] = ret_from_london_last_daily_open_18
-    raw_data[f"ret_from_london_last_daily_open_19"] = ret_from_london_last_daily_open_19
-
-    raw_data[f"ret_from_london_last_daily_close_0"] = ret_from_london_last_daily_close_0
-    raw_data[f"ret_from_london_last_daily_close_1"] = ret_from_london_last_daily_close_1
-    raw_data[f"ret_from_london_last_daily_close_2"] = ret_from_london_last_daily_close_2
-    raw_data[f"ret_from_london_last_daily_close_3"] = ret_from_london_last_daily_close_3
-    raw_data[f"ret_from_london_last_daily_close_4"] = ret_from_london_last_daily_close_4
-    raw_data[f"ret_from_london_last_daily_close_5"] = ret_from_london_last_daily_close_5
-    raw_data[f"ret_from_london_last_daily_close_6"] = ret_from_london_last_daily_close_6
-    raw_data[f"ret_from_london_last_daily_close_7"] = ret_from_london_last_daily_close_7
-    raw_data[f"ret_from_london_last_daily_close_8"] = ret_from_london_last_daily_close_8
-    raw_data[f"ret_from_london_last_daily_close_9"] = ret_from_london_last_daily_close_9
-    raw_data[f"ret_from_london_last_daily_close_10"] = ret_from_london_last_daily_close_10
-    raw_data[f"ret_from_london_last_daily_close_11"] = ret_from_london_last_daily_close_11
-    raw_data[f"ret_from_london_last_daily_close_12"] = ret_from_london_last_daily_close_12
-    raw_data[f"ret_from_london_last_daily_close_13"] = ret_from_london_last_daily_close_13
-    raw_data[f"ret_from_london_last_daily_close_14"] = ret_from_london_last_daily_close_14
-    raw_data[f"ret_from_london_last_daily_close_15"] = ret_from_london_last_daily_close_15
-    raw_data[f"ret_from_london_last_daily_close_16"] = ret_from_london_last_daily_close_16
-    raw_data[f"ret_from_london_last_daily_close_17"] = ret_from_london_last_daily_close_17
-    raw_data[f"ret_from_london_last_daily_close_18"] = ret_from_london_last_daily_close_18
-    raw_data[f"ret_from_london_last_daily_close_19"] = ret_from_london_last_daily_close_19
+    raw_data[f"ret_from_last_daily_close_0"] = ret_from_last_daily_close_0
+    raw_data[f"ret_from_last_daily_close_1"] = ret_from_last_daily_close_1
+    raw_data[f"ret_from_last_daily_close_2"] = ret_from_last_daily_close_2
+    raw_data[f"ret_from_last_daily_close_3"] = ret_from_last_daily_close_3
+    raw_data[f"ret_from_last_daily_close_4"] = ret_from_last_daily_close_4
+    raw_data[f"ret_from_last_daily_close_5"] = ret_from_last_daily_close_5
+    raw_data[f"ret_from_last_daily_close_6"] = ret_from_last_daily_close_6
+    raw_data[f"ret_from_last_daily_close_7"] = ret_from_last_daily_close_7
+    raw_data[f"ret_from_last_daily_close_8"] = ret_from_last_daily_close_8
+    raw_data[f"ret_from_last_daily_close_9"] = ret_from_last_daily_close_9
+    raw_data[f"ret_from_last_daily_close_10"] = ret_from_last_daily_close_10
+    raw_data[f"ret_from_last_daily_close_11"] = ret_from_last_daily_close_11
+    raw_data[f"ret_from_last_daily_close_12"] = ret_from_last_daily_close_12
+    raw_data[f"ret_from_last_daily_close_13"] = ret_from_last_daily_close_13
+    raw_data[f"ret_from_last_daily_close_14"] = ret_from_last_daily_close_14
+    raw_data[f"ret_from_last_daily_close_15"] = ret_from_last_daily_close_15
+    raw_data[f"ret_from_last_daily_close_16"] = ret_from_last_daily_close_16
+    raw_data[f"ret_from_last_daily_close_17"] = ret_from_last_daily_close_17
+    raw_data[f"ret_from_last_daily_close_18"] = ret_from_last_daily_close_18
+    raw_data[f"ret_from_last_daily_close_19"] = ret_from_last_daily_close_19
 
     raw_data[f"ret_from_last_weekly_close_0"] = ret_from_last_weekly_close_0
     raw_data[f"ret_from_last_weekly_close_1"] = ret_from_last_weekly_close_1

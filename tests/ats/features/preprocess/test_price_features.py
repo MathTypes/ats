@@ -133,6 +133,24 @@ def test_close():
         decimal=3
     )
 
+def test_last_daily_close_0():
+    result = run_features("last_daily_close_0", 50)
+    close_list = result['last_daily_close_0'][:10]
+    logging.error(f"close:{close_list.to_list()}")
+    close_time_list = result.index.get_level_values(level=0)[:10]
+    ticker_list = result.index.get_level_values(level=1)[:10]
+    np.testing.assert_array_almost_equal(
+        close_list,
+        [931.25, 929.25, 892.25, 890.5, 879.75, 878.0, 874.75, 909.25, 920.25, 928.75],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1277409600, 1277496000, 1277755200, 1277841600, 1277928000,
+         1278014400, 1278100800, 1278446400, 1278532800, 1278619200],
+        decimal=3
+    )
+
 def test_last_daily_close_1():
     result = run_features("last_daily_close_1", 50)
     logging.error(f"result:{result}")
