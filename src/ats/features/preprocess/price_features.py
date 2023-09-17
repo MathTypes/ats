@@ -452,6 +452,27 @@ def close_low_day_tmpl(steps:int, close:pd.Series, interval_per_day:int) -> pd.S
 def close_low_tmpl(steps:int, close:pd.Series) -> pd.Series:
     return close.groupby(['ticker']).transform(lambda x: x.rolling(steps).min().ffill())
 
+
+@parameterize(
+    last_daily_close_1={"steps": value(1),"price_col":source("daily_close")},
+    last_daily_close_2={"steps": value(2),"price_col":source("daily_close")},
+    last_daily_close_3={"steps": value(3),"price_col":source("daily_close")},
+    last_daily_close_4={"steps": value(4),"price_col":source("daily_close")},
+    last_daily_close_5={"steps": value(5),"price_col":source("daily_close")},
+    last_daily_close_6={"steps": value(6),"price_col":source("daily_close")},
+    last_daily_close_7={"steps": value(7),"price_col":source("daily_close")},
+    last_daily_close_8={"steps": value(8),"price_col":source("daily_close")},
+    last_daily_close_9={"steps": value(9),"price_col":source("daily_close")},
+)
+def shift_price_by_step_tmpl(price_col:pd.Series, steps:int) -> pd.Series:
+    series = price_col.groupby(by='ticker').transform(lambda x:x.shift(steps))
+    return series
+
+def daily_close_df(daily_close:pd.Series, last_daily_close_1:pd.Series, last_daily_close_2:pd.Series) -> pd.DataFrame:
+    df = pd.concat([daily_close, last_daily_close_1, last_daily_close_2], axis=1)
+    df.columns=["daily_close_0", "daily_close_1", "daily_close_2"]
+    return df
+
 @parameterize(
     close_high_1d_ff_shift_1d={"steps": value(1),"shift_col":source("close_high_1d_ff"),"col_name":value("close_high_1d_ff")},
     close_low_1d_ff_shift_1d={"steps": value(1), "shift_col":source("close_low_1d_ff"),"col_name":value("close_low_1d_ff")},
