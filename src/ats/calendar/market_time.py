@@ -138,6 +138,15 @@ def compute_weekly_close_time(x, cal):
         logging.error(f"can not compute weekly event for {x}, {e}")
         return None
 
+def compute_next_weekly_close_time(x, cal):
+    try:
+        x_time = datetime.datetime.fromtimestamp(x, tz=timezone.utc)
+        close_time = get_weekly_close_time(cal, x_time.date())
+        return int(close_time)
+    except Exception as e:
+        logging.error(f"can not compute weekly event for {x}, {e}")
+        return None
+
 def compute_last_weekly_close_time(x, cal, k=0):
     try:
         x_time = datetime.datetime.fromtimestamp(x, tz=timezone.utc)
