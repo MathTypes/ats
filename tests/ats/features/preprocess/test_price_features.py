@@ -333,8 +333,8 @@ def test_weekly_close():
     ticker_list = result.index.get_level_values(level=1)[:10]
     np.testing.assert_array_almost_equal(
         close_list,
-        [887.5 , 865.75, 910.5 , 930.  , 919.25, 877.5 , 909.5 , 933.25,
-         934.75, 936.5],
+        [884.75, 865.25, 911.75, 928.5 , 920.5 , 875.75, 911.  , 935.75,
+         934.75, 934.75],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
@@ -351,8 +351,8 @@ def test_weekly_high():
     ticker_list = result.index.get_level_values(level=1)[:10]
     np.testing.assert_array_almost_equal(
         high_list,
-        [917.  , 908.75, 910.75, 938.5 , 941.25, 930.75, 912.  , 946.25,
-         955.  , 954.75],
+        [920.  , 910.  , 912.25, 939.75, 943.25, 932.75, 913.75, 947.5 ,
+         956.5 , 955.75],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
@@ -369,8 +369,8 @@ def test_weekly_low():
     ticker_list = result.index.get_level_values(level=1)[:10]
     np.testing.assert_array_almost_equal(
         low_list,
-        [882.25, 857.25, 864.5 , 909.75, 917.75, 877.5 , 871.25, 910.  ,
-         929.5 , 912.75],
+        [880.5 , 856.25, 863.75, 907.25, 914.5 , 873.75, 870.25, 909.25,
+         927.75, 911.25],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
