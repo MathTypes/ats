@@ -13,6 +13,16 @@ def test_compute_last_open_time_nyse():
     # Mon Jun 01 2009 13:30:00
     assert open_time == 1243863000
 
+def test_compute_last_open_time_nyse_2115():
+    market_cal = mcal.get_calendar("NYSE")
+    open_time = market_time.compute_last_close_time(1206678600, market_cal)
+    assert open_time == 1206648000
+
+def test_compute_last_open_time_nyse_at_close():
+    market_cal = mcal.get_calendar("NYSE")
+    open_time = market_time.compute_last_close_time(1206648000, market_cal)
+    assert open_time == 1206648000
+    
 def test_compute_last_open_time_nyse_before_open():
     market_cal = mcal.get_calendar("NYSE")
     open_time = market_time.compute_last_open_time(datetime.datetime(2009, 6, 1, 10, 0, 0).timestamp(), market_cal)
