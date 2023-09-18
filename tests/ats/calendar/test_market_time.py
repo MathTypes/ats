@@ -283,6 +283,17 @@ def test_compute_weekly_close_time_fri_before_close_cme():
     # Fri Jun 05 2009 14:00:00
     assert close_time == 1244235600.0
 
+def test_compute_next_weekly_close_time_30mins_before_close():
+    market_cal = mcal.get_calendar("NYSE")
+    # Fri Oct 02 2009 12:30:00
+    close_time = market_time.compute_next_weekly_close_time(1254511800, market_cal)
+    assert close_time == 1254513600
+
+def test_compute_next_weekly_close_time_at_close():
+    market_cal = mcal.get_calendar("NYSE")
+    close_time = market_time.compute_next_weekly_close_time(1254513600, market_cal)
+    assert close_time == 1254513600
+
 def test_compute_weekly_close_time_fri_after_close_cme():
     market_cal = mcal.get_calendar("CME_Equity")
     # 2009-06-01 is Monday
