@@ -200,6 +200,12 @@ def next_weekly_close_time(timestamp: pd.Series) -> pd.Series:
         market_time.compute_next_weekly_close_time, cal=new_york_cal
     )
 
+def next_monthly_close_time(timestamp: pd.Series) -> pd.Series:
+    new_york_cal = mcal.get_calendar("NYSE")
+    return timestamp.apply(
+        market_time.compute_next_monthly_close_time, cal=new_york_cal
+    )
+
 @parameterize(
     last_weekly_close_time_0={"k":value(0)},
     last_weekly_close_time_1={"k":value(1)},

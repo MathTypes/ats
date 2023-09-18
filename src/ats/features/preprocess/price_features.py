@@ -220,66 +220,62 @@ def daily_low(next_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Se
     tuples = list(zip(timestamp, ticker, next_daily_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     low = low.set_axis(index)
-    #sample = close[close.1279742400
-    #temp = close[(close.index.close_time==1206648000)]
-    temp = low.loc[index.get_level_values('close_time')==1207080000]
-    logging.error(f"daily_close_temp:{temp}")
-    logging.error(f"daily_close_close:{low.iloc[50:150]}")
     agg = low.sort_index().groupby(["close_time", "ticker"]).agg('min')
-    logging.error(f"daily_close_agg:{agg}")
     return agg
 
-def weekly_open(last_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_weekly_close_time))
+def weekly_open(next_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_weekly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     open = open.set_axis(index)
-    agg = open.groupby(["close_time", "ticker"]).agg('first')
+    agg = open.sort_index().groupby(["close_time", "ticker"]).agg('first')
     return agg
 
-def weekly_close(last_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, close:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_weekly_close_time))
+
+def weekly_close(next_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, close:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_weekly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     close = close.set_axis(index)
-    agg = close.groupby(["close_time", "ticker"]).agg('last')
+    agg = close.sort_index().groupby(["close_time", "ticker"]).agg('last')
     return agg
 
-def weekly_high(last_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, high:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_weekly_close_time))
+
+def weekly_high(next_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, high:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_weekly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     high = high.set_axis(index)
-    agg = high.groupby(["close_time", "ticker"]).agg('max')
+    agg = high.sort_index().groupby(["close_time", "ticker"]).agg('max')
     return agg
 
-def weekly_low(last_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, low:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_weekly_close_time))
+def weekly_low(next_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, low:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_weekly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     low = low.set_axis(index)
     agg = low.groupby(["close_time", "ticker"]).agg('min')
     return agg
 
-def monthly_open(last_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_monthly_close_time))
+def monthly_open(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_monthly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     open = open.set_axis(index)
     agg = open.groupby(["close_time", "ticker"]).agg('first')
     return agg
 
-def monthly_close(last_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, close:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_monthly_close_time))
+def monthly_close(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, close:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_monthly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     close = close.set_axis(index)
     agg = close.groupby(["close_time", "ticker"]).agg('last')
     return agg
 
-def monthly_high(last_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, high:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_monthly_close_time))
+def monthly_high(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, high:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_monthly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     high = high.set_axis(index)
     agg = high.groupby(["close_time", "ticker"]).agg('max')
     return agg
 
-def monthly_low(last_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, low:pd.Series) -> pd.Series:
-    tuples = list(zip(timestamp, ticker, last_monthly_close_time))
+def monthly_low(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, low:pd.Series) -> pd.Series:
+    tuples = list(zip(timestamp, ticker, next_monthly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     low = low.set_axis(index)
     agg = low.groupby(["close_time", "ticker"]).agg('min')
