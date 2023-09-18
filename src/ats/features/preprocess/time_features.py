@@ -183,10 +183,15 @@ def new_york_last_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     )
 
 def last_daily_close_time(timestamp: pd.Series) -> pd.Series:
-    logging.error(f"timestamp:{timestamp}")
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_close_time, cal=new_york_cal, k=0
+    )
+
+def next_daily_close_time(timestamp: pd.Series) -> pd.Series:
+    new_york_cal = mcal.get_calendar("NYSE")
+    return timestamp.apply(
+        market_time.compute_next_close_time, cal=new_york_cal, k=0
     )
 
 @parameterize(
