@@ -267,6 +267,17 @@ def test_compute_next_open_time_cme_20230213():
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 14, 0, 0).timestamp(), market_cal)
     assert open_time == 1676242800
 
+def test_compute_monthly_close_time_after_close():
+    market_cal = mcal.get_calendar("NYSE")
+    # since now is after market close, next_monthly needs to be next month.
+    close_time = market_time.compute_next_monthly_close_time(1206997200, market_cal)
+    assert close_time == 1209585600
+
+def test_compute_monthly_close_time_before_close():
+    market_cal = mcal.get_calendar("NYSE")
+    close_time = market_time.compute_next_monthly_close_time(1206685800, market_cal)
+    assert close_time == 1206993600
+
 def test_compute_weekly_close_time_mon_cme():
     market_cal = mcal.get_calendar("CME_Equity")
     # 2009-06-01 is Monday

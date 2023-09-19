@@ -267,8 +267,11 @@ def monthly_open(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:
 def monthly_close(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, close:pd.Series) -> pd.Series:
     tuples = list(zip(timestamp, ticker, next_monthly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
+    temp = close.loc[index.get_level_values('close_time')==1206993600]
+    logging.error(f"monthly_close_temp:{temp}")
+    logging.error(f"monthly_close_close:{close.iloc[50:150]}")
     close = close.set_axis(index)
-    agg = close.groupby(["close_time", "ticker"]).agg('last')
+    agg = close.sort_index().groupby(["close_time", "ticker"]).agg('last')
     return agg
 
 def monthly_high(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, high:pd.Series) -> pd.Series:

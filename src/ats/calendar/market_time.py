@@ -151,6 +151,8 @@ def compute_next_monthly_close_time(x, cal):
     try:
         x_time = datetime.datetime.fromtimestamp(x, tz=timezone.utc)
         close_time = get_monthly_close_time(cal, x_time.date())
+        if close_time < x:
+            close_time = get_monthly_close_time(cal, x_time.date() + datetime.timedelta(days=1))            
         return int(close_time)
     except Exception as e:
         logging.error(f"can not compute monthly event for {x}, {e}")
