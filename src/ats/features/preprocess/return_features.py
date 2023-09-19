@@ -332,9 +332,9 @@ def close_back_cumsum_low_tmpl(steps:int, close_back_cumsum:pd.Series) -> pd.Ser
     time_low_201_bf={"close_col": source("close_low_201_bf"), "col_name":value("close_low_201_bf")},
 )
 def time_with_close_tmpl(close:pd.Series, timestamp:pd.Series, close_col:pd.Series, col_name:str) -> pd.Series:
-    logging.error(f"time_with_close_tmpl_close:{close}, col_name:{col_name}")
-    logging.error(f"time_with_close_tmpl_timestamp:{timestamp}, col_name:{col_name}")
-    logging.error(f"time_with_close_tmpl_close_col:{close_col}, col_name:{col_name}")
+    #logging.error(f"time_with_close_tmpl_close:{close}, col_name:{col_name}")
+    #logging.error(f"time_with_close_tmpl_timestamp:{timestamp}, col_name:{col_name}")
+    #logging.error(f"time_with_close_tmpl_close_col:{close_col}, col_name:{col_name}")
     df = pd.concat([close, close_col], axis=1)
     df.columns = ["close", "close_high"]
     #logging.error(f"df:{df}")
@@ -345,7 +345,7 @@ def time_with_close_tmpl(close:pd.Series, timestamp:pd.Series, close_col:pd.Seri
     #series = series.unstack(level=2).drop(columns=['ticker'])
     series = series.set_index(["timestamp","ticker"])
     series = series.ffill()
-    logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
+    #logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
     #res = series[['timestamp']]
     #logging.error(f"time_with_close_tmpl_res, col_name:{col_name}, time_with_close_tmpl:{series}")
     return series
@@ -767,8 +767,8 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     ret_velocity_from_low_201={"ret_col": source("ret_from_low_201"), "time_col": source("time_to_low_201_ff"), "col_name":value("time_to_low_201_ff")},
 )
 def ret_velocity_tmpl(ret_col: pd.Series, time_col: pd.Series, col_name:str) -> pd.Series:
-    logging.error(f"ret_col:{ret_col}, col_name:{col_name}")
-    logging.error(f"time_col:{time_col}, col_name:{col_name}")
+    logging.error(f"ret_velocity_tmpl_col_name:{col_name}, ret_col:{ret_col}")
+    logging.error(f"ret_velocity_tmpl_col_name:{col_name}, time_col:{time_col}")
     return ret_col/time_col
     
 @parameterize(

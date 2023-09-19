@@ -478,19 +478,19 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
 )
 def time_to(timestamp:pd.Series, diff_time:pd.Series, diff_col:str) -> pd.Series:
     #traceback.print_stack()
-    logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp}, diff_col:{diff_col}")
-    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
+    #logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp}, diff_col:{diff_col}")
+    #logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
     #timestamp = timestamp.reset_index()
     diff_time = diff_time.reset_index()
     df = pd.concat([diff_time], axis=1)
     df.columns = ["timestamp", "ticker", "diff_time"]
-    logging.error(f"time_to_df:{df.iloc[-10:]}")
+    #logging.error(f"time_to_df:{df.iloc[-10:]}")
     df["time_to"]=df["timestamp"] - df["diff_time"]
     df = df.set_index(["timestamp","ticker"])
     #diff_series = diff_series.set_index(["ticker","time"])
-    logging.error(f"time_to_df after diff:{df.iloc[-10:]}")
+    #logging.error(f"time_to_df after diff:{df.iloc[-10:]}")
     diff_series = df["time_to"]
-    logging.error(f"diff_series:{diff_series.iloc[-10:]}")
+    #logging.error(f"diff_series:{diff_series.iloc[-10:]}")
     return diff_series
 
 def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,

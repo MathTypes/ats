@@ -208,3 +208,12 @@ def test_example_group_features():
         [0.0195, 0.0198, 0.0200, 0.0188, 0.0183],
         decimal=3
     )
+
+def test_ret_velocity_from_high_5():
+    result = run_features("ret_velocity_from_high_5", 100)['ret_velocity_from_high_5'][10:15]
+    print(f"result:{result.to_list()}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [-1.351e-07, -1.609e-08,        np.nan, -6.762e-07, -4.831e-07],
+        decimal=8
+    )
