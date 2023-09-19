@@ -234,8 +234,12 @@ def weekly_open(next_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd
 def weekly_close(next_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, close:pd.Series) -> pd.Series:
     tuples = list(zip(timestamp, ticker, next_weekly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
+    temp = close.loc[index.get_level_values('close_time')==1254513600]
+    logging.error(f"weekly_close_temp:{temp}")
+    logging.error(f"weekly_close_close:{close.iloc[50:150]}")
     close = close.set_axis(index)
     agg = close.sort_index().groupby(["close_time", "ticker"]).agg('last')
+    logging.error(f"weekly_close_agg:{agg}")
     return agg
 
 
