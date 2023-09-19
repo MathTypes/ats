@@ -183,10 +183,10 @@ def daily_open(next_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.S
     open = open.set_axis(index)
     
     temp = open.loc[index.get_level_values('close_time')==1277496000]
-    logging.error(f"daily_open_temp:{temp}")
-    logging.error(f"daily_open_close:{open.iloc[50:150]}")
+    #logging.error(f"daily_open_temp:{temp}")
+    #logging.error(f"daily_open_close:{open.iloc[50:150]}")
     agg = open.sort_index().groupby(["close_time", "ticker"]).agg('first')
-    logging.error(f"daily_open_agg:{agg}")
+    #logging.error(f"daily_open_agg:{agg}")
     return agg
 
 def daily_close(next_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, close:pd.Series) -> pd.Series:
@@ -196,10 +196,10 @@ def daily_close(next_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.
     #sample = close[close.1279742400
     #temp = close[(close.index.close_time==1206648000)]
     temp = close.loc[index.get_level_values('close_time')==1207080000]
-    logging.error(f"daily_close_temp:{temp}")
-    logging.error(f"daily_close_close:{close.iloc[50:150]}")
+    #logging.error(f"daily_close_temp:{temp}")
+    #logging.error(f"daily_close_close:{close.iloc[50:150]}")
     agg = close.sort_index().groupby(["close_time", "ticker"]).agg('last')
-    logging.error(f"daily_close_agg:{agg}")
+    #logging.error(f"daily_close_agg:{agg}")
     return agg
 
 def daily_high(next_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, high:pd.Series) -> pd.Series:
@@ -209,10 +209,10 @@ def daily_high(next_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.S
     #sample = close[close.1279742400
     #temp = close[(close.index.close_time==1206648000)]
     temp = high.loc[index.get_level_values('close_time')==1207080000]
-    logging.error(f"daily_close_temp:{temp}")
-    logging.error(f"daily_close_close:{high.iloc[50:150]}")
+    #logging.error(f"daily_close_temp:{temp}")
+    #logging.error(f"daily_close_close:{high.iloc[50:150]}")
     agg = high.sort_index().groupby(["close_time", "ticker"]).agg('max')
-    logging.error(f"daily_close_agg:{agg}")
+    #logging.error(f"daily_close_agg:{agg}")
     return agg
 
 
@@ -235,11 +235,11 @@ def weekly_close(next_weekly_close_time:pd.Series, timestamp:pd.Series, ticker:p
     tuples = list(zip(timestamp, ticker, next_weekly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     temp = close.loc[index.get_level_values('close_time')==1254513600]
-    logging.error(f"weekly_close_temp:{temp}")
-    logging.error(f"weekly_close_close:{close.iloc[50:150]}")
+    #logging.error(f"weekly_close_temp:{temp}")
+    #logging.error(f"weekly_close_close:{close.iloc[50:150]}")
     close = close.set_axis(index)
     agg = close.sort_index().groupby(["close_time", "ticker"]).agg('last')
-    logging.error(f"weekly_close_agg:{agg}")
+    #logging.error(f"weekly_close_agg:{agg}")
     return agg
 
 
@@ -268,8 +268,8 @@ def monthly_close(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker
     tuples = list(zip(timestamp, ticker, next_monthly_close_time))
     index = pd.MultiIndex.from_tuples(tuples, names=["timestamp", "ticker", "close_time"])
     temp = close.loc[index.get_level_values('close_time')==1206993600]
-    logging.error(f"monthly_close_temp:{temp}")
-    logging.error(f"monthly_close_close:{close.iloc[50:150]}")
+    #logging.error(f"monthly_close_temp:{temp}")
+    #logging.error(f"monthly_close_close:{close.iloc[50:150]}")
     close = close.set_axis(index)
     agg = close.sort_index().groupby(["close_time", "ticker"]).agg('last')
     return agg
@@ -328,14 +328,15 @@ def df_by_daily(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.
     
 @parameterize(
     next_new_york_close={"time_col": value("new_york_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
+    next_london_close={"time_col": value("london_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     next_weekly_close={"time_col": value("weekly_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
     next_monthly_close={"time_col": value("monthly_close_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
+    last_option_expiration_close={"time_col": value("last_option_expiration_time"), "pre_interval_mins":value(0), "post_interval_mins":source("interval_mins")},
 )
 def price_at_tmpl(time_features: pd.DataFrame, time_col: str,
-                  pre_interval_mins:int, post_interval_mins:int,
-                  time_delta: datetime.timedelta) -> pd.Series:
+                  pre_interval_mins:int, post_interval_mins:int) -> pd.Series:
     logging.error(f"time_features time_col:{time_col}, pre_interval_mins:{pre_interval_mins}, post_interval_mins:{post_interval_mins}, {time_features.iloc[5:10]}")
-    series = time_features.apply(fill_close, time_col=time_col, time_delta=time_delta, axis=1).ffill()
+    series = time_features.apply(fill_close, time_col=time_col, axis=1).ffill()
     logging.error(f"price_at_tmpl series:{series.iloc[10:15]}")
     return series
 
@@ -420,6 +421,15 @@ def close_low_tmpl(steps:int, close:pd.Series) -> pd.Series:
     return close.groupby(['ticker']).transform(lambda x: x.rolling(steps).min().ffill())
 
 
+def last_daily_close(last_daily_close_0: pd.Series) -> pd.Series:
+    return last_daily_close_0
+
+def last_weekly_close(last_weekly_close_0: pd.Series) -> pd.Series:
+    return last_weekly_close_0
+
+def last_monthly_close(last_monthly_close_0: pd.Series) -> pd.Series:
+    return last_monthly_close_0
+
 @parameterize(
     last_daily_close_0={"steps": value(0),"price_col":source("daily_close")},
     last_daily_close_1={"steps": value(1),"price_col":source("daily_close")},
@@ -442,6 +452,7 @@ def close_low_tmpl(steps:int, close:pd.Series) -> pd.Series:
     last_daily_close_18={"steps": value(18),"price_col":source("daily_close")},
     last_daily_close_19={"steps": value(19),"price_col":source("daily_close")},
 
+    last_weekly_close_0={"steps": value(0),"price_col":source("weekly_close")},
     last_weekly_close_1={"steps": value(1),"price_col":source("weekly_close")},
     last_weekly_close_2={"steps": value(2),"price_col":source("weekly_close")},
     last_weekly_close_3={"steps": value(3),"price_col":source("weekly_close")},
@@ -462,6 +473,7 @@ def close_low_tmpl(steps:int, close:pd.Series) -> pd.Series:
     last_weekly_close_18={"steps": value(18),"price_col":source("weekly_close")},
     last_weekly_close_19={"steps": value(19),"price_col":source("weekly_close")},
 
+    last_monthly_close_0={"steps": value(0),"price_col":source("monthly_close")},
     last_monthly_close_1={"steps": value(1),"price_col":source("monthly_close")},
     last_monthly_close_2={"steps": value(2),"price_col":source("monthly_close")},
     last_monthly_close_3={"steps": value(3),"price_col":source("monthly_close")},

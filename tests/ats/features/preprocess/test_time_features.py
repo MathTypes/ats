@@ -63,11 +63,21 @@ def run_features(feature_name, k=10):
         full_data = dr.execute([feature_name])[-k:]
         return full_data
     
-def test_time_low_21d():
+def test_time_low_21d_ff():
     full_data = run_features("time_low_21d_ff")
     print(f"full_data:{full_data}")
     np.testing.assert_array_almost_equal(
-        full_data["timestamp"],
+        full_data["close_timestamp"],
+        [1283252400, 1283252400, 1283252400, 1283252400, 1283252400,
+         1283252400, 1283252400, 1283252400, 1283252400, 1283252400],
+        decimal=3
+    )
+
+def test_time_low_21_ff():
+    full_data = run_features("time_low_21_ff")
+    print(f"full_data:{full_data}")
+    np.testing.assert_array_almost_equal(
+        full_data["close_timestamp"],
         [1283252400, 1283252400, 1283252400, 1283252400, 1283252400,
          1283252400, 1283252400, 1283252400, 1283252400, 1283252400],
         decimal=3
@@ -86,7 +96,7 @@ def test_time_low_5_ff():
     result = run_features("time_low_5_ff", 5)
     #print(f"result:{result['timestamp']}")
     np.testing.assert_array_almost_equal(
-        result["timestamp"],
+        result["close_timestamp"],
         [1283524200, 1283524200, 1283538600, 1283538600, 1283538600],
         decimal=3
     )

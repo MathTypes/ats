@@ -478,8 +478,8 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
 )
 def time_to(timestamp:pd.Series, diff_time:pd.Series, diff_col:str) -> pd.Series:
     #traceback.print_stack()
-    logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp.iloc[-10:]}, diff_col:{diff_col}")
-    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time.iloc[-10:]}, diff_col:{diff_col}")
+    #logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp.iloc[-10:]}, diff_col:{diff_col}")
+    #logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time.iloc[-10:]}, diff_col:{diff_col}")
     #timestamp = timestamp.reset_index()
     df = pd.concat([timestamp, diff_time], axis=1)
     df.columns = ["timestamp", "diff_time"]

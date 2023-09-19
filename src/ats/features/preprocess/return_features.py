@@ -332,8 +332,11 @@ def close_back_cumsum_low_tmpl(steps:int, close_back_cumsum:pd.Series) -> pd.Ser
     time_low_201_bf={"close_col": source("close_low_201_bf"), "col_name":value("close_low_201_bf")},
 )
 def time_with_close_tmpl(close:pd.Series, timestamp:pd.Series, close_col:pd.Series, col_name:str) -> pd.Series:
-    df = pd.concat([close, timestamp, close_col], axis=1)
-    df.columns = ["close", "timestamp", "close_high"]
+    logging.error(f"time_with_close_tmpl_close:{close}, col_name:{col_name}")
+    logging.error(f"time_with_close_tmpl_timestamp:{timestamp}, col_name:{col_name}")
+    logging.error(f"time_with_close_tmpl_close_col:{close_col}, col_name:{col_name}")
+    df = pd.concat([close, close_col], axis=1)
+    df.columns = ["close", "close_high"]
     #logging.error(f"df:{df}")
     #logging.error(f"df.index:{df.index}")
     df = df.reset_index()
@@ -342,7 +345,7 @@ def time_with_close_tmpl(close:pd.Series, timestamp:pd.Series, close_col:pd.Seri
     #series = series.unstack(level=2).drop(columns=['ticker'])
     series = series.set_index(["timestamp","ticker"])
     series = series.ffill()
-    #logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
+    logging.error(f"time_with_close_tmpl after unstack col_name:{col_name}, time_with_close_tmpl:{series.shape}, series:{series}")
     #res = series[['timestamp']]
     #logging.error(f"time_with_close_tmpl_res, col_name:{col_name}, time_with_close_tmpl:{series}")
     return series
@@ -353,7 +356,7 @@ def find_close_time(df:pd.DataFrame, close_col_name:str) -> pd.Series:
     #logging.error(f"df:{df.shape}")
     #logging.error(f"df:{df}")
     res = df.apply(lambda x: get_close_time(x, close_col_name), axis=1, result_type="expand")
-    #logging.error(f"find_close_time:{res}, res.shape:{res.shape}")
+    logging.error(f"find_close_time:{res}, res.shape:{res.shape}")
     return res
 
 
@@ -595,7 +598,7 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_vwap_around_london_close={"base_col": source("vwap_around_london_close"),"col_name":value("vwap_around_london_close")},
     ret_from_vwap_post_london_close={"base_col": source("vwap_post_london_close"),"col_name":value("vwap_post_london_close")},
 
-    ret_from_last_daily_close_0={"base_col": source("last_daily_close_0"),"col_name":value("last_daily_close")},
+    ret_from_last_daily_close_0={"base_col": source("last_daily_close"),"col_name":value("last_daily_close")},
     ret_from_last_daily_close_1={"base_col": source("last_daily_close_1"),"col_name":value("last_daily_close_1")},
     ret_from_last_daily_close_2={"base_col": source("last_daily_close_2"),"col_name":value("last_daily_close_2")},
     ret_from_last_daily_close_3={"base_col": source("last_daily_close_3"),"col_name":value("last_daily_close_3")},
@@ -613,10 +616,10 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_last_daily_close_15={"base_col": source("last_daily_close_15"),"col_name":value("last_daily_close_15")},
     ret_from_last_daily_close_16={"base_col": source("last_daily_close_16"),"col_name":value("last_daily_close_16")},
     ret_from_last_daily_close_17={"base_col": source("last_daily_close_17"),"col_name":value("last_daily_close_17")},
-    ret_from_last_daily_close_18={"base_col": source("new_york_last_daily_close_18"),"col_name":value("last_daily_close_18")},
+    ret_from_last_daily_close_18={"base_col": source("last_daily_close_18"),"col_name":value("last_daily_close_18")},
     ret_from_last_daily_close_19={"base_col": source("last_daily_close_19"),"col_name":value("last_daily_close_19")},
 
-    ret_from_last_weekly_close_0={"base_col": source("last_weekly_close_0"),"col_name":value("last_weekly_close")},
+    ret_from_last_weekly_close_0={"base_col": source("last_weekly_close"),"col_name":value("last_weekly_close")},
     ret_from_last_weekly_close_1={"base_col": source("last_weekly_close_1"),"col_name":value("last_weekly_close_1")},
     ret_from_last_weekly_close_2={"base_col": source("last_weekly_close_2"),"col_name":value("last_weekly_close_2")},
     ret_from_last_weekly_close_3={"base_col": source("last_weekly_close_3"),"col_name":value("last_weekly_close_3")},
@@ -637,7 +640,7 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_last_weekly_close_18={"base_col": source("last_weekly_close_18"),"col_name":value("last_weekly_close_18")},
     ret_from_last_weekly_close_19={"base_col": source("last_weekly_close_19"),"col_name":value("last_weekly_close_19")},
 
-    ret_from_last_monthly_close_0={"base_col": source("last_monthly_close_0"),"col_name":value("last_monthly_close")},
+    ret_from_last_monthly_close_0={"base_col": source("last_monthly_close"),"col_name":value("last_monthly_close")},
     ret_from_last_monthly_close_1={"base_col": source("last_monthly_close_1"),"col_name":value("last_monthly_close_1")},
     ret_from_last_monthly_close_2={"base_col": source("last_monthly_close_2"),"col_name":value("last_monthly_close_2")},
     ret_from_last_monthly_close_3={"base_col": source("last_monthly_close_3"),"col_name":value("last_monthly_close_3")},
@@ -725,28 +728,28 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_sma_200d={"base_col": source("sma_200d"), "col_name":value("sma_200d")},
 )
 def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
-    logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
-    logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
+    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
+    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
     #base_col = base_col.reset_index()
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, base_col_type:{type(base_col)}")
     #base_col.set_index(["timestamp","ticker"], inplace = True)
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
-    logging.error(f"ret_from_price_base_col: base_col_type:{type(base_col)}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
+    #logging.error(f"ret_from_price_base_col: base_col_type:{type(base_col)}")
     base_series = None
     if isinstance(base_col, (pd.Series)) or not "close" in base_col.columns:
         base_series = base_col
     else:
         base_series = base_col["close"]
     df = pd.concat([close, base_series], axis=1)
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     df.columns = ["close", "diff_close"]
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["diff_close"]+base_price), axis=1)
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
     return series
 
 @parameterize(

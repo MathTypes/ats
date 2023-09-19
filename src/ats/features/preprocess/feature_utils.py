@@ -127,13 +127,14 @@ def get_processed_data(
 def get_close_time(x, close_col):
     #logging.error(f"get_close_time_x:{x}, x_shape:{x.shape}")
     ticker = x["ticker"]
-    time = x["time"]
-    timestamp = None
+    timestamp = x["timestamp"]
+    close_timestamp = None
     if x[close_col] == x["close"]:
-        timestamp = int(x["timestamp"])
+        close_timestamp = int(x["timestamp"])
     else:
-        timestamp = None
-    return pd.Series([ticker,time,timestamp],index=['ticker','time','timestamp'])
+        close_timestamp = None
+    series = pd.Series([timestamp,ticker,close_timestamp],index=['timestamp','ticker','close_timestamp'])
+    return series
 
 def get_time(x, close_col):
     if x[close_col] == x["close_back_cumsum"]:
@@ -813,25 +814,25 @@ def fill_open(row, time_col, pre_interval_mins=30, post_interval_mins=30):
         else:
             return np.nan
 
-def fill_close(row, is_col):
-    if not row[is_col]:
-        return np.nan
-    else:
-        return row["close"]
-
-        
-#def fill_close(row, time_col, time_delta):
-#    if pd.isna(row[time_col]) or not row["is_new_york_close"]:
+#def fill_close(row, is_col):
+#    if not row[is_col]:
 #        return np.nan
 #    else:
 #        return row["close"]
+
+        
+def fill_close(row, time_col):
+    if pd.isna(row[time_col]) or not row["is_new_york_close"]:
+        return np.nan
+    else:
+        return row["close"]
         #logging.error(f"close row:{row['timestamp']}, time_col:{time_col}, check_time:{row[time_col]}, before:{row[time_col]-before_mins}, after:{row[time_col]+after_mins}")
-        #check_time = row[time_col]
-        #if ((row["timestamp"] > check_time-before_mins) and
-        #    (row["timestamp"] < check_time+after_mins)):
-        #    return row["close"]
-        #else:
-        #    return np.nan
+        check_time = row[time_col]
+        if ((row["timestamp"] > check_time-before_mins) and
+            (row["timestamp"] < check_time+after_mins)):
+            return row["close"]
+        else:
+            return np.nan
 
 #@profile_util.profile
 #@njit(parallel=True)
