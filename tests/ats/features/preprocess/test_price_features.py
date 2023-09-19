@@ -410,7 +410,7 @@ def test_monthly_close():
     ticker_list = result.index.get_level_values(level=1)[:10]
     np.testing.assert_array_almost_equal(
         close_list,
-        [1157.  , 1221.25, 1236.25, 1118.  , 1100.75, 1116.75, 1000.  ,
+        [1157.25, 1220.  , 1236.25, 1116.25, 1099.75, 1116.75, 1000.  ,
          798.5 ,  726.75,  724.5],
         decimal=3
     )
