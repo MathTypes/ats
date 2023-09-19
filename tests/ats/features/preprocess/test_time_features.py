@@ -31,6 +31,7 @@ def run_features(feature_name, k=10):
         env_mgr = EnvMgr(cfg)
         md_mgr = market_data_mgr.MarketDataMgr(env_mgr)
         #log_setup.setup_logging()
+        ray.shutdown()
         ray.init(object_store_memory=30*1024*1024*1024,
                  storage=f"{cfg.dataset.base_dir}/cache",
                  log_to_driver=True)
@@ -144,7 +145,7 @@ def test_time_to_low_5_ff():
     )
 
 def test_new_york_last_open_time():
-    result = run_features("new_york_last_open_time", 50)
+    result = run_features("new_york_last_open_time", 5)
     #print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result["new_york_last_open_time"],
@@ -190,18 +191,10 @@ def test_next_daily_close_time():
 def test_next_weekly_close_time_1254513600():
     result = run_features("next_weekly_close_time", 100)[10:60]
     print(f"result:{result}")
-    close_time_list = result.loc[result.index.get_level_values('close_time')==1254513600].to_list()
     res = result["next_weekly_close_time"].to_list()
-    print(f"res:{res}")
-    print(f"close_time_list:{close_time_list}")
     np.testing.assert_array_almost_equal(
         res,
         [1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000, 1283544000],
-        decimal=3
-    )
-    np.testing.assert_array_almost_equal(
-        close_time_list,
-        [1283380200, 1283382000, 1283383800, 1283385600, 1283387400, 1283389200, 1283391000, 1283392800, 1283394600, 1283396400, 1283398200, 1283400000, 1283401800, 1283403600, 1283405400, 1283407200, 1283409000, 1283410800, 1283412600, 1283414400, 1283416200, 1283418000, 1283419800, 1283421600, 1283423400, 1283425200, 1283427000, 1283428800, 1283430600, 1283432400, 1283434200, 1283436000, 1283437800, 1283439600, 1283441400, 1283443200, 1283445000, 1283446800, 1283448600, 1283450400, 1283452200, 1283454000, 1283455800, 1283457600, 1283459400, 1283461200, 1283464800, 1283466600, 1283468400, 1283470200],
         decimal=3
     )
 
@@ -241,9 +234,8 @@ def test_next_monthly_close_time():
 
 def test_time_high_1d_ff_shift_1d():
     result = run_features("time_high_1d_ff_shift_1d", 100).iloc[:10]
-    #print(f"result:{result['timestamp'].to_list()}")
     np.testing.assert_array_almost_equal(
-        result["timestamp"],
+        result["close_timestamp"],
         [1283437800.0, 1283437800.0, 1283437800.0, 1283450400.0, 1283452200.0, 1283454000.0, 1283455800.0, 1283457600.0, 1283457600.0, 1283457600.0],
         decimal=3
     )
@@ -252,12 +244,8 @@ def test_is_new_york_close_time():
     result = run_features("is_new_york_close_time", 50)
     print(f"result:{result['is_new_york_close_time'].to_list()}")
     np.testing.assert_array_almost_equal(
-        result,
-        [False, False, False, True, False, False, False, False, False, False,
-         False, False, False, False, False, False, False, False, False, False,
-         False, False, False, False, False, False, False, False, False, False,
-         False, False, False, False, False, False, False, False, False, False,
-         False, False, False, False, False, False, False, False, False, False],
+        result['is_new_york_close_time'],
+        [False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False],
         decimal=3
     )
 

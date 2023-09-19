@@ -552,7 +552,7 @@ def shift_price_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interv
     #logging.error(f"shift_price_tmpl, col_name:{col_name}, shift_col:{shift_col.iloc[50:100]}")
     #logging.error(f"shift_price_tmpl, col_name:{col_name}, timestamp:{timestamp.iloc[50:100]}")
     #logging.error(f"shift_price_tmpl, col_name:{col_name}, ticker:{ticker}")
-    df = pd.concat([timestamp, shift_col], axis=1)
+    df = pd.concat([timestamp, ticker, shift_col], axis=1)
     #logging.error(f"shift_price_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day)).reset_index()
     #logging.error(f"shift_price_tmpl series:{series.iloc[50:100]}")
