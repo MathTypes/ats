@@ -240,6 +240,36 @@ def test_time_high_1d_ff_shift_1d():
         decimal=3
     )
 
+
+def test_time_to_high_51_ff():
+    result = run_features("time_to_high_51_ff", 500).iloc[100:110]
+    logging.error(f"result:{result['time_to_high_51_ff'].to_list()}")
+    np.testing.assert_array_almost_equal(
+        result["time_to_high_51_ff"],
+        [64800.0, 66600.0, 68400.0, 70200.0, 72000.0, 73800.0, 75600.0, 77400.0, 79200.0, 81000.0],
+        decimal=3
+    )
+
+def test_time_to_high_5_ff():
+    result = run_features("time_to_high_5_ff", 500).iloc[100:120]
+    logging.error(f"result:{result['time_to_high_5_ff'].to_list()}")
+    np.testing.assert_array_almost_equal(
+        result["time_to_high_5_ff"],
+        [5400.0, 7200.0, 9000.0, 10800.0, 12600.0, 14400.0, 16200.0, 0.0,
+         1800.0, 3600.0, 5400.0, 7200.0, 9000.0, 10800.0, 12600.0, 0.0,
+         0.0, 1800.0, 3600.0, 0.0],
+        decimal=3
+    )
+
+def test_time_to_low_5_ff():
+    result = run_features("time_to_low_5_ff", 500).iloc[100:120]
+    logging.error(f"result:{result['time_to_low_5_ff'].to_list()}")
+    np.testing.assert_array_almost_equal(
+        result["time_to_low_5_ff"],
+        [0.0, 0.0, 1800.0, 3600.0, 0.0, 1800.0, 3600.0, 5400.0, 0.0, 0.0, 1800.0, 3600.0, 0.0, 0.0, 1800.0, 3600.0, 5400.0, 7200.0, 0.0, 1800.0],
+        decimal=3
+    )
+
 def test_is_new_york_close_time():
     result = run_features("is_new_york_close_time", 50)
     print(f"result:{result['is_new_york_close_time'].to_list()}")

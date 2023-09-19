@@ -753,22 +753,22 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     return series
 
 @parameterize(
-    ret_velocity_from_high_5={"ret_col": source("ret_from_high_5"), "time_col": source("time_to_high_5_ff")},
-    ret_velocity_from_high_11={"ret_col": source("ret_from_high_11"), "time_col": source("time_to_high_11_ff")},
-    ret_velocity_from_high_21={"ret_col": source("ret_from_high_21"), "time_col": source("time_to_high_21_ff")},
-    ret_velocity_from_high_51={"ret_col": source("ret_from_high_51"), "time_col": source("time_to_high_51_ff")},
-    ret_velocity_from_high_101={"ret_col": source("ret_from_high_101"), "time_col": source("time_to_high_101_ff")},
-    ret_velocity_from_high_201={"ret_col": source("ret_from_high_201"), "time_col": source("time_to_high_201_ff")},
-    ret_velocity_from_low_5={"ret_col": source("ret_from_low_5"), "time_col": source("time_to_low_5_ff")},
-    ret_velocity_from_low_11={"ret_col": source("ret_from_low_11"), "time_col": source("time_to_low_11_ff")},
-    ret_velocity_from_low_21={"ret_col": source("ret_from_low_21"), "time_col": source("time_to_low_21_ff")},
-    ret_velocity_from_low_51={"ret_col": source("ret_from_low_51"), "time_col": source("time_to_low_51_ff")},
-    ret_velocity_from_low_101={"ret_col": source("ret_from_low_101"), "time_col": source("time_to_low_101_ff")},
-    ret_velocity_from_low_201={"ret_col": source("ret_from_low_201"), "time_col": source("time_to_low_201_ff")},
+    ret_velocity_from_high_5={"ret_col": source("ret_from_high_5"), "time_col": source("time_to_high_5_ff"), "col_name":value("time_to_high_5_ff")},
+    ret_velocity_from_high_11={"ret_col": source("ret_from_high_11"), "time_col": source("time_to_high_11_ff"), "col_name":value("time_to_high_11_ff")},
+    ret_velocity_from_high_21={"ret_col": source("ret_from_high_21"), "time_col": source("time_to_high_21_ff"), "col_name":value("time_to_high_21_ff")},
+    ret_velocity_from_high_51={"ret_col": source("ret_from_high_51"), "time_col": source("time_to_high_51_ff"), "col_name":value("time_to_high_51_ff")},
+    ret_velocity_from_high_101={"ret_col": source("ret_from_high_101"), "time_col": source("time_to_high_101_ff"), "col_name":value("time_to_high_101_ff")},
+    ret_velocity_from_high_201={"ret_col": source("ret_from_high_201"), "time_col": source("time_to_high_201_ff"), "col_name":value("time_to_high_201_ff")},
+    ret_velocity_from_low_5={"ret_col": source("ret_from_low_5"), "time_col": source("time_to_low_5_ff"), "col_name":value("time_to_low_5_ff")},
+    ret_velocity_from_low_11={"ret_col": source("ret_from_low_11"), "time_col": source("time_to_low_11_ff"), "col_name":value("time_to_low_11_ff")},
+    ret_velocity_from_low_21={"ret_col": source("ret_from_low_21"), "time_col": source("time_to_low_21_ff"), "col_name":value("time_to_low_21_ff")},
+    ret_velocity_from_low_51={"ret_col": source("ret_from_low_51"), "time_col": source("time_to_low_51_ff"), "col_name":value("time_to_low_51_ff")},
+    ret_velocity_from_low_101={"ret_col": source("ret_from_low_101"), "time_col": source("time_to_low_101_ff"), "col_name":value("time_to_low_101_ff")},
+    ret_velocity_from_low_201={"ret_col": source("ret_from_low_201"), "time_col": source("time_to_low_201_ff"), "col_name":value("time_to_low_201_ff")},
 )
-def ret_velocity_tmpl(ret_col: pd.Series, time_col: pd.Series) -> pd.Series:
-    #logging.error(f"ret_col:{ret_col}")
-    #logging.error(f"time_col:{time_col}")
+def ret_velocity_tmpl(ret_col: pd.Series, time_col: pd.Series, col_name:str) -> pd.Series:
+    logging.error(f"ret_col:{ret_col}, col_name:{col_name}")
+    logging.error(f"time_col:{time_col}, col_name:{col_name}")
     return ret_col/time_col
     
 @parameterize(
