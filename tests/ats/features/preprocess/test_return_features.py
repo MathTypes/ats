@@ -123,7 +123,7 @@ def test_ret_from_last_daily_close_0():
     print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_daily_close_0'][10:15],
-        [0.002, 0.003, 0.003, 0.002, 0.001],
+        [-0.001, -0.001, -0.002, -0.002, -0.002],
         decimal=3
     )
 
@@ -132,7 +132,7 @@ def test_ret_from_last_daily_close_1():
     print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_daily_close_1'][10:15],
-        [0.002, 0.003, 0.003, 0.002, 0.001],
+        [0.02 , 0.02 , 0.019, 0.018, 0.018],
         decimal=3
     )
 
@@ -141,7 +141,7 @@ def test_ret_from_last_daily_close_2():
     print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
-        [-0.0012162281057896962, -0.0008685833951798116, -0.0006948063506895252, -0.00191188030775713, -0.0024339372238166845],
+        [0.025, 0.026, 0.024, 0.024, 0.024],
         decimal=3
     )
 
@@ -150,7 +150,7 @@ def test_ret_from_last_weekly_close_1():
     print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_weekly_close_1'][10:15],
-        [0.002, 0.003, 0.003, 0.002, 0.001],
+        [0.007, 0.007, 0.006, 0.005, 0.005],
         decimal=3
     )
 
@@ -160,7 +160,7 @@ def test_ret_from_last_monthly_close_1():
     print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_monthly_close_1'][10:15],
-        [0.002, 0.003, 0.003, 0.002, 0.001],
+        [-0.013, -0.013, -0.015, -0.015, -0.015],
         decimal=3
     )
 
@@ -169,7 +169,7 @@ def test_ret_from_last_monthly_close_9():
     print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
-        [0.002, 0.003, 0.003, 0.002, 0.001],
+        [0.001,  0.001, -0.   , -0.001, -0.001],
         decimal=3
     )
 

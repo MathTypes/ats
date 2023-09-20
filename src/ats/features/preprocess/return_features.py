@@ -728,9 +728,9 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_sma_200d={"base_col": source("sma_200d"), "col_name":value("sma_200d")},
 )
 def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
-    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
+    logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
     #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
     #base_col = base_col.reset_index()
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
@@ -739,16 +739,16 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col:{base_col.iloc[50:100]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reindex base_col_index:{base_col.index[50:100]}")
     #logging.error(f"ret_from_price_base_col: base_col_type:{type(base_col)}")
-    base_series = None
-    if isinstance(base_col, (pd.Series)) or not "close" in base_col.columns:
-        base_series = base_col
-    else:
-        base_series = base_col["close"]
+    base_series = base_col
+    if base_series.name in ["close"]:
+        base_series.name = "ref_close"
+    logging.error(f"base_series:{base_series}")
     df = pd.concat([close, base_series], axis=1)
+    df.columns = ["close", "ref_close"]
+    df["ref_close"] = df.ref_close.ffill()
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
-    df.columns = ["close", "diff_close"]
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
-    series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["diff_close"]+base_price), axis=1)
+    series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["ref_close"]+base_price), axis=1)
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
     return series
 

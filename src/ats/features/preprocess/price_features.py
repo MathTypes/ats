@@ -496,7 +496,7 @@ def last_monthly_close(last_monthly_close_0: pd.Series) -> pd.Series:
 )
 def shift_price_by_step_tmpl(price_col:pd.Series, steps:int) -> pd.Series:
     series = price_col.groupby(by='ticker').transform(lambda x:x.shift(steps))
-    return series
+    return series.rename("ref_close")
 
 def joined_last_daily_close_0(close:pd.Series, last_daily_close_0:pd.Series) -> pd.Series:
     df = pd.concat([close, last_daily_close_0], axis=1)
