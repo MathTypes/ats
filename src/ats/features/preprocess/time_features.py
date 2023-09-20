@@ -368,11 +368,20 @@ def last_monthly_close_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar)
     )
 
 @tag(cache="parquet")
-def option_expiration_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
+def option_expiration_time(timestamp: pd.Series, ticker: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
-    return timestamp.apply(
+    series = timestamp.apply(
         market_time.compute_option_expiration_time, cal=new_york_cal
-    )
+    ).rename("option_expiration_time")
+    logging.error(f"ticker:{ticker}")
+    df = series.reset_index()
+    logging.error(f"df_before_reset:{df}")
+    df["ticker"] = ticker.values
+    df = df.set_index(["timestamp", "ticker"])
+    logging.error(f"option_expiration_time_df:{df}")
+    series = df["option_expiration_time"]
+    logging.error(f"option_expiration_time_series:{series}")
+    return series
 
 @tag(cache="parquet")
 def last_option_expiration_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
@@ -478,14 +487,16 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
 )
 def time_to(timestamp:pd.Series, diff_time:pd.Series, diff_col:str) -> pd.Series:
     #traceback.print_stack()
-    #logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp}, diff_col:{diff_col}")
-    #logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
+    logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp}, diff_col:{diff_col}")
+    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
     #timestamp = timestamp.reset_index()
     diff_time = diff_time.reset_index()
     df = pd.concat([diff_time], axis=1)
-    df.columns = ["timestamp", "ticker", "diff_time"]
-    #logging.error(f"time_to_df:{df.iloc[-10:]}")
-    df["time_to"]=df["timestamp"] - df["diff_time"]
+    logging.error(f"time_to_df before setting column:{df.iloc[-10:]}")
+    
+    df.columns = ["timestamp", "ticker", diff_col]
+    logging.error(f"time_to_df:{df.iloc[-10:]}")
+    df["time_to"]=df[diff_col] - df["timestamp"]
     df = df.set_index(["timestamp","ticker"])
     #diff_series = diff_series.set_index(["ticker","time"])
     #logging.error(f"time_to_df after diff:{df.iloc[-10:]}")

@@ -60,7 +60,6 @@ def run_features(feature_name, k=10):
             workflow_id=f"wf-{env_mgr.run_id}",
         )
         dr = driver.Driver(initial_columns, *modules, adapter=rga)
-        logging.error(f"feature_name:{feature_name}")
         full_data = dr.execute([feature_name])[-k:]
         return full_data
     
@@ -246,7 +245,7 @@ def test_time_to_high_51_ff():
     logging.error(f"result:{result['time_to_high_51_ff'].to_list()}")
     np.testing.assert_array_almost_equal(
         result["time_to_high_51_ff"],
-        [64800.0, 66600.0, 68400.0, 70200.0, 72000.0, 73800.0, 75600.0, 77400.0, 79200.0, 81000.0],
+        [-64800.0, -66600.0, -68400.0, -70200.0, -72000.0, -73800.0, -75600.0, -77400.0, -79200.0, -81000.0],
         decimal=3
     )
 
@@ -255,20 +254,37 @@ def test_time_to_high_5_ff():
     logging.error(f"result:{result['time_to_high_5_ff'].to_list()}")
     np.testing.assert_array_almost_equal(
         result["time_to_high_5_ff"],
-        [5400.0, 7200.0, 9000.0, 10800.0, 12600.0, 14400.0, 16200.0, 0.0,
-         1800.0, 3600.0, 5400.0, 7200.0, 9000.0, 10800.0, 12600.0, 0.0,
-         0.0, 1800.0, 3600.0, 0.0],
+        [-5400.0, -7200.0, -9000.0, -10800.0, -12600.0, -14400.0, -16200.0, 0.0, -1800.0, -3600.0, -5400.0, -7200.0, -9000.0, -10800.0, -12600.0, 0.0, 0.0, -1800.0, -3600.0, 0.0],
         decimal=3
     )
 
+def test_option_expiration_time():
+    result = run_features("option_expiration_time", 500).iloc[100:120]
+    logging.error(f"result:{result['option_expiration_time'].to_list()}")
+    np.testing.assert_array_almost_equal(
+        result["option_expiration_time"],
+        [1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600, 1284753600],
+        decimal=3
+    )
+    
 def test_time_to_low_5_ff():
     result = run_features("time_to_low_5_ff", 500).iloc[100:120]
     logging.error(f"result:{result['time_to_low_5_ff'].to_list()}")
     np.testing.assert_array_almost_equal(
         result["time_to_low_5_ff"],
-        [0.0, 0.0, 1800.0, 3600.0, 0.0, 1800.0, 3600.0, 5400.0, 0.0, 0.0, 1800.0, 3600.0, 0.0, 0.0, 1800.0, 3600.0, 5400.0, 7200.0, 0.0, 1800.0],
+        [0.0, 0.0, -1800.0, -3600.0, 0.0, -1800.0, -3600.0, -5400.0, 0.0, 0.0, -1800.0, -3600.0, 0.0, 0.0, -1800.0, -3600.0, -5400.0, -7200.0, 0.0, -1800.0],
         decimal=3
     )
+
+def test_time_to_option_expiration():
+    result = run_features("time_to_option_expiration", 500).iloc[100:120]
+    logging.error(f"result:{result['time_to_option_expiration'].to_list()}")
+    np.testing.assert_array_almost_equal(
+        result["time_to_option_expiration"],
+        [2118600, 2116800, 2115000, 2113200, 2111400, 2109600, 2107800, 2106000, 2104200, 2102400, 2100600, 2098800, 2097000, 2095200, 2093400, 2091600, 2089800, 2088000, 2086200, 2084400],
+        decimal=3
+    )
+
 
 def test_is_new_york_close_time():
     result = run_features("is_new_york_close_time", 50)
