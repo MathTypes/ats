@@ -180,7 +180,7 @@ def close(clean_sorted_data: pd.DataFrame) -> pd.Series:
     return series.transform(winsorize_col)
 
 def ticker(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    series = clean_sorted_data.index.get_level_values("ticker").to_series()
+    series = clean_sorted_data["idx_ticker"]
     return series
 
 def high(clean_sorted_data: pd.DataFrame) -> pd.Series:

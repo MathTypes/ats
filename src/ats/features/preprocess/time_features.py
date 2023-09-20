@@ -37,12 +37,13 @@ VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
 def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
+    return clean_sorted_data["idx_timestamp"]
+    #logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
     #series = clean_sorted_data[["timestamp"]]
     #series = clean_sorted_data["timestamp"]
-    series = clean_sorted_data.index.get_level_values(0).to_series()
-    logging.error(f"series:{series}")
-    return series
+    #series = clean_sorted_data.index.get_level_values(0).to_series()
+    #logging.error(f"series:{series}")
+    #return series
 
 def time(timestamp: pd.Series) -> pd.Series:
     series = timestamp.apply(lambda x:datetime.datetime.fromtimestamp(x, tz=datetime.timezone.utc))
@@ -62,14 +63,14 @@ def new_york_open_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_open_time, cal=new_york_cal
-    )
+    ).rename("new_york_open_time")
 
 @tag(cache="parquet")
 def new_york_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_close_time, cal=new_york_cal
-    )
+    ).rename("new_york_close_time")
 
 @tag(cache="parquet")
 def is_new_york_close_time(timestamp: pd.Series, new_york_close_time: pd.Series) -> pd.Series:
@@ -88,21 +89,21 @@ def london_open_time(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_next_open_time, cal=lse_cal
-    )
+    ).rename("london_open_time")
 
 @tag(cache="parquet")
 def london_close_time(timestamp: pd.Series) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_next_close_time, cal=lse_cal
-    )
+    ).rename("london_close_time")
 
 @tag(cache="parquet")
 def weekly_close_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_weekly_close_time, cal=new_york_cal
-    )
+    ).rename("weekly_close_time")
 
 
 @tag(cache="parquet")
@@ -151,7 +152,7 @@ def new_york_last_open_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=new_york_cal, k=k
-    )
+    ).rename("new_york_last_open_time")
 
 
 @parameterize(
@@ -180,31 +181,31 @@ def new_york_last_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_close_time, cal=new_york_cal, k=k
-    )
+    ).rename("new_york_last_close_time")
 
 def last_daily_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_close_time, cal=new_york_cal, k=0
-    )
+    ).rename("last_daily_close_time")
 
 def next_daily_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_close_time, cal=new_york_cal, k=0
-    )
+    ).rename("next_daily_close_time")
 
 def next_weekly_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_weekly_close_time, cal=new_york_cal
-    )
+    ).rename("next_weekly_close_time")
 
 def next_monthly_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_monthly_close_time, cal=new_york_cal
-    )
+    ).rename("next_monthly_close_time")
 
 @parameterize(
     last_weekly_close_time_0={"k":value(0)},
@@ -232,13 +233,13 @@ def last_weekly_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_weekly_close_time, cal=new_york_cal, k=1
-    )
+    ).rename("last_weekly_close_time")
 
 def last_weekly_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_weekly_close_time, cal=new_york_cal, k=0
-    )
+    ).rename("last_weekly_close_time")
 
 @parameterize(
     last_monthly_close_time_0={"k":value(0)},
@@ -266,13 +267,13 @@ def last_monthly_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_monthly_close_time, cal=new_york_cal, k=k
-    )
+    ).rename("last_monthly_close_time")
 
 def last_monthly_close_time(timestamp: pd.Series) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_monthly_close_time, cal=new_york_cal, k=0
-    )
+    ).rename("last_monthly_close_time")
 
 @parameterize(
     london_last_open_time_0={"k":value(0)},
@@ -300,7 +301,7 @@ def london_last_open_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal, k=k
-    )
+    ).rename("london_last_open_time")
 
 @parameterize(
     london_last_close_time_0={"k":value(0)},
@@ -328,7 +329,7 @@ def london_last_close_time_tmpl(timestamp: pd.Series, k:int) -> pd.Series:
     lse_cal = mcal.get_calendar("LSE")
     return timestamp.apply(
         market_time.compute_last_open_time, cal=lse_cal, k=k
-    )
+    ).rename("london_last_close_time")
 
 @tag(cache="parquet")
 def london_last_close_time(london_last_close_time_0: pd.Series) -> pd.Series:
@@ -351,21 +352,21 @@ def last_weekly_close_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) 
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_weekly_close_time, cal=new_york_cal
-    )
+    ).rename("last_weekly_close_time")
 
 @tag(cache="parquet")
 def monthly_close_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_monthly_close_time, cal=new_york_cal
-    )
+    ).rename("monthly_close_time")
 
 @tag(cache="parquet")
 def last_monthly_close_time(timestamp: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_monthly_close_time, cal=new_york_cal
-    )
+    ).rename("last_monthly_close_time")
 
 @tag(cache="parquet")
 def option_expiration_time(timestamp: pd.Series, ticker: pd.Series, cal:CMEEquityExchangeCalendar) -> pd.Series:
@@ -388,49 +389,49 @@ def last_option_expiration_time(timestamp: pd.Series, cal:CMEEquityExchangeCalen
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_option_expiration_time, cal=new_york_cal
-    )
+    ).rename("last_option_expiration_time")
 
 @tag(cache="parquet")
 def last_macro_event_time_imp1(timestamp: pd.Series, macro_data_builder:MacroDataBuilder) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_macro_event_time, cal=new_york_cal,
-        mdb=macro_data_builder, imp=1)
+        mdb=macro_data_builder, imp=1).rename("last_macro_event_time_imp1")
 
 @tag(cache="parquet")
 def next_macro_event_time_imp1(timestamp: pd.Series, macro_data_builder:MacroDataBuilder) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_macro_event_time, cal=new_york_cal,
-        mdb=macro_data_builder, imp=1)
+        mdb=macro_data_builder, imp=1).rename("next_macro_event_time_imp1")
 
 @tag(cache="parquet")
 def last_macro_event_time_imp2(timestamp: pd.Series, macro_data_builder:MacroDataBuilder) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_macro_event_time, cal=new_york_cal,
-        mdb=macro_data_builder, imp=2)
+        mdb=macro_data_builder, imp=2).rename("last_macro_event_time_imp2")
 
 @tag(cache="parquet")
 def next_macro_event_time_imp2(timestamp: pd.Series, macro_data_builder:MacroDataBuilder) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_macro_event_time, cal=new_york_cal,
-        mdb=macro_data_builder, imp=2)
+        mdb=macro_data_builder, imp=2).rename("next_macro_event_time_imp2")
 
 @tag(cache="parquet")
 def last_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDataBuilder) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_last_macro_event_time, cal=new_york_cal,
-        mdb=macro_data_builder, imp=3)
+        mdb=macro_data_builder, imp=3).rename("last_macro_event_time_imp3")
 
 @tag(cache="parquet")
 def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDataBuilder) -> pd.Series:
     new_york_cal = mcal.get_calendar("NYSE")
     return timestamp.apply(
         market_time.compute_next_macro_event_time, cal=new_york_cal,
-        mdb=macro_data_builder, imp=3)
+        mdb=macro_data_builder, imp=3).rename("next_macro_event_time_imp3")
 
 @parameterize(
     time_to_new_york_open={"diff_time": source("new_york_open_time"),"diff_col":value("new_york_open_time")},
@@ -485,13 +486,17 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
     time_to_high_201d_ff={"diff_time": source("time_high_201d_ff"),"diff_col":value("time_high_201d_ff")},
     time_to_low_201d_ff={"diff_time": source("time_low_201d_ff"),"diff_col":value("time_low_201d_ff")},
 )
-def time_to(timestamp:pd.Series, diff_time:pd.Series, diff_col:str) -> pd.Series:
+def time_to(timestamp:pd.Series, diff_time:pd.Series, ticker:pd.Series, diff_col:str) -> pd.Series:
     #traceback.print_stack()
     logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp}, diff_col:{diff_col}")
-    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
+    logging.error(f"time_to_diff_col:{diff_col}, ticker:{ticker}")
     #timestamp = timestamp.reset_index()
     diff_time = diff_time.reset_index()
-    df = pd.concat([diff_time], axis=1)
+    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
+    if "ticker" in diff_time.columns:
+        df = pd.concat([diff_time], axis=1)
+    else:
+        df = pd.concat([diff_time, ticker.index.to_series()], axis=1)
     logging.error(f"time_to_df before setting column:{df.iloc[-10:]}")
     
     df.columns = ["timestamp", "ticker", diff_col]

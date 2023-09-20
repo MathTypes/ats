@@ -53,6 +53,7 @@ def sorted_data(config : DictConfig, env_mgr : EnvMgr) -> pd.DataFrame:
     )
     full_data["timestamp"] = full_data.time.apply(lambda x: int(x.timestamp()))
     full_data["idx_timestamp"] = full_data["timestamp"]
+    full_data["idx_ticker"] = full_data["ticker"]
     # Do not use what are in serialized files as we need to recompute across different months.
     full_data = full_data.drop(
         columns=[

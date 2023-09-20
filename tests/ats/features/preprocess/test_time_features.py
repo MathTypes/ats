@@ -249,6 +249,16 @@ def test_time_to_high_51_ff():
         decimal=3
     )
 
+def test_time_to_new_york_close():
+    result = run_features("time_to_new_york_close", 500).iloc[100:110]
+    logging.error(f"result:{result['time_to_new_york_close'].to_list()}")
+    np.testing.assert_array_almost_equal(
+        result["time_to_new_york_close"],
+        [45000, 43200, 41400, 39600, 37800, 36000, 34200, 32400, 30600,
+         28800],
+        decimal=3
+    )
+
 def test_time_to_high_5_ff():
     result = run_features("time_to_high_5_ff", 500).iloc[100:120]
     logging.error(f"result:{result['time_to_high_5_ff'].to_list()}")
