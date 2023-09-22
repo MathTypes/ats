@@ -375,7 +375,9 @@ def ret_from_vwap(time_features:pd.DataFrame,
     cum_volume_col = f"{time_col}_cum_volume"
     raw_data["cum_dv"] = cum_dv
     raw_data["cum_volume"] = cum_volume
-    #logging.error(f"time_features:{time_features.iloc[20:40]}")
+    raw_data = raw_data.reset_index()
+    logging.error(f"ret_from_vwap_time_features:, tie_col:{time_col}, {time_features.iloc[20:40]}")
+    logging.error(f"ret_from_vwap_time_features: raw_data:{raw_data}")
     raw_data[cum_dv_col] = raw_data.apply(
         fill_cum_dv, time_col=time_col,
         pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
@@ -384,7 +386,9 @@ def ret_from_vwap(time_features:pd.DataFrame,
         pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
     raw_data[cum_dv_col] = raw_data[cum_dv_col].ffill()
     raw_data[cum_volume_col] = raw_data[cum_volume_col].ffill()
-    return raw_data.apply(compute_ret_from_vwap, dv_col=cum_dv_col, volume_col=cum_volume_col, axis=1)
+    raw_data = raw_data.set_index(["timestamp","ticker"])
+    series = raw_data.apply(compute_ret_from_vwap, dv_col=cum_dv_col, volume_col=cum_volume_col, axis=1)
+    return series
 
 
 @parameterize(
@@ -404,10 +408,12 @@ def around_vwap(time_features:pd.DataFrame,
     cum_volume_col = f"around_{time_col}_cum_volume"
     raw_data["cum_dv"] = cum_dv
     raw_data["cum_volume"] = cum_volume
+    raw_data = raw_data.reset_index()
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
                                           pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
                                               pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
+    raw_data = raw_data.set_index(["timestamp","ticker"])
     rol = raw_data[cum_dv_col].rolling(window=2)
 
     def vwap_around(ser, cum_dv_col, cum_volume_col):
@@ -437,12 +443,14 @@ def post_vwap(time_features:pd.DataFrame,
     raw_data = time_features
     raw_data["cum_dv"] = cum_dv
     raw_data["cum_volume"] = cum_volume
+    raw_data = raw_data.reset_index()
     cum_dv_col = f"post_{time_col}_cum_dv"
     cum_volume_col = f"post_{time_col}_cum_volume"
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
                                           pre_interval_mins=0, post_interval_mins=interval_mins*3, axis=1)
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
                                               pre_interval_mins=0, post_interval_mins=interval_mins*3, axis=1)
+    raw_data = raw_data.set_index(["timestamp","ticker"])
     rol = raw_data[cum_dv_col].rolling(window=2)
 
     def vwap_around(ser, cum_dv_col, cum_volume_col):
@@ -474,14 +482,18 @@ def pre_vwap(time_features:pd.DataFrame,
     raw_data = time_features
     raw_data["cum_dv"] = cum_dv
     raw_data["cum_volume"] = cum_volume
+    raw_data = raw_data.reset_index()
     cum_dv_col = f"pre_{time_col}_cum_dv"
     cum_volume_col = f"pre_{time_col}_cum_volume"
-    #logging.error(f"pre_vwap_time_features:{time_features.iloc[10:40][[time_col,'timestamp','cum_dv','cum_volume']]}")
-    #logging.error(f"pre_vwap_time_col:{time_col}, interval_mins:{interval_mins}")
+    
+    logging.error(f"pre_vwap_time_features_raw_data:{raw_data.iloc[10:40]}")
+    logging.error(f"pre_vwap_time_features:{time_features.iloc[10:40]}")
+    logging.error(f"pre_vwap_time_col:{time_col}, interval_mins:{interval_mins}")
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
                                           pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
                                               pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
+    raw_data = raw_data.set_index(["timestamp","ticker"])
     rol = raw_data[cum_dv_col].rolling(window=2)
     #logging.error(f"raw_data[cum_dv_col]:{raw_data[cum_dv_col].iloc[10:60]}")
     #logging.error(f"raw_data[cum_volume_col]:{raw_data[cum_volume_col].iloc[10:60]}")
@@ -496,7 +508,7 @@ def pre_vwap(time_features:pd.DataFrame,
             return data["close"].iloc[-1]
         return 0
     series = rol.apply(vwap_around, args=(cum_dv_col,cum_volume_col), raw=False).ffill()
-    #logging.error(f"vwap_around_series:{series}")
+    logging.error(f"vwap_around_series:{series}")
     return series
 
         

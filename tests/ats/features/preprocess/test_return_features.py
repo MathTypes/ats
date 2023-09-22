@@ -91,6 +91,7 @@ def test_ret_from_high_21():
         decimal=3
     )
 
+# test_ret_from_low_1d_ff_shift_1d
 def test_ret_from_low_1d_ff_shift_1d():
     result = run_features("ret_from_low_1d_shift_1d", 100)
     print(f"result:{result}")
@@ -109,12 +110,22 @@ def test_ret_from_sma_5():
         decimal=3
     )
 
+def test_ret_from_vwap_since_new_york_open():
+    result = run_features("ret_from_vwap_since_new_york_open", 100)
+    print(f"result:{result}")
+    np.testing.assert_array_almost_equal(
+        result['ret_from_vwap_since_new_york_open'][10:15],
+        [0.002, 0.003, 0.003, 0.002, 0.001],
+        decimal=3
+    )
+
+    
 def test_ret_from_vwap_pre_new_york_open():
     result = run_features("ret_from_vwap_pre_new_york_open", 100)
     print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_vwap_pre_new_york_open'][10:15],
-        [0.002, 0.003, 0.003, 0.002, 0.001],
+        [0.01 , 0.01 , 0.011, 0.009, 0.009],
         decimal=3
     )
 

@@ -374,14 +374,14 @@ def option_expiration_time(timestamp: pd.Series, ticker: pd.Series, cal:CMEEquit
     series = timestamp.apply(
         market_time.compute_option_expiration_time, cal=new_york_cal
     ).rename("option_expiration_time")
-    logging.error(f"ticker:{ticker}")
+    #logging.error(f"ticker:{ticker}")
     df = series.reset_index()
-    logging.error(f"df_before_reset:{df}")
+    #logging.error(f"df_before_reset:{df}")
     df["ticker"] = ticker.values
     df = df.set_index(["timestamp", "ticker"])
-    logging.error(f"option_expiration_time_df:{df}")
+    #logging.error(f"option_expiration_time_df:{df}")
     series = df["option_expiration_time"]
-    logging.error(f"option_expiration_time_series:{series}")
+    #logging.error(f"option_expiration_time_series:{series}")
     return series
 
 @tag(cache="parquet")
