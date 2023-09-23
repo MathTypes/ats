@@ -822,7 +822,7 @@ def fill_open(row, time_col, pre_interval_mins=30, post_interval_mins=30):
 
         
 def fill_close(row, time_col):
-    if pd.isna(row[time_col]) or not row["is_new_york_close"]:
+    if pd.isna(row[time_col]):
         return np.nan
     else:
         return row["close"]
