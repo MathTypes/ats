@@ -356,7 +356,7 @@ def find_close_time(df:pd.DataFrame, close_col_name:str) -> pd.Series:
     #logging.error(f"df:{df.shape}")
     #logging.error(f"df:{df}")
     res = df.apply(lambda x: get_close_time(x, close_col_name), axis=1, result_type="expand")
-    logging.error(f"find_close_time:{res}, res.shape:{res.shape}")
+    #logging.error(f"find_close_time:{res}, res.shape:{res.shape}")
     return res
 
 
@@ -376,8 +376,8 @@ def ret_from_vwap(time_features:pd.DataFrame,
     raw_data["cum_dv"] = cum_dv
     raw_data["cum_volume"] = cum_volume
     raw_data = raw_data.reset_index()
-    logging.error(f"ret_from_vwap_time_features:, tie_col:{time_col}, {time_features.iloc[20:40]}")
-    logging.error(f"ret_from_vwap_time_features: raw_data:{raw_data}")
+    #logging.error(f"ret_from_vwap_time_features:, tie_col:{time_col}, {time_features.iloc[20:40]}")
+    #logging.error(f"ret_from_vwap_time_features: raw_data:{raw_data}")
     raw_data[cum_dv_col] = raw_data.apply(
         fill_cum_dv, time_col=time_col,
         pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
@@ -403,6 +403,9 @@ def ret_from_vwap(time_features:pd.DataFrame,
 def around_vwap(time_features:pd.DataFrame,
                 cum_dv:pd.Series, cum_volume:pd.Series,
                 time_col:str, interval_mins:int) ->pd.Series:
+    pd.set_option("display.max_columns", None)
+    #pd.set_option("display.max_rows", None)
+    pd.options.display.float_format = "{:,.4f}".format
     raw_data = time_features
     cum_dv_col = f"around_{time_col}_cum_dv"
     cum_volume_col = f"around_{time_col}_cum_volume"
@@ -414,12 +417,21 @@ def around_vwap(time_features:pd.DataFrame,
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
                                               pre_interval_mins=interval_mins*3, post_interval_mins=interval_mins*3, axis=1)
     raw_data = raw_data.set_index(["timestamp","ticker"])
-    rol = raw_data[cum_dv_col].rolling(window=2)
-
+    timestamp_series = raw_data.index.get_level_values('timestamp')
+    temp = raw_data.loc[(timestamp_series>=1681195800) & (timestamp_series<=1681296800)][[time_col,cum_dv_col,cum_volume_col,"cum_dv","cum_volume"]]
+    #logging.error(f"raw_data_around_vwap:{raw_data}, time_col:{time_col}")
+    #logging.error(f"raw_data_around_vwap_tmp:{temp}, time_col:{time_col}")
+    rol = raw_data[cum_dv_col].rolling(window=3)
+    #logging.error(f"rol:{rol}")
     def vwap_around(ser, cum_dv_col, cum_volume_col):
         data = raw_data.loc[ser.index]
+        data[cum_volume_col] = data[cum_volume_col].ffill()
+        data[cum_dv_col] = data[cum_dv_col].ffill()
+        #logging.error(f"vwap_around_data: ser.index:{ser.iloc[:10]}, data:{data[[time_col,cum_dv_col,cum_volume_col,'cum_dv','cum_volume']]}")
         cum_volume_diff = data[cum_volume_col].iloc[-1]-data[cum_volume_col].iloc[0]
         cum_dv_diff = data[cum_dv_col].iloc[-1]-data[cum_dv_col].iloc[0]
+        
+        #logging.error(f"cum_volume_diff:{cum_volume_diff}, cum_dv_diff:{cum_dv_diff}, end_volume:{data[cum_volume_col].iloc[0]}, start_volume:{data[cum_volume_col].iloc[-1]}, end_dv:{data[cum_dv_col].iloc[0]}, start_dv:{data[cum_dv_col].iloc[-1]}")
         if cum_volume_diff>0:
             return cum_dv_diff/cum_volume_diff
         else:
@@ -486,9 +498,9 @@ def pre_vwap(time_features:pd.DataFrame,
     cum_dv_col = f"pre_{time_col}_cum_dv"
     cum_volume_col = f"pre_{time_col}_cum_volume"
     
-    logging.error(f"pre_vwap_time_features_raw_data:{raw_data.iloc[10:40]}")
-    logging.error(f"pre_vwap_time_features:{time_features.iloc[10:40]}")
-    logging.error(f"pre_vwap_time_col:{time_col}, interval_mins:{interval_mins}")
+    #logging.error(f"pre_vwap_time_features_raw_data:{raw_data.iloc[10:40]}")
+    #logging.error(f"pre_vwap_time_features:{time_features.iloc[10:40]}")
+    #logging.error(f"pre_vwap_time_col:{time_col}, interval_mins:{interval_mins}")
     raw_data[cum_dv_col] = raw_data.apply(fill_cum_dv, time_col=time_col,
                                           pre_interval_mins=interval_mins*3, post_interval_mins=0, axis=1)
     raw_data[cum_volume_col] = raw_data.apply(fill_cum_volume, time_col=time_col,
@@ -508,7 +520,7 @@ def pre_vwap(time_features:pd.DataFrame,
             return data["close"].iloc[-1]
         return 0
     series = rol.apply(vwap_around, args=(cum_dv_col,cum_volume_col), raw=False).ffill()
-    logging.error(f"vwap_around_series:{series}")
+    #logging.error(f"vwap_around_series:{series}")
     return series
 
         
@@ -740,9 +752,9 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_sma_200d={"base_col": source("sma_200d"), "col_name":value("sma_200d")},
 )
 def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
-    logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close.iloc[50:100]}")
+    #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close(close.timestamp<=1681191800) and (close.timestamp>=1681193800)}")
     #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col.iloc[50:100]}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col[(basecol.timestamp<=1681191800) and (basecol.timestamp>=1681193800)]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col_index:{base_col.index[50:100]}")
     #base_col = base_col.reset_index()
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, after reset base_col:{base_col.iloc[50:100]}")
@@ -758,10 +770,13 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     df = pd.concat([close, base_series], axis=1)
     df.columns = ["close", "ref_close"]
     df["ref_close"] = df.ref_close.ffill()
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+    logging.error(f"df:{df}")
+    temp = df.loc[df.index.get_level_values('timestamp')==1681192800]
+    logging.error(f"temp:{temp}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df[(df.index.get_level_values('timestamp')<=1681191800) and (df.index.get_level_values('timestamp')>=1681193800)]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["ref_close"]+base_price), axis=1)
-    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
+    logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
     return series
 
 @parameterize(

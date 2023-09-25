@@ -10,63 +10,10 @@ import ray
 from ray import workflow
 
 from ats.app.env_mgr import EnvMgr
+from ats.features.preprocess.test_utils import run_features
 from ats.market_data import market_data_mgr
 from ats.util import logging_utils
 
-# THe config path is relative to the file calling initialize (this file)
-def run_features(features, k=10):
-    logging_utils.init_logging()
-    pd.set_option("display.max_columns", None)
-    pd.set_option("display.max_rows", None)
-    pd.options.display.float_format = "{:,.4f}".format
-    with initialize(version_base=None, config_path="../../../../conf"):
-        cfg = compose(
-            config_name="test",
-            overrides=[
-                "dataset.snapshot=''",
-                "dataset.write_snapshot=False",
-                "job.eval_start_date=2009-08-01",
-                "job.eval_end_date=2009-10-01",                
-            ],
-            return_hydra_config=True
-        )
-        env_mgr = EnvMgr(cfg)
-        md_mgr = market_data_mgr.MarketDataMgr(env_mgr)
-        #log_setup.setup_logging()
-        ray.shutdown()
-        ray.init(object_store_memory=30*1024*1024*1024,
-                 storage=f"{cfg.dataset.base_dir}/cache",
-                 log_to_driver=True)
-        workflow.init()
-        # You can also script module import loading by knowing the module name
-        # See run.py for an example of doing it that way.
-        from ats.features.data_loaders import load_data_parquet
-        from ats.features.preprocess import price_features, time_features, return_features 
-        modules = [load_data_parquet, price_features, time_features, return_features]
-        initial_columns = {  # could load data here via some other means, or delegate to a module as we have done.
-            "config": env_mgr.config,
-            "env_mgr": env_mgr,
-            "cal": env_mgr.market_cal,
-            "macro_data_builder": md_mgr.macro_data_builder,
-            "feast_repository_path":".",
-            "feast_config":{},
-            "ret_std":env_mgr.config.dataset.ret_std,
-            "vol_threshold":5.0,
-            "base_price":float(env_mgr.config.dataset.base_price),
-            "interval_mins": env_mgr.config.dataset.interval_mins,
-            "interval_per_day":int(23 * 60 / env_mgr.config.dataset.interval_mins)
-        }
-        rga = h_ray.RayWorkflowGraphAdapter(
-            result_builder=base.PandasDataFrameResult(),
-        #    # Ray will resume a run if possible based on workflow id
-            workflow_id=f"wf-{env_mgr.run_id}",
-        )
-        dr = driver.Driver(initial_columns, *modules, adapter=rga)
-        logging.error(f"features:{features}")
-        if not isinstance(features, list):
-            features = [features]
-        full_data = dr.execute(features)[-k:]
-        return full_data
 
 def test_close_low_5_ff():
     result = run_features("close_low_5_ff", 50)
@@ -482,3 +429,15 @@ def test_close_low_1d_ff():
     )
 
 
+def test_vwap_around_london_close_20230411():
+    timestamp = 1681192800
+    result = run_features("vwap_around_london_close", 100000, timestamp)
+    #print(f"result:{result}")
+    close_list = result.query(f"(timestamp=={timestamp})")['vwap_around_london_close']
+    print(f"close_list:{close_list}")
+    close_time_list = close_list.index.get_level_values(level=0)[:10].to_list()
+    np.testing.assert_array_almost_equal(
+        result['vwap_around_london_close'][10:15],
+        [0.02 , 0.02 , 0.02 , 0.019, 0.019],
+        decimal=3
+    )

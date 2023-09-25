@@ -1,5 +1,6 @@
 import logging
 
+import datetime
 import numpy as np
 import pandas as pd
 from hamilton import base, driver, log_setup
@@ -10,60 +11,10 @@ import ray
 from ray import workflow
 
 from ats.app.env_mgr import EnvMgr
+from ats.features.preprocess.test_utils import run_features
 from ats.market_data import market_data_mgr
 from ats.util import logging_utils
 
-# THe config path is relative to the file calling initialize (this file)
-def run_features(feature_name, k=10):
-    logging_utils.init_logging()
-    pd.set_option("display.max_columns", None)
-    pd.set_option("display.max_rows", None)
-    pd.options.display.float_format = "{:,.4f}".format
-    with initialize(version_base=None, config_path="../../../../conf"):
-        cfg = compose(
-            config_name="test",
-            overrides=[
-                "dataset.snapshot=''",
-                "dataset.write_snapshot=False",
-            ],
-            return_hydra_config=True
-        )
-        env_mgr = EnvMgr(cfg)
-        md_mgr = market_data_mgr.MarketDataMgr(env_mgr)
-        #log_setup.setup_logging()
-        ray.shutdown()
-        ray.init(object_store_memory=30*1024*1024*1024,
-                 storage=f"{cfg.dataset.base_dir}/cache",
-                 log_to_driver=True)
-        workflow.init()
-        # You can also script module import loading by knowing the module name
-        # See run.py for an example of doing it that way.
-        from ats.features.data_loaders import load_data_parquet
-        from ats.features.preprocess import price_features, time_features, return_features 
-        modules = [load_data_parquet, price_features, time_features, return_features]
-        initial_columns = {  # could load data here via some other means, or delegate to a module as we have done.
-            "config": env_mgr.config,
-            "env_mgr": env_mgr,
-            "cal": env_mgr.market_cal,
-            "macro_data_builder": md_mgr.macro_data_builder,
-            "feast_repository_path":".",
-            "feast_config":{},
-            "ret_std":env_mgr.config.dataset.ret_std,
-            "vol_threshold":5.0,
-            "base_price":float(env_mgr.config.dataset.base_price),
-            "interval_mins": env_mgr.config.dataset.interval_mins,
-            "interval_per_day":int(23 * 60 / env_mgr.config.dataset.interval_mins)
-        }
-        rga = h_ray.RayWorkflowGraphAdapter(
-            result_builder=base.PandasDataFrameResult(),
-        #    # Ray will resume a run if possible based on workflow id
-            workflow_id=f"wf-{env_mgr.run_id}",
-        )
-        dr = driver.Driver(initial_columns, *modules, adapter=rga)
-        logging.error(f"feature_name:{feature_name}")
-        full_data = dr.execute([feature_name])[-k:]
-        return full_data
-    
 def test_ret_from_high_1d():
     result = run_features("ret_from_high_1d", 5)
     print(f"result:{result}")
@@ -110,6 +61,34 @@ def test_ret_from_sma_5():
         decimal=3
     )
 
+def test_ret_from_vwap_around_london_close():
+    result = run_features("ret_from_vwap_around_london_close", 100)
+    print(f"result:{result}")
+    np.testing.assert_array_almost_equal(
+        result['ret_from_vwap_around_london_close'][10:15],
+        [0.02 , 0.02 , 0.02 , 0.019, 0.019],
+        decimal=3
+    )
+
+def test_ret_from_vwap_around_london_close_20230411():
+    timestamp = 1681192800
+    result = run_features("ret_from_vwap_around_london_close", 100000, timestamp)
+    #print(f"result:{result}")
+    close_list = result.query(f"(timestamp=={timestamp})")['ret_from_vwap_around_london_close']
+    print(f"close_list:{close_list}")
+    close_time_list = close_list.index.get_level_values(level=0)[:10].to_list()
+    np.testing.assert_array_almost_equal(
+        result['ret_from_vwap_around_london_close'][10:15],
+        [0.02 , 0.02 , 0.02 , 0.019, 0.019],
+        decimal=3
+    )
+    
+#                              ret_from_vwap_around_london_close  \
+#idx_ticker idx_timestamp                                      
+#ES         1681192800                                2.2263   
+#           1681194600                                2.2259   
+#           1681196400                                2.2260
+           
 def test_ret_from_vwap_since_new_york_open():
     result = run_features("ret_from_vwap_since_new_york_open", 100)
     print(f"result:{result}")

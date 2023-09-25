@@ -797,7 +797,7 @@ def fill_cum_volume(row, time_col, pre_interval_mins=30, post_interval_mins=30):
             next_time_check = row[time_col] + 86400
             if ((row["timestamp"] > next_time_check-before_mins) and
                 (row["timestamp"] < next_time_check+after_mins)):
-                return row["cum_dv"]
+                return row["cum_volume"]
             else:
                 return np.nan
 
