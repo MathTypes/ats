@@ -3,11 +3,12 @@ import functools
 import logging
 from datetime import timezone
 import pandas_market_calendars as mcal
-import pytz
+import pytz #its deprecated tho --- however datetime doesnt seem to be doing anything to it.
 
 from ats.calendar import date_util
 from ats.util import time_util
 from ats.util import profile_util
+
 
 @functools.lru_cache(maxsize=128000)
 def get_last_macro_event_time(cal, x_time, mdb, imp):
@@ -305,24 +306,111 @@ def compute_next_close_time(x, cal, k=0):
         logging.error(f"can not compute_next_close for {x}, {e}")
         return None
 
-def get_next_trading_times(cal, interval, now, k):
-    start_date = now.date()
+
+def get_next_trading_times(cal, interval, nynow, k): #get next k trading times based of calendar
+    #now is in nytime.
+    now=nynow.astimezone(pytz.timezone('UTC')) #utc now
+    
+
+    ######start of code#########
+    start_date=now.date()
     schedule = cal.schedule(
-        start_date=start_date, end_date=start_date + datetime.timedelta(days=5)
-    )
-    time_range = mcal.date_range(schedule, frequency=f"{interval}min")
-    results = []
-    last_time = None
-    for utc_time in time_range:
-        nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
-        if nyc_time < now:
+        start_date=start_date, end_date=start_date + datetime.timedelta(days=k*7)
+    ) #dataframe type
+
+    print(type(schedule)) #dataframe. Iterate down market_open.
+
+    print("schedule begins here:")
+    res=[]
+    count=0
+    for row in schedule.values: #column by column of dataframe
+        start_time=row[0]
+
+        if start_time < now:
             continue
-        # There are cases where market stops around 16:15 EST and it will be
-        # included in schedule. We would like to skip it.
-        if last_time and nyc_time < last_time + datetime.timedelta(minutes=interval):
-            continue
-        last_time = nyc_time
-        results.append(nyc_time.timestamp())
-        if len(results) >= k:
+        
+        res.append(row[0].timestamp())
+        count+=1
+
+        if count == k:
             break
-    return results 
+    
+    return res
+
+
+
+# def get_next_trading_times(cal, interval, now, k): 
+#     #task: get next k trading times from "now"
+#     #( calendar object, 30, datetime object IN NY TIME, how many opening times to return)
+#     start_date = now.date() #NY time starting date (date object)
+
+
+#     schedule = cal.schedule(
+#         start_date=start_date, end_date=start_date + datetime.timedelta(days=5)
+#     ) #get the nyse/cme's trading hours for these days (dateframe object)
+    
+#     #PROB: days = 4*k to ensure all k days are covered.
+#     #PROB: cal.schedule should be taking in utc time dates --- not ny time dates????
+    
+
+
+#     time_range = mcal.date_range(schedule, frequency=f"{interval}min")  #return a DatetimeIndex object with all timestamps at the frequency given, within the valid range of date and time 
+    
+#     #(in this case, valid range is the first timestamp in calendar to last timestamp in schedule. For example, my calendar starts at 2023/7/19 22:00 and ends at 2023/7/24 15:00, it'll form list of time 30minutes at a time starting with 22:30 on 7/19 til the end.)
+
+#     #PROB: so trading hours for these days, except you increment at 30 minutes at a time. Sometimes it goes 15 minutes at a time tho --- THIS IS DESPITE THE MARKET NOT CLOSING AT :15. 
+
+
+
+#     #when searching: pick keywords common to other ppl.
+
+#     results = []
+#     last_time = None
+    
+#     for utc_time in time_range:
+        
+#         nyc_time = utc_time.astimezone(pytz.timezone("America/New_York")) #this is a pandas.timestamp, equivalent to datetime.datetime
+
+#         if nyc_time < now:
+#             continue
+#         # There are cases where market stops around 16:15 EST and it will be
+#         # included in schedule. We would like to skip it.
+#         if last_time and nyc_time < last_time + datetime.timedelta(minutes=interval):
+#             continue
+#         last_time = nyc_time
+#         results.append(nyc_time.timestamp()) #PROB: !!!!As long as its a time period in between, it'll be accepted??? 
+#         if len(results) >= k:
+#             break 
+#     return results 
+
+    '''
+    PROB's ex:
+            market_open               break_start                 break_end              market_close
+2023-07-20 2023-07-19 22:00:00+00:00 2023-07-20 20:15:00+00:00 2023-07-20 20:30:00+00:00 2023-07-20 21:00:00+00:00
+2023-07-21 2023-07-20 22:00:00+00:00 2023-07-21 20:15:00+00:00 2023-07-21 20:30:00+00:00 2023-07-21 21:00:00+00:00
+2023-07-24 2023-07-23 22:00:00+00:00 2023-07-24 20:15:00+00:00 2023-07-24 20:30:00+00:00 2023-07-24 21:00:00+00:00
+2023-07-25 2023-07-24 22:00:00+00:00 2023-07-25 20:15:00+00:00 2023-07-25 20:30:00+00:00 2023-07-25 21:00:00+00:00
+2023-07-26 2023-07-25 22:00:00+00:00 2023-07-26 20:15:00+00:00 2023-07-26 20:30:00+00:00 2023-07-26 21:00:00+00:00
+
+resulting time intervals by going 30 minutes:
+
+DatetimeIndex(['2023-07-19 22:30:00+00:00', '2023-07-19 23:00:00+00:00',
+               '2023-07-19 23:30:00+00:00', '2023-07-20 00:00:00+00:00',
+               '2023-07-20 00:30:00+00:00', '2023-07-20 01:00:00+00:00',
+               '2023-07-20 01:30:00+00:00', '2023-07-20 02:00:00+00:00',
+               '2023-07-20 02:30:00+00:00', '2023-07-20 03:00:00+00:00',
+               ...
+               '2023-07-26 16:30:00+00:00', '2023-07-26 17:00:00+00:00',
+               '2023-07-26 17:30:00+00:00', '2023-07-26 18:00:00+00:00',
+               '2023-07-26 18:30:00+00:00', '2023-07-26 19:00:00+00:00',
+               '2023-07-26 19:30:00+00:00', '2023-07-26 20:00:00+00:00',
+               '2023-07-26 20:15:00+00:00', '2023-07-26 21:00:00+00:00'],
+              dtype='datetime64[ns, UTC]', length=230, freq=None)
+
+    '''
+
+    
+
+
+
+
