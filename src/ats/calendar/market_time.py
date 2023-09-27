@@ -308,7 +308,9 @@ def compute_next_close_time(x, cal, k=0):
 
 
 def get_next_trading_times(cal, interval, nynow, k): #get next k trading times based of calendar
-    #now is in nytime.
+    #now is in nytime
+    #all tests pass in interval --- which is kind of useless, but I guess I'll keep it.
+    #all tests pass in ny time, which I conver to utc.
     now=nynow.astimezone(pytz.timezone('UTC')) #utc now
     
 
