@@ -447,21 +447,21 @@ def test_kc_10d_10_high():
         decimal=3
     )
 
-def test_kc_10d_15_high():
-    result = run_features("kc_10d_15_high", 50)
-    close = result["kc_10d_15_high"][30:35]
-    np.testing.assert_array_almost_equal(
-        close,
-        [999.749, 1000.568,  997.569,  991.583,  985.935],
-        decimal=3
-    )
-
 def test_kc_10d_20_high():
     result = run_features("kc_10d_20_high", 50)
     close = result["kc_10d_20_high"][30:35]
     np.testing.assert_array_almost_equal(
         close,
         [1009.058, 1009.821, 1007.659, 1001.514,  995.698],
+        decimal=3
+    )
+
+def test_kc_10d_15_high():
+    result = run_features("kc_10d_15_high", 50)
+    close = result["kc_10d_15_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [999.749, 1000.568,  997.569,  991.583,  985.935],
         decimal=3
     )
 
@@ -474,15 +474,52 @@ def test_kc_20d_10_high():
         decimal=3
     )
 
-def test_kc_10d_15_high():
-    result = run_features("kc_10d_15_high", 50)
-    close = result["kc_10d_15_high"][30:35]
+
+def test_kc_10w_05_high():
+    result = run_features("kc_10w_05_high", 500)
+    logging.error(f"result:{result}")
+    close = result["kc_10w_05_high"][30:35]
     np.testing.assert_array_almost_equal(
         close,
-        [987.258, 988.325, 989.25 , 986.483, 984.467],
+        [966.239, 948.058, 925.703, 895.169, 857.538],
         decimal=3
     )
 
+def test_kc_10w_10_high():
+    result = run_features("kc_10w_10_high", 500)
+    close = result["kc_10w_10_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [1019.612, 1004.044,  981.665,  952.822,  916.564],
+        decimal=3
+    )
+
+def test_kc_10w_15_high():
+    result = run_features("kc_10w_15_high", 500)
+    close = result["kc_10w_15_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [1072.985, 1060.029, 1037.627, 1010.476,  975.589],
+        decimal=3
+    )
+
+def test_kc_10w_20_high():
+    result = run_features("kc_10w_20_high", 500)
+    close = result["kc_10w_20_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [1126.358, 1116.015, 1093.589, 1068.129, 1034.615],
+        decimal=3
+    )
+
+def test_kc_20w_10_high():
+    result = run_features("kc_20w_10_high", 500)
+    close = result["kc_20w_10_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [1110.522, 1096.197, 1075.676, 1053.225, 1025.977],
+        decimal=3
+    )
 
 def test_vwap_around_london_close_20230411():
     timestamp = 1681192800

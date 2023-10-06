@@ -78,6 +78,15 @@ def bollinger_tmpl(close:pd.Series, window:int, window_dev:int) -> pd.Series:
     kc_20d_05={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(0.5)},
     kc_20d_10={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(1.0)},
     kc_20d_15={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(1.5)},
+    kc_20d_20={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(2.0)},
+    kc_10w_05={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(0.5)},
+    kc_10w_10={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(1.0)},
+    kc_10w_15={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(1.5)},
+    kc_10w_20={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(2)},
+    kc_20w_05={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(0.5)},
+    kc_20w_10={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(1.0)},
+    kc_20w_15={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(1.5)},
+    kc_20w_20={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(2.0)},
 )
 def indicator_kc_tmpl(close:pd.Series, high:pd.Series, low:pd.Series, window:int, mult:float) -> KeltnerChannel:
     logging.error(f"indicator_kc_tmpl: window:{window}, mult:{mult}")
@@ -95,6 +104,13 @@ def indicator_kc_tmpl(close:pd.Series, high:pd.Series, low:pd.Series, window:int
     kc_20d_05_high={"kc": source("kc_20d_05")},
     kc_20d_10_high={"kc": source("kc_20d_10")},
     kc_20d_15_high={"kc": source("kc_20d_15")},
+    kc_10w_05_high={"kc": source("kc_10w_05")},
+    kc_10w_10_high={"kc": source("kc_10w_10")},
+    kc_10w_15_high={"kc": source("kc_10w_15")},
+    kc_10w_20_high={"kc": source("kc_10w_20")},
+    kc_20w_05_high={"kc": source("kc_20w_05")},
+    kc_20w_10_high={"kc": source("kc_20w_10")},
+    kc_20w_15_high={"kc": source("kc_20w_15")},
 )
 def kc_high_tmpl(kc: KeltnerChannel) -> pd.Series:
     ta.volatility.keltner_channel_hband
