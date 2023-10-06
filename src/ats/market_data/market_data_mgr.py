@@ -179,7 +179,6 @@ class MarketDataMgr(object):
         logging.error(f"full_data before filtering:{full_data.describe()}")
         #ret_from_vwap_around_london_close
         logging.error(f"full_data.ret_from_vwap_around_london_close>0.15:{full_data[full_data.ret_from_vwap_around_london_close>0.5].iloc[-3:]}")
-        exit(0)
         logging.error(f"full_data.ret_from_vwap_around_london_open>0.15:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
         logging.error(f"full_data.ret_from_close_cumsum_low_51d<-0.24:{full_data[full_data.ret_from_close_cumsum_low_51d<-0.24].iloc[-10:]}") 
         logging.error(f"full_data.ret_from_close_cumsum_low_201d<-0.3:{full_data[full_data.ret_from_close_cumsum_low_201d<-0.3].iloc[-10:]}")
