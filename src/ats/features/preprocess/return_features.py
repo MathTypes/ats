@@ -766,17 +766,17 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     base_series = base_col
     if base_series.name in ["close"]:
         base_series.name = "ref_close"
-    logging.error(f"base_series:{base_series}")
+    #logging.error(f"base_series:{base_series}")
     df = pd.concat([close, base_series], axis=1)
     df.columns = ["close", "ref_close"]
     df["ref_close"] = df.ref_close.ffill()
-    logging.error(f"df:{df}")
-    temp = df.loc[df.index.get_level_values('timestamp')==1681192800]
-    logging.error(f"temp:{temp}")
+    #logging.error(f"df:{df}")
+    #temp = df.loc[df.index.get_level_values('timestamp')==1681192800]
+    #logging.error(f"temp:{temp}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df[(df.index.get_level_values('timestamp')<=1681191800) and (df.index.get_level_values('timestamp')>=1681193800)]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
     series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["ref_close"]+base_price), axis=1)
-    logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
+    #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
     return series
 
 @parameterize(
