@@ -431,10 +431,55 @@ def test_close_low_1d_ff():
 def test_kc_10d_05_high():
     result = run_features("kc_10d_05_high", 50)
     logging.error(f"result:{result}")
-    close = result["kc_10d_05_high"][:4]
+    close = result["kc_10d_05_high"][30:35]
     np.testing.assert_array_almost_equal(
         close,
-        [974.692, 972.425, 968.65, 961.575],
+        [981.131, 982.062, 977.389, 971.721, 966.409],
+        decimal=3
+    )
+
+def test_kc_10d_10_high():
+    result = run_features("kc_10d_10_high", 50)
+    close = result["kc_10d_10_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [990.44 , 991.315, 987.479, 981.652, 976.172],
+        decimal=3
+    )
+
+def test_kc_10d_15_high():
+    result = run_features("kc_10d_15_high", 50)
+    close = result["kc_10d_15_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [999.749, 1000.568,  997.569,  991.583,  985.935],
+        decimal=3
+    )
+
+def test_kc_10d_20_high():
+    result = run_features("kc_10d_20_high", 50)
+    close = result["kc_10d_20_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [1009.058, 1009.821, 1007.659, 1001.514,  995.698],
+        decimal=3
+    )
+
+def test_kc_20d_10_high():
+    result = run_features("kc_20d_10_high", 50)
+    close = result["kc_20d_10_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [978.913, 980.416, 980.242, 977.728, 975.071],
+        decimal=3
+    )
+
+def test_kc_10d_15_high():
+    result = run_features("kc_10d_15_high", 50)
+    close = result["kc_10d_15_high"][30:35]
+    np.testing.assert_array_almost_equal(
+        close,
+        [987.258, 988.325, 989.25 , 986.483, 984.467],
         decimal=3
     )
 
