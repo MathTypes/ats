@@ -12,7 +12,8 @@ import pandas as pd
 from pyarrow import csv
 import ray
 import ta
-
+from ta.volatility import (AverageTrueRange, BollingerBands, DonchianChannel,
+                           KeltnerChannel)
 from omegaconf.dictconfig import DictConfig
 from pandas_market_calendars.exchange_calendar_cme import CMEEquityExchangeCalendar
 from ats.event.macro_indicator import MacroDataBuilder
@@ -69,6 +70,33 @@ def bollinger_day_tmpl(close:pd.Series, window:int, window_dev:int, interval_per
 def bollinger_tmpl(close:pd.Series, window:int, window_dev:int) -> pd.Series:
     return ta.volatility.BollingerBands(close, window=window, window_dev=window_dev)
 
+
+@parameterize(
+    kc_10d_05={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(0.5)},
+    kc_10d_10={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(1.0)},
+    kc_10d_15={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(1.5)},
+)
+def indicator_kc_tmpl(close:pd.Series, high:pd.Series, low:pd.Series, window:int, mult:float) -> KeltnerChannel:
+    res = KeltnerChannel(close=close, high=high, low=low, window=window, fillna=False, multiplier=mult)
+    return res
+
+@parameterize(
+    kc_10d_05_high={"kc": source("kc_10d_05")},
+    kc_10d_10_high={"kc": source("kc_10d_10")},
+    kc_10d_15_high={"kc": source("kc_10d_15")},
+)
+def kc_high_tmpl(kc: KeltnerChannel) -> pd.Series:
+    series = kc.keltner_channel_hband()
+    logging.error(f"series:{series}")
+    return series
+
+@parameterize(
+    kc_10d_05_low={"kc": source("kc_10d_05")},
+    kc_10d_10_low={"kc": source("kc_10d_10")},
+    kc_10d_15_low={"kc": source("kc_10d_15")},
+)
+def kc_low_tmpl(kc: KeltnerChannel) -> pd.Series:
+    return kc.keltner_channel_lband()
 
 @parameterize(
     bb_high_5d_2={"bollinger": source("bollinger_5d_2")},

@@ -428,6 +428,16 @@ def test_close_low_1d_ff():
         decimal=3
     )
 
+def test_kc_10d_05_high():
+    result = run_features("kc_10d_05_high", 50)
+    logging.error(f"result:{result}")
+    close = result["kc_10d_05_high"][:4]
+    np.testing.assert_array_almost_equal(
+        close,
+        [974.692, 972.425, 968.65, 961.575],
+        decimal=3
+    )
+
 
 def test_vwap_around_london_close_20230411():
     timestamp = 1681192800
