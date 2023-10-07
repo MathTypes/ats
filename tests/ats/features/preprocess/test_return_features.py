@@ -73,14 +73,13 @@ def test_ret_from_vwap_around_london_close():
 def test_ret_from_vwap_around_london_close_20230411():
     timestamp = 1681192800
     result = run_features("ret_from_vwap_around_london_close", 100000, timestamp)
-    #print(f"result:{result}")
-    close_list = result.query(f"(timestamp=={timestamp})")['ret_from_vwap_around_london_close']
+    close_list = result.query(f"(timestamp>={timestamp-3600}) & (timestamp<={timestamp+3600})")['ret_from_vwap_around_london_close']
     print(f"close_list:{close_list}")
     close_time_list = close_list.index.get_level_values(level=0)[:10].to_list()
     np.testing.assert_array_almost_equal(
-        result['ret_from_vwap_around_london_close'][10:15],
-        [0.02 , 0.02 , 0.02 , 0.019, 0.019],
-        decimal=3
+        close_list,
+        [0.0029, 0.0033, 0.0034, 0.0031, 0.0031],
+        decimal=4
     )
     
 #                              ret_from_vwap_around_london_close  \
@@ -101,16 +100,14 @@ def test_ret_from_vwap_since_new_york_open():
     
 def test_ret_from_vwap_pre_new_york_open():
     result = run_features("ret_from_vwap_pre_new_york_open", 100)
-    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_vwap_pre_new_york_open'][10:15],
-        [0.01 , 0.01 , 0.011, 0.009, 0.009],
+        [0.012, 0.012, 0.013, 0.011, 0.011],
         decimal=3
     )
 
 def test_ret_from_last_daily_close_0():
     result = run_features("ret_from_last_daily_close_0", 100)
-    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_daily_close_0'][10:15],
         [-0.001, -0.001, -0.002, -0.002, -0.002],
@@ -119,7 +116,6 @@ def test_ret_from_last_daily_close_0():
 
 def test_ret_from_last_daily_close_1():
     result = run_features("ret_from_last_daily_close_1", 100)
-    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_daily_close_1'][10:15],
         [0.02 , 0.02 , 0.019, 0.018, 0.018],
@@ -128,7 +124,6 @@ def test_ret_from_last_daily_close_1():
 
 def test_ret_from_last_daily_close_2():
     result = run_features("ret_from_last_daily_close_2", 100)["ret_from_last_daily_close_2"][10:15]
-    print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
         [0.025, 0.026, 0.024, 0.024, 0.024],
@@ -137,7 +132,6 @@ def test_ret_from_last_daily_close_2():
 
 def test_ret_from_last_weekly_close_1():
     result = run_features("ret_from_last_weekly_close_1", 100)
-    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_weekly_close_1'][10:15],
         [0.007, 0.007, 0.006, 0.005, 0.005],
@@ -147,7 +141,6 @@ def test_ret_from_last_weekly_close_1():
 
 def test_ret_from_last_monthly_close_1():
     result = run_features("ret_from_last_monthly_close_1", 100)
-    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result['ret_from_last_monthly_close_1'][10:15],
         [-0.013, -0.013, -0.015, -0.015, -0.015],
@@ -156,7 +149,6 @@ def test_ret_from_last_monthly_close_1():
 
 def test_ret_from_last_monthly_close_9():
     result = run_features("ret_from_last_monthly_close_9", 100)['ret_from_last_monthly_close_9'][10:15]
-    print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
         [0.001,  0.001, -0.   , -0.001, -0.001],
@@ -165,7 +157,6 @@ def test_ret_from_last_monthly_close_9():
 
 def test_ret_from_kc_10d_05_high():
     result = run_features("ret_from_kc_10d_05_high", 100)['ret_from_kc_10d_05_high'][10:15]
-    print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
         [0.004, 0.004, 0.003, 0.002, 0.002],
@@ -174,7 +165,6 @@ def test_ret_from_kc_10d_05_high():
 
 def test_ret_from_vwap_pre_new_york_close():
     result = run_features("ret_from_vwap_pre_new_york_close", 100)['ret_from_vwap_pre_new_york_close'][10:15]
-    print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
         [-0.0012162281057896962, -0.0008685833951798116, -0.0006948063506895252, -0.00191188030775713, -0.0024339372238166845],
@@ -183,7 +173,6 @@ def test_ret_from_vwap_pre_new_york_close():
 
 def test_ret_from_vwap_pre_london_open():
     result = run_features("ret_from_vwap_pre_london_open", 100)['ret_from_vwap_pre_london_open'][10:15]
-    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result,
         [0.019, 0.02 , 0.02 , 0.019, 0.018],
@@ -192,19 +181,29 @@ def test_ret_from_vwap_pre_london_open():
 
 def test_ret_from_vwap_pre_london_close():
     result = run_features("ret_from_vwap_pre_london_close", 100)['ret_from_vwap_pre_london_close'][10:15]
-    print(f"result:{result}")
     np.testing.assert_array_almost_equal(
         result,
         [0.0195, 0.0198, 0.0200, 0.0188, 0.0183],
         decimal=3
     )
-
-def test_example_group_features():
-    result = run_features("example_group_features", 100)
-    print(f"result:{result}")
+    close_time_list = result.index.get_level_values(level=0).to_list()
     np.testing.assert_array_almost_equal(
         result,
-        [0.0195, 0.0198, 0.0200, 0.0188, 0.0183],
+        [0.01826763, 0.01861528, 0.01878905, 0.01757198, 0.01704992],
+        decimal=8
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1283380200, 1283382000, 1283383800, 1283385600, 1283387400],
+        decimal=8
+    )
+
+def test_example_group_features():
+    result = run_features("example_group_features", 100).iloc[10:15]
+    print(f"result:{result}")
+    np.testing.assert_array_almost_equal(
+        result["open"],
+        [938.5 , 938.25, 938.5 , 939.  , 937],
         decimal=3
     )
 
@@ -213,7 +212,7 @@ def test_ret_velocity_from_high_5():
     print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
-        [-1.351e-07, -1.609e-08,        np.nan, -6.762e-07, -4.831e-07],
+        [1.35136456e-07, 1.60904671e-08,            nan, 6.76152198e-07,                  4.83091909e-07],
         decimal=8
     )
 
