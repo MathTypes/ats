@@ -1026,7 +1026,7 @@ def add_example_level_features_df(cal, macro_data_builder, config, raw_data):
         time_diff, axis=1, base_col="timestamp", diff_col="new_york_close_time"
     )
     raw_data["time_to_london_open"] = raw_data.apply(
-        time_diff, axis=1, base_col="timestamp", diff_col="london_open_time_0"
+        time_diff, axis=1, base_col="timestamp", diff_col="london_open_time"
     )
     raw_data["time_to_london_last_open"] = raw_data.apply(
         time_diff, axis=1, base_col="timestamp", diff_col="london_last_open_time_0"

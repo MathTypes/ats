@@ -50,6 +50,16 @@ def test_rolling():
     )
     
 def test_add_highs_trending_no_high():
+    cfg = None
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+                "dataset.interval_mins=1380",
+            ],
+            return_hydra_config=True
+        )
     start_timestamp = 1325689200
     delta = 30*60
     timestamps = [start_timestamp + i*delta for i in range(7)]
@@ -65,7 +75,7 @@ def test_add_highs_trending_no_high():
     }
     raw_data = pd.DataFrame(data=raw_data)
     full_ds = ray.data.from_pandas(raw_data)
-    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    add_group_features = partial(data_util.add_group_features, config=cfg)
     full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
     raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
@@ -84,6 +94,16 @@ def test_add_highs_trending_no_high():
 
 
 def test_with_high():
+    cfg = None
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+                "dataset.interval_mins=1380",
+            ],
+            return_hydra_config=True
+        )
     start_timestamp = 1325689200
     delta = 30*60
     timestamps = [start_timestamp + i*delta for i in range(11)]
@@ -101,7 +121,7 @@ def test_with_high():
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
     full_ds = ray.data.from_pandas(raw_data)
-    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    add_group_features = partial(data_util.add_group_features, config=cfg)
     full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
     raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[5]
@@ -114,29 +134,40 @@ def test_with_high():
     assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
     assert math.isclose(row_two["volume_back"], -0.2231435513142097, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
+    logging.error(f"time_high_5_ff:{raw_data['time_high_5_ff'].to_list()}")
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0.006, 0.028, 0.028, 0.028, 0.028],
+        [nan, nan, nan, nan, nan,  3.,  4., 15., 15., 15., 15.],
         decimal=3,
         err_msg="can not match close_high_5_ff")
     np.testing.assert_array_almost_equal(
         raw_data["time_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 1325700000, 1325701800, 1325701800, 1325701800, 1325701800],
+        [nan, nan, nan, nan, nan, 1325698200.0, 1325700000.0, 1325701800.0, 1325701800.0, 1325701800.0, 1325701800.0],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_bf"],
-        [0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.028, 0.028, 0.028, 0.028],
+        [3.,  3.,  3.,  3.,  3.,  3.,  4., 15., 15., 15., 15.],
         decimal=3,
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_low_5_ff"],
-        [ np.nan,   np.nan,   np.nan,   np.nan,   np.nan,   np.nan, 0.   , 0.   , 0.002, 0.004, 0.006],
+        [nan, nan, nan, nan, nan,  1.,  1.,  1.,  2.,  3.,  4.],
         decimal=3,
     )
 
 
 def test_with_negative_price():
+    cfg = None
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+                "dataset.interval_mins=1380",
+            ],
+            return_hydra_config=True
+        )
     start_timestamp = 1325689200
     delta = 30*60
     timestamps = [start_timestamp + i*delta for i in range(8)]
@@ -154,7 +185,7 @@ def test_with_negative_price():
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
     full_ds = ray.data.from_pandas(raw_data)
-    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    add_group_features = partial(data_util.add_group_features, config=cfg)
     full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
     raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
@@ -169,11 +200,21 @@ def test_with_negative_price():
     peak_timestamp = start_timestamp + delta * 4
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, -0.002, -0.004],
+        [nan, nan, nan, nan, nan, -2., -3., -4.],
         decimal=3,
         err_msg="can not match close_high_5_ff")
 
 def test_with_low():
+    cfg = None
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+                "dataset.interval_mins=1380",
+            ],
+            return_hydra_config=True
+        )
     start_timestamp = 1325689200
     delta = 30*60
     timestamps = [start_timestamp + i*delta for i in range(11)]
@@ -191,7 +232,7 @@ def test_with_low():
     # fake the time interval to one day so that we can have 5 day high with 5
     # intervals
     full_ds = ray.data.from_pandas(raw_data)
-    add_group_features = partial(data_util.add_group_features, 30*23*2)
+    add_group_features = partial(data_util.add_group_features, config=cfg)
     full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
     raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[5]
@@ -204,24 +245,25 @@ def test_with_low():
     assert math.isclose(row_two["close_back"], 0.0019900504080103687, rel_tol=0.01)
     assert math.isclose(row_two["volume_back"], -0.2231435513142097, rel_tol=0.01)
     peak_timestamp = start_timestamp + delta * 4
+    logging.error(f"time_high_5_ff:{raw_data['time_high_5_ff'].to_list()}")
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0.006, 0.006, 0.01, 0.012, 0.014],
+        [nan, nan, nan, nan, nan,  3.,  4.,  4.,  6.,  7.,  8.],
         decimal=3, verbose=True,
         err_msg="can not match close_high_5_ff")
     np.testing.assert_array_almost_equal(
         raw_data["time_high_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 1325700000, 1325700000, 1325703600, 1325705400, 1325707200],
-        decimal=3, verbose=True, err_msg="can not match time_high_5_ff",
+        [nan, nan, nan, nan, nan, 1325698200.0, 1325700000.0, 1325700000.0, 1325703600.0, 1325705400.0, 1325707200.0],
+        decimal=3
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_high_5_bf"],
-        [0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.01, 0.012, 0.014],
+        [3., 3., 3., 3., 3., 3., 4., 4., 6., 7., 8.],
         decimal=3, verbose=True, err_msg="can not match close_high_5_bf"
     )
     np.testing.assert_array_almost_equal(
         raw_data["close_low_5_ff"],
-        [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 0., -0.001, -0.001, -0.001, -0.001],
+        [nan, nan, nan, nan, nan, 1. , 1. , 0.5, 0.5, 0.5, 0.5],
         decimal=3, verbose=True, err_msg="can not match close_low_5_ff",
     )
     np.testing.assert_array_almost_equal(
@@ -231,6 +273,15 @@ def test_with_low():
     )
 
 def test_group_features():
+    cfg = None
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+            ],
+            return_hydra_config=True
+        )
     raw_data = {
         "ticker": ["ES", "ES", "ES"],
         "open": [1, 2, 3],
@@ -243,7 +294,7 @@ def test_group_features():
     }
     raw_data = pd.DataFrame(data=raw_data)
     full_ds = ray.data.from_pandas(raw_data)
-    add_group_features = partial(data_util.add_group_features, 30)
+    add_group_features = partial(data_util.add_group_features, cfg)
     full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
     raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
@@ -252,12 +303,13 @@ def test_group_features():
     assert math.isclose(row_two["close_back"], 0.001982161203990529, rel_tol=0.01)
 
 
-def test_add_example_features():
+def test_add_example_features_basic():
     with initialize(version_base=None, config_path="../../../conf"):
         cfg = compose(
             config_name="test",
             overrides=[
 	        "dataset.read_snapshot=False",
+                "dataset.interval_mins=1380",
             ],
             return_hydra_config=True
         )
@@ -282,16 +334,17 @@ def test_add_example_features():
         # fake the time interval to one day so that we can have 5 day high with 5
         # intervals
         full_ds = ray.data.from_pandas(raw_data)
-        add_group_features = partial(data_util.add_group_features, 30*23*2)
+        add_group_features = partial(data_util.add_group_features, config=cfg)
         full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
-        add_example_features = partial(
-            data_util.add_example_level_features, market_cal, macro_data_builder)
-        full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_level_features_df(market_cal, macro_data_builder, cfg, raw_data) 
+        raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data, cfg)
+        
         row_two = raw_data.iloc[2]
         assert row_two["ticker"] == "ES"
         assert row_two["close_back"] ==  0.0006482982398861026
         data_len = len(raw_data.timestamp)
+        logging.error(f"raw_data:{raw_data.iloc[:2]}")
         np.testing.assert_array_almost_equal(
             raw_data["weekly_close_time"],
             [1325887200] * data_len,
@@ -324,6 +377,14 @@ def test_add_example_features():
         )
 
 def test_group_features():
+    with initialize(version_base=None, config_path="../../../conf"):
+        cfg = compose(
+            config_name="test",
+            overrides=[
+	        "dataset.read_snapshot=False",
+            ],
+            return_hydra_config=True
+        )
     raw_data = {
         "ticker": ["ES", "ES", "ES"],
         "open": [1, 2, 3],
@@ -336,7 +397,7 @@ def test_group_features():
     }
     raw_data = pd.DataFrame(data=raw_data)
     full_ds = ray.data.from_pandas(raw_data)
-    add_group_features = partial(data_util.add_group_features, 30)
+    add_group_features = partial(data_util.add_group_features, config=cfg)
     full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
     raw_data = full_ds.to_pandas()
     row_two = raw_data.iloc[2]
@@ -378,10 +439,8 @@ def test_add_example_features_vwap_before_new_york_open():
         full_ds = ray.data.from_pandas(raw_data)
         add_group_features = partial(data_util.add_group_features, 30*23*2)
         full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
-        add_example_features = partial(
-            data_util.add_example_level_features, market_cal, macro_data_builder)
-        full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_level_features_df(market_cal, macro_data_builder, cfg, raw_data) 
         raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
@@ -423,10 +482,8 @@ def test_add_example_features_vwap_around_new_york_open_no_event():
         full_ds = ray.data.from_pandas(raw_data)
         add_group_features = partial(data_util.add_group_features, 30*23*2)
         full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
-        add_example_features = partial(
-            data_util.add_example_level_features, market_cal, macro_data_builder)
-        full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_level_features_df(market_cal, macro_data_builder, cfg, raw_data) 
         raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
         logging.error(f"raw_data:{raw_data}")
         np.testing.assert_array_almost_equal(
@@ -477,10 +534,8 @@ def test_add_example_features_vwap_around_new_york_open():
         full_ds = ray.data.from_pandas(raw_data)
         add_group_features = partial(data_util.add_group_features, 30*23*2)
         full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
-        add_example_features = partial(
-            data_util.add_example_level_features, market_cal, macro_data_builder)
-        full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_level_features_df(market_cal, macro_data_builder, cfg, raw_data) 
         raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
 
         logging.error(f"raw_data:{raw_data}")
@@ -554,12 +609,7 @@ def test_add_example_features_daily_close():
         #full_ds = ray.data.from_pandas(raw_data)
         #add_group_features = partial(data_util.add_group_features, 30*23*2)
         raw_data = data_util.add_group_features(raw_data, cfg)
-        add_example_features = partial(
-            data_util.add_example_level_features, cal=market_cal,
-            macro_data_builder=macro_data_builder, config=cfg)
-        full_ds = ray.data.from_pandas(raw_data) 
-        full_ds = full_ds.map_batches(add_example_features)
-        raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_level_features_df(market_cal, macro_data_builder, cfg, raw_data) 
         raw_data = data_util.add_example_group_features(
             cal=market_cal, macro_data_builder=macro_data_builder, raw_data=raw_data, config=cfg)
 
@@ -637,10 +687,8 @@ def test_add_example_features_vwap_around_london_open():
         full_ds = ray.data.from_pandas(raw_data)
         add_group_features = partial(data_util.add_group_features, 30*23*2)
         full_ds = full_ds.groupby("ticker").map_groups(add_group_features)
-        add_example_features = partial(
-            data_util.add_example_level_features, market_cal, macro_data_builder)
-        full_ds = full_ds.map_batches(add_example_features)
         raw_data = full_ds.to_pandas()
+        raw_data = data_util.add_example_level_features_df(market_cal, macro_data_builder, cfg, raw_data) 
         raw_data = data_util.add_example_group_features(market_cal, macro_data_builder, raw_data)
         np.testing.assert_array_almost_equal(
             raw_data["vwap_since_london_open"],
