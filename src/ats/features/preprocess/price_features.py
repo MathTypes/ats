@@ -104,6 +104,7 @@ def indicator_kc_tmpl(close:pd.Series, high:pd.Series, low:pd.Series, window:int
     res = KeltnerChannel(close=close, high=high, low=low, window=window, fillna=False, original_version=False, multiplier=mult)
     return res
 
+
 @parameterize(
     kc_10d_05_high={"kc": source("kc_10d_05")},
     kc_10d_10_high={"kc": source("kc_10d_10")},
@@ -128,9 +129,25 @@ def indicator_kc_tmpl(close:pd.Series, high:pd.Series, low:pd.Series, window:int
     kc_20m_15_high={"kc": source("kc_20m_15")},
 )
 def kc_high_tmpl(kc: KeltnerChannel) -> pd.Series:
-    ta.volatility.keltner_channel_hband
     series = kc.keltner_channel_hband()
-    logging.error(f"series:{series}")
+    return series
+
+@parameterize(
+    kc_10d_05_mid={"kc": source("kc_10d_05")},
+    kc_10d_10_mid={"kc": source("kc_10d_10")},
+    kc_20d_05_mid={"kc": source("kc_20d_05")},
+    kc_20d_10_mid={"kc": source("kc_20d_10")},
+    kc_10w_05_mid={"kc": source("kc_10w_05")},
+    kc_10w_10_mid={"kc": source("kc_10w_10")},
+    kc_20w_05_mid={"kc": source("kc_20w_05")},
+    kc_20w_10_mid={"kc": source("kc_20w_10")},
+    kc_10m_05_mid={"kc": source("kc_10m_05")},
+    kc_10m_10_mid={"kc": source("kc_10m_10")},
+    kc_20m_05_mid={"kc": source("kc_20m_05")},
+    kc_20m_10_mid={"kc": source("kc_20m_10")},
+)
+def kc_mid_tmpl(kc: KeltnerChannel) -> pd.Series:
+    series = kc.keltner_channel_mband()
     return series
 
 @parameterize(
