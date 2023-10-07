@@ -225,6 +225,15 @@ def low_back(low: pd.Series, base_price:float) -> pd.Series:
 def open_back(open: pd.Series,base_price: float) -> pd.Series:
     return open.groupby(["ticker"]).transform(lambda x:back_ret(x, base_price))
 
+def ret_from_high(high: pd.Series, close: pd.Series, base_price: float) -> pd.Series:
+    return np.log(close+base_price) - np.log(high+base_price)
+
+def ret_from_low(low: pd.Series, close: pd.Series, base_price: float) -> pd.Series:
+    return np.log(close+base_price) - np.log(low+base_price)
+
+def ret_from_open(open: pd.Series, close: pd.Series, base_price: float) -> pd.Series:
+    return np.log(close+base_price) - np.log(open+base_price)
+
 def volume_back(cum_volume: pd.Series) -> pd.Series:
     return cum_volume.groupby(["ticker"]).transform(lambda x:back_volume(x))
 
@@ -1307,6 +1316,9 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            ret_from_kc_10d_05_mid: pd.Series,
                            ret_from_kc_10w_05_mid: pd.Series,
                            ret_from_kc_10m_05_mid: pd.Series,
+                           ret_from_high: pd.Series,
+                           ret_from_low: pd.Series,
+                           ret_from_open: pd.Series,
                            ret_to_next_new_york_close: pd.Series,
                            ret_to_next_weekly_close: pd.Series,
                            ret_to_next_monthly_close: pd.Series,
@@ -1728,7 +1740,10 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
         raw_data["ret_from_sma_100d"] = ret_from_sma_100d
         raw_data["ret_from_sma_200d"] = ret_from_sma_200d
 
-    
+
+    raw_data["ret_from_high"] = ret_from_high
+    raw_data["ret_from_low"] = ret_from_low
+    raw_data["ret_from_open"] = ret_from_open
     #logging.error(f"sampled_raw:{raw_data.iloc[-10:]}")
     raw_data["idx_ticker"] = raw_data["ticker"]
     raw_data["close_back"] = trimmed_close_back

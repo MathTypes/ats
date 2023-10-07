@@ -216,3 +216,31 @@ def test_ret_velocity_from_high_5():
         [-1.351e-07, -1.609e-08,        np.nan, -6.762e-07, -4.831e-07],
         decimal=8
     )
+
+def test_ret_from_high():
+    result = run_features("ret_from_high", 100)['ret_from_high'][10:15]
+    print(f"result:{result.to_list()}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [-0.00052142, -0.00017378, -0.00086843, -0.00156454, -0.00069602],
+        decimal=8
+    )
+
+def test_ret_from_low():
+    result = run_features("ret_from_low", 100)['ret_from_low'][10:15]
+    print(f"result:{result.to_list()}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [0.        , 0.00034764, 0.00069529, 0.        , 0.00017408],
+        decimal=8
+    )
+
+def test_ret_from_open():
+    result = run_features("ret_from_open", 100)['ret_from_open'][10:15]
+    print(f"result:{result.to_list()}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [-0.00034764,  0.00017381,  0.00017378, -0.00139082, -0.00052206],
+        decimal=8
+    )
+
