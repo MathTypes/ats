@@ -61,28 +61,28 @@ def test_compute_close_time_nyse_on_good_friday_multiple_calls():
     close_time = market_time.compute_next_close_time(datetime.datetime(2009, 4, 9, 12, 0, 0).timestamp(), market_cal)
     assert close_time == 1239307200
     close_time = market_time.compute_next_close_time(datetime.datetime(2009, 4, 10, 12, 0, 0).timestamp(), market_cal)
-    assert close_time == None
+    assert close_time == 1239652800
     close_time = market_time.compute_next_close_time(datetime.datetime(2009, 4, 10, 14, 0, 0).timestamp(), market_cal)
-    assert close_time == None
+    assert close_time == 1239652800
     close_time = market_time.compute_next_close_time(datetime.datetime(2009, 4, 11, 14, 0, 0).timestamp(), market_cal)
-    assert close_time == None
+    assert close_time == 1239652800
     close_time = market_time.compute_next_close_time(datetime.datetime(2009, 4, 12, 14, 0, 0).timestamp(), market_cal)
-    assert close_time == None
+    assert close_time == 1239652800
     close_time = market_time.compute_next_close_time(datetime.datetime(2009, 4, 13, 14, 0, 0).timestamp(), market_cal)
     assert close_time == 1239652800
 
 def test_compute_open_time_nyse_on_good_friday():
     market_cal = mcal.get_calendar("NYSE")
     open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 10, 12, 0, 0).timestamp(), market_cal)
-    assert open_time == None
-    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 10, 14, 0, 0).timestamp(), market_cal)
-    assert open_time == None
-    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 11, 14, 0, 0).timestamp(), market_cal)
-    assert open_time == None
-    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 12, 14, 0, 0).timestamp(), market_cal)
-    assert open_time == None
-    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 13, 14, 0, 0).timestamp(), market_cal)
     assert open_time == 1239629400
+    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 10, 14, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239629400
+    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 11, 14, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239629400
+    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 12, 14, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239629400
+    open_time = market_time.compute_next_open_time(datetime.datetime(2009, 4, 13, 14, 0, 0).timestamp(), market_cal)
+    assert open_time == 1239715800
 
 
 # Test that caches are working properly
@@ -117,7 +117,7 @@ def test_compute_open_time_nyse_20230213_two_calls():
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 14, 0, 0).timestamp(), market_cal)
     assert open_time == 1676298600
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 22, 0, 0).timestamp(), market_cal)
-    assert open_time == 1676298600
+    assert open_time == 1676385000
 
 def test_compute_open_time_nyse_20230213_single_call():
     market_cal = mcal.get_calendar("NYSE")
@@ -126,146 +126,153 @@ def test_compute_open_time_nyse_20230213_single_call():
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 14, 0, 0).timestamp(), market_cal)
     assert open_time == 1676298600
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 22, 0, 0).timestamp(), market_cal)
-    assert open_time == 1676298600
+    assert open_time == 1676385000
 
 def test_compute_open_time_cme_consecutive_call():
     market_cal = mcal.get_calendar("CME_Equity")
     dt = datetime.datetime(2023, 7, 28, 12, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == 1690495200
+    assert open_time == 1690754400
     dt = datetime.datetime(2023, 7, 29, 12, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == None
+    assert open_time == 1690754400
     dt = datetime.datetime(2023, 7, 30, 12, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == None
+    assert open_time == 1690754400
     dt = datetime.datetime(2023, 7, 31, 12, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == 1690754400
+    assert open_time == 1690840800
     dt = datetime.datetime(2023, 8, 1, 12, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == 1690840800
+    assert open_time == 1690927200
     dt = datetime.datetime(2023, 8, 2, 12, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == 1690927200
+    assert open_time == 1691013600
     dt = datetime.datetime(2023, 8, 3, 12, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == 1691013600
+    assert open_time == 1691100000
     dt = datetime.datetime(2023, 8, 3, 14, 0, 0)
     open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
-    assert open_time == 1691013600
+    assert open_time == 1691100000
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 8, 3, 17, 0, 0).timestamp(), market_cal)
-    assert open_time == 1691013600
+    assert open_time == 1691100000
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 8, 3, 20, 0, 0).timestamp(), market_cal)
-    assert open_time == 1691013600
+    assert open_time == 1691100000
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 8, 3, 22, 0, 0).timestamp(), market_cal)
-    assert open_time == 1691013600
+    assert open_time == 1691100000
 
 def test_compute_open_time_nyse_consecutive_call():
     market_cal = mcal.get_calendar("NYSE")
     dt = datetime.datetime(2023, 7, 28, 12, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
     assert open_time == 1690551000
     dt = datetime.datetime(2023, 7, 29, 12, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
-    assert open_time == None
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
+    assert open_time == 1690810200
     dt = datetime.datetime(2023, 7, 30, 12, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
-    assert open_time == None
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
+    assert open_time == 1690810200
     dt = datetime.datetime(2023, 7, 31, 12, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
     assert open_time == 1690810200
     dt = datetime.datetime(2023, 8, 1, 12, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
     assert open_time == 1690896600
     dt = datetime.datetime(2023, 8, 2, 12, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
     assert open_time == 1690983000
     dt = datetime.datetime(2023, 8, 3, 12, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
     assert open_time == 1691069400
     dt = datetime.datetime(2023, 8, 3, 14, 0, 0)
-    open_time = market_time.compute_open_time(dt.timestamp(), market_cal)
-    assert open_time == 1691069400
-    open_time = market_time.compute_open_time(datetime.datetime(2023, 8, 3, 17, 0, 0).timestamp(), market_cal)
-    assert open_time == 1691069400
+    open_time = market_time.compute_next_open_time(dt.timestamp(), market_cal)
+    assert open_time == 1691155800
+    open_time = market_time.compute_next_open_time(datetime.datetime(2023, 8, 3, 17, 0, 0).timestamp(), market_cal)
+    assert open_time == 1691155800
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 8, 3, 20, 0, 0).timestamp(), market_cal)
-    assert open_time == 1691069400
+    assert open_time == 1691155800
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 8, 3, 22, 0, 0).timestamp(), market_cal)
-    assert open_time == 1691069400
+    assert open_time == 1691155800
 
 def test_compute_close_time_cme_consecutive_call():
     market_cal = mcal.get_calendar("CME_Equity")
     dt = datetime.datetime(2023, 7, 28, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1690578000
     dt = datetime.datetime(2023, 7, 29, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
-    assert close_time == None
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
+    assert close_time == 1690837200
     dt = datetime.datetime(2023, 7, 30, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
-    assert close_time == None
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
+    assert close_time == 1690837200
     dt = datetime.datetime(2023, 7, 31, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1690837200
     dt = datetime.datetime(2023, 8, 1, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1690923600
     dt = datetime.datetime(2023, 8, 2, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1691010000
     dt = datetime.datetime(2023, 8, 3, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1691096400
     dt = datetime.datetime(2023, 8, 3, 14, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1691096400
-    close_time = market_time.compute_close_time(datetime.datetime(2023, 8, 3, 17, 0, 0).timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(datetime.datetime(2023, 8, 3, 17, 0, 0).timestamp(), market_cal)
     assert close_time == 1691096400
-    close_time = market_time.compute_close_time(datetime.datetime(2023, 8, 3, 20, 0, 0).timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(datetime.datetime(2023, 8, 3, 20, 0, 0).timestamp(), market_cal)
     assert close_time == 1691096400
-    close_time = market_time.compute_close_time(datetime.datetime(2023, 8, 3, 22, 0, 0).timestamp(), market_cal)
-    assert close_time == 1691096400
+    close_time = market_time.compute_next_close_time(datetime.datetime(2023, 8, 3, 22, 0, 0).timestamp(), market_cal)
+    assert close_time == 1691182800
 
 def test_compute_close_time_nyse_consecutive_call():
     market_cal = mcal.get_calendar("NYSE")
     dt = datetime.datetime(2023, 7, 28, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1690574400
     dt = datetime.datetime(2023, 7, 29, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
-    assert close_time == None
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
+    assert close_time == 1690833600
     dt = datetime.datetime(2023, 7, 30, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
-    assert close_time == None
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
+    assert close_time == 1690833600
     dt = datetime.datetime(2023, 7, 31, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1690833600
     dt = datetime.datetime(2023, 8, 1, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1690920000
     dt = datetime.datetime(2023, 8, 2, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1691006400
     dt = datetime.datetime(2023, 8, 3, 12, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1691092800
     dt = datetime.datetime(2023, 8, 3, 14, 0, 0)
-    close_time = market_time.compute_close_time(dt.timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(dt.timestamp(), market_cal)
     assert close_time == 1691092800
-    close_time = market_time.compute_close_time(datetime.datetime(2023, 8, 3, 17, 0, 0).timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(datetime.datetime(2023, 8, 3, 17, 0, 0).timestamp(), market_cal)
     assert close_time == 1691092800
-    close_time = market_time.compute_close_time(datetime.datetime(2023, 8, 3, 20, 0, 0).timestamp(), market_cal)
+    close_time = market_time.compute_next_close_time(datetime.datetime(2023, 8, 3, 20, 0, 0).timestamp(), market_cal)
     assert close_time == 1691092800
-    close_time = market_time.compute_close_time(datetime.datetime(2023, 8, 3, 22, 0, 0).timestamp(), market_cal)
-    assert close_time == 1691092800
+    close_time = market_time.compute_next_close_time(datetime.datetime(2023, 8, 3, 22, 0, 0).timestamp(), market_cal)
+    assert close_time == 1691179200
 
 def test_compute_next_open_time_cme_20230213():
     market_cal = mcal.get_calendar("CME_Equity")
+    now = datetime.datetime(2023, 2, 13, 1, 0, 0).timestamp()
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 1, 0, 0).timestamp(), market_cal)
-    assert open_time == 1676242800
+    assert open_time == 1676329200
     open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 14, 0, 0).timestamp(), market_cal)
-    assert open_time == 1676242800
+    assert open_time == 1676329200
+    # market opens at 23:00
+    open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 23, 0, 0).timestamp(), market_cal)
+    assert open_time == 1676329200
+    # at 23:30, we will look at next trading open time
+    open_time = market_time.compute_next_open_time(datetime.datetime(2023, 2, 13, 23, 30, 0).timestamp(), market_cal)
+    assert open_time == 1676415600
 
 def test_compute_monthly_close_time_after_close():
     market_cal = mcal.get_calendar("NYSE")
