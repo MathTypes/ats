@@ -28,7 +28,7 @@ To run main app
 
 To run test
   - poetry run pytest -s   tests/ats/trading/test_trader.py -k test_on_interval
-  - poetry run pytest -s --disable-warnings   tests/ats/trading/test_trader.py -k test_on_interval
+  - poetry run pytest -s --disable-warnings -o log_cli=true  tests/ats/trading/test_trader.py -k test_on_interval
   - quick test: poetry run python3 src/ats/app/main.py --config-name=dev --config-path=/home/ubuntu/ats/conf job.eval_start_date=2011-01-01
 
 To profile
