@@ -71,59 +71,74 @@ def bollinger_tmpl(close:pd.Series, window:int, window_dev:int) -> pd.Series:
     return ta.volatility.BollingerBands(close, window=window, window_dev=window_dev)
 
 @parameterize(
-    kc_10d_05={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(0.5)},
+    kc_10_05={"close": source("close"), "high": source("high"), "low": source("low"), "window": value(10), "mult": value(0.5)},
+    kc_10_10={"close": source("close"), "high": source("high"), "low": source("low"), "window": value(10), "mult": value(1.0)},
+    kc_10_15={"close": source("close"), "high": source("high"), "low": source("low"), "window": value(10), "mult": value(1.5)},
+    kc_10_20={"close": source("close"), "high": source("high"), "low": source("low"), "window": value(10), "mult": value(2)},
+
     kc_10d_10={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(1.0)},
     kc_10d_15={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(1.5)},
     kc_10d_20={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(2)},
+
     kc_20d_05={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(0.5)},
     kc_20d_10={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(1.0)},
     kc_20d_15={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(1.5)},
     kc_20d_20={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(20), "mult": value(2.0)},
+
     kc_10w_05={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(0.5)},
     kc_10w_10={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(1.0)},
     kc_10w_15={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(1.5)},
     kc_10w_20={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(10), "mult": value(2)},
+
     kc_20w_05={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(0.5)},
     kc_20w_10={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(1.0)},
     kc_20w_15={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(1.5)},
     kc_20w_20={"close": source("weekly_close"), "high": source("weekly_high"), "low": source("weekly_low"), "window": value(20), "mult": value(2.0)},
+
     kc_10m_05={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(10), "mult": value(0.5)},
     kc_10m_10={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(10), "mult": value(1.0)},
     kc_10m_15={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(10), "mult": value(1.5)},
     kc_10m_20={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(10), "mult": value(2)},
+
     kc_20m_05={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(20), "mult": value(0.5)},
     kc_20m_10={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(20), "mult": value(1.0)},
     kc_20m_15={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(20), "mult": value(1.5)},
     kc_20m_20={"close": source("monthly_close"), "high": source("monthly_high"), "low": source("monthly_low"), "window": value(20), "mult": value(2.0)},
 )
 def indicator_kc_tmpl(close:pd.Series, high:pd.Series, low:pd.Series, window:int, mult:float) -> KeltnerChannel:
-    logging.error(f"indicator_kc_tmpl: window:{window}, mult:{mult}")
-    logging.error(f"close:{close}")
-    logging.error(f"high:{high}")
-    logging.error(f"low:{low}")
     res = KeltnerChannel(close=close, high=high, low=low, window=window, fillna=False, original_version=False, multiplier=mult)
     return res
 
 
 @parameterize(
+    kc_10_05_high={"kc": source("kc_10_05")},
+    kc_10_10_high={"kc": source("kc_10_10")},
+    kc_10_15_high={"kc": source("kc_10_15")},
+    kc_10_20_high={"kc": source("kc_10_20")},
+
     kc_10d_05_high={"kc": source("kc_10d_05")},
     kc_10d_10_high={"kc": source("kc_10d_10")},
     kc_10d_15_high={"kc": source("kc_10d_15")},
     kc_10d_20_high={"kc": source("kc_10d_20")},
+
     kc_20d_05_high={"kc": source("kc_20d_05")},
     kc_20d_10_high={"kc": source("kc_20d_10")},
     kc_20d_15_high={"kc": source("kc_20d_15")},
+
     kc_10w_05_high={"kc": source("kc_10w_05")},
     kc_10w_10_high={"kc": source("kc_10w_10")},
     kc_10w_15_high={"kc": source("kc_10w_15")},
     kc_10w_20_high={"kc": source("kc_10w_20")},
+
     kc_20w_05_high={"kc": source("kc_20w_05")},
     kc_20w_10_high={"kc": source("kc_20w_10")},
     kc_20w_15_high={"kc": source("kc_20w_15")},
+
     kc_10m_05_high={"kc": source("kc_10m_05")},
     kc_10m_10_high={"kc": source("kc_10m_10")},
     kc_10m_15_high={"kc": source("kc_10m_15")},
     kc_10m_20_high={"kc": source("kc_10m_20")},
+
     kc_20m_05_high={"kc": source("kc_20m_05")},
     kc_20m_10_high={"kc": source("kc_20m_10")},
     kc_20m_15_high={"kc": source("kc_20m_15")},
@@ -133,16 +148,24 @@ def kc_high_tmpl(kc: KeltnerChannel) -> pd.Series:
     return series
 
 @parameterize(
+    kc_10_05_mid={"kc": source("kc_10_05")},
+    kc_10_10_mid={"kc": source("kc_10_10")},
+
     kc_10d_05_mid={"kc": source("kc_10d_05")},
     kc_10d_10_mid={"kc": source("kc_10d_10")},
+
     kc_20d_05_mid={"kc": source("kc_20d_05")},
     kc_20d_10_mid={"kc": source("kc_20d_10")},
+
     kc_10w_05_mid={"kc": source("kc_10w_05")},
     kc_10w_10_mid={"kc": source("kc_10w_10")},
+
     kc_20w_05_mid={"kc": source("kc_20w_05")},
     kc_20w_10_mid={"kc": source("kc_20w_10")},
+
     kc_10m_05_mid={"kc": source("kc_10m_05")},
     kc_10m_10_mid={"kc": source("kc_10m_10")},
+
     kc_20m_05_mid={"kc": source("kc_20m_05")},
     kc_20m_10_mid={"kc": source("kc_20m_10")},
 )
@@ -151,24 +174,34 @@ def kc_mid_tmpl(kc: KeltnerChannel) -> pd.Series:
     return series
 
 @parameterize(
+    kc_10_05_low={"kc": source("kc_10_05")},
+    kc_10_10_low={"kc": source("kc_10_10")},
+    kc_10_15_low={"kc": source("kc_10_15")},
+    kc_10_20_low={"kc": source("kc_10_20")},
+
     kc_10d_05_low={"kc": source("kc_10d_05")},
     kc_10d_10_low={"kc": source("kc_10d_10")},
     kc_10d_15_low={"kc": source("kc_10d_15")},
     kc_10d_20_low={"kc": source("kc_10d_20")},
+
     kc_20d_05_low={"kc": source("kc_20d_05")},
     kc_20d_10_low={"kc": source("kc_20d_10")},
     kc_20d_15_low={"kc": source("kc_20d_15")},
+
     kc_10w_05_low={"kc": source("kc_10w_05")},
     kc_10w_10_low={"kc": source("kc_10w_10")},
     kc_10w_15_low={"kc": source("kc_10w_15")},
     kc_10w_20_low={"kc": source("kc_10w_20")},
+
     kc_20w_05_low={"kc": source("kc_20w_05")},
     kc_20w_10_low={"kc": source("kc_20w_10")},
     kc_20w_15_low={"kc": source("kc_20w_15")},
+
     kc_10m_05_low={"kc": source("kc_10m_05")},
     kc_10m_10_low={"kc": source("kc_10m_10")},
     kc_10m_15_low={"kc": source("kc_10m_15")},
     kc_10m_20_low={"kc": source("kc_10m_20")},
+
     kc_20m_05_low={"kc": source("kc_20m_05")},
     kc_20m_10_low={"kc": source("kc_20m_10")},
     kc_20m_15_low={"kc": source("kc_20m_15")},

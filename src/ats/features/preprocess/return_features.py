@@ -751,10 +751,16 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_sma_100d={"base_col": source("sma_100d"), "col_name":value("sma_100d")},
     ret_from_sma_200d={"base_col": source("sma_200d"), "col_name":value("sma_200d")},
     
+    ret_from_kc_10_05_high={"base_col": source("kc_10_05_high"), "col_name":value("kc_10_05_high")},
+    ret_from_kc_10_10_high={"base_col": source("kc_10_10_high"), "col_name":value("kc_10_10_high")},
+    ret_from_kc_10_15_high={"base_col": source("kc_10_15_high"), "col_name":value("kc_10_15_high")},
+    ret_from_kc_10_20_high={"base_col": source("kc_10_20_high"), "col_name":value("kc_10_20_high")},
+
     ret_from_kc_10d_05_high={"base_col": source("kc_10d_05_high"), "col_name":value("kc_10d_05_high")},
     ret_from_kc_10d_10_high={"base_col": source("kc_10d_10_high"), "col_name":value("kc_10d_10_high")},
     ret_from_kc_10d_15_high={"base_col": source("kc_10d_15_high"), "col_name":value("kc_10d_15_high")},
     ret_from_kc_10d_20_high={"base_col": source("kc_10d_20_high"), "col_name":value("kc_10d_20_high")},
+
     ret_from_kc_20d_05_high={"base_col": source("kc_20d_05_high"), "col_name":value("kc_20d_05_high")},
     ret_from_kc_20d_10_high={"base_col": source("kc_20d_10_high"), "col_name":value("kc_20d_10_high")},
     ret_from_kc_20d_15_high={"base_col": source("kc_20d_15_high"), "col_name":value("kc_20d_15_high")},
@@ -770,10 +776,16 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_kc_10m_15_high={"base_col": source("kc_10m_15_high"), "col_name":value("kc_10m_15_high")},
     ret_from_kc_10m_20_high={"base_col": source("kc_10m_20_high"), "col_name":value("kc_10m_20_high")},
 
+    ret_from_kc_10_05_low={"base_col": source("kc_10_05_low"), "col_name":value("kc_10_05_low")},
+    ret_from_kc_10_10_low={"base_col": source("kc_10_10_low"), "col_name":value("kc_10_10_low")},
+    ret_from_kc_10_15_low={"base_col": source("kc_10_15_low"), "col_name":value("kc_10_15_low")},
+    ret_from_kc_10_20_low={"base_col": source("kc_10_20_low"), "col_name":value("kc_10_20_low")},
+
     ret_from_kc_10d_05_low={"base_col": source("kc_10d_05_low"), "col_name":value("kc_10d_05_low")},
     ret_from_kc_10d_10_low={"base_col": source("kc_10d_10_low"), "col_name":value("kc_10d_10_low")},
     ret_from_kc_10d_15_low={"base_col": source("kc_10d_15_low"), "col_name":value("kc_10d_15_low")},
     ret_from_kc_10d_20_low={"base_col": source("kc_10d_20_low"), "col_name":value("kc_10d_20_low")},
+
     ret_from_kc_20d_05_low={"base_col": source("kc_20d_05_low"), "col_name":value("kc_20d_05_low")},
     ret_from_kc_20d_10_low={"base_col": source("kc_20d_10_low"), "col_name":value("kc_20d_10_low")},
     ret_from_kc_20d_15_low={"base_col": source("kc_20d_15_low"), "col_name":value("kc_20d_15_low")},
@@ -788,6 +800,12 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_kc_10m_10_low={"base_col": source("kc_10m_10_low"), "col_name":value("kc_10m_10_low")},
     ret_from_kc_10m_15_low={"base_col": source("kc_10m_15_low"), "col_name":value("kc_10m_15_low")},
     ret_from_kc_10m_20_low={"base_col": source("kc_10m_20_low"), "col_name":value("kc_10m_20_low")},
+
+    ret_from_kc_10_05_mid={"base_col": source("kc_10_05_mid"), "col_name":value("kc_10_05_mid")},
+    ret_from_kc_10d_05_mid={"base_col": source("kc_10d_05_mid"), "col_name":value("kc_10d_05_mid")},
+    ret_from_kc_10w_05_mid={"base_col": source("kc_10w_05_mid"), "col_name":value("kc_10w_05_mid")},
+    ret_from_kc_10m_05_mid={"base_col": source("kc_10m_05_mid"), "col_name":value("kc_10m_05_mid")},
+
 )
 def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
     #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close(close.timestamp<=1681191800) and (close.timestamp>=1681193800)}")
