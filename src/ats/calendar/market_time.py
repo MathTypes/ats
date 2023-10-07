@@ -307,92 +307,28 @@ def compute_next_close_time(x, cal, k=0):
         return None
 
 
-def get_next_trading_times(cal, interval, nynow, k): #get next k trading times based of calendar
-    #now is in nytime
-    #all tests pass in interval --- which is kind of useless, but I guess I'll keep it.
-    #all tests pass in ny time, which I conver to utc.
-    now=nynow.astimezone(pytz.timezone('UTC')) #utc now
-    
-
-    ######start of code#########
-    start_date=now.date()
+def get_next_trading_times(cal, interval, now, k):
+    start_date = now.date()
     schedule = cal.schedule(
-        start_date=start_date, end_date=start_date + datetime.timedelta(days=k*7)
-    ) #dataframe type
-
-    # print(type(schedule)) #dataframe. Iterate down market_open.
-
-    # print("schedule begins here:")
-    res=[]
-    count=0
-    for row in schedule.values: #column by column of dataframe
-        start_time=row[0]
-
-        if start_time < now:
+        start_date=start_date, end_date=start_date + datetime.timedelta(days=5)
+    )
+    time_range = mcal.date_range(schedule, frequency=f"{interval}min")
+    results = []
+    last_time = None
+    for utc_time in time_range:
+        nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
+        if nyc_time < now:
             continue
-        
-        res.append(row[0].timestamp())
-        count+=1
-
-        if count == k:
+        # There are cases where market stops around 16:15 EST and it will be
+        # included in schedule. We would like to skip it.
+        if last_time and nyc_time < last_time + datetime.timedelta(minutes=interval):
+            continue
+        last_time = nyc_time
+        results.append(nyc_time.timestamp())
+        if len(results) >= k:
             break
-    
-    return res
+    return results
 
-'''
-error: failed to push some refs to 'https://github.com/MathTypes/ats.git'
-hint: Updates were rejected because the remote contains work that you do
-hint: not have locally. This is usually caused by another repository pushing
-hint: to the same ref. You may want to first integrate the remote changes
-hint: (e.g., 'git pull ...') before pushing again.
-hint: See the 'Note about fast-forwards' in 'git push --help' for details
-'''
-
-
-
-# def get_next_trading_times(cal, interval, now, k): 
-#     #task: get next k trading times from "now"
-#     #( calendar object, 30, datetime object IN NY TIME, how many opening times to return)
-#     start_date = now.date() #NY time starting date (date object)
-
-
-#     schedule = cal.schedule(
-#         start_date=start_date, end_date=start_date + datetime.timedelta(days=5)
-#     ) #get the nyse/cme's trading hours for these days (dateframe object)
-    
-#     #PROB: days = 4*k to ensure all k days are covered.
-#     #PROB: cal.schedule should be taking in utc time dates --- not ny time dates????
-    
-
-
-#     time_range = mcal.date_range(schedule, frequency=f"{interval}min")  #return a DatetimeIndex object with all timestamps at the frequency given, within the valid range of date and time 
-    
-#     #(in this case, valid range is the first timestamp in calendar to last timestamp in schedule. For example, my calendar starts at 2023/7/19 22:00 and ends at 2023/7/24 15:00, it'll form list of time 30minutes at a time starting with 22:30 on 7/19 til the end.)
-
-#     #PROB: so trading hours for these days, except you increment at 30 minutes at a time. Sometimes it goes 15 minutes at a time tho --- THIS IS DESPITE THE MARKET NOT CLOSING AT :15. 
-
-
-
-#     #when searching: pick keywords common to other ppl.
-
-#     results = []
-#     last_time = None
-    
-#     for utc_time in time_range:
-        
-#         nyc_time = utc_time.astimezone(pytz.timezone("America/New_York")) #this is a pandas.timestamp, equivalent to datetime.datetime
-
-#         if nyc_time < now:
-#             continue
-#         # There are cases where market stops around 16:15 EST and it will be
-#         # included in schedule. We would like to skip it.
-#         if last_time and nyc_time < last_time + datetime.timedelta(minutes=interval):
-#             continue
-#         last_time = nyc_time
-#         results.append(nyc_time.timestamp()) #PROB: !!!!As long as its a time period in between, it'll be accepted??? 
-#         if len(results) >= k:
-#             break 
-#     return results 
 
 '''
 PROB's ex:
