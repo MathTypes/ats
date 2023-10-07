@@ -1271,6 +1271,42 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
                            ret_from_bb_low_100d_3: pd.Series,
                            ret_from_bb_low_200d_2: pd.Series,
                            ret_from_bb_low_200d_3: pd.Series,
+                           ret_from_kc_10_05_high: pd.Series,
+                           ret_from_kc_10_10_high: pd.Series,
+                           ret_from_kc_10_15_high: pd.Series,
+                           ret_from_kc_10_20_high: pd.Series,
+                           ret_from_kc_10d_05_high: pd.Series,
+                           ret_from_kc_10d_10_high: pd.Series,
+                           ret_from_kc_10d_15_high: pd.Series,
+                           ret_from_kc_10d_20_high: pd.Series,
+                           ret_from_kc_10w_05_high: pd.Series,
+                           ret_from_kc_10w_10_high: pd.Series,
+                           ret_from_kc_10w_15_high: pd.Series,
+                           ret_from_kc_10w_20_high: pd.Series,
+                           ret_from_kc_10m_05_high: pd.Series,
+                           ret_from_kc_10m_10_high: pd.Series,
+                           ret_from_kc_10m_15_high: pd.Series,
+                           ret_from_kc_10m_20_high: pd.Series,
+                           ret_from_kc_10_05_low: pd.Series,
+                           ret_from_kc_10_10_low: pd.Series,
+                           ret_from_kc_10_15_low: pd.Series,
+                           ret_from_kc_10_20_low: pd.Series,
+                           ret_from_kc_10d_05_low: pd.Series,
+                           ret_from_kc_10d_10_low: pd.Series,
+                           ret_from_kc_10d_15_low: pd.Series,
+                           ret_from_kc_10d_20_low: pd.Series,
+                           ret_from_kc_10w_05_low: pd.Series,
+                           ret_from_kc_10w_10_low: pd.Series,
+                           ret_from_kc_10w_15_low: pd.Series,
+                           ret_from_kc_10w_20_low: pd.Series,
+                           ret_from_kc_10m_05_low: pd.Series,
+                           ret_from_kc_10m_10_low: pd.Series,
+                           ret_from_kc_10m_15_low: pd.Series,
+                           ret_from_kc_10m_20_low: pd.Series,
+                           ret_from_kc_10_05_mid: pd.Series,
+                           ret_from_kc_10d_05_mid: pd.Series,
+                           ret_from_kc_10w_05_mid: pd.Series,
+                           ret_from_kc_10m_05_mid: pd.Series,
                            ret_to_next_new_york_close: pd.Series,
                            ret_to_next_weekly_close: pd.Series,
                            ret_to_next_monthly_close: pd.Series,
@@ -1351,7 +1387,51 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     raw_data["time_to_london_close"] = time_to_london_close
     raw_data["time_to_london_last_close"] = time_to_london_last_close
 
-    
+    raw_data["ret_from_kc_10_05_high"] = ret_from_kc_10_05_high
+    raw_data["ret_from_kc_10_10_high"] = ret_from_kc_10_10_high
+    raw_data["ret_from_kc_10_15_high"] = ret_from_kc_10_15_high
+    raw_data["ret_from_kc_10_20_high"] = ret_from_kc_10_20_high
+
+    raw_data["ret_from_kc_10d_05_high"] = ret_from_kc_10d_05_high
+    raw_data["ret_from_kc_10d_10_high"] = ret_from_kc_10d_10_high
+    raw_data["ret_from_kc_10d_15_high"] = ret_from_kc_10d_15_high
+    raw_data["ret_from_kc_10d_20_high"] = ret_from_kc_10d_20_high
+
+    raw_data["ret_from_kc_10w_05_high"] = ret_from_kc_10w_05_high
+    raw_data["ret_from_kc_10w_10_high"] = ret_from_kc_10w_10_high
+    raw_data["ret_from_kc_10w_15_high"] = ret_from_kc_10w_15_high
+    raw_data["ret_from_kc_10w_20_high"] = ret_from_kc_10w_20_high
+
+    raw_data["ret_from_kc_10m_05_high"] = ret_from_kc_10m_05_high
+    raw_data["ret_from_kc_10m_10_high"] = ret_from_kc_10m_10_high
+    raw_data["ret_from_kc_10m_15_high"] = ret_from_kc_10m_15_high
+    raw_data["ret_from_kc_10m_20_high"] = ret_from_kc_10m_20_high
+
+    raw_data["ret_from_kc_10_05_low"] = ret_from_kc_10_05_low
+    raw_data["ret_from_kc_10_10_low"] = ret_from_kc_10_10_low
+    raw_data["ret_from_kc_10_15_low"] = ret_from_kc_10_15_low
+    raw_data["ret_from_kc_10_20_low"] = ret_from_kc_10_20_low
+
+    raw_data["ret_from_kc_10d_05_low"] = ret_from_kc_10d_05_low
+    raw_data["ret_from_kc_10d_10_low"] = ret_from_kc_10d_10_low
+    raw_data["ret_from_kc_10d_15_low"] = ret_from_kc_10d_15_low
+    raw_data["ret_from_kc_10d_20_low"] = ret_from_kc_10d_20_low
+
+    raw_data["ret_from_kc_10w_05_low"] = ret_from_kc_10w_05_low
+    raw_data["ret_from_kc_10w_10_low"] = ret_from_kc_10w_10_low
+    raw_data["ret_from_kc_10w_15_low"] = ret_from_kc_10w_15_low
+    raw_data["ret_from_kc_10w_20_low"] = ret_from_kc_10w_20_low
+
+    raw_data["ret_from_kc_10m_05_low"] = ret_from_kc_10m_05_low
+    raw_data["ret_from_kc_10m_10_low"] = ret_from_kc_10m_10_low
+    raw_data["ret_from_kc_10m_15_low"] = ret_from_kc_10m_15_low
+    raw_data["ret_from_kc_10m_20_low"] = ret_from_kc_10m_20_low
+
+    raw_data["ret_from_kc_10_05_mid"] = ret_from_kc_10_05_mid
+    raw_data["ret_from_kc_10d_05_mid"] = ret_from_kc_10d_05_mid
+    raw_data["ret_from_kc_10w_05_mid"] = ret_from_kc_10w_05_mid
+    raw_data["ret_from_kc_10m_05_mid"] = ret_from_kc_10m_05_mid
+
     if add_daily_rolling_features:
         raw_data["ret_from_close_cumsum_high_5d"] = ret_from_close_cumsum_high_5d
         raw_data["ret_from_close_cumsum_high_11d"] = ret_from_close_cumsum_high_11d

@@ -76,6 +76,7 @@ def bollinger_tmpl(close:pd.Series, window:int, window_dev:int) -> pd.Series:
     kc_10_15={"close": source("close"), "high": source("high"), "low": source("low"), "window": value(10), "mult": value(1.5)},
     kc_10_20={"close": source("close"), "high": source("high"), "low": source("low"), "window": value(10), "mult": value(2)},
 
+    kc_10d_05={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(0.5)},
     kc_10d_10={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(1.0)},
     kc_10d_15={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(1.5)},
     kc_10d_20={"close": source("daily_close"), "high": source("daily_high"), "low": source("daily_low"), "window": value(10), "mult": value(2)},
