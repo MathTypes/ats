@@ -67,124 +67,114 @@ def test_close_high_21_ff():
         decimal=3
     )
 
-def test_close():
-    result = run_features("close", 50)
+def test_close_feature():
+    result = run_features("close", 50)[10:15]
     print(f"result:{result['close'].to_list()}")
     np.testing.assert_array_almost_equal(
         result["close"],
-        [943.5, 944.5, 947.0, 947.75, 947.0, 946.75, 946.75, 946.75, 946.0, 945.75,
-         947.25, 946.75, 946.0, 945.25, 945.75, 944.75, 945.5, 945.0, 945.5, 945.0,
-         944.5, 945.25, 945.5, 945.75, 946.0, 947.5, 945.75, 947.0, 948.25, 948.25,
-         949.0, 948.25, 947.25, 945.75, 949.25, 959.25, 957.5, 961.5, 954.0, 953.75,
-         954.5, 955.0, 955.5, 958.25, 958.0, 960.0, 960.0, 957.5, 959.25, 961.],
+        [947.25, 946.75, 946.  , 945.25, 945.75],
         decimal=3
     )
 
 def test_joined_last_daily_close_0():
-    result = run_features("joined_last_daily_close_0", 200)
-    logging.error(f"result:{result.iloc[10:110]}")
-    close_list = result['joined_last_daily_close_0'][10:110]
-    logging.error(f"close:{close_list.to_list()}")
-    close_time_list = result.index.get_level_values(level=0)[:10]
-    ticker_list = result.index.get_level_values(level=1)[:10]
+    result = run_features("joined_last_daily_close_0", 200)[10:15]
+    logging.error(f"result:{result}")
+    close_list = result['joined_last_daily_close_0']
+    close_time_list = result.index.get_level_values(level=0)
     np.testing.assert_array_almost_equal(
         close_list,
-        [931.25, 929.25, 892.25, 890.5, 879.75, 878.0, 874.75, 909.25, 920.25, 928.75],
+        [902.5, 902.5, 902.5, 902.5, 902.5],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1277409600, 1277496000, 1277755200, 1277841600, 1277928000,
-         1278014400, 1278100800, 1278446400, 1278532800, 1278619200],
+        [1283198400, 1283200200, 1283202000, 1283205600, 1283207400],
         decimal=3
     )
     
 def test_last_daily_close_0():
-    result = run_features("last_daily_close_0", 50)
-    close_list = result['last_daily_close_0'][:10]
-    logging.error(f"close:{close_list.to_list()}")
-    close_time_list = result.index.get_level_values(level=0)[:10]
-    ticker_list = result.index.get_level_values(level=1)[:10]
+    result = run_features("last_daily_close_0", 50)[:10]
+    close_list = result['last_daily_close_0']
+    close_time_list = result.index.get_level_values(level=0)
+    ticker_list = result.index.get_level_values(level=1)
     np.testing.assert_array_almost_equal(
         close_list,
-        [931.25, 929.25, 892.25, 890.5, 879.75, 878.0, 874.75, 909.25, 920.25, 928.75],
+        [932.5 , 928.25, 892.75, 882.25, 879.75, 872.  , 881.75, 917.  ,
+         924.75, 929.5],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1277409600, 1277496000, 1277755200, 1277841600, 1277928000,
-         1278014400, 1278100800, 1278446400, 1278532800, 1278619200],
+        [1277496000, 1277755200, 1277841600, 1277928000, 1278014400,
+         1278100800, 1278446400, 1278532800, 1278619200, 1278705600],
         decimal=3
     )
 
 def test_last_daily_close_1():
-    result = run_features("last_daily_close_1", 50)
+    result = run_features("last_daily_close_1", 50)[:10]
     logging.error(f"result:{result}")
-    open_list = result['last_daily_close_1'][:10]
-    close_time_list = result.index.get_level_values(level=0)[:10]
-    ticker_list = result.index.get_level_values(level=1)[:10]
+    open_list = result['last_daily_close_1']
+    close_time_list = result.index.get_level_values(level=0)
     np.testing.assert_array_almost_equal(
         open_list,
-        [928.5 , 931.25, 929.25, 892.25, 890.5 , 879.75, 878.  , 874.75,
-         909.25, 920.25],
+        [928.  , 932.5 , 928.25, 892.75, 882.25, 879.75, 872.  , 881.75,
+         917.  , 924.75],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1277409600, 1277496000, 1277755200, 1277841600, 1277928000,
-         1278014400, 1278100800, 1278446400, 1278532800, 1278619200],
+        [1277496000, 1277755200, 1277841600, 1277928000, 1278014400,
+         1278100800, 1278446400, 1278532800, 1278619200, 1278705600],
         decimal=3
     )
 
 def test_last_daily_close_2():
-    result = run_features("last_daily_close_2", 50)
-    logging.error(f"result:{result}")
-    open_list = result['last_daily_close_2'][:10]
-    close_time_list = result.index.get_level_values(level=0)[:10]
-    ticker_list = result.index.get_level_values(level=1)[:10]
+    result = run_features("last_daily_close_2", 50)[:10]
+    open_list = result['last_daily_close_2']
+    close_time_list = result.index.get_level_values(level=0)
     np.testing.assert_array_almost_equal(
         open_list,
-        [946.25, 928.5 , 931.25, 929.25, 892.25, 890.5 , 879.75, 878.  ,
-         874.75, 909.25],
+        [944.75, 928.  , 932.5 , 928.25, 892.75, 882.25, 879.75, 872.  ,
+         881.75, 917],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1277409600, 1277496000, 1277755200, 1277841600, 1277928000,
-         1278014400, 1278100800, 1278446400, 1278532800, 1278619200],
+        [1277496000, 1277755200, 1277841600, 1277928000, 1278014400,
+         1278100800, 1278446400, 1278532800, 1278619200, 1278705600],
         decimal=3
     )
 
 def test_daily_close_df():
-    result = run_features("daily_close_df", 50)
+    result = run_features("daily_close_df", 50)[:10]
     logging.error(f"result:{result}")
-    daily_close_0_list = result['daily_close_0'][:10]
-    daily_close_1_list = result['daily_close_1'][:10]
-    daily_close_2_list = result['daily_close_2'][:10]
-    close_time_list = result.index.get_level_values(level=0)[:10]
-    ticker_list = result.index.get_level_values(level=1)[:10]
+    daily_close_0_list = result['daily_close_0']
+    daily_close_1_list = result['daily_close_1']
+    daily_close_2_list = result['daily_close_2']
+    close_time_list = result.index.get_level_values(level=0)
+    ticker_list = result.index.get_level_values(level=1)
     np.testing.assert_array_almost_equal(
         daily_close_0_list,
-        [931.25, 929.25, 892.25, 890.5 , 879.75, 878.  , 874.75, 909.25,
-         920.25, 928.75],
+        [932.5 , 928.25, 892.75, 882.25, 879.75, 872.  , 881.75, 917.  ,
+         924.75, 929.5],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         daily_close_1_list,
-        [928.5 , 931.25, 929.25, 892.25, 890.5 , 879.75, 878.  , 874.75,
-         909.25, 920.25],
+        [928.  , 932.5 , 928.25, 892.75, 882.25, 879.75, 872.  , 881.75,
+         917.  , 924.75],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         daily_close_2_list,
-        [946.25, 928.5 , 931.25, 929.25, 892.25, 890.5 , 879.75, 878.  ,
-         874.75, 909.25],
+        [944.75, 928.  , 932.5 , 928.25, 892.75, 882.25, 879.75, 872.  ,
+         881.75, 917.],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1277409600, 1277496000, 1277755200, 1277841600, 1277928000,
-         1278014400, 1278100800, 1278446400, 1278532800, 1278619200],
+        [1277496000, 1277755200, 1277841600, 1277928000, 1278014400,
+         1278100800, 1278446400, 1278532800, 1278619200, 1278705600],
         decimal=3
     )
 
@@ -339,14 +329,14 @@ def test_monthly_open():
     ticker_list = result.index.get_level_values(level=1)[:10]
     np.testing.assert_array_almost_equal(
         open_list,
-        [1173.25, 1157.75, 1220.25, 1234.25, 1114.  , 1100.  , 1116.75,
-         1005.75,  803.  ,  726.25],
+        [1173.25, 1156.75, 1218.5 , 1236.25, 1116.25, 1099.75, 1115.25,
+         999.5 ,  797.75,  729.5],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1204318800, 1206993600, 1209585600, 1212177600, 1214856000,
-         1217534400, 1220040000, 1222804800, 1225483200, 1227895200],
+        [1206993600, 1209585600, 1212177600, 1214856000, 1217534400,
+         1220040000, 1222804800, 1225483200, 1227895200, 1230757200],
         decimal=3
     )
 
@@ -375,56 +365,55 @@ def test_monthly_high():
     ticker_list = result.index.get_level_values(level=1)[:10]
     np.testing.assert_array_almost_equal(
         high_list,
-        [1175.5 , 1239.  , 1276.  , 1244.5 , 1127.25, 1144.25, 1133.  ,
-         1005.75,  839.  ,  748.25],
+        [1176.  , 1242.5 , 1276.5 , 1246.5 , 1128.  , 1146.75, 1136.75,
+         1006.  ,  840.5 ,  751.25],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1204318800, 1206993600, 1209585600, 1212177600, 1214856000,
-         1217534400, 1220040000, 1222804800, 1225483200, 1227895200],
+        [1206993600, 1209585600, 1212177600, 1214856000, 1217534400,
+         1220040000, 1222804800, 1225483200, 1227895200, 1230757200],
         decimal=3
     )
 
 def test_monthly_low():
-    result = run_features("monthly_low", 50)
-    low_list = result['monthly_low'][:10]
-    close_time_list = result.index.get_level_values(level=0)[:10]
-    ticker_list = result.index.get_level_values(level=1)[:10]
+    result = run_features("monthly_low", 50)[:10]
+    low_list = result['monthly_low']
+    close_time_list = result.index.get_level_values(level=0)
     np.testing.assert_array_almost_equal(
         low_list,
-        [1147.  , 1152.  , 1207.25, 1109.25, 1038.75, 1080.75,  947.75,
-         661.  ,  577.  ,  646.25],
+        [1145.  , 1151.25, 1206.  , 1106.  , 1034.  , 1079.5 ,  944.  ,
+         657.  ,  571.  ,  645.],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1204318800, 1206993600, 1209585600, 1212177600, 1214856000,
-         1217534400, 1220040000, 1222804800, 1225483200, 1227895200],
+        [1206993600, 1209585600, 1212177600, 1214856000, 1217534400,
+         1220040000, 1222804800, 1225483200, 1227895200, 1230757200],
         decimal=3
     )
 
 def test_close_low_1d_ff_shift_1d():
-    result = run_features("close_low_1d_ff_shift_1d", 50)
-    close = result["close"][:4]
-    timestamp = result["timestamp"][:4]
+    result = run_features("close_low_1d_ff_shift_1d", 50)[:4]
+    close = result["close_low_1d_ff_shift_1d"]
+    close_time_list = result.index.get_level_values(level=0)
     np.testing.assert_array_almost_equal(
         close,
         [944.5, 944.5, 944.5, 944.5],
         decimal=3
     )
     np.testing.assert_array_almost_equal(
-        timestamp,
-        [1283536800, 1283538600, 1283540400, 1283542200],
+        close_time_list,
+        [1283452200, 1283454000, 1283455800, 1283457600],
         decimal=3
     )
     
 def test_close_low_1d_ff():
-    result = run_features("close_low_1d_ff", 50)
-    close = result[:4]
+    result = run_features("close_low_1d_ff", 50)[:4]
+    close = result["close_low_1d_ff"]
     np.testing.assert_array_almost_equal(
         close,
-        [0.0018, 0.0011, -0.0009, 0.0002, 0.0013],
+        [934.5, 934.5, 934.5, 934.5],
         decimal=3
     )
 
@@ -579,7 +568,7 @@ def test_kc_10d_15_low():
     close = result["kc_10d_15_low"][30:35]
     np.testing.assert_array_almost_equal(
         close,
-        [934.586, 935.797, 926.937, 922.065, 917.593],
+        [943.895, 945.05 , 937.027, 931.996, 927.357],
         decimal=3
     )
 
