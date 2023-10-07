@@ -237,10 +237,15 @@ def test_ret_from_low():
 
 def test_ret_from_open():
     result = run_features("ret_from_open", 100)['ret_from_open'][10:15]
-    print(f"result:{result.to_list()}")
+    close_time_list = result.index.get_level_values(level=0).to_list()
     np.testing.assert_array_almost_equal(
         result,
         [-0.00034764,  0.00017381,  0.00017378, -0.00139082, -0.00052206],
+        decimal=8
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1283380200, 1283382000, 1283383800, 1283385600, 1283387400],
         decimal=8
     )
 
