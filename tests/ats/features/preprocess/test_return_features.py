@@ -163,6 +163,15 @@ def test_ret_from_last_monthly_close_9():
         decimal=3
     )
 
+def test_ret_from_kc_10d_05_high():
+    result = run_features("ret_from_kc_10d_05_high", 100)['ret_from_kc_10d_05_high'][10:15]
+    print(f"result:{result.to_list()}")
+    np.testing.assert_array_almost_equal(
+        result,
+        [0.004, 0.004, 0.003, 0.002, 0.002],
+        decimal=3
+    )
+
 def test_ret_from_vwap_pre_new_york_close():
     result = run_features("ret_from_vwap_pre_new_york_close", 100)['ret_from_vwap_pre_new_york_close'][10:15]
     print(f"result:{result.to_list()}")
