@@ -1,6 +1,6 @@
 defaults:
  - dataset: es
  - optimizer: adam
- - model: patch_tft_supervised_dev
+ - model: patch_tft_supervised_v5.1
  - job: dev
  - trading: dev

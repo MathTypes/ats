@@ -20,4 +20,5 @@ market: CME_Equity
 tune_learning_rate: False
 num_tune_iter: 20
 max_stale_minutes: 30
-checkpoint: ${hydra:runtime.cwd}/model/20230815-040441/epoch=0-step=127.ckpt
+#checkpoint: ${hydra:runtime.cwd}/model/20230815-040441/epoch=0-step=127.ckpt
+checkpoint: ${hydra:runtime.cwd}/model/dev.ckpt
