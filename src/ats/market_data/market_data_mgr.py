@@ -56,10 +56,12 @@ class MarketDataMgr(object):
         if self._FULL_DATA is None:
             logging.info("costly full_data creation")
             self._FULL_DATA = self._get_snapshot()
-            data_artifact = wandb.Artifact(f"run_{wandb.run.id}_data_viz", type="data_viz")
-            data_table = wandb.Table(dataframe=self._FULL_DATA.sample(frac=0.01, replace=False, random_state=1))
-            data_artifact.add(data_table, "raw_data")
-            wandb.run.use_artifact(data_artifact)
+            if wandb.run:
+                run_id = wandb.run.id
+                data_artifact = wandb.Artifact(f"run_{run_id}_data_viz", type="data_viz")
+                data_table = wandb.Table(dataframe=self._FULL_DATA.sample(frac=0.01, replace=False, random_state=1))
+                data_artifact.add(data_table, "raw_data")
+                wandb.run.use_artifact(data_artifact)
         return self._FULL_DATA
 
     #@cached_property
