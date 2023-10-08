@@ -100,7 +100,7 @@ class Trader(object):
         # Do not trade other than between 10 and 16 NYC time.
         if predict_nyc_time.hour < 10 or predict_nyc_time.hour>=16:
             return None
-        #logging.error(f"trading_times:{trading_times}")
+        logging.info(f"trading_times:{trading_times}")
         new_data = self.future_data[
             (self.future_data.timestamp >= trading_times[0])
             & (self.future_data.timestamp <= trading_times[-1])
@@ -147,7 +147,7 @@ class Trader(object):
                 )
                 return None
         self.last_data_time = predict_nyc_time
-        self.last_time_idx = train_raw_data.iloc[-1]["time_idx"]
+        self.last_time_idx = int(train_raw_data.iloc[-1]["time_idx"])
         self.last_time_idx += 1
         new_data["time_idx"] = range(
             self.last_time_idx, self.last_time_idx + len(new_data)
@@ -204,8 +204,8 @@ class Trader(object):
         #logging.info(f"new_positions:{new_positions}, ret:{ret}, val:{val}")
         y_hats_cum = torch.cumsum(y_hats, dim=-1)
         logging.info(f"y:{y}")
-        # y is open/high/low/close
-        y_close = y[0][0]
+        # y is close
+        y_close = y[0]['prediction'][0]
         y_close_cum_sum = torch.cumsum(y_close, dim=-1)
         # logging.info(f"x:{x}")
         # self.last_time_idx is current interval (as of close is known). indices would be self.last_time_idx + 1
@@ -234,7 +234,7 @@ class Trader(object):
             self.config,
             self.model,
             out,
-            self.target_size,
+            #self.target_size,
             interp_output,
             rmse,
             mae,
