@@ -35,7 +35,7 @@ from ats.features.preprocess.feature_utils import *
 from ats.features.preprocess import time_features
 from pandas.core.groupby import generic
 
-VOL_THRESHOLD = 5  # multiple to winsorise by
+VOL_THRESHOLD = 3  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
 #@profile_util.profile
@@ -205,7 +205,6 @@ def cum_dv(clean_sorted_data: pd.DataFrame) -> pd.Series:
 
 def back_ret(x:pd.Series, base_price:float) -> pd.Series:
     log_ret = np.log(x+base_price) - np.log(x.shift(1)+base_price)
-    log_ret = np.cbrt(log_ret)
     return log_ret
 
 def back_volume(x:pd.Series) -> pd.Series:

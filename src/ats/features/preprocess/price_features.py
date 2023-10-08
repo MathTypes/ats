@@ -432,8 +432,8 @@ def monthly_low(next_monthly_close_time:pd.Series, timestamp:pd.Series, ticker:p
 
 def df_by_daily(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.Series, open:pd.Series,
                 high:pd.Series, close:pd.Series, low:pd.Series) -> pd.DataFrame:
-    logging.error(f"last_daily_close_time:{last_daily_close_time}")
-    logging.error(f"ticker:{ticker}")
+    #logging.error(f"last_daily_close_time:{last_daily_close_time}")
+    #logging.error(f"ticker:{ticker}")
     COLUMN_NAMES = ["last_daily_close_time", "ticker", "open", "high", "close", "low"]
     df_dict = dict.fromkeys(COLUMN_NAMES, [])
     df_dict["last_daily_close_time"] = pd.Series(last_daily_close_time.values)
@@ -443,11 +443,11 @@ def df_by_daily(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.
     df_dict["high"] = pd.Series(high.values)
     df_dict["close"] = pd.Series(close.values)
     df_dict["low"] = pd.Series(low.values)
-    logging.error(f"open:{open}")
-    logging.error(f"close:{close}")
-    logging.error(f"timestamp:{timestamp}")
-    logging.error(f"high:{high}")
-    logging.error(f"low:{low}")
+    #logging.error(f"open:{open}")
+    #logging.error(f"close:{close}")
+    #logging.error(f"timestamp:{timestamp}")
+    #logging.error(f"high:{high}")
+    #logging.error(f"low:{low}")
     df = pd.DataFrame.from_dict(df_dict)[COLUMN_NAMES]
     #df = pd.concat([ticker, last_daily_close_time, open, high, close, low], axis=1)
     #df = pd.concat([ticker, open], axis=1) 
@@ -477,9 +477,9 @@ def df_by_daily(last_daily_close_time:pd.Series, timestamp:pd.Series, ticker:pd.
 )
 def price_at_tmpl(time_features: pd.DataFrame, time_col: str,
                   pre_interval_mins:int, post_interval_mins:int) -> pd.Series:
-    logging.error(f"time_features time_col:{time_col}, pre_interval_mins:{pre_interval_mins}, post_interval_mins:{post_interval_mins}, {time_features.iloc[5:10]}")
+    #logging.error(f"time_features time_col:{time_col}, pre_interval_mins:{pre_interval_mins}, post_interval_mins:{post_interval_mins}, {time_features.iloc[5:10]}")
     series = time_features.apply(fill_close, time_col=time_col, axis=1).ffill()
-    logging.error(f"price_at_tmpl series:{series.iloc[10:15]}")
+    #logging.error(f"price_at_tmpl series:{series.iloc[10:15]}")
     return series
 
 @parameterize(
@@ -643,10 +643,10 @@ def shift_price_by_step_tmpl(price_col:pd.Series, steps:int) -> pd.Series:
 def joined_last_daily_close_0(close:pd.Series, last_daily_close_0:pd.Series) -> pd.Series:
     df = pd.concat([close, last_daily_close_0], axis=1)
     df.columns = ["close", "last_daily_close_0"]
-    logging.error(f"df:{df.iloc[50:100]}")
+    #logging.error(f"df:{df.iloc[50:100]}")
     series = df["last_daily_close_0"]
     series = series.ffill()
-    logging.error(f"series:{series}")
+    #logging.error(f"series:{series}")
     return series
 
     
@@ -698,7 +698,7 @@ def shift_price_tmpl(steps:int, shift_col:pd.Series, timestamp:pd.Series, interv
     #logging.error(f"shift_price_tmpl_shift_col, col_name:{col_name}, df:{df.iloc[50:100]}")
     df = df.groupby(by='ticker', group_keys=True).transform(lambda x:x.shift(-steps*interval_per_day))
     series = df["close"].rename("ref_close") 
-    logging.error(f"shift_price_tmpl series:{series.iloc[50:100]}")
+    #logging.error(f"shift_price_tmpl series:{series.iloc[50:100]}")
     #series = series.set_index(["ticker","time"])
     #logging.error(f"shift_price_tmpl_col_name:{col_name}, series:{series.iloc[50:100]}, interval_per_day:{interval_per_day}, steps:{steps}")
     return series

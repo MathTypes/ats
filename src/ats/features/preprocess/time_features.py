@@ -488,19 +488,19 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
 )
 def time_to(timestamp:pd.Series, diff_time:pd.Series, ticker:pd.Series, diff_col:str) -> pd.Series:
     #traceback.print_stack()
-    logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp}, diff_col:{diff_col}")
-    logging.error(f"time_to_diff_col:{diff_col}, ticker:{ticker}")
+    #logging.error(f"time_to_diff_col:{diff_col}, timestamp:{timestamp}, diff_col:{diff_col}")
+    #logging.error(f"time_to_diff_col:{diff_col}, ticker:{ticker}")
     #timestamp = timestamp.reset_index()
     diff_time = diff_time.reset_index()
-    logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
+    #logging.error(f"time_to_diff_col:{diff_col}, diff_time:{diff_time}, diff_col:{diff_col}")
     if "ticker" in diff_time.columns:
         df = pd.concat([diff_time], axis=1)
     else:
         df = pd.concat([diff_time, ticker.index.to_series()], axis=1)
-    logging.error(f"time_to_df before setting column:{df.iloc[-10:]}")
+    #logging.error(f"time_to_df before setting column:{df.iloc[-10:]}")
     
     df.columns = ["timestamp", "ticker", diff_col]
-    logging.error(f"time_to_df:{df.iloc[-10:]}")
+    #logging.error(f"time_to_df:{df.iloc[-10:]}")
     df["time_to"]=df[diff_col] - df["timestamp"]
     df = df.set_index(["timestamp","ticker"])
     #diff_series = diff_series.set_index(["ticker","time"])
