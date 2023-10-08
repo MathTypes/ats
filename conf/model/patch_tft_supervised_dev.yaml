@@ -21,16 +21,16 @@ lstm_layers: 7
 multitask: True
 heads:
   - prediction
-  - returns_daily_prediction
-  - returns_weekly_prediction
-  - returns_monthly_prediction
-  - time_daily_prediction
-  - time_weekly_prediction
-  - time_monthly_prediction
+  #- returns_daily_prediction
+  #- returns_weekly_prediction
+  #- returns_monthly_prediction
+  #- time_daily_prediction
+  #- time_weekly_prediction
+  #- time_monthly_prediction
   #- vol_prediction
-  - returns_daily_close
-  - returns_weekly_close
-  - returns_monthly_close
+  #- returns_daily_close
+  #- returns_weekly_close
+  #- returns_monthly_close
 prediction:
   loss_name: SMAPE
   target: ["close_back"]
