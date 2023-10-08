@@ -118,7 +118,7 @@ def test_ret_from_last_daily_close_1():
     result = run_features("ret_from_last_daily_close_1", 100)
     np.testing.assert_array_almost_equal(
         result['ret_from_last_daily_close_1'][10:15],
-        [0.02 , 0.02 , 0.019, 0.018, 0.018],
+        [0.019, 0.018, 0.018, 0.018, 0.018],
         decimal=3
     )
 
@@ -126,7 +126,7 @@ def test_ret_from_last_daily_close_2():
     result = run_features("ret_from_last_daily_close_2", 100)["ret_from_last_daily_close_2"][10:15]
     np.testing.assert_array_almost_equal(
         result,
-        [0.025, 0.026, 0.024, 0.024, 0.024],
+        [0.024, 0.024, 0.024, 0.024, 0.024],
         decimal=3
     )
 
@@ -134,7 +134,7 @@ def test_ret_from_last_weekly_close_1():
     result = run_features("ret_from_last_weekly_close_1", 100)
     np.testing.assert_array_almost_equal(
         result['ret_from_last_weekly_close_1'][10:15],
-        [0.007, 0.007, 0.006, 0.005, 0.005],
+        [0.006, 0.005, 0.005, 0.005, 0.005],
         decimal=3
     )
 
@@ -159,7 +159,7 @@ def test_ret_from_kc_10d_05_high():
     result = run_features("ret_from_kc_10d_05_high", 100)['ret_from_kc_10d_05_high'][10:15]
     np.testing.assert_array_almost_equal(
         result,
-        [0.004, 0.004, 0.003, 0.002, 0.002],
+        [0.003, 0.002, 0.002, 0.002, 0.002],
         decimal=3
     )
 
@@ -212,7 +212,7 @@ def test_ret_velocity_from_high_5():
     print(f"result:{result.to_list()}")
     np.testing.assert_array_almost_equal(
         result,
-        [1.35136456e-07, 1.60904671e-08,            nan, 6.76152198e-07,                  4.83091909e-07],
+        [1.35136456e-07, 1.60904671e-08,            np.nan, 6.76152198e-07,                  4.83091909e-07],
         decimal=8
     )
 

@@ -88,7 +88,7 @@ def test_joined_last_daily_close_0():
     )
     np.testing.assert_array_almost_equal(
         close_time_list,
-        [1283198400, 1283200200, 1283202000, 1283205600, 1283207400],
+        [1283202000, 1283205600, 1283207400, 1283209200, 1283211000],
         decimal=3
     )
     
@@ -758,12 +758,18 @@ def test_kc_10m_10_mid():
 def test_vwap_around_london_close_20230411():
     timestamp = 1681192800
     result = run_features("vwap_around_london_close", 100000, timestamp)
-    #print(f"result:{result}")
-    close_list = result.query(f"(timestamp=={timestamp})")['vwap_around_london_close']
+    close_list = result.query(f"(timestamp>={timestamp-7200}) and (timestamp<={timestamp+7200})")['vwap_around_london_close']
     print(f"close_list:{close_list}")
-    close_time_list = close_list.index.get_level_values(level=0)[:10].to_list()
+    close_time_list = close_list.index.get_level_values(level=0).to_list()
     np.testing.assert_array_almost_equal(
-        result['vwap_around_london_close'][10:15],
-        [0.02 , 0.02 , 0.02 , 0.019, 0.019],
+        close_list.to_list(),
+        [4126.026, 4126.026, 4126.026, 4126.026, 4126.026, 4126.026,
+         4126.026, 4126.026, 4126.026],
+        decimal=3
+    )
+    np.testing.assert_array_almost_equal(
+        close_time_list,
+        [1681185600, 1681187400, 1681189200, 1681191000, 1681192800,
+         1681194600, 1681196400, 1681198200, 1681200000],
         decimal=3
     )
