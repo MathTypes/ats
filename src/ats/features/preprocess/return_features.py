@@ -204,7 +204,9 @@ def cum_dv(clean_sorted_data: pd.DataFrame) -> pd.Series:
     return series.transform("cumsum")
 
 def back_ret(x:pd.Series, base_price:float) -> pd.Series:
-    return np.log(x+base_price) - np.log(x.shift(1)+base_price)
+    log_ret = np.log(x+base_price) - np.log(x.shift(1)+base_price)
+    log_ret = np.cbrt(log_ret)
+    return log_ret
 
 def back_volume(x:pd.Series) -> pd.Series:
     return np.log(x+2) - np.log(x.shift(1)+2)
@@ -1760,8 +1762,9 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     raw_data["rsi_42d"] = rsi_42d
     raw_data["idx_timestamp"] = raw_data["timestamp"]
     raw_data["time"] = time
-    raw_data = raw_data.set_index(["idx_ticker","idx_timestamp"])
-    raw_data = raw_data.sort_values(["ticker", "timestamp"])
+    raw_data = raw_data.set_index(["idx_timestamp", "idx_ticker"])
+    #raw_data = raw_data.sort_values(["ticker", "timestamp"])
+    raw_data = raw_data.sort_index()
 
     return raw_data
 

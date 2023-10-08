@@ -26,10 +26,11 @@ eval_batch_size = 10
 
 class TimeSeriesDataModule(pl.LightningDataModule):
     def __init__(
-            self, config, full_data, training_time_idx, validation_time_idx, test_time_idx,
+            self, config, market_data_mgr, full_data, training_time_idx, validation_time_idx, test_time_idx,
             target_dict, transformed_full = None
     ):
         super().__init__()
+        self.market_data_mgr=market_data_mgr
         if training_time_idx.empty and config.job.mode in ["eval", "build_search"]:
             # TODO: get rid of the hack to fake train data during
             # eval and build_search mode. In both case, we do
@@ -83,7 +84,9 @@ class TimeSeriesDataModule(pl.LightningDataModule):
             # categorical_encoders={"ticker": GroupNormalizer().fit(self.train_data.ticker)},
             add_relative_time_idx=config.model.features.add_relative_time_idx,
             add_target_scales=False,
-            transformed_data=transformed_full
+            transformed_data=transformed_full,
+            config=config,
+            market_data_mgr=market_data_mgr,
         )
         # create dataloaders for model
         self.batch_size = config.model.train_batch_size  # set this between 32 to 128

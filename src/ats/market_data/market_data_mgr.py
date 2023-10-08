@@ -112,6 +112,7 @@ class MarketDataMgr(object):
         full_data = full_data.sort_values(["ticker", "timestamp"])
         data_module = TimeSeriesDataModule(
             config,
+            self,
             full_data, train_time_idx, eval_time_idx, test_time_idx,
             env_mgr.targets,
             transformed_full=self.transformed_full

@@ -9,11 +9,19 @@ from copy import copy as _copy, deepcopy
 from functools import lru_cache, partial
 import inspect
 import math
+import pathlib
 from typing import Any, Callable, Dict, List, Tuple, Union
 import warnings
 import logging
 import math
 import traceback
+
+import ray
+from ray import workflow
+
+from hamilton import base, driver, log_setup
+from hamilton.experimental import h_ray
+from hamilton.experimental import h_cache
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -226,6 +234,8 @@ class TimeSeriesDataSet(Dataset):
         randomize_length: Union[None, Tuple[float, float], bool] = False,
         predict_mode: bool = False,
         transformed_data=None,
+        config=None,
+        market_data_mgr=None,
     ):
         """
         Timeseries dataset holding data for models.
@@ -353,6 +363,8 @@ class TimeSeriesDataSet(Dataset):
         """
         super().__init__()
         # data = data.fillna(-1)
+        self.config = config
+        self.market_data_mgr = market_data_mgr
         assert (
             min_encoder_length == max_encoder_length
         ), "max encoder length must be equal to min encoder length"
@@ -404,7 +416,7 @@ class TimeSeriesDataSet(Dataset):
         self.time_varying_unknown_categoricals = [] + time_varying_unknown_categoricals
         self.time_varying_unknown_reals = [] + time_varying_unknown_reals
         self.add_relative_time_idx = add_relative_time_idx
-        # logging.info(f"raw_data:{data.iloc[-2:]}")
+        logging.error(f"init time series raw_data:{data.iloc[-2:]}")
         # set automatic defaults
         if isinstance(randomize_length, bool):
             if not randomize_length:
@@ -612,7 +624,7 @@ class TimeSeriesDataSet(Dataset):
             ]
             data.reset_index(drop=True, inplace=True)
         # data = data.sort_values(self.group_ids + [self.time_idx])
-        # logging.error(f"before process:{data.describe()}")
+        logging.error(f"before process:{data.describe()}")
         # preprocess data
         self._preprocess_data(data)
         # Keep raw data for processing new data
@@ -823,6 +835,7 @@ class TimeSeriesDataSet(Dataset):
         """
         # add lags to data
         # logging.info(f"lags:{self.lags}")
+        logging.error(f"_preprocess_data:{data.iloc[:10]}")
         for name in self.lags:
             # todo: add support for variable groups
             assert (
@@ -940,8 +953,9 @@ class TimeSeriesDataSet(Dataset):
                         self.scalers[name] = self.scalers[name].fit(data[[name]])
 
         # encode after fitting
-        # logging.info(f"data:{data.columns}")
-        # logging.info(f"data_describe:{data.describe()}")
+        logging.info(f"data:{data.columns}")
+        logging.info(f"data_describe:{data.describe()}")
+        logging.error(f"data:{data.iloc[:20]}")
         for name in self.reals:
             # logging.info(f"encode name:{name}")
             # targets are handled separately
@@ -951,6 +965,7 @@ class TimeSeriesDataSet(Dataset):
                 and transformer is not None
                 and not isinstance(transformer, EncoderNormalizer)
             ):
+                logging.error(f"name:{name}, data:{data[name].iloc[:20]}")
                 data[name] = self.transform_values(
                     name, data[name], data=data, inverse=False
                 )
@@ -977,7 +992,8 @@ class TimeSeriesDataSet(Dataset):
             # negative tail implementation as .groupby().tail(-self.max_lag) is not implemented in pandas
             g = data.groupby(self._group_ids, observed=True)
             data = g._selected_obj[g.cumcount() >= self.max_lag]
-
+        return data
+    
     def _create_encoder(self, data: pd.DataFrame) -> None:
         """
         Scale continuous variables, encode categories and set aside target and weight.
@@ -1351,7 +1367,7 @@ class TimeSeriesDataSet(Dataset):
 
         # reals
         elif name in self.reals:
-            # logging.info(f"name:{name}, transformer:{transformer}, transform:{transform}")
+            logging.info(f"name:{name}, transformer:{transformer}, transform:{transform}")
             if isinstance(transformer, GroupNormalizer):
                 return transform(values, data, **kwargs)
             elif isinstance(transformer, EncoderNormalizer):
@@ -2239,7 +2255,7 @@ class TimeSeriesDataSet(Dataset):
         raw_data = raw_data[
             (raw_data.timestamp < start_timestamp) & (raw_data.ticker == "ES")
         ]
-        # logging.error(f"raw_data before adding:{raw_data.iloc[-6:]}")
+        logging.error(f"raw_data before adding:{raw_data.iloc[-6:]}")
         for index, row in new_data.iterrows():
             idx = raw_data[(raw_data.time_idx == row["time_idx"])].index
             if not idx.empty:
@@ -2282,40 +2298,85 @@ class TimeSeriesDataSet(Dataset):
         raw_data["new_idx"] = raw_data.apply(
             lambda x: x.ticker + "_" + str(x.timestamp), axis=1
         )
+        raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
+        raw_data["idx_timestamp"] = raw_data["timestamp"]
+        raw_data["idx_ticker"] = raw_data["ticker"]
+        raw_data = raw_data.reset_index()
+        raw_data = raw_data.set_index(["timestamp","ticker"])
+        raw_data = raw_data.sort_index()
+        logging.error(f"raw_data before hamilton:{raw_data.iloc[:5]}")
+        
+        log_setup.setup_logging()
+        workflow.init()
+        logging.error(f"before processing raw_data:{raw_data.iloc[:3]}")
+        # You can also script module import loading by knowing the module name
+        # See run.py for an example of doing it that way.
+        from ats.features.preprocess import price_features, time_features, return_features 
+        modules = [price_features, time_features, return_features]
+        initial_columns = {  # could load data here via some other means, or delegate to a module as we have done.
+            "config": self.config,
+            "sorted_data": raw_data,
+            "env_mgr": self.market_data_mgr.env_mgr,
+            "cal": self.market_data_mgr.market_cal,
+            "macro_data_builder": self.market_data_mgr.macro_data_builder,
+            "feast_repository_path":".",
+            "feast_config":{},
+            "ret_std":self.config.dataset.ret_std,
+            "vol_threshold":5.0,
+            "base_price":float(self.config.dataset.base_price),
+            "interval_mins": self.config.dataset.interval_mins,
+            "interval_per_day":int(23 * 60 / self.config.dataset.interval_mins)
+        }
+        cache_path = "/tmp/hamilton_cache"
+        pathlib.Path(cache_path).mkdir(exist_ok=True)
+        rga = h_ray.RayWorkflowGraphAdapter(
+            result_builder=base.PandasDataFrameResult(),
+            workflow_id=f"wf-{self.market_data_mgr.env_mgr.run_id}",
+        )
+        dr = driver.Driver(initial_columns, *modules, adapter=rga)
+    
+        output_columns = self.config.model.features.time_varying_known_reals
+        new_raw_data = dr.execute(["example_group_features"])
+        new_raw_data = new_raw_data.copy()
+        new_raw_data["time_idx"] = raw_data["time_idx"]
+        logging.error(f"raw_data before assigment:{raw_data.iloc[:3]}")
+        raw_data = new_raw_data
+        logging.error(f"raw_data after assignment:{raw_data.iloc[:3]}")
+        #logging.error(f"raw_data before filtering:{raw_data.describe()}")
         # full_ds = ray.data.from_pandas(raw_data)
-        raw_data = data_util.add_group_features(interval_minutes, raw_data)
-        if raw_data is not None:
-            raw_data.set_index("time_idx", inplace=True)
+        #raw_data = data_util.add_group_features(interval_minutes, raw_data)
+        #if raw_data is not None:
+        #    raw_data.set_index("time_idx", inplace=True)
         # add_group_features = partial(data_util.add_group_features, interval_minutes)
         # full_ds = full_ds.groupby("ticker").map_groups(add_group_features).sort("time_idx")
         # raw_data = full_ds.to_pandas(limit=10000000).set_index("time_idx")
-        raw_data["time_idx"] = raw_data.index
+        #raw_data["time_idx"] = raw_data.index
         # logging.error(f"raw_data after adding group features:{raw_data.iloc[-6:]}")
 
-        min_new_data_idx = new_data.time_idx.min()
+        #min_new_data_idx = new_data.time_idx.min()
         # logging.error(f"raw_data index:{raw_data.index[-6:]}, min_new_data_idx:{min_new_data_idx}")
-        new_data_idx = raw_data.index >= min_new_data_idx
-        new_raw_data = raw_data.copy()
-        new_raw_data = new_raw_data[raw_data.index > min_new_data_idx - 46 * 250]
-        new_raw_data["time_idx"] = new_raw_data.index
+        #new_data_idx = raw_data.index >= min_new_data_idx
+        #new_raw_data = raw_data.copy()
+        #new_raw_data = new_raw_data[raw_data.index > min_new_data_idx - 46 * 250]
+        #new_raw_data["time_idx"] = new_raw_data.index
         # logging.error(f"new_data_idx:{new_data_idx[-10:]}")
-        new_raw_data = data_util.add_example_level_features_df(
-            cal, mdr.macro_data_builder, new_raw_data
-        )
+        #new_raw_data = data_util.add_example_level_features_df(
+        #    cal, mdr.macro_data_builder, new_raw_data
+        #)
         # new_full_ds = ray.data.from_pandas(new_raw_data)
         # add_example_features = partial(data_util.add_example_level_features, cal, mdr.macro_data_builder)
         # new_full_ds = new_full_ds.repartition(100).map_batches(add_example_features, batch_size=4096).sort("time_idx")
         # new_raw_data = new_full_ds.to_pandas(limit=10000000).set_index("time_idx")
-        new_raw_data["time_idx"] = new_raw_data.index
+        #new_raw_data["time_idx"] = new_raw_data.index
         # logging.error(f"raw_data after adding example features:{raw_data.iloc[-6:]}")
-        new_raw_data = data_util.add_example_group_features(
-            cal, mdr.macro_data_builder, new_raw_data
-        )
+        #new_raw_data = data_util.add_example_group_features(
+        #    cal, mdr.macro_data_builder, new_raw_data
+        #)
         # logging.error(f"new_raw_data after adding example group:{new_raw_data.iloc[-10:]}")
 
         # raw_data_copy = raw_data.copy()
-        raw_data[new_data_idx] = new_raw_data[new_raw_data.time_idx >= min_new_data_idx]
-        del new_raw_data
+        #raw_data[new_data_idx] = new_raw_data[new_raw_data.time_idx >= min_new_data_idx]
+        #del new_raw_data
         # raw_data = raw_data_copy
         # logging.error(f"after adding example features raw_data:{raw_data.iloc[-10:]}")
         # Only selected columns can be ffilled

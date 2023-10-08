@@ -642,7 +642,7 @@ def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     add_daily_rolling_features=config.model.features.add_daily_rolling_features
     new_york_cal = mcal.get_calendar("NYSE")
 
-    raw_data = clean_sorted_data
+    raw_data = clean_sorted_data.copy()
 
     raw_data["weekly_close_time"] = weekly_close_time
     raw_data["last_weekly_close_time"] = last_weekly_close_time
