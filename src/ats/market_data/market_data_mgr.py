@@ -181,6 +181,8 @@ class MarketDataMgr(object):
         full_data = dr.execute(["example_group_features"])
         logging.error(f"full_data before filtering:{full_data.describe()}")
         #ret_from_vwap_around_london_close
+        #from scipy.stats import boxcox
+        #df_close_back, lmbda = boxcox(full_data["close_back"], lmbda=None)
         logging.error(f"full_data.ret_from_vwap_around_london_close>0.15:{full_data[full_data.ret_from_vwap_around_london_close>0.5].iloc[-3:]}")
         logging.error(f"full_data.ret_from_vwap_around_london_open>0.15:{full_data[full_data.ret_from_vwap_around_london_open>0.15].iloc[-3:]}")
         logging.error(f"full_data.ret_from_close_cumsum_low_51d<-0.24:{full_data[full_data.ret_from_close_cumsum_low_51d<-0.24].iloc[-10:]}") 

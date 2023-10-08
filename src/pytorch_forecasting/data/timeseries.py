@@ -416,7 +416,7 @@ class TimeSeriesDataSet(Dataset):
         self.time_varying_unknown_categoricals = [] + time_varying_unknown_categoricals
         self.time_varying_unknown_reals = [] + time_varying_unknown_reals
         self.add_relative_time_idx = add_relative_time_idx
-        logging.error(f"init time series raw_data:{data.iloc[-2:]}")
+        #logging.error(f"init time series raw_data:{data.iloc[-2:]}")
         # set automatic defaults
         if isinstance(randomize_length, bool):
             if not randomize_length:
@@ -456,7 +456,7 @@ class TimeSeriesDataSet(Dataset):
         ), f"add_encoder_length should be boolean or 'auto' but found {add_encoder_length}"
         self.add_encoder_length = add_encoder_length
 
-        logging.info(f"summary before normalizer:{data.describe()}")
+        #logging.info(f"summary before normalizer:{data.describe()}")
         # target normalizer
         # JJ: disable target normalizer
         self._set_target_normalizer(data)
@@ -486,11 +486,11 @@ class TimeSeriesDataSet(Dataset):
         # logging.error(f"data:{data.iloc[-5:]} simulation_mode:{self.simulation_mode}")
         if transformed_data is None:
             self._create_encoder(data)
-            logging.info(f"after create_encoder data:{data.describe()}")
+            #logging.info(f"after create_encoder data:{data.describe()}")
             self.add_lag_variables(data, transformed=True)
-            logging.info(f"after lag_variable:{data.describe()}")
+            #logging.info(f"after lag_variable:{data.describe()}")
             self.transform_data(data)
-            logging.info(f"after transform data:{data.describe()}")
+            #logging.info(f"after transform data:{data.describe()}")
         else:
             # logging.info(f"setting tranformed_data")
             data = transformed_data
@@ -600,7 +600,7 @@ class TimeSeriesDataSet(Dataset):
     @profile_util.profile
     def transform_data(self, data: pd.DataFrame):
         # logging.info(f"data:{data.iloc[-30:]}")
-        logging.info(f"data before transform: {data.describe()}")
+        #logging.info(f"data before transform: {data.describe()}")
         for target in self.all_target_names:
             assert (
                 target not in self.time_varying_known_reals
@@ -624,7 +624,7 @@ class TimeSeriesDataSet(Dataset):
             ]
             data.reset_index(drop=True, inplace=True)
         # data = data.sort_values(self.group_ids + [self.time_idx])
-        logging.error(f"before process:{data.describe()}")
+        #logging.error(f"before process:{data.describe()}")
         # preprocess data
         self._preprocess_data(data)
         # Keep raw data for processing new data
@@ -660,7 +660,7 @@ class TimeSeriesDataSet(Dataset):
         if self.data is not None:
             del self.data
             torch.cuda.empty_cache()
-        logging.info(f"data:{data.describe()}")
+        #logging.info(f"data:{data.describe()}")
         self.data = self._data_to_tensors(data)
         # logging.error(f"transformed_self.data:{self.data['time'][-10:]}")
 
@@ -835,7 +835,7 @@ class TimeSeriesDataSet(Dataset):
         """
         # add lags to data
         # logging.info(f"lags:{self.lags}")
-        logging.error(f"_preprocess_data:{data.iloc[:10]}")
+        #logging.error(f"_preprocess_data:{data.iloc[:10]}")
         for name in self.lags:
             # todo: add support for variable groups
             assert (
@@ -919,7 +919,7 @@ class TimeSeriesDataSet(Dataset):
         assert (
             "__time_idx__" not in data.columns
         ), "__time_idx__ is a protected column and must not be present in data"
-        data["__time_idx__"] = data[self.time_idx]  # save unscaled
+        data["__time_idx__"] = data[self.time_idx].astype(int)  # save unscaled
         # logging.info(f"target_names:type{self.all_target_names}")
         for key, val in self.target.items():
         #for target in self.all_target_names:
@@ -953,9 +953,9 @@ class TimeSeriesDataSet(Dataset):
                         self.scalers[name] = self.scalers[name].fit(data[[name]])
 
         # encode after fitting
-        logging.info(f"data:{data.columns}")
-        logging.info(f"data_describe:{data.describe()}")
-        logging.error(f"data:{data.iloc[:20]}")
+        #logging.info(f"data:{data.columns}")
+        #logging.info(f"data_describe:{data.describe()}")
+        #logging.error(f"data:{data.iloc[:20]}")
         for name in self.reals:
             # logging.info(f"encode name:{name}")
             # targets are handled separately
@@ -965,7 +965,7 @@ class TimeSeriesDataSet(Dataset):
                 and transformer is not None
                 and not isinstance(transformer, EncoderNormalizer)
             ):
-                logging.error(f"name:{name}, data:{data[name].iloc[:20]}")
+                #logging.error(f"name:{name}, data:{data[name].iloc[:20]}")
                 data[name] = self.transform_values(
                     name, data[name], data=data, inverse=False
                 )
@@ -1041,7 +1041,7 @@ class TimeSeriesDataSet(Dataset):
                 group_ids_to_encode = self.group_ids
             else:
                 group_ids_to_encode = []
-        logging.info(f"group_ids_to_encode:{group_ids_to_encode}")
+        #logging.info(f"group_ids_to_encode:{group_ids_to_encode}")
         for name in dict.fromkeys(group_ids_to_encode + self.categoricals):
             if name in self.lagged_variables:
                 continue  # do not encode here but only in transform
@@ -1073,11 +1073,11 @@ class TimeSeriesDataSet(Dataset):
                             name
                         ].fit(data[name])
 
-        logging.info(f"before normalizer:{data.describe()}")
+        #logging.info(f"before normalizer:{data.describe()}")
         # train target normalizer
         if self.target_normalizer is not None:
             for key, val in self.target_normalizer.items():
-                logging.info(f"fitting key:{key}, val:{val}")
+                #logging.info(f"fitting key:{key}, val:{val}")
                 self.fit_target_normalizer(data, key, val)
 
         # rescale continuous variables apart from target
@@ -1229,7 +1229,7 @@ class TimeSeriesDataSet(Dataset):
         assert (
             "__time_idx__" not in data.columns
         ), "__time_idx__ is a protected column and must not be present in data"
-        data["__time_idx__"] = data[self.time_idx]  # save unscaled
+        data["__time_idx__"] = data[self.time_idx].astype(int)  # save unscaled
         # logging.info(f"target_names:type{self.all_target_names}")
         for target in self.all_target_names:
             #logging.info(f"setting  target:{target}")
@@ -1367,7 +1367,7 @@ class TimeSeriesDataSet(Dataset):
 
         # reals
         elif name in self.reals:
-            logging.info(f"name:{name}, transformer:{transformer}, transform:{transform}")
+            #logging.info(f"name:{name}, transformer:{transformer}, transform:{transform}")
             if isinstance(transformer, GroupNormalizer):
                 return transform(values, data, **kwargs)
             elif isinstance(transformer, EncoderNormalizer):
@@ -2338,10 +2338,10 @@ class TimeSeriesDataSet(Dataset):
         output_columns = self.config.model.features.time_varying_known_reals
         new_raw_data = dr.execute(["example_group_features"])
         new_raw_data = new_raw_data.copy()
-        new_raw_data["time_idx"] = raw_data["time_idx"]
-        logging.error(f"raw_data before assigment:{raw_data.iloc[:3]}")
+        new_raw_data["time_idx"] = raw_data["time_idx"].astype(int)
+        #logging.error(f"raw_data before assigment:{raw_data.iloc[:3]}")
         raw_data = new_raw_data
-        logging.error(f"raw_data after assignment:{raw_data.iloc[:3]}")
+        #logging.error(f"raw_data after assignment:{raw_data.iloc[:3]}")
         #logging.error(f"raw_data before filtering:{raw_data.describe()}")
         # full_ds = ray.data.from_pandas(raw_data)
         #raw_data = data_util.add_group_features(interval_minutes, raw_data)
@@ -2404,7 +2404,7 @@ class TimeSeriesDataSet(Dataset):
 
         del self.raw_data
         self.raw_data = raw_data
-        # logging.info(f"transformed_data:{data.iloc[-10:]}, data:{len(data)}")
+        logging.info(f"add_new_data:{raw_data.iloc[-10:]}, data:{len(data)}")
 
         # Call the malloc_trim function with a zero argument
         malloc_trim(0)
@@ -2426,8 +2426,10 @@ class TimeSeriesDataSet(Dataset):
         """
         # logging.info(f"idx:{idx}")
         # traceback.print_stack()
+        #logging.info(f"self.index:{self.index.iloc[:3]}")
         index = self.index.iloc[idx]
-        # logging.info(f"index:{index}")
+        #logging.info(f"index:{index}")
+        #logging.info(f"self.data:{self.data['reals'][:3]}")
         # get index data
         data_cont = self.data["reals"][index.index_start : index.index_end + 1].clone()
         data_cat = self.data["categoricals"][
