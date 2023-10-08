@@ -25,6 +25,8 @@ from torch.nn.utils import rnn
 
 from pytorch_forecasting.utils import InitialParameterRepresenterMixIn
 
+def _reciprocal(x):
+    return 1/x
 
 def _plus_one(x):
     return x + 1
@@ -145,6 +147,7 @@ class TransformMixIn:
         "softplus": dict(forward=softplus_inv, reverse=F.softplus, inverse_torch=SoftplusTransform()),
         "relu": dict(forward=_identity, reverse=F.relu, inverse=_identity, inverse_torch=ReLuTransform()),
         "sqrt": dict(forward=torch.sqrt, reverse=_square, inverse_torch=PowerTransform(exponent=2.0)),
+        "reciprocal": dict(forward=torch.reciprocal, reverse=_reciprocal, inverse_torch=torch.reciprocal),
     }
 
     @classmethod
