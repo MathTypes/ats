@@ -10,7 +10,7 @@ from ats.market_data import market_data_mgr
 
 
 # THe config path is relative to the file calling initialize (this file)
-def test_get_snapshot():
+def test_get_snapshot_basic():
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
     with initialize(version_base=None, config_path="../../../conf"):
@@ -45,11 +45,11 @@ def test_get_snapshot():
         assert first_eval_data_row["timestamp"] == 1277935200
         last_eval_data_row = data_module.eval_data.iloc[-1]
         # 2009-07-30 21:30:00.
-        assert last_eval_data_row["timestamp"] == 1249333200
+        assert last_eval_data_row["timestamp"] == 1280782800
         first_test_data_row = data_module.test_data.iloc[0]
         assert first_test_data_row["timestamp"] == 1277935200
         last_test_data_row = data_module.test_data.iloc[-1]
-        assert last_test_data_row["timestamp"] == 1249333200
+        assert last_test_data_row["timestamp"] == 1280782800
 
 
 def test_get_snapshot_20161026():
