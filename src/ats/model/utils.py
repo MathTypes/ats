@@ -150,7 +150,7 @@ class Pipeline:
                 lr_monitor,
                 # log_predictions_callback,
                 prediction_logger,
-                StochasticWeightAveraging(swa_lrs=1e-2)
+                #StochasticWeightAveraging(swa_lrs=1e-2)
                 # WandbModelCheckpoint("models"),
                 # WandbMetricsLogger(),
                 # StochasticWeightAveraging(swa_lrs=1e-2)
