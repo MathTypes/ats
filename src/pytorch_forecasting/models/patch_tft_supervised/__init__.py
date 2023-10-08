@@ -578,8 +578,8 @@ class PatchTftSupervised(BaseModelWithCovariates):
             #d_model=self.hparams.hidden_size, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
             d_model=d_model, n_head=self.hparams.attention_head_size, dropout=self.hparams.dropout
         )
-        self.anomaly_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
-        self.min_max_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
+        #self.anomaly_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
+        #self.min_max_head = PredictionHead(individual, self.n_vars, d_model, num_patch, target_dim, head_dropout)
         self.post_attn_gate_norm = GateAddNorm(
             #self.hparams.hidden_size, dropout=self.hparams.dropout, trainable_add=False
             d_model, dropout=self.hparams.dropout, trainable_add=False
@@ -679,42 +679,54 @@ class PatchTftSupervised(BaseModelWithCovariates):
             if isinstance(returns_daily_output_size, (tuple, list)):
             #if self.n_head_targets(head="returns_daily_prediction") > 1:  # if to run with multiple targets
                 self.returns_daily_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in returns_daily_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in returns_daily_output_size]
+                )
+                #self.returns_daily_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in returns_daily_output_size])
             else:
-                self.returns_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                            output_dim=returns_daily_output_size,
-                                                            num_layers=n_layers,
-                                                            activation=nn.ReLU)                
+                self.returns_daily_output_layer = nn.Linear(d_model, returns_daily_output_size)
+                #self.returns_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                            output_dim=returns_daily_output_size,
+                #                                            num_layers=n_layers,
+                #                                            activation=nn.ReLU)                
         self.returns_weekly_output_layer = None
         self.returns_weekly_output_size = returns_weekly_output_size
         if returns_weekly_output_size:
             if isinstance(returns_weekly_output_size, (tuple, list)):
             #if self.n_head_targets(head="returns_weekly_prediction") > 1:  # if to run with multiple targets
                 self.returns_weekly_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in returns_weekly_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in returns_weekly_output_size]
+                )
+                #self.returns_weekly_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in returns_weekly_output_size])
             else:
-                self.returns_weekly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                             output_dim=returns_weekly_output_size,
-                                                             num_layers=n_layers,
-                                                             activation=nn.ReLU)            
+                self.returns_weekly_output_layer = nn.Linear(d_model, returns_weekly_output_size)
+                #self.returns_weekly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                             output_dim=returns_weekly_output_size,
+                #                                             num_layers=n_layers,
+                #                                             activation=nn.ReLU)            
         self.returns_monthly_output_layer = None
         self.returns_monthly_output_size = returns_monthly_output_size
         if returns_monthly_output_size:
             #if self.n_head_targets(head="returns_monthly_prediction") > 1:  # if to run with multiple targets
             if isinstance(returns_monthly_output_size, (tuple, list)):
                 self.returns_monthly_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in returns_monthly_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in returns_monthly_output_size]
+                )
+                #self.returns_monthly_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in returns_monthly_output_size])
             else:
-                self.returns_monthly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                             output_dim=returns_monthly_output_size,
-                                                             num_layers=n_layers,
-                                                             activation=nn.ReLU)            
+                self.returns_monthly_output_layer = nn.Linear(d_model, returns_monthly_output_size)
+                #self.returns_monthly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                             output_dim=returns_monthly_output_size,
+                #                                             num_layers=n_layers,
+                #                                             activation=nn.ReLU)            
 
         self.returns_daily_close_output_layer = None
         self.returns_daily_close_output_size = returns_daily_close_output_size
@@ -722,84 +734,108 @@ class PatchTftSupervised(BaseModelWithCovariates):
             if isinstance(returns_daily_close_output_size, (tuple, list)):
             #if self.n_head_targets(head="returns_daily_close") > 1:  # if to run with multiple targets
                 self.returns_daily_close_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in returns_daily_close_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in returns_daily_close_output_size]
+                )
+                #self.returns_daily_close_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in returns_daily_close_output_size])
             else:
-                self.returns_daily_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                                  output_dim=returns_daily_close_output_size,
-                                                                  num_layers=n_layers,
-                                                                  activation=nn.ReLU)                
+                self.returns_daily_output_layer = nn.Linear(d_model, returns_daily_output_size)
+                #self.returns_daily_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                                  output_dim=returns_daily_close_output_size,
+                #                                                  num_layers=n_layers,
+                #                                                  activation=nn.ReLU)                
         self.returns_weekly_close_output_layer = None
         self.returns_weekly_close_output_size = returns_weekly_close_output_size
         if returns_weekly_close_output_size:
             #if self.n_head_targets(head="returns_weekly_close") > 1:  # if to run with multiple targets
             if isinstance(returns_weekly_close_output_size, (tuple, list)):
                 self.returns_weekly_close_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in returns_weekly_close_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in returns_weekly_close_output_size]
+                )
+                #self.returns_weekly_close_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in returns_weekly_close_output_size])
             else:
-                self.returns_weekly_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                                   output_dim=returns_weekly_close_output_size,
-                                                                   num_layers=n_layers,
-                                                                   activation=nn.ReLU)            
+                self.returns_weekly_output_layer = nn.Linear(d_model, returns_weekly_output_size)
+                #self.returns_weekly_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                                   output_dim=returns_weekly_close_output_size,
+                #                                                   num_layers=n_layers,
+                #                                                   activation=nn.ReLU)            
         self.returns_monthly_close_output_layer = None
         self.returns_monthly_close_output_size = returns_monthly_close_output_size
         if returns_monthly_close_output_size:
             if isinstance(returns_monthly_close_output_size, (tuple, list)):
             #if self.n_head_targets(head="returns_monthly_close") > 1:  # if to run with multiple targets
                 self.returns_monthly_close_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in returns_monthly_close_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in returns_monthly_close_output_size]
+                )
+                #self.returns_monthly_close_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in returns_monthly_close_output_size])
             else:
-                self.returns_monthly_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                                    output_dim=returns_monthly_close_output_size,
-                                                                    num_layers=n_layers,
-                                                                    activation=nn.ReLU)            
+                self.returns_monthly_output_layer = nn.Linear(d_model, returns_monthly_output_size)
+                #self.returns_monthly_close_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                                    output_dim=returns_monthly_close_output_size,
+                #                                                    num_layers=n_layers,
+                #                                                    activation=nn.ReLU)            
         self.time_daily_output_layer = None
         self.time_daily_output_size = time_daily_output_size
         if time_daily_output_size:
             if isinstance(time_daily_output_size, (tuple, list)):
             #if self.n_head_targets(head="time_daily_prediction") > 1:  # if to run with multiple targets
                 self.time_daily_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in time_daily_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in time_daily_output_size]
+                )
+                #self.time_daily_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in time_daily_output_size])
             else:
-                self.time_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                         output_dim=time_daily_output_size,
-                                                         num_layers=n_layers,
-                                                         activation=nn.ReLU)
+                self.time_daily_output_layer = nn.Linear(d_model, time_daily_output_size)
+                #self.time_daily_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                         output_dim=time_daily_output_size,
+                #                                         num_layers=n_layers,
+                #                                         activation=nn.ReLU)
         self.time_weekly_output_layer = None
         self.time_weekly_output_size = time_weekly_output_size
         if time_weekly_output_size:
             if isinstance(time_weekly_output_size, (tuple, list)):
             #if self.n_head_targets(head="time_weekly_prediction") > 1:  # if to run with multiple targets
                 self.time_weekly_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in time_weekly_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in time_weekly_output_size]
+                )
+                #self.time_weekly_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in time_weekly_output_size])
             else:
-                self.time_weekly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                          output_dim=time_weekly_output_size,
-                                                          num_layers=n_layers,
-                                                          activation=nn.ReLU)
+                self.time_weekly_output_layer = nn.Linear(d_model, time_weekly_output_size)
+                #self.time_weekly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                          output_dim=time_weekly_output_size,
+                #                                          num_layers=n_layers,
+                #                                          activation=nn.ReLU)
         self.time_monthly_output_layer = None
         self.time_monthly_output_size = time_monthly_output_size
         if time_monthly_output_size:
             if isinstance(time_monthly_output_size, (tuple, list)):
             #if self.n_head_targets(head="time_monthly_prediction") > 1:  # if to run with multiple targets
                 self.time_monthly_output_layer = nn.ModuleList(
-	            [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
-                                num_layers=n_layers, activation=nn.ReLU)
-                      for output_size in time_monthly_output_size])
+                    [nn.Linear(d_model, output_size) for output_size in time_monthly_output_size]
+                )
+                #self.time_monthly_output_layer = nn.ModuleList(
+	        #    [ _easy_mlp(input_dim=d_model, hidden_dim=d_model, output_dim=output_size,
+                #                num_layers=n_layers, activation=nn.ReLU)
+                #      for output_size in time_monthly_output_size])
             else:
-                self.time_monthly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
-                                                           output_dim=time_monthly_output_size,
-                                                           num_layers=n_layers,
-                                                           activation=nn.ReLU)
+                self.time_monthly_output_layer = nn.Linear(d_model, time_monthly_output_size)
+                #self.time_monthly_output_layer = _easy_mlp(input_dim=d_model, hidden_dim=d_model,
+                #                                           output_dim=time_monthly_output_size,
+                #                                           num_layers=n_layers,
+                #                                           activation=nn.ReLU)
         #self.anomaly_returns_output_layer = None
         #if anomaly_returns_output_size:
         #    if self.n_head_targets(head="anomaly_returns") > 1:  # if to run with multiple targets
