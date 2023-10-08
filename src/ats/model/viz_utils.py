@@ -433,7 +433,7 @@ def create_viz_row(
             draw_mode="pred_cum",
             x_time=x_time,
         )
-        if True:
+        if False:
             pl_module.plot_prediction(
                 x,
                 out,
