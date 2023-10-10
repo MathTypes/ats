@@ -235,7 +235,6 @@ class TimeSeriesDataSet(Dataset):
         predict_mode: bool = False,
         transformed_data=None,
         config=None,
-        market_data_mgr=None,
     ):
         """
         Timeseries dataset holding data for models.
@@ -364,7 +363,6 @@ class TimeSeriesDataSet(Dataset):
         super().__init__()
         # data = data.fillna(-1)
         self.config = config
-        self.market_data_mgr = market_data_mgr
         assert (
             min_encoder_length == max_encoder_length
         ), "max encoder length must be equal to min encoder length"
@@ -2316,9 +2314,9 @@ class TimeSeriesDataSet(Dataset):
         initial_columns = {  # could load data here via some other means, or delegate to a module as we have done.
             "config": self.config,
             "sorted_data": raw_data,
-            "env_mgr": self.market_data_mgr.env_mgr,
-            "cal": self.market_data_mgr.market_cal,
-            "macro_data_builder": self.market_data_mgr.macro_data_builder,
+            "env_mgr": mdr.env_mgr,
+            "cal": mdr.market_cal,
+            "macro_data_builder": mdr.macro_data_builder,
             "feast_repository_path":".",
             "feast_config":{},
             "ret_std":self.config.dataset.ret_std,
@@ -2331,7 +2329,7 @@ class TimeSeriesDataSet(Dataset):
         pathlib.Path(cache_path).mkdir(exist_ok=True)
         rga = h_ray.RayWorkflowGraphAdapter(
             result_builder=base.PandasDataFrameResult(),
-            workflow_id=f"wf-{self.market_data_mgr.env_mgr.run_id}-{now.timestamp()}",
+            workflow_id=f"wf-{mdr.env_mgr.run_id}-{now.timestamp()}",
         )
         dr = driver.Driver(initial_columns, *modules, adapter=rga)
     

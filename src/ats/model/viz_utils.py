@@ -318,7 +318,7 @@ def create_viz_row(
     train_data_row = train_data[
         train_data.time_idx == index.time_idx
     ].iloc[0]
-    logging.error(f"train_data_row:{train_data_row}")
+    #logging.error(f"train_data_row:{train_data_row}")
     dm = train_data_row["time"]
     dm_str = datetime.datetime.strftime(dm, "%Y%m%d-%H%M%S")
     y_close_cum_sum_row = y_close_cum_sum[idx]
