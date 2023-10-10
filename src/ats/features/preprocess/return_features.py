@@ -46,6 +46,7 @@ def clean_sorted_data(sorted_data : pd.DataFrame, config: DictConfig) -> pd.Data
     add_daily_rolling_features = config.model.features.add_daily_rolling_features
     base_price = config.dataset.base_price
     raw_data = sorted_data
+    logging.error(f"sorted_data:{sorted_data.iloc[-3:]}")
     for column in [
         "close_back", "high_back", "low_back", "open_back", "close_velocity_back",
         "volume_back",
@@ -817,7 +818,7 @@ def ret_from_close_cumsum_tmpl(close_back_cumsum: pd.Series, close_back_cumsum_f
     ret_from_kc_10m_05_mid={"base_col": source("kc_10m_05_mid"), "col_name":value("kc_10m_05_mid")},
 
 )
-def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_name:str) -> pd.Series:
+def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float=500, col_name:str="") -> pd.Series:
     #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close:{close(close.timestamp<=1681191800) and (close.timestamp>=1681193800)}")
     #logging.error(f"ret_from_price_close, col:col_name:{col_name}, close_index:{close.index[50:100]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, before reindex base_col:{base_col[(basecol.timestamp<=1681191800) and (basecol.timestamp>=1681193800)]}")
@@ -836,11 +837,14 @@ def ret_from_price(close: pd.Series, base_col: pd.Series, base_price:float, col_
     df = pd.concat([close, base_series], axis=1)
     df.columns = ["close", "ref_close"]
     df["ref_close"] = df.ref_close.ffill()
-    #logging.error(f"df:{df}")
+    logging.error(f"df_{col_name}, base_price:{base_price}, df:{df.describe()}")
     #temp = df.loc[df.index.get_level_values('timestamp')==1681192800]
     #logging.error(f"temp:{temp}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df[(df.index.get_level_values('timestamp')<=1681191800) and (df.index.get_level_values('timestamp')>=1681193800)]}")
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, df:{df.iloc[50:100]}")
+
+    logging.error(f"close_{col_name}:{df['close']}")
+    logging.error(f"ref_close_{col_name}:{df['ref_close']}")
     series = df.apply(lambda x: math.log(x["close"]+base_price)-math.log(x["ref_close"]+base_price), axis=1)
     #logging.error(f"ret_from_price_base_col:col_name:{col_name}, series:{series}")
     return series
@@ -1341,6 +1345,11 @@ def example_group_features(cal:CMEEquityExchangeCalendar, macro_data_builder:Mac
     raw_data["ticker"] = ticker
     raw_data["timestamp"] = timestamp
     raw_data["week_of_year"] = week_of_year
+    raw_data["month"]=month_of_year
+    raw_data["year"]=year
+    raw_data["hour_of_day"] = hour_of_day
+    raw_data["day_of_week"] = day_of_week
+    raw_data["day_of_month"] = day_of_month
     raw_data["month_of_year"] = month_of_year
     raw_data["weekly_close_time"] = weekly_close_time
     raw_data["last_weekly_close_time"] = last_weekly_close_time

@@ -98,9 +98,9 @@ class Trader(object):
         )
         predict_nyc_time = utc_time.astimezone(pytz.timezone("America/New_York"))
         # Do not trade other than between 10 and 16 NYC time.
-        if predict_nyc_time.hour < 10 or predict_nyc_time.hour>=16:
-            return None
-        logging.info(f"trading_times:{trading_times}")
+        #if predict_nyc_time.hour < 10 or predict_nyc_time.hour>=16:
+        #    return None
+        logging.error(f"trading_times:{trading_times}")
         new_data = self.future_data[
             (self.future_data.timestamp >= trading_times[0])
             & (self.future_data.timestamp <= trading_times[-1])
@@ -110,9 +110,9 @@ class Trader(object):
             (self.train_dataset.raw_data.timestamp < trading_times[0])
             & (self.train_dataset.raw_data.ticker == "ES")
         ]
-        #logging.error(f"new_data_from_future:{new_data.iloc[:10][['time','timestamp','close_back']]}")
+        logging.error(f"new_data_from_future:{new_data.iloc[:10][['time','timestamp','close_back']]}")
         missing_times = len(trading_times) - len(new_data)
-        #logging.error(f"missing_times:{missing_times}, trading_times:{len(trading_times)}, new_data:{len(new_data)}")
+        logging.error(f"missing_times:{missing_times}, trading_times:{len(trading_times)}, new_data:{len(new_data)}")
         if missing_times>0:
             starting_trading_times = len(new_data)
             new_data_df = pd.DataFrame(columns=["open","close","high","low","volume","dv","ticker","new_idx"])
@@ -122,13 +122,14 @@ class Trader(object):
                 logging.error(f"adding timestamp:{timestamp}, idx:{idx}, starting_trading_times:{starting_trading_times}")
                 new_row = {"time":time,
                            "timestamp":timestamp,
+                           "idx_timestamp":timestamp,
+                           "idx_ticker":"ES",
                            "open":0.1, "close":0.1, "high":0.1, "low":0.1, "volume":1, "dv":1,
                            "series_idx":str(time),
                            "ticker":"ES","new_idx":"ES_" + str(timestamp)}
                 new_data_df = pd.concat([new_data_df, pd.DataFrame(new_row, index=["new_idx"])])
-            new_data_df = new_data_df.set_index("new_idx")
+            new_data_df = new_data_df.set_index(["idx_timestamp", "idx_ticker"])
             new_data = pd.concat([new_data, new_data_df])
-        #logging.error(f"new_data:{new_data}")
         #bad_new_data = new_data[new_data.isna().any(axis=1)]
         #if not bad_new_data.empty:
         #    logging.error(f"bad_new_data:{bad_new_data}")
@@ -154,6 +155,7 @@ class Trader(object):
         )
         logging.info(f"running step {predict_nyc_time}, new_data:{new_data.iloc[:3][['time_idx','close','time']]}")
         self.train_dataset.add_new_data(
+            predict_nyc_time,
             new_data,
             self.config.job.time_interval_minutes,
             self.market_cal,

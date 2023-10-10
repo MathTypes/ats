@@ -37,7 +37,9 @@ VOL_THRESHOLD = 5  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
 def timestamp(clean_sorted_data: pd.DataFrame) -> pd.Series:
-    return clean_sorted_data["idx_timestamp"]
+    series = clean_sorted_data["idx_timestamp"]
+    logging.error(f"series:{series}")
+    return series
     #logging.error(f"clean_sorted_data:{clean_sorted_data.iloc[:3]}")
     #series = clean_sorted_data[["timestamp"]]
     #series = clean_sorted_data["timestamp"]

@@ -2227,7 +2227,7 @@ class TimeSeriesDataSet(Dataset):
         return obj
 
     @profile_util.profile
-    def add_new_data(self, new_data: pd.DataFrame, interval_minutes, cal, mdr):
+    def add_new_data(self, now, new_data: pd.DataFrame, interval_minutes, cal, mdr):
         if self.add_relative_time_idx:
             assert (
                 "relative_time_idx" not in new_data.columns
@@ -2255,7 +2255,7 @@ class TimeSeriesDataSet(Dataset):
         raw_data = raw_data[
             (raw_data.timestamp < start_timestamp) & (raw_data.ticker == "ES")
         ]
-        logging.error(f"raw_data before adding:{raw_data.iloc[-6:]}")
+        #logging.error(f"raw_data before adding:{raw_data.iloc[-6:]}")
         for index, row in new_data.iterrows():
             idx = raw_data[(raw_data.time_idx == row["time_idx"])].index
             if not idx.empty:
@@ -2331,12 +2331,14 @@ class TimeSeriesDataSet(Dataset):
         pathlib.Path(cache_path).mkdir(exist_ok=True)
         rga = h_ray.RayWorkflowGraphAdapter(
             result_builder=base.PandasDataFrameResult(),
-            workflow_id=f"wf-{self.market_data_mgr.env_mgr.run_id}",
+            workflow_id=f"wf-{self.market_data_mgr.env_mgr.run_id}-{now.timestamp()}",
         )
         dr = driver.Driver(initial_columns, *modules, adapter=rga)
     
         output_columns = self.config.model.features.time_varying_known_reals
+        logging.error(f"before executing")
         new_raw_data = dr.execute(["example_group_features"])
+        logging.error(f"after executing, new_raw_data:{new_raw_data.iloc[-3:]}")
         new_raw_data = new_raw_data.copy()
         new_raw_data["time_idx"] = raw_data["time_idx"].astype(int)
         #logging.error(f"raw_data before assigment:{raw_data.iloc[:3]}")
@@ -2404,7 +2406,7 @@ class TimeSeriesDataSet(Dataset):
 
         del self.raw_data
         self.raw_data = raw_data
-        logging.info(f"add_new_data:{raw_data.iloc[-10:]}, data:{len(data)}")
+        #logging.info(f"add_new_data:{raw_data.iloc[-10:]}")
 
         # Call the malloc_trim function with a zero argument
         malloc_trim(0)
