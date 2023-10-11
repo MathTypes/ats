@@ -10,7 +10,7 @@ from ats.util import time_util
 from ats.util import profile_util
 
 
-@functools.lru_cache(maxsize=1280000)
+@functools.lru_cache(maxsize=None)
 def get_last_macro_event_time(cal, x_time, mdb, imp):
     events = mdb.get_last_events(x_time, imp)
     for ix, val in events.event_time.iloc[::-1].items():
@@ -18,7 +18,7 @@ def get_last_macro_event_time(cal, x_time, mdb, imp):
             return val
     return None
     
-@functools.lru_cache(maxsize=1280000)
+@functools.lru_cache(maxsize=None)
 def get_next_macro_event_time(cal, x_time, mdb, imp):
     events = mdb.get_next_events(x_time, imp)
     for	ix, val in events.event_time.items():
@@ -29,7 +29,7 @@ def get_next_macro_event_time(cal, x_time, mdb, imp):
 _OPEN_TIME_DICT = {}
 _CLOSE_TIME_DICT = {}
 
-@functools.lru_cache(maxsize=128000)
+@functools.lru_cache(maxsize=None)
 def get_open_time(cal, x_date):
     if not cal in _OPEN_TIME_DICT.keys():
         _OPEN_TIME_DICT[cal] = {}
@@ -55,7 +55,7 @@ def get_open_time(cal, x_date):
     else:
         return None
 
-@functools.lru_cache(maxsize=1280000)
+@functools.lru_cache(maxsize=None)
 def get_close_time(cal, x_date):
     if not cal in _CLOSE_TIME_DICT.keys():
         _CLOSE_TIME_DICT[cal] = {}
@@ -76,7 +76,7 @@ def get_close_time(cal, x_date):
         return None
 
 
-@functools.lru_cache(maxsize=1280000)
+@functools.lru_cache(maxsize=None)
 def get_weekly_close_time(cal, x_date):
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=8)
@@ -91,7 +91,7 @@ def get_weekly_close_time(cal, x_date):
     return curr_close_time.timestamp()
 
 
-@functools.lru_cache(maxsize=1280000)
+@functools.lru_cache(maxsize=None)
 def get_monthly_close_time(cal, x_date):
     schedule = cal.schedule(
         start_date=x_date, end_date=x_date + datetime.timedelta(days=38)
@@ -106,7 +106,7 @@ def get_monthly_close_time(cal, x_date):
     return curr_close_time.timestamp()
 
 
-@functools.lru_cache(maxsize=1280000)
+@functools.lru_cache(maxsize=None)
 def get_option_expiration_time(cal, x_date):
     x_date = date_util.get_option_expiration_day(x_date)
     return get_weekly_close_time(cal, x_date)
