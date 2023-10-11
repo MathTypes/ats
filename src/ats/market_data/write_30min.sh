@@ -1,5 +1,5 @@
 #!/bin/bash
-# Example: sh -x src/ats/market_data/write_month.sh 2023-05-01 $PWD/data/firstratedata/full
+# Example: sh -x src/ats/market_data/write_30min.sh 2023-05-01 $PWD/data/firstratedata/full
 base_dir=$(dirname "$0")
 root_dir=$base_dir/../../..
 echo $root_dir

@@ -8,7 +8,7 @@ NOW=$(date +"%Y-%m-%d")
 TMPDIR=$root_dir/download/$NOW
 mkdir -p $TMPDIR/FUT
 
-wget -O $TMPDIR/FUT/data.zip "https://firstratedata.com/api/data_file?type=futures&period=full&adjustment=contin_UNadj&timeframe=5min&userid=fg1LcNsv8kWWMJIt0caCFQ"
+wget -O $TMPDIR/FUT/data.zip "https://firstratedata.com/api/data_file?type=futures&period=full&adjustment=contin_adj&timeframe=5min&userid=fg1LcNsv8kWWMJIt0caCFQ"
 cd $TMPDIR/FUT
 unzip data.zip
 cd $rel_base_dir/../../..
