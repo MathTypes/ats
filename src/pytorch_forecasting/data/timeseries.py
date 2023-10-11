@@ -2299,10 +2299,11 @@ class TimeSeriesDataSet(Dataset):
         raw_data["timestamp"] = raw_data.time.apply(lambda x: int(x.timestamp()))
         raw_data["idx_timestamp"] = raw_data["timestamp"]
         raw_data["idx_ticker"] = raw_data["ticker"]
+        logging.error(f"raw_data before hamilton:{raw_data.iloc[:5]}")
+        raw_data=raw_data.drop(columns=["level_0","level_1"])
         raw_data = raw_data.reset_index()
         raw_data = raw_data.set_index(["timestamp","ticker"])
         raw_data = raw_data.sort_index()
-        logging.error(f"raw_data before hamilton:{raw_data.iloc[:5]}")
         
         log_setup.setup_logging()
         workflow.init()
@@ -2331,6 +2332,18 @@ class TimeSeriesDataSet(Dataset):
             result_builder=base.PandasDataFrameResult(),
             workflow_id=f"wf-{mdr.env_mgr.run_id}-{now.timestamp()}",
         )
+
+        #min_new_data_idx = raw_data.time_idx.min()
+        # logging.error(f"raw_data index:{raw_data.index[-6:]}, min_new_data_idx:{min_new_data_idx}")
+        #new_data_idx = raw_data.index >= min_new_data_idx
+        #new_raw_data = raw_data.copy()
+        #new_raw_data = new_raw_data[raw_data.index > min_new_data_idx - 46 * 250]
+        #new_raw_data["time_idx"] = new_raw_data.index
+        # logging.error(f"new_data_idx:{new_data_idx[-10:]}")
+        #new_raw_data = data_util.add_example_level_features_df(
+        #    cal, mdr.macro_data_builder, new_raw_data
+        #)
+
         dr = driver.Driver(initial_columns, *modules, adapter=rga)
     
         output_columns = self.config.model.features.time_varying_known_reals
