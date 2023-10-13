@@ -2300,7 +2300,9 @@ class TimeSeriesDataSet(Dataset):
         raw_data["idx_timestamp"] = raw_data["timestamp"]
         raw_data["idx_ticker"] = raw_data["ticker"]
         logging.error(f"raw_data before hamilton:{raw_data.iloc[:5]}")
-        raw_data=raw_data.drop(columns=["level_0","level_1"])
+        for column in ["level_0", "level_1"]:
+            if column in raw_data.columns:
+                raw_data=raw_data.drop(columns=[coumn])
         raw_data = raw_data.reset_index()
         raw_data = raw_data.set_index(["timestamp","ticker"])
         raw_data = raw_data.sort_index()
