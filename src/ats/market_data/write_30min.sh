@@ -3,7 +3,8 @@
 base_dir=$(dirname "$0")
 root_dir=$base_dir/../../..
 echo $root_dir
-tickers=$(cat "$base_dir/firstratedata_fut.txt")
+#tickers=$(cat "$base_dir/firstratedata_fut.txt")
+tickers="ES"
 export RAY_DATA_STRICT_MODE=0
 input_dir=$1
 start_date=$2
