@@ -52,7 +52,7 @@ def optimize_hyperparameters(
     d_model_range: Tuple[int, int] = (16, 16),
     stride_range: Tuple[int, int] = (2, 2),
     dropout_range: Tuple[float, float] = (0.1, 0.1),
-    learning_rate_range: Tuple[float, float] = (1e-4, 0.5),
+    learning_rate_range: Tuple[float, float] = (1e-2, 0.5),
     use_learning_rate_finder: bool = True,
     trainer_kwargs: Dict[str, Any] = {},
     log_dir: str = "lightning_logs",
