@@ -7,6 +7,7 @@ import logging
 from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
 import warnings
 
+from scipy.stats import yeojohnson
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -51,6 +52,20 @@ def softplus_inv(y):
     return y.where(y > 20.0, y + (y + finfo.eps).neg().expm1().neg().log())
 
 
+def _yeojohnson(x):
+    res, lam = yeojohnson(x)
+    return res
+
+def _reverse_yeojohnson(value, lmbda=8.472135811722177):
+      if value>= 0 and lmbda == 0:
+              return exp(value) - 1
+      elif value >= 0 and lmbda != 0:
+              return (value * lmbda + 1) ** (1 / lmbda) - 1
+      elif value < 0 and lmbda != 2:
+              return 1 - (-(2 - lmbda) * value + 1) ** (1 / (2 - lmbda))
+      elif value < 0 and lmbda == 2:
+              return 1 - exp(-value)
+          
 def _square(y):
     return torch.pow(y, 2.0)
 
@@ -91,6 +106,31 @@ class Expm1Transform(ExpTransform):
 
     def _inverse(self, y):
         return super()._inverse(y + 1.0)
+
+
+class YeojohnsonTransform(Transform):
+    domain = constraints.real
+    codomain = constraints.real
+
+    def _call(self, x):
+        res, lam = yeojohnson(x.cpu().numpy())
+        return torch.from_numpy(res).to(x)
+
+    def _inverse(self, y):
+        func = torch.vmap(_reverse_yeojohnson)
+        return torch.from_numpy(func(y.cpu().numpy())).to(y)
+
+class ReverseYeojohnsonTransform(Transform):
+    domain = constraints.real
+    codomain = constraints.real
+
+    def _call(self, x):
+        func = torch.vmap(_reverse_yeojohnson)
+        return torch.from_numpy(func(x.cpu().numpy())).to(x)
+
+    def _inverse(self, y):
+        res, lam = yeojohnson(y.cpu().numpy())
+        return torch.from_numpy(res).to(y)
 
 
 class MinusOneTransform(Transform):
@@ -148,6 +188,7 @@ class TransformMixIn:
         "relu": dict(forward=_identity, reverse=F.relu, inverse=_identity, inverse_torch=ReLuTransform()),
         "sqrt": dict(forward=torch.sqrt, reverse=_square, inverse_torch=PowerTransform(exponent=2.0)),
         "reciprocal": dict(forward=torch.reciprocal, reverse=_reciprocal, inverse_torch=torch.reciprocal),
+        "yeojohnson": dict(forward=YeojohnsonTransform(), reverse=ReverseYeojohnsonTransform(), inverse_torch=ReverseYeojohnsonTransform()),
     }
 
     @classmethod

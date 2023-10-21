@@ -513,9 +513,9 @@ class BaseModel(pl.LightningModule, InitialParameterRepresenterMixIn, TupleOutpu
             self.logging_metrics = nn.ModuleList(
                 [convert_torchmetric_to_pytorch_forecasting_metric(l) for l in logging_metrics]
             )
-        logging.info(f"model_loss:{self.loss}")
-        logging.info(f"self.n_targets_dict:{self.n_targets_dict}")
-        logging.error(f"output_transformer:{output_transformer}")
+        #logging.info(f"model_loss:{self.loss}")
+        #logging.info(f"self.n_targets_dict:{self.n_targets_dict}")
+        #logging.error(f"output_transformer:{output_transformer}")
         if not hasattr(self, "output_transformer"):
             self.output_transformer = output_transformer
         if not hasattr(self, "optimizer"):  # callables are removed from hyperparameters, so better to save them

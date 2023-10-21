@@ -42,7 +42,7 @@ from ats.util import time_util
 
 def create_loss(loss_name, device, prediction_length=None, hidden_size=None):
     loss = None
-    logging.info(f"loss_name:{loss_name}")
+    #logging.info(f"loss_name:{loss_name}")
     if loss_name == "MASE":
         loss = MASE()
     if loss_name == "SharpeLoss":
@@ -175,14 +175,14 @@ def get_patch_tft_supervised_model(config, data_module, heads):
         # hidden_continuous_size=8,  # set to <= hidden_size
         # loss=QuantileLoss(),
         #optimizer="Ranger",
-        #optimizer="sgd",
-        optimizer="adam",
+        optimizer="adamw",
+        #optimizer="Ranger",
         output_size=output_size_dict,
         # reduce learning rate if no improvement in validation loss after x epochs
-        #reduce_on_plateau_patience=10,
-        #reduce_on_plateau_reduction=5.0,
-        #reduce_on_plateau_min_lr=0.0001,
-        #weight_decay=0.2
+        reduce_on_plateau_patience=5,
+        reduce_on_plateau_reduction=5.0,
+        reduce_on_plateau_min_lr=0.0001,
+        weight_decay=0.01,
     )
     return net
 
