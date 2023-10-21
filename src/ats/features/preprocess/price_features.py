@@ -33,9 +33,6 @@ from ats.util import time_util
 from ats.util import profile_util
 from ats.features.preprocess.feature_utils import *
 
-VOL_THRESHOLD = 5  # multiple to winsorise by
-HALFLIFE_WINSORISE = 252
-
 @parameterize(
     bollinger_5d_2={"window": value(5), "window_dev":value(2)},
     bollinger_5d_3={"window": value(5), "window_dev":value(3)},

@@ -35,7 +35,7 @@ from ats.features.preprocess.feature_utils import *
 from ats.features.preprocess import time_features
 from pandas.core.groupby import generic
 
-VOL_THRESHOLD = 3  # multiple to winsorise by
+VOL_THRESHOLD = 6  # multiple to winsorise by
 HALFLIFE_WINSORISE = 252
 
 #@profile_util.profile
