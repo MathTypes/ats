@@ -39,6 +39,8 @@ class TimeSeriesDataModule(pl.LightningDataModule):
         context_length = config.model.context_length
         prediction_length = config.model.prediction_length
         target_normalizer = {}
+        #transformation="yeojohnson"
+        transformation=None
         for name, target in target_dict.items():
             normalizer_list = []
             for i in range(len(target)):
@@ -47,7 +49,7 @@ class TimeSeriesDataModule(pl.LightningDataModule):
                 elif "daily_vol" in target[i]:
                     normalizer_list.append(EncoderNormalizer(transformation=None))
                 else:
-                    normalizer_list.append(EncoderNormalizer(transformation=None))
+                    normalizer_list.append(EncoderNormalizer(transformation=transformation))
             target_normalizer[name] = MultiNormalizer(normalizer_list)
         # use softplus and normalize by group
         logging.info(f"target:{type(target)}, target_normalizer={target_normalizer}")

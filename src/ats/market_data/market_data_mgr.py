@@ -197,8 +197,16 @@ class MarketDataMgr(object):
         logging.error(f"full_data.ret_from_vwap_since_london_open>0.3:{full_data[full_data.ret_from_vwap_since_london_open>0.3].iloc[-10:]}")
         logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp3<0:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp3<-0.15].iloc[-10:]}") 
         logging.error(f"full_data.ret_from_vwap_since_last_macro_event_imp3>0.2:{full_data[full_data.ret_from_vwap_since_last_macro_event_imp3>0.2].iloc[-10:]}") 
-
+        logging.error(f"full_data.ret_from_low>0.04:{full_data[full_data.ret_from_low>0.04].iloc[-10:]}") 
         logging.info(f"full_data:{full_data.describe()}")
+        from scipy.stats import boxcox, yeojohnson
+        # invert a yeojhonson transform for one value
+        #close_transformed, close_lmbda = yeojohnson(full_data["close_back"])
+        #high_transformed, high_lmbda = yeojohnson(full_data["high_back"])
+        #low_transformed, low_lmbda = yeojohnson(full_data["low_back"]) 
+        #logging.info(f"close_lmbda:{close_lmbda}")
+        #logging.info(f"high_lmbda:{high_lmbda}")
+        #logging.info(f"low_lmbda:{low_lmbda}")
         if self.config.dataset.write_snapshot and self.config.dataset.snapshot:
             ds = ray.data.from_pandas(full_data)
             snapshot_dir = f"{self.config.dataset.snapshot}/{env_mgr.run_id}/{data_start_date_str}_{data_end_date_str}"
