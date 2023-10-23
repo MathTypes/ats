@@ -91,7 +91,17 @@ def test_new_york_close_time():
         [1283544000, 1283544000, 1283544000, 1283544000, 1283544000],
         decimal=3
     )
-    
+
+def test_time_low_1d_bf():
+    full_data = run_features("time_low_1d_bf")
+    logging.error(f"full_data:{full_data}")
+    np.testing.assert_array_almost_equal(
+        full_data["close_timestamp"],
+        [1283252400, 1283252400, 1283252400, 1283252400, 1283252400,
+         1283252400, 1283252400, 1283252400, 1283252400, 1283252400],
+        decimal=3
+    )
+
 def test_time_low_5_ff():
     result = run_features("time_low_5_ff", 5)
     #print(f"result:{result['timestamp']}")

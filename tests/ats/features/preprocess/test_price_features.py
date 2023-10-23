@@ -417,6 +417,16 @@ def test_close_low_1d_ff():
         decimal=3
     )
 
+def test_close_low_1d_ff():
+    result = run_features("close_low_1d_bf", 50)[:4]
+    close = result["close_low_1d_bf"]
+    logging.error(f"close:{close}")
+    np.testing.assert_array_almost_equal(
+        close,
+        [934.5, 934.5, 934.5, 934.5],
+        decimal=3
+    )
+
 def test_kc_10d_05_high():
     result = run_features("kc_10d_05_high", 50)
     logging.error(f"result:{result}")

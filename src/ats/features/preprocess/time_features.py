@@ -466,6 +466,10 @@ def next_macro_event_time_imp3(timestamp: pd.Series, macro_data_builder:MacroDat
     time_to_low_101_ff={"diff_time": source("time_low_101_ff"),"diff_col":value("time_low_101_ff")},
     time_to_low_201_ff={"diff_time": source("time_low_201_ff"),"diff_col":value("time_low_201_ff")},
     time_to_high_1d_ff_shift_1d={"diff_time": source("time_high_1d_ff_shift_1d"),"diff_col":value("time_high_1d_ff_shift_1d")},
+    time_to_low_1d_bf_shift_1d={"diff_time": source("time_low_1d_bf_shift_1d"),"diff_col":value("time_low_1d_bf_shift_1d")},
+    time_to_high_1d_bf_shift_1d={"diff_time": source("time_high_1d_bf_shift_1d"),"diff_col":value("time_high_1d_bf_shift_1d")},
+    time_to_low_5d_bf_shift_5d={"diff_time": source("time_low_5d_bf_shift_5d"),"diff_col":value("time_low_5d_bf_shift_5d")},
+    time_to_high_5d_bf_shift_5d={"diff_time": source("time_high_5d_bf_shift_5d"),"diff_col":value("time_high_5d_bf_shift_5d")},
     time_to_low_1d_ff_shift_1d={"diff_time": source("time_low_1d_ff_shift_1d"),"diff_col":value("time_low_1d_ff_shift_1d")},
     time_to_high_5d_ff_shift_5d={"diff_time": source("time_high_5d_ff_shift_5d"),"diff_col":value("time_high_5d_ff_shift_5d")},
     time_to_low_5d_ff_shift_5d={"diff_time": source("time_low_5d_ff_shift_5d"),"diff_col":value("time_low_5d_ff_shift_5d")},
@@ -793,6 +797,10 @@ def time_features(clean_sorted_data:pd.DataFrame, cal:CMEEquityExchangeCalendar,
     return raw_data
 
 @parameterize(
+    time_high_1d_bf_shift_1d={"steps": value(1), "shift_col":source("time_high_1d_bf"),"col_name":value("time_high_1d_bf")},
+    time_low_1d_bf_shift_1d={"steps": value(1), "shift_col":source("time_low_1d_bf"),"col_name":value("time_low_1d_bf")},
+    time_high_5d_bf_shift_5d={"steps": value(5), "shift_col":source("time_high_5d_bf"),"col_name":value("time_high_5d_bf")},
+    time_low_5d_bf_shift_5d={"steps": value(5), "shift_col":source("time_low_5d_bf"),"col_name":value("time_low_5d_bf")},
     time_high_1d_ff_shift_1d={"steps": value(1), "shift_col":source("time_high_1d_ff"),"col_name":value("time_high_1d_ff")},
     time_low_1d_ff_shift_1d={"steps": value(1), "shift_col":source("time_low_1d_ff"),"col_name":value("time_low_1d_ff")},
     time_high_5d_ff_shift_5d={"steps": value(5), "shift_col":source("time_high_5d_ff"),"col_name":value("time_high_5d_ff")},
